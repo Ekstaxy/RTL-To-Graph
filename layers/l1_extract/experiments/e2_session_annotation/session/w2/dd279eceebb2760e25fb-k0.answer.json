@@ -1,0 +1,21 @@
+{
+  "module_summary": "Serial accumulator: a 2-bit counter groups four accepted 8-bit inputs, the output register sums them, and valid_out pulses one cycle with each 4-sample sum.",
+  "anchors": [
+    {"id": "E6", "name": "data_out", "role": "DATAPATH_MAJOR", "importance": "critical", "trace": "data_backward", "why": "10-bit accumulator output: loads first sample, adds next three data_in values."},
+    {"id": "E5", "name": "valid_out", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "One-cycle pulse when the fourth sample is accumulated, marking data_out valid."},
+    {"id": "E4", "name": "valid_in", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Input data-valid; enables accumulation and counting via ready_add."},
+    {"id": "E3", "name": "data_in", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "8-bit samples added into the accumulator."},
+    {"id": "E7", "name": "count", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Counts accepted samples 0-3; selects load vs add and triggers end_cnt."},
+    {"id": "E9", "name": "ready_add", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Accept enable (valid_in or not valid_out) gating counter and accumulator updates."},
+    {"id": "E10", "name": "end_cnt", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Terminal count: wraps count and sets valid_out."}
+  ],
+  "groups": [
+    {"name": "sample_counter", "kind": "COUNTER_TIMER", "anchor_ids": ["E7", "E9", "E10", "E4", "E5"], "member_ids": ["E8"], "description": "Accept logic and mod-4 sample counter generating the output valid pulse."},
+    {"name": "accumulator", "kind": "DATAPATH", "anchor_ids": ["E6", "E3"], "member_ids": ["E11"], "description": "Adds incoming samples; data_out_reg is an unread duplicate accumulator."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "sample_in", "protocol": "STREAM", "direction": "IN", "member_ids": ["E3", "E4"]},
+    {"name": "sum_out", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E5", "E6"]}
+  ]
+}

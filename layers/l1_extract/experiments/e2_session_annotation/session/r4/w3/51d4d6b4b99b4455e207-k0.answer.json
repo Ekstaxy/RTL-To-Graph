@@ -1,0 +1,36 @@
+{
+  "module_summary": "10G Ethernet MAC+PHY transmit path: an AXI-Stream-to-BASE-R encoder frames packets into 64b/66b blocks, which a PHY TX interface scrambles and registers onto the SERDES.",
+  "anchors": [
+    {"id": "E3", "name": "s_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "AXI-Stream transmit packet data into the encoder.", "lines": [61, 135]},
+    {"id": "E5", "name": "s_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "AXI-Stream input valid.", "lines": [63, 137]},
+    {"id": "E6", "name": "s_axis_tready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Encoder backpressure to AXI-Stream source.", "lines": [64, 138]},
+    {"id": "E7", "name": "s_axis_tlast", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "End-of-frame marker for transmit packet.", "lines": [65, 139]},
+    {"id": "E4", "name": "s_axis_tkeep", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Byte-valid mask of input word.", "lines": [62, 136]},
+    {"id": "E8", "name": "s_axis_tuser", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Error/PTP sideband of input stream.", "lines": [66, 140]},
+    {"id": "E20", "name": "encoded_tx_data", "role": "DATAPATH_MAJOR", "importance": "critical", "trace": "data_backward", "why": "64b/66b encoded block data from encoder to PHY scrambler.", "lines": [114, 141, 164]},
+    {"id": "E21", "name": "encoded_tx_hdr", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Encoded block sync header from encoder to PHY.", "lines": [115, 142, 165]},
+    {"id": "E9", "name": "serdes_tx_data", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Scrambled 64-bit data to SERDES.", "lines": [71, 166]},
+    {"id": "E10", "name": "serdes_tx_hdr", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Sync header to SERDES.", "lines": [72, 167]},
+    {"id": "E12", "name": "m_axis_ptp_ts", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Captured PTP transmit timestamp output.", "lines": [78, 144]},
+    {"id": "E13", "name": "m_axis_ptp_ts_tag", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Tag identifying the timestamped frame.", "lines": [79, 145]},
+    {"id": "E14", "name": "m_axis_ptp_ts_valid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Valid pulse for transmit timestamp output.", "lines": [80, 146]},
+    {"id": "E11", "name": "ptp_ts", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Current PTP time input for timestamping.", "lines": [77, 143]},
+    {"id": "E15", "name": "tx_start_packet", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "Start-of-packet lane indication from encoder.", "lines": [85, 147]},
+    {"id": "E16", "name": "tx_error_underflow", "role": "STATUS", "importance": "major", "trace": "data_backward", "why": "Underflow error when input stalls mid-frame.", "lines": [86, 148]},
+    {"id": "E17", "name": "cfg_ifg", "role": "CONFIG_REG", "importance": "minor", "trace": "interface", "why": "Configured inter-frame gap length for encoder.", "lines": [91, 149]},
+    {"id": "E18", "name": "cfg_tx_enable", "role": "CONFIG_REG", "importance": "minor", "trace": "interface", "why": "Enables the transmit encoder.", "lines": [92, 150]},
+    {"id": "E19", "name": "cfg_tx_prbs31_enable", "role": "CONFIG_REG", "importance": "minor", "trace": "interface", "why": "Selects PRBS31 test pattern in PHY TX interface.", "lines": [93, 168]}
+  ],
+  "groups": [
+    {"name": "baser_encoder", "kind": "DATAPATH", "anchor_ids": ["E3", "E5", "E6", "E7", "E4", "E8", "E20", "E21", "E12", "E13", "E14", "E11", "E15", "E16", "E17", "E18"], "member_ids": ["I1"], "description": "AXI-Stream to 64b/66b encoder with framing FSM, CRC and PTP timestamping."},
+    {"name": "phy_tx_interface", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E9", "E10", "E19"], "member_ids": ["I2"], "description": "Scrambler/PRBS generator registering encoded blocks to SERDES."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "s_axis", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8"]},
+    {"name": "serdes_tx", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E9", "E10"]},
+    {"name": "ptp", "protocol": "OTHER", "direction": "OUT", "member_ids": ["E11", "E12", "E13", "E14"]},
+    {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E15", "E16"]},
+    {"name": "config", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E17", "E18", "E19"]}
+  ]
+}

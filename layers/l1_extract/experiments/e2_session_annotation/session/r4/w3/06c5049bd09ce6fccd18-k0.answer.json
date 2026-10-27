@@ -1,0 +1,45 @@
+{
+ "module_summary": "I2C-slave to AXI-lite master bridge: an i2c_slave child streams bytes to a 6-state FSM that loads an auto-incrementing address register, assembles bytes into words with strobes, and issues AXI-lite reads/writes.",
+ "anchors": [
+  {"id": "E33", "name": "state_reg", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Bridge FSM: idle, address load, read issue/send, write assemble/wait", "lines": [237, 297, 431]},
+  {"id": "E35", "name": "count_reg", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Byte counter indexing address bytes and byte lanes of the data word", "lines": [318, 370, 390]},
+  {"id": "E38", "name": "addr_reg", "role": "INDEX", "importance": "critical", "trace": "data_backward", "why": "Auto-incrementing AXI address pointer loaded from I2C header bytes", "lines": [263, 357, 414]},
+  {"id": "E40", "name": "data_reg", "role": "HOLDING_REG", "importance": "critical", "trace": "data_backward", "why": "Word buffer: assembles write bytes, holds read word for byte-wise return", "lines": [266, 356, 370]},
+  {"id": "E44", "name": "m_axil_wstrb_reg", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Byte strobes set per received write byte", "lines": [267, 443]},
+  {"id": "E37", "name": "last_cycle_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Latched last-byte flag ending write sequence after response", "lines": [436, 417]},
+  {"id": "E11", "name": "m_axil_awvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "AXI write address valid when a word is assembled", "lines": [265]},
+  {"id": "E15", "name": "m_axil_wvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "AXI write data valid issued with awvalid", "lines": [268]},
+  {"id": "E18", "name": "m_axil_bvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Write response completes STATE_WRITE_2 and bumps address", "lines": [411]},
+  {"id": "E19", "name": "m_axil_bready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Write response ready held while waiting for completion", "lines": [269, 411]},
+  {"id": "E22", "name": "m_axil_arvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "AXI read address valid issued on I2C read request", "lines": [272]},
+  {"id": "E26", "name": "m_axil_rvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Read data valid capturing m_axil_rdata into data_reg", "lines": [353]},
+  {"id": "E27", "name": "m_axil_rready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Read data ready asserted in STATE_READ_1", "lines": [273, 353]},
+  {"id": "E24", "name": "m_axil_rdata", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "AXI read data loaded into word buffer", "lines": [356]},
+  {"id": "E12", "name": "m_axil_awready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Clears pending write address valid", "lines": [290]},
+  {"id": "E16", "name": "m_axil_wready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Clears pending write data valid", "lines": [292]},
+  {"id": "E23", "name": "m_axil_arready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Clears pending read address valid", "lines": [294]},
+  {"id": "E61", "name": "data_out_valid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Received I2C byte valid from slave; starts address/write sequences", "lines": [301, 316, 388]},
+  {"id": "E60", "name": "data_out", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Received I2C byte stored into address or data registers", "lines": [318, 390]},
+  {"id": "E63", "name": "data_out_ready_reg", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Accept ready for received I2C bytes", "lines": [316, 454, 486]},
+  {"id": "E62", "name": "data_out_last", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "End of I2C write transaction; ends address or write phase", "lines": [330, 393, 436]},
+  {"id": "E55", "name": "data_in_reg", "role": "INTERFACE_DATA", "importance": "minor", "trace": "data_backward", "why": "Read byte sent to I2C slave from data_reg", "lines": [451, 479]},
+  {"id": "E57", "name": "data_in_valid_reg", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "Read byte valid toward I2C slave", "lines": [452, 480, 368]},
+  {"id": "E59", "name": "data_in_ready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "I2C slave requests read byte; triggers AXI read or next byte", "lines": [305, 368, 481]},
+  {"id": "E29", "name": "bus_addressed", "role": "STATUS", "importance": "minor", "trace": "forward", "why": "Device addressed indication; loss returns read FSM to idle", "lines": [365, 500]},
+  {"id": "E54", "name": "busy_reg", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Busy level when FSM not idle, drives busy port", "lines": [449, 275]}
+ ],
+ "groups": [
+  {"name": "I2C slave front-end", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E61", "E60", "E63", "E62", "E55", "E57", "E59", "E29"], "member_ids": ["I1", "E56", "E58", "E64", "E30"], "description": "i2c_slave child converting I2C bus to byte streams in both directions"},
+  {"name": "Bridge controller", "kind": "CONTROLLER", "anchor_ids": ["E33", "E35", "E37", "E54"], "member_ids": ["E34", "E36", "E28"], "description": "FSM sequencing address load, AXI reads and word-assembled writes"},
+  {"name": "Address and data registers", "kind": "DATAPATH", "anchor_ids": ["E38", "E40", "E44"], "member_ids": ["E39", "E41", "E45", "E9", "E20", "E13", "E14"], "description": "Address pointer and word buffer with byte strobes feeding AXI channels"},
+  {"name": "AXI-lite master", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E11", "E15", "E18", "E19", "E22", "E26", "E27", "E24", "E12", "E16", "E23"], "member_ids": ["E42", "E43", "E46", "E47", "E48", "E49", "E50", "E51", "E52", "E53"], "description": "AW/W/B and AR/R handshake registers driven by the FSM"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "i2c_bus", "protocol": "SERIAL", "direction": "BIDIR", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8"]},
+  {"name": "axil_write", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E9", "E10", "E11", "E12", "E13", "E14", "E15", "E16", "E17", "E18", "E19"]},
+  {"name": "axil_read", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E20", "E21", "E22", "E23", "E24", "E25", "E26", "E27"]},
+  {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E28", "E29", "E30"]},
+  {"name": "configuration", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E31", "E32"]}
+ ]
+}

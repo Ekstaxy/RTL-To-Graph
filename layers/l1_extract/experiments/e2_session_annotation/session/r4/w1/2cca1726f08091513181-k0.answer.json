@@ -1,0 +1,40 @@
+{
+ "module_summary": "AXI-lite write-channel clock-domain crossing: slave-side registers capture aw/w, two 2-state FSMs exchange a toggle flag via 2-flop synchronizers, master-side registers issue the write and return bresp.",
+ "anchors": [
+  {"id": "E27", "name": "s_state_reg", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Slave-domain FSM: waits for aw+w, raises flag, awaits master done, returns response.", "lines": [140, 143, 149]},
+  {"id": "E31", "name": "m_state_reg", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Master-domain FSM: issues write on synced flag, waits bvalid, signals completion.", "lines": [194, 197, 210]},
+  {"id": "E28", "name": "s_flag_reg", "role": "CONTROL_FLAG", "importance": "major", "trace": "forward", "why": "Request flag from slave domain announcing captured write transaction.", "lines": [144, 180]},
+  {"id": "E30", "name": "s_flag_sync_reg_2", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Synchronized request flag in master domain starting master FSM.", "lines": [181, 196, 214]},
+  {"id": "E32", "name": "m_flag_reg", "role": "CONTROL_FLAG", "importance": "major", "trace": "forward", "why": "Completion flag from master domain after write response received.", "lines": [209, 175]},
+  {"id": "E34", "name": "m_flag_sync_reg_2", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Synchronized completion flag in slave domain advancing slave FSM.", "lines": [148, 156, 176]},
+  {"id": "E37", "name": "s_axil_awvalid_reg", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Captured aw valid; holds address slot full and gates awready.", "lines": [131, 142, 111]},
+  {"id": "E40", "name": "s_axil_wvalid_reg", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "Captured w valid; holds data slot full and gates wready.", "lines": [137, 142, 112]},
+  {"id": "E35", "name": "s_axil_awaddr_reg", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Holds write address across the clock crossing.", "lines": [129, 198]},
+  {"id": "E38", "name": "s_axil_wdata_reg", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Holds write data across the clock crossing.", "lines": [135, 201]},
+  {"id": "E42", "name": "s_axil_bvalid_reg", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Slave-side write response valid; blocks new aw/w acceptance.", "lines": [126, 152, 114]},
+  {"id": "E41", "name": "s_axil_bresp_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Write response code copied from master domain.", "lines": [151, 113]},
+  {"id": "E45", "name": "m_axil_awvalid_reg", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Master-side aw valid, set on new transfer, cleared by awready.", "lines": [186, 200, 118]},
+  {"id": "E48", "name": "m_axil_wvalid_reg", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "Master-side w valid, set on new transfer, cleared by wready.", "lines": [187, 203, 121]},
+  {"id": "E43", "name": "m_axil_awaddr_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Master-side address register driving m_axil_awaddr.", "lines": [198, 116]},
+  {"id": "E46", "name": "m_axil_wdata_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Master-side write data register driving m_axil_wdata.", "lines": [201, 119]},
+  {"id": "E50", "name": "m_axil_bvalid_reg", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Captured master bvalid; completes master FSM and drives bready.", "lines": [191, 208, 122]},
+  {"id": "E49", "name": "m_axil_bresp_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Captured response code returned to slave domain.", "lines": [190, 151]}
+ ],
+ "groups": [
+  {"name": "Slave-side capture", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E37", "E40", "E35", "E38", "E42", "E41"], "member_ids": ["E36", "E39", "E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12", "E13"], "description": "Captures aw/w channels, holds them, returns write response to slave."},
+  {"name": "Slave controller", "kind": "CONTROLLER", "anchor_ids": ["E27", "E28"], "member_ids": [], "description": "Slave-domain FSM raising request flag and waiting for completion."},
+  {"name": "CDC synchronizers", "kind": "OTHER", "anchor_ids": ["E30", "E34"], "member_ids": ["E29", "E33"], "description": "2-flop synchronizers carrying request and completion flags across domains."},
+  {"name": "Master controller", "kind": "CONTROLLER", "anchor_ids": ["E31", "E32"], "member_ids": [], "description": "Master-domain FSM issuing write and raising completion flag."},
+  {"name": "Master-side issue", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E45", "E48", "E43", "E46", "E50", "E49"], "member_ids": ["E44", "E47", "E16", "E17", "E18", "E19", "E20", "E21", "E22", "E23", "E24", "E25", "E26"], "description": "Drives aw/w on master bus and captures b response."}
+ ],
+ "interfaces": [
+  {"name": "slave_clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "master_clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E14", "E15"]},
+  {"name": "s_axil_aw", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6"]},
+  {"name": "s_axil_w", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E7", "E8", "E9", "E10"]},
+  {"name": "s_axil_b", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E11", "E12", "E13"]},
+  {"name": "m_axil_aw", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E16", "E17", "E18", "E19"]},
+  {"name": "m_axil_w", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E20", "E21", "E22", "E23"]},
+  {"name": "m_axil_b", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E24", "E25", "E26"]}
+ ]
+}

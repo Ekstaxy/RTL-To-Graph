@@ -1,0 +1,1540 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-axi_axi_vfifo_dec",
+ "tops": [
+  "axi_vfifo_dec"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "axi_vfifo_dec": {
+   "source": "teacher",
+   "canonical_instance": "axi_vfifo_dec",
+   "file": "data/rtl/verilog-axi/rtl/axi_vfifo_dec.v",
+   "lines": [
+    34,
+    718
+   ],
+   "summary": "Virtual-FIFO decoder: parses per-segment headers into a segmented control FIFO, then re-aligns segments to extract AXI-stream frames into an output FIFO register stage.",
+   "blocks": [
+    {
+     "name": "Header parser",
+     "kind": "CONTROLLER",
+     "description": "Decodes segment headers and tracks frame segment counts and parity",
+     "anchors": [
+      {
+       "id": "E7",
+       "name": "input_ctrl_data",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 91.7,
+       "struct_score": 79.0,
+       "trace": "interface",
+       "why": "Segment header words decoded for start, last, length and parity",
+       "lines": [
+        72,
+        351,
+        353
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "input_ctrl_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 53.0,
+       "struct_score": 44.2,
+       "trace": "interface",
+       "why": "Per-segment header valid feeding seg_valid",
+       "lines": [
+        73,
+        350
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "input_ctrl_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 49.1,
+       "struct_score": 28.8,
+       "trace": "control_backward",
+       "why": "Header ready asserted when all segments valid and control FIFO not half full",
+       "lines": [
+        74,
+        209
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "sts_hdr_parity_err",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 43.6,
+       "struct_score": 6.6,
+       "trace": "control_backward",
+       "why": "Reports header parity error detected during parsing",
+       "lines": [
+        91,
+        211
+       ]
+      },
+      {
+       "id": "E19",
+       "name": "frame_reg",
+       "role": "FSM_STATE",
+       "importance": "major",
+       "score": 62.8,
+       "struct_score": 76.9,
+       "trace": "control_backward",
+       "why": "Header parser in-frame state; set on start-of-packet, cleared at frame end",
+       "lines": [
+        149,
+        328,
+        609
+       ]
+      },
+      {
+       "id": "E31",
+       "name": "seg_cnt_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 49.2,
+       "struct_score": 29.1,
+       "trace": "control_backward",
+       "why": "Remaining segments in current frame; detects last segment for eop/end",
+       "lines": [
+        153,
+        336,
+        613
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "last_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.1,
+       "struct_score": 8.5,
+       "trace": "control_backward",
+       "why": "Frame is last of packet; sets ctrl FIFO last flag",
+       "lines": [
+        150,
+        330,
+        610
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "extra_cycle_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.1,
+       "struct_score": 8.4,
+       "trace": "control_backward",
+       "why": "Extra segment needed for straddling tail; emits eop next segment",
+       "lines": [
+        151,
+        333,
+        611
+       ]
+      },
+      {
+       "id": "E28",
+       "name": "last_straddle_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.1,
+       "struct_score": 8.4,
+       "trace": "control_backward",
+       "why": "Last data straddles segment boundary; selects extra-cycle path",
+       "lines": [
+        152,
+        334,
+        612
+       ]
+      },
+      {
+       "id": "E57",
+       "name": "seg_hdr_start_pkt",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 16.8,
+       "struct_score": 11.3,
+       "trace": "data_backward",
+       "why": "Decoded start-of-packet header bit starting a frame",
+       "lines": [
+        165,
+        351,
+        363
+       ]
+      },
+      {
+       "id": "E61",
+       "name": "seg_hdr_len",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 24.1,
+       "struct_score": 41.0,
+       "trace": "data_backward",
+       "why": "Decoded header length giving segment count and last length",
+       "lines": [
+        169,
+        353,
+        354
+       ]
+      },
+      {
+       "id": "E60",
+       "name": "seg_hdr_parity_err",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 15.0,
+       "struct_score": 4.2,
+       "trace": "data_backward",
+       "why": "Header parity check result raising parity error",
+       "lines": [
+        168,
+        356,
+        378
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E20",
+       "name": "frame_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E21",
+       "name": "frame_cyc",
+       "kind": "comb"
+      },
+      {
+       "id": "E23",
+       "name": "last_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E24",
+       "name": "last_cyc",
+       "kind": "comb"
+      },
+      {
+       "id": "E26",
+       "name": "extra_cycle_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E27",
+       "name": "extra_cycle_cyc",
+       "kind": "comb"
+      },
+      {
+       "id": "E29",
+       "name": "last_straddle_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E30",
+       "name": "last_straddle_cyc",
+       "kind": "comb"
+      },
+      {
+       "id": "E32",
+       "name": "seg_cnt_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E33",
+       "name": "seg_cnt_cyc",
+       "kind": "comb"
+      },
+      {
+       "id": "E34",
+       "name": "hdr_parity_err_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E35",
+       "name": "hdr_parity_err_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E36",
+       "name": "hdr_parity_err_cyc",
+       "kind": "comb"
+      },
+      {
+       "id": "E55",
+       "name": "seg_valid",
+       "kind": "comb"
+      },
+      {
+       "id": "E56",
+       "name": "seg_valid_straddle",
+       "kind": "comb"
+      },
+      {
+       "id": "E58",
+       "name": "seg_hdr_last",
+       "kind": "comb"
+      },
+      {
+       "id": "E59",
+       "name": "seg_hdr_last_straddle",
+       "kind": "comb"
+      },
+      {
+       "id": "E62",
+       "name": "seg_hdr_seg_cnt",
+       "kind": "mem"
+      },
+      {
+       "id": "E70",
+       "name": "input_ctrl_ready_cmb",
+       "kind": "comb"
+      },
+      {
+       "id": "E142",
+       "name": "seg",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Segmented control FIFO",
+     "kind": "BUFFER",
+     "description": "Per-segment FIFOs storing sop/eop/end/last flags between parser and re-packer",
+     "anchors": [
+      {
+       "id": "E112",
+       "name": "ctrl_fifo_wr_en",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 43.4,
+       "struct_score": 5.7,
+       "trace": "control_backward",
+       "why": "Writes parsed sop/eop/end/last flags into control FIFO segments",
+       "lines": [
+        224,
+        290,
+        420
+       ]
+      },
+      {
+       "id": "E124",
+       "name": "ctrl_fifo_half_full",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.1,
+       "struct_score": 8.6,
+       "trace": "control_backward",
+       "why": "Control FIFO half full; back-pressures header acceptance",
+       "lines": [
+        239,
+        417
+       ]
+      },
+      {
+       "id": "E128",
+       "name": "ctrl_fifo_seg[*].seg_mem_sop",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 80.1,
+       "struct_score": 40.9,
+       "trace": "data_backward",
+       "why": "Per-segment control FIFO memory (representative of sop/eop/end/last arrays)",
+       "lines": [
+        252,
+        291,
+        301
+       ]
+      },
+      {
+       "id": "E126",
+       "name": "ctrl_fifo_seg[*].seg_wr_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "minor",
+       "score": 27.5,
+       "struct_score": 53.2,
+       "trace": "control_backward",
+       "why": "Control FIFO segment write pointer",
+       "lines": [
+        248,
+        278,
+        297
+       ]
+      },
+      {
+       "id": "E127",
+       "name": "ctrl_fifo_seg[*].seg_rd_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "minor",
+       "score": 29.1,
+       "struct_score": 59.1,
+       "trace": "control_backward",
+       "why": "Control FIFO segment read pointer",
+       "lines": [
+        249,
+        279,
+        308
+       ]
+      },
+      {
+       "id": "E138",
+       "name": "ctrl_fifo_seg[*].seg_rd_valid_reg",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 22.4,
+       "struct_score": 33.9,
+       "trace": "control_backward",
+       "why": "Control FIFO read output valid per segment",
+       "lines": [
+        267,
+        276,
+        300
+       ]
+      },
+      {
+       "id": "E141",
+       "name": "ctrl_fifo_seg[*].seg_empty",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.0,
+       "struct_score": 8.3,
+       "trace": "control_backward",
+       "why": "Segment control FIFO empty; gates read prefetch",
+       "lines": [
+        279,
+        283,
+        300
+       ]
+      },
+      {
+       "id": "E119",
+       "name": "ctrl_fifo_rd_en",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 44.3,
+       "struct_score": 9.5,
+       "trace": "control_backward",
+       "why": "Pops consumed segments from control FIFO",
+       "lines": [
+        232,
+        286,
+        505
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E101",
+       "name": "ctrl_fifo_wr_ptr_reg",
+       "kind": "wire"
+      },
+      {
+       "id": "E102",
+       "name": "ctrl_fifo_wr_ptr_next",
+       "kind": "wire"
+      },
+      {
+       "id": "E103",
+       "name": "ctrl_fifo_rd_ptr_reg",
+       "kind": "wire"
+      },
+      {
+       "id": "E104",
+       "name": "ctrl_fifo_rd_ptr_next",
+       "kind": "wire"
+      },
+      {
+       "id": "E105",
+       "name": "ctrl_mem_rd_data_valid_reg",
+       "kind": "wire"
+      },
+      {
+       "id": "E106",
+       "name": "ctrl_mem_rd_data_valid_next",
+       "kind": "wire"
+      },
+      {
+       "id": "E107",
+       "name": "ctrl_fifo_wr_sop",
+       "kind": "comb"
+      },
+      {
+       "id": "E108",
+       "name": "ctrl_fifo_wr_eop",
+       "kind": "comb"
+      },
+      {
+       "id": "E109",
+       "name": "ctrl_fifo_wr_end",
+       "kind": "comb"
+      },
+      {
+       "id": "E110",
+       "name": "ctrl_fifo_wr_last",
+       "kind": "comb"
+      },
+      {
+       "id": "E111",
+       "name": "ctrl_fifo_wr_last_len",
+       "kind": "comb"
+      },
+      {
+       "id": "E113",
+       "name": "ctrl_fifo_rd_sop",
+       "kind": "wire"
+      },
+      {
+       "id": "E114",
+       "name": "ctrl_fifo_rd_eop",
+       "kind": "wire"
+      },
+      {
+       "id": "E115",
+       "name": "ctrl_fifo_rd_end",
+       "kind": "wire"
+      },
+      {
+       "id": "E116",
+       "name": "ctrl_fifo_rd_last",
+       "kind": "wire"
+      },
+      {
+       "id": "E117",
+       "name": "ctrl_fifo_rd_last_len",
+       "kind": "wire"
+      },
+      {
+       "id": "E118",
+       "name": "ctrl_fifo_rd_valid",
+       "kind": "wire"
+      },
+      {
+       "id": "E120",
+       "name": "ctrl_fifo_seg_full",
+       "kind": "wire"
+      },
+      {
+       "id": "E121",
+       "name": "ctrl_fifo_seg_half_full",
+       "kind": "wire"
+      },
+      {
+       "id": "E122",
+       "name": "ctrl_fifo_seg_empty",
+       "kind": "wire"
+      },
+      {
+       "id": "E123",
+       "name": "ctrl_fifo_full",
+       "kind": "wire"
+      },
+      {
+       "id": "E125",
+       "name": "ctrl_fifo_empty",
+       "kind": "wire"
+      },
+      {
+       "id": "E129",
+       "name": "ctrl_fifo_seg[*].seg_mem_eop",
+       "kind": "mem"
+      },
+      {
+       "id": "E130",
+       "name": "ctrl_fifo_seg[*].seg_mem_end",
+       "kind": "mem"
+      },
+      {
+       "id": "E131",
+       "name": "ctrl_fifo_seg[*].seg_mem_last",
+       "kind": "mem"
+      },
+      {
+       "id": "E132",
+       "name": "ctrl_fifo_seg[*].seg_mem_last_len",
+       "kind": "mem"
+      },
+      {
+       "id": "E133",
+       "name": "ctrl_fifo_seg[*].seg_rd_sop_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E134",
+       "name": "ctrl_fifo_seg[*].seg_rd_eop_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E135",
+       "name": "ctrl_fifo_seg[*].seg_rd_end_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E136",
+       "name": "ctrl_fifo_seg[*].seg_rd_last_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E137",
+       "name": "ctrl_fifo_seg[*].seg_rd_last_len_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E139",
+       "name": "ctrl_fifo_seg[*].seg_half_full_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E140",
+       "name": "ctrl_fifo_seg[*].seg_full",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Output re-packer",
+     "kind": "CONTROLLER",
+     "description": "Aligns and consumes segments into output beats with header/last control",
+     "anchors": [
+      {
+       "id": "E37",
+       "name": "out_frame_reg",
+       "role": "FSM_STATE",
+       "importance": "major",
+       "score": 63.5,
+       "struct_score": 78.6,
+       "trace": "control_backward",
+       "why": "Output re-packer in-frame state between sop and end segments",
+       "lines": [
+        156,
+        438,
+        616
+       ]
+      },
+      {
+       "id": "E40",
+       "name": "out_seg_offset_reg",
+       "role": "INDEX",
+       "importance": "minor",
+       "score": 16.5,
+       "struct_score": 10.3,
+       "trace": "control_backward",
+       "why": "Current segment offset rotating control flags for alignment",
+       "lines": [
+        157,
+        464,
+        617
+       ]
+      },
+      {
+       "id": "E43",
+       "name": "output_offset_reg",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 16.6,
+       "struct_score": 10.7,
+       "trace": "control_backward",
+       "why": "Output beat segment offset register",
+       "lines": [
+        158,
+        442,
+        618
+       ]
+      },
+      {
+       "id": "E47",
+       "name": "out_seg_consumed_reg",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.5,
+       "struct_score": 6.1,
+       "trace": "control_backward",
+       "why": "Registered consumed-segment mask driving input_ready",
+       "lines": [
+        160,
+        575,
+        619
+       ]
+      },
+      {
+       "id": "E49",
+       "name": "out_valid",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.6,
+       "struct_score": 10.7,
+       "trace": "control_backward",
+       "why": "Contiguous valid segments available for output beat",
+       "lines": [
+        161,
+        487,
+        523
+       ]
+      },
+      {
+       "id": "E53",
+       "name": "out_abort",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.2,
+       "struct_score": 9.0,
+       "trace": "control_backward",
+       "why": "Aborts beat when segments missing or output not ready",
+       "lines": [
+        161,
+        501,
+        531
+       ]
+      },
+      {
+       "id": "E54",
+       "name": "out_done",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.4,
+       "struct_score": 13.7,
+       "trace": "control_backward",
+       "why": "Output beat complete; stops further segment consumption",
+       "lines": [
+        161,
+        496,
+        517
+       ]
+      },
+      {
+       "id": "E77",
+       "name": "out_ctrl_en_reg",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 43.2,
+       "struct_score": 4.8,
+       "trace": "control_backward",
+       "why": "Registered beat-emit enable becoming m_axis_tvalid_int",
+       "lines": [
+        188,
+        592,
+        624
+       ]
+      },
+      {
+       "id": "E79",
+       "name": "out_ctrl_hdr_reg",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.3,
+       "struct_score": 5.1,
+       "trace": "control_backward",
+       "why": "Header beat flag loading tid/tdest/tuser metadata",
+       "lines": [
+        189,
+        586,
+        625
+       ]
+      },
+      {
+       "id": "E81",
+       "name": "out_ctrl_last_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 15.6,
+       "struct_score": 6.7,
+       "trace": "control_backward",
+       "why": "Last beat flag driving tlast and partial tkeep",
+       "lines": [
+        190,
+        579,
+        584
+       ]
+      },
+      {
+       "id": "E83",
+       "name": "out_ctrl_last_len_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 15.5,
+       "struct_score": 6.0,
+       "trace": "data_backward",
+       "why": "Last beat byte length used to build tkeep",
+       "lines": [
+        191,
+        580,
+        627
+       ]
+      },
+      {
+       "id": "E85",
+       "name": "out_ctrl_seg_offset_reg",
+       "role": "MUX_SELECT",
+       "importance": "major",
+       "score": 48.0,
+       "struct_score": 24.2,
+       "trace": "control_backward",
+       "why": "Selects starting segment for data and metadata extraction",
+       "lines": [
+        192,
+        577,
+        587
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "input_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 24.4,
+       "struct_score": 41.9,
+       "trace": "control_backward",
+       "why": "Payload ready from consumed-segment register",
+       "lines": [
+        71,
+        208,
+        600
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "input_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 25.7,
+       "struct_score": 46.6,
+       "trace": "interface",
+       "why": "Per-segment payload valid, latched in expand mode",
+       "lines": [
+        70,
+        186,
+        600
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E38",
+       "name": "out_frame_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E39",
+       "name": "out_frame_cyc",
+       "kind": "comb"
+      },
+      {
+       "id": "E41",
+       "name": "out_seg_offset_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E42",
+       "name": "out_seg_offset_cyc",
+       "kind": "comb"
+      },
+      {
+       "id": "E44",
+       "name": "output_offset_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E45",
+       "name": "output_offset_cyc",
+       "kind": "comb"
+      },
+      {
+       "id": "E46",
+       "name": "out_seg_consumed",
+       "kind": "comb"
+      },
+      {
+       "id": "E48",
+       "name": "out_seg_consumed_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E50",
+       "name": "out_valid_straddle",
+       "kind": "comb"
+      },
+      {
+       "id": "E51",
+       "name": "out_frame",
+       "kind": "comb"
+      },
+      {
+       "id": "E52",
+       "name": "out_last",
+       "kind": "wire"
+      },
+      {
+       "id": "E63",
+       "name": "shift_out_seg_valid",
+       "kind": "comb"
+      },
+      {
+       "id": "E64",
+       "name": "shift_out_seg_valid_straddle",
+       "kind": "comb"
+      },
+      {
+       "id": "E65",
+       "name": "shift_out_seg_sop",
+       "kind": "comb"
+      },
+      {
+       "id": "E66",
+       "name": "shift_out_seg_eop",
+       "kind": "comb"
+      },
+      {
+       "id": "E67",
+       "name": "shift_out_seg_end",
+       "kind": "comb"
+      },
+      {
+       "id": "E68",
+       "name": "shift_out_seg_last",
+       "kind": "comb"
+      },
+      {
+       "id": "E69",
+       "name": "input_ready_cmb",
+       "kind": "comb"
+      },
+      {
+       "id": "E78",
+       "name": "out_ctrl_en_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E80",
+       "name": "out_ctrl_hdr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E82",
+       "name": "out_ctrl_last_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E84",
+       "name": "out_ctrl_last_len_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E86",
+       "name": "out_ctrl_seg_offset_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E143",
+       "name": "out_seg",
+       "kind": "comb"
+      },
+      {
+       "id": "E144",
+       "name": "out_cur_seg",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Data extraction",
+     "kind": "DATAPATH",
+     "description": "Shifts segment data and header metadata into output beat fields",
+     "anchors": [
+      {
+       "id": "E4",
+       "name": "input_data",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 88.6,
+       "struct_score": 71.2,
+       "trace": "interface",
+       "why": "Segmented payload data from which output beats are extracted",
+       "lines": [
+        69,
+        185,
+        601
+       ]
+      },
+      {
+       "id": "E93",
+       "name": "m_axis_tdata_int",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 43.9,
+       "struct_score": 7.5,
+       "trace": "data_backward",
+       "why": "Extracted output beat data shifted from input segments, written to output FIFO",
+       "lines": [
+        199,
+        577,
+        691
+       ]
+      },
+      {
+       "id": "E75",
+       "name": "input_data_full",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 20.4,
+       "struct_score": 26.1,
+       "trace": "data_backward",
+       "why": "Duplicated segment data window for shifting extraction",
+       "lines": [
+        185,
+        577,
+        587
+       ]
+      },
+      {
+       "id": "E71",
+       "name": "input_data_int_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 18.7,
+       "struct_score": 19.3,
+       "trace": "data_backward",
+       "why": "Holds previous segment data in expand-input mode",
+       "lines": [
+        182,
+        185,
+        621
+       ]
+      },
+      {
+       "id": "E91",
+       "name": "axis_tuser_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 14.8,
+       "struct_score": 3.1,
+       "trace": "data_backward",
+       "why": "Frame tuser metadata captured from header, held for frame",
+       "lines": [
+        196,
+        456,
+        632
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E72",
+       "name": "input_data_int_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E73",
+       "name": "input_valid_int_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E74",
+       "name": "input_valid_int_next",
+       "kind": "reg"
+      },
+      {
+       "id": "E76",
+       "name": "input_valid_full",
+       "kind": "wire"
+      },
+      {
+       "id": "E87",
+       "name": "axis_tid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E88",
+       "name": "axis_tid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E89",
+       "name": "axis_tdest_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E90",
+       "name": "axis_tdest_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E92",
+       "name": "axis_tuser_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E94",
+       "name": "m_axis_tkeep_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E95",
+       "name": "m_axis_tvalid_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E97",
+       "name": "m_axis_tlast_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E98",
+       "name": "m_axis_tid_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E99",
+       "name": "m_axis_tdest_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E100",
+       "name": "m_axis_tuser_int",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Output FIFO",
+     "kind": "BUFFER",
+     "description": "Distributed-RAM FIFO and output register driving the AXI stream",
+     "anchors": [
+      {
+       "id": "E157",
+       "name": "out_fifo_tdata",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 87.8,
+       "struct_score": 69.0,
+       "trace": "data_backward",
+       "why": "Output FIFO data memory buffering extracted beats",
+       "lines": [
+        663,
+        691,
+        701
+       ]
+      },
+      {
+       "id": "E152",
+       "name": "out_fifo_wr_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "minor",
+       "score": 27.8,
+       "struct_score": 54.2,
+       "trace": "control_backward",
+       "why": "Output FIFO write pointer",
+       "lines": [
+        655,
+        691,
+        697
+       ]
+      },
+      {
+       "id": "E153",
+       "name": "out_fifo_rd_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "minor",
+       "score": 27.9,
+       "struct_score": 54.8,
+       "trace": "control_backward",
+       "why": "Output FIFO read pointer",
+       "lines": [
+        656,
+        701,
+        708
+       ]
+      },
+      {
+       "id": "E154",
+       "name": "out_fifo_half_full_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 15.4,
+       "struct_score": 5.7,
+       "trace": "control_backward",
+       "why": "Output FIFO half full; drives internal ready",
+       "lines": [
+        657,
+        675,
+        688
+       ]
+      },
+      {
+       "id": "E155",
+       "name": "out_fifo_full",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 15.7,
+       "struct_score": 6.7,
+       "trace": "control_backward",
+       "why": "Output FIFO full blocks writes",
+       "lines": [
+        659,
+        690
+       ]
+      },
+      {
+       "id": "E156",
+       "name": "out_fifo_empty",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 15.8,
+       "struct_score": 7.3,
+       "trace": "control_backward",
+       "why": "Output FIFO empty blocks output register load",
+       "lines": [
+        660,
+        700
+       ]
+      },
+      {
+       "id": "E96",
+       "name": "m_axis_tready_int",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 16.3,
+       "struct_score": 9.5,
+       "trace": "control_backward",
+       "why": "Internal ready from output FIFO half-full, gates beat emission",
+       "lines": [
+        202,
+        523,
+        675
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "m_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 84.5,
+       "struct_score": 57.0,
+       "trace": "data_backward",
+       "why": "Output stream data from output FIFO register",
+       "lines": [
+        79,
+        677
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "m_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 80.1,
+       "struct_score": 40.9,
+       "trace": "control_backward",
+       "why": "Output stream valid from m_axis_tvalid_reg",
+       "lines": [
+        81,
+        679
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "m_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 50.5,
+       "struct_score": 34.4,
+       "trace": "forward",
+       "why": "Downstream ready popping the output FIFO",
+       "lines": [
+        82,
+        686,
+        700
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "m_axis_tlast",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 20.2,
+       "struct_score": 25.1,
+       "trace": "data_backward",
+       "why": "End-of-frame marker from output FIFO",
+       "lines": [
+        83,
+        680
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E158",
+       "name": "out_fifo_tkeep",
+       "kind": "mem"
+      },
+      {
+       "id": "E159",
+       "name": "out_fifo_tlast",
+       "kind": "mem"
+      },
+      {
+       "id": "E160",
+       "name": "out_fifo_tid",
+       "kind": "mem"
+      },
+      {
+       "id": "E161",
+       "name": "out_fifo_tdest",
+       "kind": "mem"
+      },
+      {
+       "id": "E162",
+       "name": "out_fifo_tuser",
+       "kind": "mem"
+      },
+      {
+       "id": "E145",
+       "name": "m_axis_tdata_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E146",
+       "name": "m_axis_tkeep_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E147",
+       "name": "m_axis_tvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E148",
+       "name": "m_axis_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E149",
+       "name": "m_axis_tid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E150",
+       "name": "m_axis_tdest_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E151",
+       "name": "m_axis_tuser_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E11",
+       "name": "m_axis_tkeep",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "m_axis_tid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "m_axis_tdest",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "m_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E3",
+     "name": "fifo_rst_in",
+     "role": "COMMAND",
+     "importance": "minor",
+     "score": 19.0,
+     "struct_score": 20.4,
+     "trace": "forward",
+     "why": "Channel reset clearing parser, FIFO pointers and output state",
+     "lines": [
+      68,
+      311,
+      634
+     ]
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "fifo_reset",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "fifo_rst_in",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "segment_data_in",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E4",
+      "E5",
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "input_data",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "input_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "input_ready",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "segment_ctrl_in",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E7",
+      "E8",
+      "E9"
+     ],
+     "members": [
+      {
+       "id": "E7",
+       "name": "input_ctrl_data",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "input_ctrl_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "input_ctrl_ready",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "m_axis",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E10",
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17"
+     ],
+     "members": [
+      {
+       "id": "E10",
+       "name": "m_axis_tdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E11",
+       "name": "m_axis_tkeep",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "m_axis_tvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "m_axis_tready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E14",
+       "name": "m_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "m_axis_tid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "m_axis_tdest",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "m_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E18"
+     ],
+     "members": [
+      {
+       "id": "E18",
+       "name": "sts_hdr_parity_err",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

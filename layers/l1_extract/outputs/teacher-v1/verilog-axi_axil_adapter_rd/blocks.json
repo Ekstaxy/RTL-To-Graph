@@ -1,0 +1,601 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-axi_axil_adapter_rd",
+ "tops": [
+  "axil_adapter_rd"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "axil_adapter_rd": {
+   "source": "teacher",
+   "canonical_instance": "axil_adapter_rd",
+   "file": "data/rtl/verilog-axi/rtl/axil_adapter_rd.v",
+   "lines": [
+    34,
+    275
+   ],
+   "summary": "AXI-Lite read width adapter: a two-state IDLE/DATA FSM forwards AR requests to the master side and returns R data, splitting into segments when the master is narrower.",
+   "blocks": [
+    {
+     "name": "read_fsm",
+     "kind": "CONTROLLER",
+     "description": "IDLE/DATA state machine and segment counter sequencing transfers.",
+     "anchors": [
+      {
+       "id": "E19",
+       "name": "state_reg",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.5,
+       "struct_score": 98.8,
+       "trace": "control_backward",
+       "why": "IDLE/DATA controller sequencing address forwarding and read-data return.",
+       "lines": [
+        128,
+        168,
+        250
+       ]
+      },
+      {
+       "id": "E21",
+       "name": "current_segment_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 56.1,
+       "struct_score": 55.3,
+       "trace": "control_backward",
+       "why": "Segment counter for narrow master; indexes rdata packing and ends transfer.",
+       "lines": [
+        130,
+        229,
+        233
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E20",
+       "name": "state_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E22",
+       "name": "current_segment_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "slave_ar_channel",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Accepts read-address requests from the AXI-Lite slave port.",
+     "anchors": [
+      {
+       "id": "E5",
+       "name": "s_axil_arvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 92.5,
+       "struct_score": 81.1,
+       "trace": "interface",
+       "why": "Slave read-address valid; accepted in IDLE to start a transfer.",
+       "lines": [
+        56,
+        172,
+        211
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "s_axil_arready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 92.5,
+       "struct_score": 81.1,
+       "trace": "interface",
+       "why": "Slave read-address ready, registered, gates request acceptance.",
+       "lines": [
+        57,
+        142,
+        172
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "s_axil_araddr",
+       "role": "INTERFACE_ADDR",
+       "importance": "critical",
+       "score": 89.5,
+       "struct_score": 73.4,
+       "trace": "interface",
+       "why": "Slave read address, latched into master address register.",
+       "lines": [
+        54,
+        174,
+        208
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "s_axil_arprot",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 29.4,
+       "struct_score": 60.1,
+       "trace": "interface",
+       "why": "Protection bits forwarded to master arprot.",
+       "lines": [
+        55,
+        175
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E23",
+       "name": "s_axil_arready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E24",
+       "name": "s_axil_arready_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "master_ar_channel",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Issues read addresses per segment on the AXI-Lite master port.",
+     "anchors": [
+      {
+       "id": "E11",
+       "name": "m_axil_araddr",
+       "role": "INTERFACE_ADDR",
+       "importance": "critical",
+       "score": 88.2,
+       "struct_score": 70.3,
+       "trace": "interface",
+       "why": "Master read address driven from m_axil_araddr_reg.",
+       "lines": [
+        66,
+        147
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "m_axil_arvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 64.9,
+       "struct_score": 82.0,
+       "trace": "interface",
+       "why": "Master read-address valid issued per segment.",
+       "lines": [
+        68,
+        149,
+        170
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "m_axil_arready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 54.3,
+       "struct_score": 49.0,
+       "trace": "interface",
+       "why": "Master read-address ready; clears arvalid.",
+       "lines": [
+        69,
+        163
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "m_axil_arprot",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 30.9,
+       "struct_score": 65.6,
+       "trace": "interface",
+       "why": "Forwarded protection bits on master side.",
+       "lines": [
+        67,
+        148
+       ]
+      },
+      {
+       "id": "E31",
+       "name": "m_axil_araddr_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 27.0,
+       "struct_score": 51.3,
+       "trace": "data_backward",
+       "why": "Holds master address, increments per segment, selects shift offset.",
+       "lines": [
+        137,
+        191,
+        227
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E32",
+       "name": "m_axil_araddr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E33",
+       "name": "m_axil_arprot_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E34",
+       "name": "m_axil_arprot_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E35",
+       "name": "m_axil_arvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E36",
+       "name": "m_axil_arvalid_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "read_data_path",
+     "kind": "DATAPATH",
+     "description": "Shifts or packs master read data and response into slave R channel.",
+     "anchors": [
+      {
+       "id": "E15",
+       "name": "m_axil_rdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 92.2,
+       "struct_score": 80.3,
+       "trace": "interface",
+       "why": "Master read data shifted or packed into slave rdata register.",
+       "lines": [
+        70,
+        189,
+        228
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "m_axil_rvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 66.3,
+       "struct_score": 85.6,
+       "trace": "interface",
+       "why": "Master read-data valid; with rready completes a beat.",
+       "lines": [
+        72,
+        186,
+        225
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "m_axil_rready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 66.3,
+       "struct_score": 85.6,
+       "trace": "interface",
+       "why": "Master read-data ready, asserted in DATA when slave rvalid clear.",
+       "lines": [
+        73,
+        150,
+        186
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "s_axil_rdata_reg",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 53.3,
+       "struct_score": 45.1,
+       "trace": "data_backward",
+       "why": "Accumulates read data segments across beats before returning to slave.",
+       "lines": [
+        133,
+        228,
+        255
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "s_axil_rdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 93.2,
+       "struct_score": 82.8,
+       "trace": "data_backward",
+       "why": "Read data returned to slave side from s_axil_rdata_reg.",
+       "lines": [
+        58,
+        143
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "s_axil_rvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 64.9,
+       "struct_score": 82.0,
+       "trace": "interface",
+       "why": "Slave read-data valid, set when response is complete.",
+       "lines": [
+        60,
+        145
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "s_axil_rready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 54.3,
+       "struct_score": 49.0,
+       "trace": "interface",
+       "why": "Slave read-data ready; clears rvalid.",
+       "lines": [
+        61,
+        160
+       ]
+      },
+      {
+       "id": "E27",
+       "name": "s_axil_rresp_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 19.4,
+       "struct_score": 21.8,
+       "trace": "data_backward",
+       "why": "Holds accumulated read response returned on s_axil_rresp.",
+       "lines": [
+        134,
+        231,
+        256
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "s_axil_rresp",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 20.1,
+       "struct_score": 24.8,
+       "trace": "interface",
+       "why": "Read response to slave side.",
+       "lines": [
+        59,
+        144
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "m_axil_rresp",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 18.2,
+       "struct_score": 17.1,
+       "trace": "interface",
+       "why": "Master read response, propagated into slave rresp.",
+       "lines": [
+        71,
+        193,
+        231
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E26",
+       "name": "s_axil_rdata_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E28",
+       "name": "s_axil_rresp_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E29",
+       "name": "s_axil_rvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E30",
+       "name": "s_axil_rvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E37",
+       "name": "m_axil_rready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E38",
+       "name": "m_axil_rready_next",
+       "kind": "comb"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axil_ar",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axil_araddr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axil_arprot",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axil_arvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_axil_arready",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "s_axil_r",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E7",
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E7",
+       "name": "s_axil_rdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E8",
+       "name": "s_axil_rresp",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "s_axil_rvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "s_axil_rready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axil_ar",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E11",
+      "E12",
+      "E13",
+      "E14"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "m_axil_araddr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "m_axil_arprot",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "m_axil_arvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "m_axil_arready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axil_r",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E15",
+      "E16",
+      "E17",
+      "E18"
+     ],
+     "members": [
+      {
+       "id": "E15",
+       "name": "m_axil_rdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E16",
+       "name": "m_axil_rresp",
+       "kind": "port_in"
+      },
+      {
+       "id": "E17",
+       "name": "m_axil_rvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "m_axil_rready",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

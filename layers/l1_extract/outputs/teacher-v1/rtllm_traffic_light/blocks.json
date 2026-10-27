@@ -1,0 +1,249 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "rtllm_traffic_light",
+ "tops": [
+  "verified_traffic_light"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "verified_traffic_light": {
+   "source": "teacher",
+   "canonical_instance": "verified_traffic_light",
+   "file": "data/rtl/RTLLM/Miscellaneous/Others/traffic_light/verified_traffic_light.v",
+   "lines": [
+    3,
+    101
+   ],
+   "summary": "Traffic light controller: 4-state FSM sequences red/green/yellow next-value registers, a reloadable down-counter times phases, and outputs are registered copies.",
+   "blocks": [
+    {
+     "name": "Light FSM",
+     "kind": "CONTROLLER",
+     "description": "Sequences lights and produces next-light registers",
+     "anchors": [
+      {
+       "id": "E9",
+       "name": "state",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.7,
+       "struct_score": 99.2,
+       "trace": "control_backward",
+       "why": "Light FSM idle/red/green/yellow, advancing when cnt reaches 3",
+       "lines": [
+        19,
+        32,
+        46
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "p_green",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 25.8,
+       "struct_score": 47.1,
+       "trace": "control_backward",
+       "why": "FSM-decoded next light values; edge vs outputs triggers cnt reload",
+       "lines": [
+        20,
+        63,
+        78
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E10",
+       "name": "p_red",
+       "kind": "reg"
+      },
+      {
+       "id": "E11",
+       "name": "p_yellow",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Phase timer",
+     "kind": "COUNTER_TIMER",
+     "description": "Down-counter with phase reloads and pedestrian shortening",
+     "anchors": [
+      {
+       "id": "E8",
+       "name": "cnt",
+       "role": "COUNTER",
+       "importance": "critical",
+       "score": 94.0,
+       "struct_score": 84.8,
+       "trace": "control_backward",
+       "why": "Phase down-counter reloaded 60/5/10 on light changes, gates FSM transitions",
+       "lines": [
+        18,
+        79,
+        84
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "pass_request",
+       "role": "COMMAND",
+       "importance": "major",
+       "score": 52.6,
+       "struct_score": 42.8,
+       "trace": "interface",
+       "why": "Pedestrian request shortens green countdown to 10",
+       "lines": [
+        7,
+        76
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "clock",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 28.6,
+       "struct_score": 57.3,
+       "trace": "data_backward",
+       "why": "Exposes remaining countdown cnt",
+       "lines": [
+        8,
+        85
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Light outputs",
+     "kind": "REGISTER_BANK",
+     "description": "Registered red, yellow, green outputs",
+     "anchors": [
+      {
+       "id": "E5",
+       "name": "red",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 57.5,
+       "struct_score": 60.6,
+       "trace": "control_backward",
+       "why": "Registered red light output from p_red",
+       "lines": [
+        9,
+        97
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "yellow",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 57.5,
+       "struct_score": 60.6,
+       "trace": "control_backward",
+       "why": "Registered yellow light output from p_yellow",
+       "lines": [
+        10,
+        96
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "green",
+       "role": "STATUS",
+       "importance": "critical",
+       "score": 85.5,
+       "struct_score": 60.6,
+       "trace": "control_backward",
+       "why": "Registered green light output; also qualifies pedestrian shortening",
+       "lines": [
+        11,
+        76,
+        98
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "rst_n",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "clk",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "pedestrian",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "pass_request",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "lights",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E4",
+      "E5",
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "clock",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "red",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "yellow",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "green",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

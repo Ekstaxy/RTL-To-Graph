@@ -1,0 +1,41 @@
+{
+ "module_summary": "32-bit XGMII-to-AXI-stream receiver: input words pass a 3-stage delay pipeline while start/terminate/error control characters are detected, a 4-state FSM frames packets and an LFSR CRC32 child checks FCS per terminate lane.",
+ "anchors": [
+  {"id": "E15", "name": "state_reg", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "IDLE/PREAMBLE/PAYLOAD/LAST controller framing packets and FCS checks", "lines": [194, 291]},
+  {"id": "E22", "name": "xgmii_rxd_d0", "role": "PIPELINE_REG", "importance": "major", "trace": "data_backward", "why": "First data delay stage with control bytes zeroed; feeds CRC child", "lines": [172, 326]},
+  {"id": "E24", "name": "xgmii_rxd_d2", "role": "PIPELINE_REG", "importance": "minor", "trace": "data_backward", "why": "Final data delay stage aligned with CRC result, sent to output", "lines": [228, 330]},
+  {"id": "E28", "name": "xgmii_start_d2", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Delayed start-character detect triggering packet reception from IDLE", "lines": [199, 334]},
+  {"id": "E20", "name": "term_present_reg", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Terminate character detected in word; ends payload state", "lines": [241, 310]},
+  {"id": "E18", "name": "term_lane_reg", "role": "INDEX", "importance": "minor", "trace": "control_backward", "why": "Lane of terminate character selecting tkeep and CRC check variant", "lines": [243, 309]},
+  {"id": "E21", "name": "framing_error_reg", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Unexpected control characters flag forcing bad-frame termination", "lines": [234, 305, 311]},
+  {"id": "E45", "name": "crc_state", "role": "HOLDING_REG", "importance": "critical", "trace": "data_backward", "why": "Running CRC32 state fed to LFSR child, reset between frames", "lines": [173, 318, 320]},
+  {"id": "E46", "name": "crc_next", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "LFSR next CRC compared to residue constants per lane", "lines": [175, 145]},
+  {"id": "E48", "name": "crc_valid_save", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Registered per-lane CRC match flags deciding bad FCS at frame end", "lines": [247, 273, 323]},
+  {"id": "E3", "name": "xgmii_rxd", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "XGMII receive data word", "lines": [50, 326]},
+  {"id": "E4", "name": "xgmii_rxc", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "XGMII per-lane control flags used for start/terminate detection", "lines": [51, 305, 308]},
+  {"id": "E5", "name": "m_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Output AXI-stream payload word", "lines": [56, 150]},
+  {"id": "E7", "name": "m_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Output beat valid from m_axis_tvalid_reg", "lines": [58, 152]},
+  {"id": "E8", "name": "m_axis_tlast", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Output end-of-frame marker", "lines": [59, 153]},
+  {"id": "E6", "name": "m_axis_tkeep", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Byte enables for final partial word", "lines": [57, 151]},
+  {"id": "E9", "name": "m_axis_tuser", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Bad-frame flag and optional PTP timestamp sideband", "lines": [60, 154]},
+  {"id": "E11", "name": "cfg_rx_enable", "role": "CONFIG_REG", "importance": "major", "trace": "forward", "why": "Configuration enable gating packet acceptance in IDLE", "lines": [70, 199]},
+  {"id": "E12", "name": "start_packet", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "Pulse indicating start of received packet", "lines": [75, 156]},
+  {"id": "E13", "name": "error_bad_frame", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "Pulse reporting framing error or bad frame", "lines": [76, 157]},
+  {"id": "E14", "name": "error_bad_fcs", "role": "STATUS", "importance": "major", "trace": "interface", "why": "Pulse reporting FCS mismatch", "lines": [77, 158]}
+ ],
+ "groups": [
+  {"name": "Receive framing FSM", "kind": "CONTROLLER", "anchor_ids": ["E15", "E28", "E20", "E21", "E18"], "member_ids": ["E16", "E17", "E19", "E26", "E27", "E49", "E39", "E40", "E41", "E42", "E43", "E44"], "description": "Detects start/terminate/error characters and sequences packet framing"},
+  {"name": "Input delay pipeline", "kind": "PIPELINE_STAGE", "anchor_ids": ["E22", "E24"], "member_ids": ["E23", "E25"], "description": "Three-stage XGMII data delay aligning output with CRC result"},
+  {"name": "CRC check", "kind": "DATAPATH", "anchor_ids": ["E45", "E46", "E48"], "member_ids": ["I1", "E47"], "description": "LFSR CRC32 with per-lane residue comparison flags"},
+  {"name": "AXI output registers", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E5", "E7", "E8", "E6", "E9"], "member_ids": ["E29", "E30", "E31", "E32", "E33", "E34", "E35", "E36", "E37", "E38"], "description": "Registered AXI-stream output beat"},
+  {"name": "Status outputs", "kind": "OTHER", "anchor_ids": ["E12", "E13", "E14", "E11"], "member_ids": [], "description": "Configuration enable and packet/error status pulses"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "xgmii_rx", "protocol": "STREAM", "direction": "IN", "member_ids": ["E3", "E4"]},
+  {"name": "m_axis", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E5", "E6", "E7", "E8", "E9"]},
+  {"name": "ptp", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E10"]},
+  {"name": "config", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E11"]},
+  {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E12", "E13", "E14"]}
+ ]
+}

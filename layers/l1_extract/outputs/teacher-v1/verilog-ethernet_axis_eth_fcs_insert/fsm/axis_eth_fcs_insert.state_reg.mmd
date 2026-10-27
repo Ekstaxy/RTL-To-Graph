@@ -1,0 +1,17 @@
+stateDiagram-v2
+    [*] --> STATE_IDLE
+    ANY_STATE --> STATE_IDLE
+    STATE_IDLE --> STATE_IDLE : s_axis_tready && s_axis_tvalid && s_axis_tlast && s_axis_tuser
+    STATE_IDLE --> STATE_FCS : s_axis_tready && s_axis_tvalid && s_axis_tlast && !s_axis_tuser
+    STATE_IDLE --> STATE_PAYLOAD : s_axis_tready && s_axis_tvalid && !s_axis_tlast
+    STATE_IDLE --> STATE_IDLE : !(s_axis_tready && s_axis_tvalid)
+    STATE_PAYLOAD --> STATE_IDLE : s_axis_tready && s_axis_tvalid && s_axis_tlast && s_axis_tuser
+    STATE_PAYLOAD --> STATE_FCS : s_axis_tready && s_axis_tvalid && s_axis_tlast && !s_axis_tuser
+    STATE_PAYLOAD --> STATE_PAYLOAD : s_axis_tready && s_axis_tvalid && !s_axis_tlast
+    STATE_PAYLOAD --> STATE_PAYLOAD : !(s_axis_tready && s_axis_tvalid)
+    STATE_PAD --> STATE_PAD : m_axis_tready_int_reg && frame_ptr_reg < MIN_FRAME_LENGTH-5
+    STATE_PAD --> STATE_FCS : m_axis_tready_int_reg && !(frame_ptr_reg < MIN_FRAME_LENGTH-5)
+    STATE_PAD --> STATE_PAD : !m_axis_tready_int_reg
+    STATE_FCS --> STATE_FCS : m_axis_tready_int_reg && frame_ptr_reg < 16'd3
+    STATE_FCS --> STATE_IDLE : m_axis_tready_int_reg && !(frame_ptr_reg < 16'd3)
+    STATE_FCS --> STATE_FCS : !m_axis_tready_int_reg

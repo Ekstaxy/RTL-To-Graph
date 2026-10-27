@@ -1,0 +1,153 @@
+[
+ {
+  "module": "axis_baser_tx_64",
+  "instance": "axis_baser_tx_64",
+  "state": "state_reg",
+  "next": "state_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "STATE_IDLE",
+    "value": "3'b0"
+   },
+   {
+    "name": "STATE_PAYLOAD",
+    "value": "3'b1"
+   },
+   {
+    "name": "STATE_PAD",
+    "value": "3'b10"
+   },
+   {
+    "name": "STATE_ERR",
+    "value": "3'b101"
+   },
+   {
+    "name": "STATE_FCS_1",
+    "value": "3'b11"
+   },
+   {
+    "name": "STATE_FCS_2",
+    "value": "3'b100"
+   },
+   {
+    "name": "STATE_IFG",
+    "value": "3'b110"
+   }
+  ],
+  "reset_state": "STATE_IDLE",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_PAYLOAD",
+    "cond": "s_axis_tvalid && cfg_tx_enable"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_IDLE",
+    "cond": "!(s_axis_tvalid && cfg_tx_enable)"
+   },
+   {
+    "src": "STATE_PAYLOAD",
+    "dst": "STATE_PAD",
+    "cond": "(!s_axis_tvalid || s_axis_tlast) && frame_min_count_reg && frame_min_count_reg > KEEP_WIDTH"
+   },
+   {
+    "src": "STATE_PAYLOAD",
+    "dst": "STATE_ERR",
+    "cond": "(!s_axis_tvalid || s_axis_tlast) && frame_min_count_reg && !(frame_min_count_reg > KEEP_WIDTH) && frame_error_next"
+   },
+   {
+    "src": "STATE_PAYLOAD",
+    "dst": "STATE_FCS_1",
+    "cond": "(!s_axis_tvalid || s_axis_tlast) && frame_min_count_reg && !(frame_min_count_reg > KEEP_WIDTH) && !frame_error_next"
+   },
+   {
+    "src": "STATE_PAYLOAD",
+    "dst": "STATE_ERR",
+    "cond": "(!s_axis_tvalid || s_axis_tlast) && !frame_min_count_reg && frame_error_next"
+   },
+   {
+    "src": "STATE_PAYLOAD",
+    "dst": "STATE_FCS_1",
+    "cond": "(!s_axis_tvalid || s_axis_tlast) && !frame_min_count_reg && !frame_error_next"
+   },
+   {
+    "src": "STATE_PAYLOAD",
+    "dst": "STATE_PAYLOAD",
+    "cond": "!(!s_axis_tvalid || s_axis_tlast)"
+   },
+   {
+    "src": "STATE_PAD",
+    "dst": "STATE_PAD",
+    "cond": "frame_min_count_reg > KEEP_WIDTH"
+   },
+   {
+    "src": "STATE_PAD",
+    "dst": "STATE_ERR",
+    "cond": "!(frame_min_count_reg > KEEP_WIDTH) && frame_error_reg"
+   },
+   {
+    "src": "STATE_PAD",
+    "dst": "STATE_FCS_1",
+    "cond": "!(frame_min_count_reg > KEEP_WIDTH) && !frame_error_reg"
+   },
+   {
+    "src": "STATE_FCS_1",
+    "dst": "STATE_FCS_2",
+    "cond": "s_empty_reg <= 4"
+   },
+   {
+    "src": "STATE_FCS_1",
+    "dst": "STATE_IFG",
+    "cond": "!(s_empty_reg <= 4)"
+   },
+   {
+    "src": "STATE_FCS_2",
+    "dst": "STATE_IFG",
+    "cond": "ifg_count_next > 8'd7"
+   },
+   {
+    "src": "STATE_FCS_2",
+    "dst": "STATE_IDLE",
+    "cond": "!(ifg_count_next > 8'd7)"
+   },
+   {
+    "src": "STATE_ERR",
+    "dst": "STATE_IFG",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_IFG",
+    "dst": "STATE_IFG",
+    "cond": "(ifg_count_next > 8'd7 || frame_reg)"
+   },
+   {
+    "src": "STATE_IFG",
+    "dst": "STATE_IDLE",
+    "cond": "!(ifg_count_next > 8'd7 || frame_reg)"
+   }
+  ],
+  "outputs": [
+   {
+    "signal": "reset_crc",
+    "kind": "moore",
+    "port": false
+   },
+   {
+    "signal": "update_crc",
+    "kind": "moore",
+    "port": false
+   }
+  ],
+  "warnings": [
+   "semantic_check: unsupported (unsupported: packed select of array)"
+  ],
+  "semantic_check": "unsupported"
+ }
+]

@@ -1,0 +1,42 @@
+{
+ "module_summary": "AXI slave to single-port RAM command adapter: separate write and read adapter children generate RAM commands, and an arbiter tracking last grant and open bursts muxes them onto one shared command port.",
+ "anchors": [
+  {"id": "E94", "name": "last_read_reg", "role": "ARBITRATION", "importance": "critical", "trace": "control_backward", "why": "Remembers whether last granted command was read; alternates priority between read and write.", "lines": [318, 323, 336]},
+  {"id": "E96", "name": "transaction_reg", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Burst in progress flag; locks grant to current side until last beat when not interleaving.", "lines": [318, 323, 337]},
+  {"id": "E59", "name": "ram_cmd_rd_en", "role": "MUX_SELECT", "importance": "critical", "trace": "control_backward", "why": "Read grant; selects read versus write command fields onto the shared RAM command bus.", "lines": [293, 295, 296]},
+  {"id": "E58", "name": "ram_cmd_wr_en", "role": "ENABLE", "importance": "critical", "trace": "control_backward", "why": "Write grant driving RAM write enable from arbiter write_en.", "lines": [292]},
+  {"id": "E48", "name": "ram_cmd_addr", "role": "INTERFACE_ADDR", "importance": "critical", "trace": "interface", "why": "Shared RAM command address muxed from read or write adapter.", "lines": [296]},
+  {"id": "E55", "name": "ram_cmd_wr_data", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "RAM write data from the write adapter child.", "lines": [221]},
+  {"id": "E61", "name": "ram_cmd_ready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "RAM command ready; qualifies eligibility and returned to granted adapter.", "lines": [305, 306, 315]},
+  {"id": "E63", "name": "ram_rd_resp_data", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "RAM read response data passed to the read adapter R channel.", "lines": [275]},
+  {"id": "E76", "name": "ram_wr_cmd_en", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "data_backward", "why": "Write adapter command request into the arbiter.", "lines": [224, 315]},
+  {"id": "E87", "name": "ram_rd_cmd_en", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "data_backward", "why": "Read adapter command request into the arbiter.", "lines": [271, 316]},
+  {"id": "E16", "name": "s_axi_wdata", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "AXI write data channel payload into write adapter.", "lines": [202]},
+  {"id": "E41", "name": "s_axi_rdata", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "AXI read data channel payload from read adapter.", "lines": [257]},
+  {"id": "E91", "name": "write_eligible", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Write request with RAM ready; candidate for write grant.", "lines": [315, 318]},
+  {"id": "E90", "name": "read_eligible", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Read request with RAM ready; candidate for read grant.", "lines": [316, 323]},
+  {"id": "E78", "name": "ram_wr_cmd_ready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "forward", "why": "Ready back to write adapter when write granted.", "lines": [305]},
+  {"id": "E89", "name": "ram_rd_cmd_ready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "forward", "why": "Ready back to read adapter when read granted.", "lines": [306]},
+  {"id": "E66", "name": "ram_rd_resp_valid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "RAM read response valid into read adapter.", "lines": [278]},
+  {"id": "E14", "name": "s_axi_awvalid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "AXI write address valid into write adapter.", "lines": [200]},
+  {"id": "E38", "name": "s_axi_arvalid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "AXI read address valid into read adapter.", "lines": [254]},
+  {"id": "E25", "name": "s_axi_bvalid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "AXI write response valid from write adapter.", "lines": [211]},
+  {"id": "E45", "name": "s_axi_rvalid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "AXI read data valid from read adapter.", "lines": [261]}
+ ],
+ "groups": [
+  {"name": "Command arbiter", "kind": "ARBITER", "anchor_ids": ["E94", "E96", "E59", "E58", "E91", "E90", "E78", "E89", "E76", "E87"], "member_ids": ["E92", "E93", "E95", "E97", "E77", "E88"], "description": "Grants shared RAM command port to read or write adapter with alternating priority and burst locking."},
+  {"name": "RAM command mux", "kind": "DATAPATH", "anchor_ids": ["E48", "E55", "E61"], "member_ids": ["E47", "E49", "E50", "E51", "E52", "E53", "E54", "E60", "E68", "E69", "E79", "E80", "E56", "E57"], "description": "Muxes read or write command fields onto the RAM command interface by ram_cmd_rd_en."},
+  {"name": "AXI write adapter", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E16", "E14", "E25"], "member_ids": ["I1", "E70", "E71", "E72", "E73", "E74", "E75"], "description": "axi_ram_wr_if child converting AW/W bursts to RAM write commands and B responses."},
+  {"name": "AXI read adapter", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E41", "E38", "E45", "E63", "E66"], "member_ids": ["I2", "E81", "E82", "E83", "E84", "E85", "E86", "E67"], "description": "axi_ram_rd_if child converting AR bursts to RAM read commands and returning R data."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "s_axi_aw", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12", "E13", "E14", "E15"]},
+  {"name": "s_axi_w", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E16", "E17", "E18", "E19", "E20", "E21"]},
+  {"name": "s_axi_b", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E22", "E23", "E24", "E25", "E26"]},
+  {"name": "s_axi_ar", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E27", "E28", "E29", "E30", "E31", "E32", "E33", "E34", "E35", "E36", "E37", "E38", "E39"]},
+  {"name": "s_axi_r", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E40", "E41", "E42", "E43", "E44", "E45", "E46"]},
+  {"name": "ram_cmd", "protocol": "MEMORY_BUS", "direction": "OUT", "member_ids": ["E47", "E48", "E49", "E50", "E51", "E52", "E53", "E54", "E55", "E56", "E57", "E58", "E59", "E60", "E61"]},
+  {"name": "ram_rd_resp", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E62", "E63", "E64", "E65", "E66", "E67"]}
+ ]
+}

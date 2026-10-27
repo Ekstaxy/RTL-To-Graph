@@ -1,0 +1,38 @@
+{
+ "module_summary": "Dual-issue RISC-V decode front end: a fetch_fifo buffers 64-bit fetch pairs (flushed on branch) and presents two instruction slots, each decoded by a biriscv_decoder into functional-unit class flags.",
+ "anchors": [
+  {"id": "E3", "name": "fetch_in_valid_i", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Fetch pair valid; pushes into fetch FIFO", "lines": [217]},
+  {"id": "E4", "name": "fetch_in_instr_i", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "64-bit instruction pair written into FIFO, zeroed on fault", "lines": [220]},
+  {"id": "E14", "name": "fetch_in_accept_o", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "data_backward", "why": "FIFO accept backpressure to fetch stage", "lines": [223]},
+  {"id": "E8", "name": "fetch_in_pc_i", "role": "INTERFACE_ADDR", "importance": "major", "trace": "interface", "why": "PC of fetch pair stored in FIFO", "lines": [218]},
+  {"id": "E6", "name": "fetch_in_fault_fetch_i", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "Fetch fault; zeroes instruction and passes as FIFO info", "lines": [220, 221]},
+  {"id": "E7", "name": "fetch_in_fault_page_i", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "Page fault; zeroes instruction and passes as FIFO info", "lines": [220, 221]},
+  {"id": "E5", "name": "fetch_in_pred_branch_i", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Branch prediction bits stored with fetch pair", "lines": [219]},
+  {"id": "E11", "name": "branch_request_i", "role": "COMMAND", "importance": "major", "trace": "forward", "why": "Branch redirect flushes the fetch FIFO", "lines": [214]},
+  {"id": "E15", "name": "fetch_out0_valid_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "data_backward", "why": "Slot 0 instruction valid from FIFO, also decoder valid", "lines": [226, 242]},
+  {"id": "E16", "name": "fetch_out0_instr_o", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Slot 0 instruction from FIFO, decoded by u_dec0", "lines": [228, 245]},
+  {"id": "E9", "name": "fetch_out0_accept_i", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Issue accepts slot 0; pops FIFO slot", "lines": [230]},
+  {"id": "E17", "name": "fetch_out0_pc_o", "role": "INTERFACE_ADDR", "importance": "minor", "trace": "data_backward", "why": "PC of slot 0 instruction", "lines": [227]},
+  {"id": "E20", "name": "fetch_out0_instr_exec_o", "role": "DECODE", "importance": "major", "trace": "data_backward", "why": "Slot 0 decoded class flag; representative of exec/lsu/branch/mul/div/csr", "lines": [248]},
+  {"id": "E27", "name": "fetch_out0_instr_invalid_o", "role": "DECODE", "importance": "minor", "trace": "data_backward", "why": "Slot 0 illegal instruction flag from decoder", "lines": [247]},
+  {"id": "E26", "name": "fetch_out0_instr_rd_valid_o", "role": "DECODE", "importance": "minor", "trace": "data_backward", "why": "Slot 0 writes destination register", "lines": [254]},
+  {"id": "E18", "name": "fetch_out0_fault_fetch_o", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "Slot 0 fetch fault info from FIFO, feeds decoder fault input", "lines": [229, 243]},
+  {"id": "E28", "name": "fetch_out1_valid_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "data_backward", "why": "Slot 1 instruction valid from FIFO, also decoder valid", "lines": [232, 260]},
+  {"id": "E29", "name": "fetch_out1_instr_o", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Slot 1 instruction from FIFO, decoded by u_dec1", "lines": [234, 263]},
+  {"id": "E10", "name": "fetch_out1_accept_i", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Issue accepts slot 1; pops FIFO slot", "lines": [236]},
+  {"id": "E33", "name": "fetch_out1_instr_exec_o", "role": "DECODE", "importance": "major", "trace": "data_backward", "why": "Slot 1 decoded class flag; representative of slot 1 decode outputs", "lines": [266]},
+  {"id": "E41", "name": "enable_muldiv_w", "role": "CONFIG_REG", "importance": "minor", "trace": "none", "why": "Parameter-tied enable for mul/div decode in both decoders", "lines": [85, 244, 262]}
+ ],
+ "groups": [
+  {"name": "Fetch FIFO", "kind": "BUFFER", "anchor_ids": ["E3", "E4", "E14", "E8", "E6", "E7", "E5", "E11", "E9", "E10", "E17", "E18"], "member_ids": ["I1", "E19", "E30", "E31", "E32"], "description": "Two-entry fetch pair FIFO with two independently popped slots, flushed on branch"},
+  {"name": "Slot 0 decoder", "kind": "DECODER", "anchor_ids": ["E15", "E16", "E20", "E27", "E26", "E41"], "member_ids": ["I2", "E21", "E22", "E23", "E24", "E25"], "description": "Decodes slot 0 instruction into unit class flags"},
+  {"name": "Slot 1 decoder", "kind": "DECODER", "anchor_ids": ["E28", "E29", "E33"], "member_ids": ["I3", "E34", "E35", "E36", "E37", "E38", "E39", "E40"], "description": "Decodes slot 1 instruction into unit class flags"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "fetch_in", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E14"]},
+  {"name": "branch", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E11", "E12", "E13"]},
+  {"name": "fetch_out0", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E9", "E15", "E16", "E17", "E18", "E19", "E20", "E21", "E22", "E23", "E24", "E25", "E26", "E27"]},
+  {"name": "fetch_out1", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E10", "E28", "E29", "E30", "E31", "E32", "E33", "E34", "E35", "E36", "E37", "E38", "E39", "E40"]}
+ ]
+}

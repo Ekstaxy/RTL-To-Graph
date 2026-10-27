@@ -1,0 +1,1205 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "common_cells_cc_cb_filter",
+ "tops": [
+  "cc_cb_filter"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "cc_sub_per_hash": {
+   "source": "heuristic",
+   "canonical_instance": "cc_cb_filter.i_look_hashes.gen_hashes[0].i_hash",
+   "file": "data/rtl/common_cells/src/cc_sub_per_hash.sv",
+   "lines": [
+    39,
+    175
+   ],
+   "summary": "cc_sub_per_hash (heuristic)",
+   "blocks": [
+    {
+     "name": "storage",
+     "kind": "BUFFER",
+     "description": "storage",
+     "anchors": [
+      {
+       "id": "E4",
+       "name": "Permutations",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 70.4,
+       "struct_score": 96.0,
+       "trace": "data_backward",
+       "why": "memory array",
+       "lines": []
+      },
+      {
+       "id": "E5",
+       "name": "XorStages",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 70.4,
+       "struct_score": 96.0,
+       "trace": "data_backward",
+       "why": "memory array",
+       "lines": []
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E1",
+     "name": "data_i",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 41.9,
+     "struct_score": 94.6,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    },
+    {
+     "id": "E3",
+     "name": "hash_onehot_o",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 43.4,
+     "struct_score": 98.5,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "data",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E1"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "data_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "hash",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E2",
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E2",
+       "name": "hash_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E3",
+       "name": "hash_onehot_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "cc_hash_block": {
+   "source": "teacher",
+   "canonical_instance": "cc_cb_filter.i_look_hashes",
+   "file": "data/rtl/common_cells/src/cc_cb_filter.sv",
+   "lines": [
+    203,
+    248
+   ],
+   "summary": "Bloom-filter hash block: NoHashes parallel cc_sub_per_hash instances one-hot hash the input, and their outputs are ORed into an indicator vector.",
+   "blocks": [
+    {
+     "name": "hash_functions",
+     "kind": "DATAPATH",
+     "description": "Replicated cc_sub_per_hash instances with distinct seeds producing one-hot hashes.",
+     "anchors": [
+      {
+       "id": "E1",
+       "name": "data_i",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 98.6,
+       "struct_score": 96.4,
+       "trace": "interface",
+       "why": "Input data broadcast to every hash function instance.",
+       "lines": [
+        210,
+        224
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "hashes",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 60.9,
+       "struct_score": 71.9,
+       "trace": "data_backward",
+       "why": "Per-hash one-hot outputs collected from the hash instances.",
+       "lines": [
+        214,
+        226,
+        234
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "gen_hashes[*].i_hash",
+       "module": "cc_sub_per_hash"
+      }
+     ],
+     "members": []
+    },
+    {
+     "name": "or_reduce",
+     "kind": "DATAPATH",
+     "description": "OR-reduces the one-hot hashes into indicator_o.",
+     "anchors": [
+      {
+       "id": "E2",
+       "name": "indicator_o",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 99.7,
+       "struct_score": 99.3,
+       "trace": "data_backward",
+       "why": "Bitwise OR of all one-hot hashes, the bloom indicator vector.",
+       "lines": [
+        232,
+        234
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "data",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E1"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "data_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "indicator",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E2",
+       "name": "indicator_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "cc_delta_counter": {
+   "source": "teacher",
+   "canonical_instance": "cc_cb_filter.gen_buckets[0].i_bucket.i_counter",
+   "file": "data/rtl/common_cells/src/cc_delta_counter.sv",
+   "lines": [
+    15,
+    70
+   ],
+   "summary": "Loadable up/down counter register stepping by a variable delta each enabled cycle, with an extra MSB (or sticky flag) reporting overflow.",
+   "blocks": [
+    {
+     "name": "delta_counter",
+     "kind": "COUNTER_TIMER",
+     "description": "Up/down delta counter with load and enable control.",
+     "anchors": [
+      {
+       "id": "E11",
+       "name": "counter_q",
+       "role": "COUNTER",
+       "importance": "critical",
+       "score": 95.2,
+       "struct_score": 88.0,
+       "trace": "control_backward",
+       "why": "Counter register with overflow MSB; updated by load or +/- delta.",
+       "lines": [
+        30,
+        62,
+        64
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "en_i",
+       "role": "ENABLE",
+       "importance": "critical",
+       "score": 82.4,
+       "struct_score": 49.2,
+       "trace": "interface",
+       "why": "Enables counting by delta_i each cycle.",
+       "lines": [
+        22,
+        60
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "load_i",
+       "role": "COMMAND",
+       "importance": "major",
+       "score": 53.7,
+       "struct_score": 46.6,
+       "trace": "interface",
+       "why": "Loads d_i into the counter, overriding counting.",
+       "lines": [
+        23,
+        58
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "down_i",
+       "role": "MUX_SELECT",
+       "importance": "major",
+       "score": 62.3,
+       "struct_score": 75.5,
+       "trace": "interface",
+       "why": "Selects subtracting versus adding delta_i.",
+       "lines": [
+        24,
+        61
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "delta_i",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 65.3,
+       "struct_score": 83.1,
+       "trace": "interface",
+       "why": "Step amount added to or subtracted from counter_q.",
+       "lines": [
+        25,
+        62,
+        64
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "d_i",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 65.3,
+       "struct_score": 83.1,
+       "trace": "interface",
+       "why": "Load value written into counter on load_i.",
+       "lines": [
+        26,
+        59
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E12",
+       "name": "counter_d",
+       "kind": "comb"
+      },
+      {
+       "id": "E3",
+       "name": "clr_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "overflow_detect",
+     "kind": "OTHER",
+     "description": "Transient or sticky overflow detection.",
+     "anchors": [
+      {
+       "id": "E10",
+       "name": "overflow_o",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 52.9,
+       "struct_score": 43.8,
+       "trace": "data_backward",
+       "why": "Overflow indication from counter MSB or sticky overflow flag.",
+       "lines": [
+        28,
+        48,
+        51
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "count_output",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Exposes current count value.",
+     "anchors": [
+      {
+       "id": "E9",
+       "name": "q_o",
+       "role": "STATUS",
+       "importance": "critical",
+       "score": 83.1,
+       "struct_score": 52.0,
+       "trace": "interface",
+       "why": "Count value output, lower Width bits of counter_q.",
+       "lines": [
+        27,
+        53
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2",
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_ni",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "clr_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "control_in",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "en_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "load_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "down_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "delta_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "d_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "count_out",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E9",
+       "name": "q_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "overflow_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "cc_counter": {
+   "source": "teacher",
+   "canonical_instance": "cc_cb_filter.gen_buckets[0].i_bucket",
+   "file": "data/rtl/common_cells/src/cc_counter.sv",
+   "lines": [
+    14,
+    43
+   ],
+   "summary": "Up/down loadable counter wrapper: instantiates cc_delta_counter with delta fixed to 1, exposing count value and overflow flag.",
+   "blocks": [
+    {
+     "name": "Delta counter",
+     "kind": "COUNTER_TIMER",
+     "description": "cc_delta_counter stepping by one, loadable, up/down with overflow",
+     "anchors": [
+      {
+       "id": "E8",
+       "name": "q_o",
+       "role": "COUNTER",
+       "importance": "critical",
+       "score": 94.2,
+       "struct_score": 85.4,
+       "trace": "data_backward",
+       "why": "Current counter value from cc_delta_counter register",
+       "lines": [
+        40
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "en_i",
+       "role": "ENABLE",
+       "importance": "critical",
+       "score": 83.2,
+       "struct_score": 52.3,
+       "trace": "interface",
+       "why": "Enables counting step each cycle",
+       "lines": [
+        35
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "load_i",
+       "role": "COMMAND",
+       "importance": "major",
+       "score": 54.7,
+       "struct_score": 50.3,
+       "trace": "interface",
+       "why": "Loads d_i into the counter",
+       "lines": [
+        36
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "down_i",
+       "role": "COMMAND",
+       "importance": "major",
+       "score": 54.7,
+       "struct_score": 50.3,
+       "trace": "interface",
+       "why": "Selects down-count instead of up-count",
+       "lines": [
+        37
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "d_i",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 66.3,
+       "struct_score": 85.6,
+       "trace": "interface",
+       "why": "Load value for the counter",
+       "lines": [
+        39
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "clr_i",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 26.7,
+       "struct_score": 50.3,
+       "trace": "interface",
+       "why": "Synchronous clear of counter",
+       "lines": [
+        34
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "overflow_o",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 53.7,
+       "struct_score": 46.6,
+       "trace": "data_backward",
+       "why": "Counter overflow indication from delta counter",
+       "lines": [
+        41
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "i_counter",
+       "module": "cc_delta_counter"
+      }
+     ],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_ni",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "control",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "clr_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "en_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "load_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "down_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "d_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "count_out",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E8",
+      "E9"
+     ],
+     "members": [
+      {
+       "id": "E8",
+       "name": "q_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "overflow_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "cc_cb_filter": {
+   "source": "teacher",
+   "canonical_instance": "cc_cb_filter",
+   "file": "data/rtl/common_cells/src/cc_cb_filter.sv",
+   "lines": [
+    45,
+    200
+   ],
+   "summary": "Counting Bloom filter: three hash blocks map lookup/increment/decrement data to one-hot bucket indicators driving per-bucket up/down counters, plus a total-item counter and status flags.",
+   "blocks": [
+    {
+     "name": "hash_units",
+     "kind": "DATAPATH",
+     "description": "Three hash blocks mapping lookup/incr/decr data to bucket indicators.",
+     "anchors": [
+      {
+       "id": "E14",
+       "name": "look_ind",
+       "role": "INDEX",
+       "importance": "major",
+       "score": 47.2,
+       "struct_score": 21.1,
+       "trace": "data_backward",
+       "why": "One-hot bucket indicator vector of lookup data hashes.",
+       "lines": [
+        104,
+        106,
+        107
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "incr_ind",
+       "role": "INDEX",
+       "importance": "minor",
+       "score": 17.4,
+       "struct_score": 13.7,
+       "trace": "data_backward",
+       "why": "Bucket indicator vector for increment data.",
+       "lines": [
+        120,
+        145
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "decr_ind",
+       "role": "INDEX",
+       "importance": "minor",
+       "score": 18.4,
+       "struct_score": 17.7,
+       "trace": "data_backward",
+       "why": "Bucket indicator vector for decrement data.",
+       "lines": [
+        134,
+        140,
+        146
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "i_look_hashes",
+       "module": "cc_hash_block"
+      },
+      {
+       "id": "I2",
+       "instance": "i_incr_hashes",
+       "module": "cc_hash_block"
+      },
+      {
+       "id": "I3",
+       "instance": "i_decr_hashes",
+       "module": "cc_hash_block"
+      }
+     ],
+     "members": []
+    },
+    {
+     "name": "bucket_control",
+     "kind": "CONTROLLER",
+     "description": "Decodes incr/decr valid into per-bucket enable and direction.",
+     "anchors": [
+      {
+       "id": "E7",
+       "name": "incr_valid_i",
+       "role": "COMMAND",
+       "importance": "critical",
+       "score": 77.6,
+       "struct_score": 30.9,
+       "trace": "forward",
+       "why": "Add-member command enabling bucket increments and total counter.",
+       "lines": [
+        143,
+        178
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "decr_valid_i",
+       "role": "COMMAND",
+       "importance": "critical",
+       "score": 79.2,
+       "struct_score": 37.4,
+       "trace": "forward",
+       "why": "Remove-member command selecting count-down for buckets and total counter.",
+       "lines": [
+        140,
+        143,
+        179
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "bucket_en",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 48.6,
+       "struct_score": 26.7,
+       "trace": "control_backward",
+       "why": "Per-bucket counter enable decoded from incr/decr valid and indicators.",
+       "lines": [
+        142,
+        145,
+        163
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "bucket_down",
+       "role": "MUX_SELECT",
+       "importance": "minor",
+       "score": 25.7,
+       "struct_score": 46.9,
+       "trace": "control_backward",
+       "why": "Per-bucket count direction, down on decrement indicators.",
+       "lines": [
+        140,
+        165
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "bucket_counters",
+     "kind": "MEMORY",
+     "description": "Array of per-bucket up/down counters with occupancy/full/empty decode.",
+     "anchors": [
+      {
+       "id": "E27",
+       "name": "gen_buckets[*].bucket_content",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 83.7,
+       "struct_score": 54.0,
+       "trace": "data_backward",
+       "why": "Per-bucket counter value forming the counting Bloom filter array.",
+       "lines": [
+        156,
+        167,
+        171
+       ]
+      },
+      {
+       "id": "E19",
+       "name": "bucket_occupied",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 55.6,
+       "struct_score": 53.5,
+       "trace": "data_backward",
+       "why": "Nonzero-bucket vector used for membership check and empty flag.",
+       "lines": [
+        82,
+        106,
+        171
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I4",
+       "instance": "gen_buckets[*].i_bucket",
+       "module": "cc_counter"
+      }
+     ],
+     "members": [
+      {
+       "id": "E20",
+       "name": "bucket_overflow",
+       "kind": "wire"
+      },
+      {
+       "id": "E21",
+       "name": "bucket_full",
+       "kind": "wire"
+      },
+      {
+       "id": "E22",
+       "name": "bucket_empty",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "membership_lookup",
+     "kind": "DATAPATH",
+     "description": "Checks all lookup-hashed buckets occupied to produce look_valid_o.",
+     "anchors": [
+      {
+       "id": "E4",
+       "name": "look_data_i",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 93.7,
+       "struct_score": 84.2,
+       "trace": "interface",
+       "why": "Lookup data hashed to test set membership.",
+       "lines": [
+        58,
+        103
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "look_valid_o",
+       "role": "STATUS",
+       "importance": "critical",
+       "score": 80.4,
+       "struct_score": 42.0,
+       "trace": "data_backward",
+       "why": "Membership result: all hashed buckets of lookup data are occupied.",
+       "lines": [
+        107
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "data_in_bucket",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 23.6,
+       "struct_score": 39.0,
+       "trace": "data_backward",
+       "why": "Lookup indicators masked by occupied buckets for membership compare.",
+       "lines": [
+        106,
+        107
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "total_counter",
+     "kind": "COUNTER_TIMER",
+     "description": "Counts items currently in the filter.",
+     "anchors": [
+      {
+       "id": "E24",
+       "name": "cnt_en",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 16.8,
+       "struct_score": 11.2,
+       "trace": "control_backward",
+       "why": "Enables total item counter when exactly one of incr/decr is valid.",
+       "lines": [
+        178,
+        186
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "filter_usage_o",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 50.5,
+       "struct_score": 34.5,
+       "trace": "data_backward",
+       "why": "Total item count output from i_tot_count.",
+       "lines": [
+        67,
+        190
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I5",
+       "instance": "i_tot_count",
+       "module": "cc_counter"
+      }
+     ],
+     "members": [
+      {
+       "id": "E25",
+       "name": "cnt_down",
+       "kind": "wire"
+      },
+      {
+       "id": "E26",
+       "name": "cnt_overflow",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "status_flags",
+     "kind": "OTHER",
+     "description": "Reduces bucket flags into full, empty and error outputs.",
+     "anchors": [
+      {
+       "id": "E11",
+       "name": "filter_full_o",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 51.8,
+       "struct_score": 39.8,
+       "trace": "data_backward",
+       "why": "Any bucket saturated or overflowed.",
+       "lines": [
+        197
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "filter_empty_o",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 23.8,
+       "struct_score": 39.8,
+       "trace": "data_backward",
+       "why": "All buckets empty.",
+       "lines": [
+        198
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "filter_error_o",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 49.1,
+       "struct_score": 29.0,
+       "trace": "data_backward",
+       "why": "Bucket or total counter overflow error flag.",
+       "lines": [
+        199
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E6",
+     "name": "incr_data_i",
+     "role": "INTERFACE_DATA",
+     "importance": "major",
+     "score": 65.7,
+     "struct_score": 84.2,
+     "trace": "interface",
+     "why": "Data to add to the set, hashed into incr_ind.",
+     "lines": [
+      61,
+      119
+     ]
+    },
+    {
+     "id": "E8",
+     "name": "decr_data_i",
+     "role": "INTERFACE_DATA",
+     "importance": "major",
+     "score": 65.7,
+     "struct_score": 84.2,
+     "trace": "interface",
+     "why": "Data to remove from the set, hashed into decr_ind.",
+     "lines": [
+      64,
+      133
+     ]
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2",
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_ni",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "clr_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "lookup",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "look_data_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "look_valid_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "increment",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "incr_data_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "incr_valid_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "decrement",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E8",
+      "E9"
+     ],
+     "members": [
+      {
+       "id": "E8",
+       "name": "decr_data_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "decr_valid_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E10",
+      "E11",
+      "E12",
+      "E13"
+     ],
+     "members": [
+      {
+       "id": "E10",
+       "name": "filter_usage_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E11",
+       "name": "filter_full_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "filter_empty_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "filter_error_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

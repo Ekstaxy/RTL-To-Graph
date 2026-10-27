@@ -1,0 +1,4076 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-ethernet_eth_mac_mii",
+ "tops": [
+  "eth_mac_mii"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "ssio_sdr_in": {
+   "source": "teacher",
+   "canonical_instance": "eth_mac_mii.mii_phy_if_inst.rx_ssio_sdr_inst",
+   "file": "data/rtl/verilog-ethernet/rtl/ssio_sdr_in.v",
+   "lines": [
+    34,
+    165
+   ],
+   "summary": "Source-synchronous SDR input: buffers the forwarded clock via target-specific primitives and captures input data in an IOB register on that clock.",
+   "blocks": [
+    {
+     "name": "Clock buffering",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Target-specific buffering of input_clk into clk_io and output_clk",
+     "anchors": [
+      {
+       "id": "E5",
+       "name": "clk_int",
+       "role": "CLOCK_GEN",
+       "importance": "minor",
+       "score": 25.0,
+       "struct_score": 44.4,
+       "trace": "control_backward",
+       "why": "Buffered internal copy of input_clk feeding output clock",
+       "lines": [
+        149,
+        150
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E1",
+       "name": "input_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "clk_io",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Input capture register",
+     "kind": "PIPELINE_STAGE",
+     "description": "Registers input_d on clk_io into output_q",
+     "anchors": [
+      {
+       "id": "E7",
+       "name": "output_q_reg",
+       "role": "PIPELINE_REG",
+       "importance": "critical",
+       "score": 86.7,
+       "struct_score": 65.0,
+       "trace": "data_backward",
+       "why": "IOB capture register sampling input_d every clk_io edge",
+       "lines": [
+        157,
+        159,
+        162
+       ]
+      },
+      {
+       "id": "E2",
+       "name": "input_d",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 96.2,
+       "struct_score": 90.5,
+       "trace": "interface",
+       "why": "Source-synchronous input data captured by output_q_reg",
+       "lines": [
+        49,
+        162
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "output_q",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 69.2,
+       "struct_score": 92.9,
+       "trace": "interface",
+       "why": "Registered data output driven from output_q_reg",
+       "lines": [
+        53,
+        159
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "input_clock",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "input_clk",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "output_clock",
+     "protocol": "CLOCK_RESET",
+     "direction": "OUT",
+     "member_ids": [
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "output_clk",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "data_in",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E2",
+       "name": "input_d",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "data_out",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "output_q",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "mii_phy_if": {
+   "source": "teacher",
+   "canonical_instance": "eth_mac_mii.mii_phy_if_inst",
+   "file": "data/rtl/verilog-ethernet/rtl/mii_phy_if.v",
+   "lines": [
+    34,
+    139
+   ],
+   "summary": "MII PHY interface: RX path captured by a source-synchronous SDR input child, TX path registered in IOB flops on the forwarded tx clock, plus per-domain reset synchronizer shift registers.",
+   "blocks": [
+    {
+     "name": "rx_capture",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "SDR input child buffers PHY rx clock and registers rxd/dv/er for MAC.",
+     "anchors": [
+      {
+       "id": "E13",
+       "name": "phy_mii_rxd",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 89.3,
+       "struct_score": 72.9,
+       "trace": "interface",
+       "why": "PHY receive nibble captured by SDR input child with dv/er.",
+       "lines": [
+        65,
+        82
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "mac_mii_rxd",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 90.3,
+       "struct_score": 75.5,
+       "trace": "data_backward",
+       "why": "Registered receive nibble delivered to the MAC.",
+       "lines": [
+        52,
+        84
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "phy_mii_rx_dv",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 62.7,
+       "struct_score": 76.6,
+       "trace": "interface",
+       "why": "PHY receive data valid, captured alongside rxd.",
+       "lines": [
+        66,
+        82
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "mac_mii_rx_dv",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 63.7,
+       "struct_score": 78.9,
+       "trace": "data_backward",
+       "why": "Registered receive data valid to MAC.",
+       "lines": [
+        53,
+        84
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "rx_ssio_sdr_inst",
+       "module": "ssio_sdr_in"
+      }
+     ],
+     "members": [
+      {
+       "id": "E12",
+       "name": "phy_mii_rx_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "phy_mii_rx_er",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "mac_mii_rx_er",
+       "kind": "port_out"
+      },
+      {
+       "id": "E2",
+       "name": "mac_mii_rx_clk",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "tx_output_regs",
+     "kind": "PIPELINE_STAGE",
+     "description": "IOB flops registering MAC tx signals on the forwarded PHY tx clock.",
+     "anchors": [
+      {
+       "id": "E9",
+       "name": "mac_mii_txd",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 89.7,
+       "struct_score": 74.0,
+       "trace": "interface",
+       "why": "MAC transmit nibble registered into IOB output flop.",
+       "lines": [
+        57,
+        97
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "phy_mii_txd_reg",
+       "role": "PIPELINE_REG",
+       "importance": "critical",
+       "score": 77.9,
+       "struct_score": 32.3,
+       "trace": "data_backward",
+       "why": "IOB register driving PHY transmit data on tx clock.",
+       "lines": [
+        88,
+        92,
+        97
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "mac_mii_tx_en",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 63.1,
+       "struct_score": 77.6,
+       "trace": "interface",
+       "why": "MAC transmit enable registered toward PHY.",
+       "lines": [
+        58,
+        98
+       ]
+      },
+      {
+       "id": "E21",
+       "name": "phy_mii_tx_en_reg",
+       "role": "PIPELINE_REG",
+       "importance": "major",
+       "score": 47.9,
+       "struct_score": 24.1,
+       "trace": "data_backward",
+       "why": "IOB register driving PHY transmit enable.",
+       "lines": [
+        90,
+        93,
+        98
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "phy_mii_txd",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 34.8,
+       "struct_score": 76.7,
+       "trace": "data_backward",
+       "why": "PHY transmit data port driven by IOB register.",
+       "lines": [
+        92
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "phy_mii_tx_er_reg",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 19.9,
+       "struct_score": 24.1,
+       "trace": "data_backward",
+       "why": "IOB register driving PHY transmit error.",
+       "lines": [
+        90,
+        94,
+        99
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E11",
+       "name": "mac_mii_tx_er",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "phy_mii_tx_en",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "phy_mii_tx_er",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "phy_mii_tx_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "mac_mii_tx_clk",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "reset_sync",
+     "kind": "OTHER",
+     "description": "Per-domain reset synchronizers for MAC rx and tx resets.",
+     "anchors": [
+      {
+       "id": "E23",
+       "name": "tx_rst_reg",
+       "role": "STORAGE",
+       "importance": "minor",
+       "score": 28.2,
+       "struct_score": 55.7,
+       "trace": "control_backward",
+       "why": "Shift-register reset synchronizer producing mac_mii_tx_rst in tx clock domain.",
+       "lines": [
+        117,
+        118,
+        124
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "rx_rst_reg",
+       "role": "STORAGE",
+       "importance": "minor",
+       "score": 28.2,
+       "struct_score": 55.7,
+       "trace": "control_backward",
+       "why": "Shift-register reset synchronizer producing mac_mii_rx_rst in rx clock domain.",
+       "lines": [
+        128,
+        129,
+        135
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E3",
+       "name": "mac_mii_rx_rst",
+       "kind": "port_out"
+      },
+      {
+       "id": "E8",
+       "name": "mac_mii_tx_rst",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "mac_clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "OUT",
+     "member_ids": [
+      "E2",
+      "E3",
+      "E7",
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E2",
+       "name": "mac_mii_rx_clk",
+       "kind": "port_out"
+      },
+      {
+       "id": "E3",
+       "name": "mac_mii_rx_rst",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "mac_mii_tx_clk",
+       "kind": "port_out"
+      },
+      {
+       "id": "E8",
+       "name": "mac_mii_tx_rst",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "mac_mii_rx",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E4",
+      "E5",
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "mac_mii_rxd",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "mac_mii_rx_dv",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "mac_mii_rx_er",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "mac_mii_tx",
+     "protocol": "STREAM",
+     "direction": "IN",
+     "member_ids": [
+      "E9",
+      "E10",
+      "E11"
+     ],
+     "members": [
+      {
+       "id": "E9",
+       "name": "mac_mii_txd",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "mac_mii_tx_en",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "mac_mii_tx_er",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "phy_mii_rx",
+     "protocol": "STREAM",
+     "direction": "IN",
+     "member_ids": [
+      "E12",
+      "E13",
+      "E14",
+      "E15"
+     ],
+     "members": [
+      {
+       "id": "E12",
+       "name": "phy_mii_rx_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "phy_mii_rxd",
+       "kind": "port_in"
+      },
+      {
+       "id": "E14",
+       "name": "phy_mii_rx_dv",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "phy_mii_rx_er",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "phy_mii_tx",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E16",
+      "E17",
+      "E18",
+      "E19"
+     ],
+     "members": [
+      {
+       "id": "E16",
+       "name": "phy_mii_tx_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E17",
+       "name": "phy_mii_txd",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "phy_mii_tx_en",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "phy_mii_tx_er",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "lfsr": {
+   "source": "heuristic",
+   "canonical_instance": "eth_mac_mii.eth_mac_1g_inst.axis_gmii_rx_inst.eth_crc_8",
+   "file": "data/rtl/verilog-ethernet/rtl/lfsr.v",
+   "lines": [
+    34,
+    445
+   ],
+   "summary": "lfsr (heuristic)",
+   "blocks": [],
+   "ungrouped_anchors": [
+    {
+     "id": "E1",
+     "name": "data_in",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 41.8,
+     "struct_score": 94.5,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    },
+    {
+     "id": "E2",
+     "name": "state_in",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 42.8,
+     "struct_score": 97.0,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    },
+    {
+     "id": "E3",
+     "name": "data_out",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 41.9,
+     "struct_score": 94.6,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    },
+    {
+     "id": "E4",
+     "name": "state_out",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 43.6,
+     "struct_score": 99.0,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "data",
+     "protocol": "SIMPLE",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E1",
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "data_in",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "data_out",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "state",
+     "protocol": "SIMPLE",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E2",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E2",
+       "name": "state_in",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "state_out",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "axis_gmii_rx": {
+   "source": "teacher",
+   "canonical_instance": "eth_mac_mii.eth_mac_1g_inst.axis_gmii_rx_inst",
+   "file": "data/rtl/verilog-ethernet/rtl/axis_gmii_rx.v",
+   "lines": [
+    34,
+    356
+   ],
+   "summary": "GMII/MII-to-AXI-Stream receiver: a five-stage byte delay line (with MII nibble assembly) feeds a 3-state FSM that strips preamble and checks CRC32 FCS via an LFSR.",
+   "blocks": [
+    {
+     "name": "Receive FSM",
+     "kind": "CONTROLLER",
+     "description": "Detects SFD, forwards payload, checks FCS and errors",
+     "anchors": [
+      {
+       "id": "E17",
+       "name": "state_reg",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.2,
+       "struct_score": 98.1,
+       "trace": "control_backward",
+       "why": "IDLE/PAYLOAD/WAIT_LAST receive FSM driving AXI output and CRC control",
+       "lines": [
+        189,
+        248
+       ]
+      },
+      {
+       "id": "E19",
+       "name": "reset_crc",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.5,
+       "struct_score": 6.0,
+       "trace": "control_backward",
+       "why": "Reinitialises CRC in IDLE",
+       "lines": [
+        192,
+        326
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "update_crc",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.5,
+       "struct_score": 6.0,
+       "trace": "control_backward",
+       "why": "Advances CRC during PAYLOAD",
+       "lines": [
+        202,
+        328
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "cfg_rx_enable",
+       "role": "CONFIG_REG",
+       "importance": "minor",
+       "score": 17.9,
+       "struct_score": 15.8,
+       "trace": "interface",
+       "why": "Enables acceptance of new frames in IDLE",
+       "lines": [
+        194
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E18",
+       "name": "state_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Input delay line",
+     "kind": "PIPELINE_STAGE",
+     "description": "Five-stage data/dv/er delay holding FCS window for comparison",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "gmii_rxd",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 88.8,
+       "struct_score": 71.6,
+       "trace": "interface",
+       "why": "GMII receive byte (or MII nibble) input into delay line",
+       "lines": [
+        275,
+        306
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "gmii_rx_dv",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 93.1,
+       "struct_score": 82.7,
+       "trace": "interface",
+       "why": "Receive data valid; frames packet and signals end of frame",
+       "lines": [
+        213,
+        312
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "gmii_rx_er",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 17.2,
+       "struct_score": 12.9,
+       "trace": "interface",
+       "why": "Receive error input delayed to flag bad frames",
+       "lines": [
+        318
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "gmii_rxd_d0",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 23.6,
+       "struct_score": 39.1,
+       "trace": "data_backward",
+       "why": "First delay stage, assembles MII nibbles; part of FCS compare window",
+       "lines": [
+        220,
+        275
+       ]
+      },
+      {
+       "id": "E27",
+       "name": "gmii_rxd_d4",
+       "role": "PIPELINE_REG",
+       "importance": "major",
+       "score": 49.8,
+       "struct_score": 31.5,
+       "trace": "data_backward",
+       "why": "Last delay-line stage; checked for SFD, fed to CRC and output",
+       "lines": [
+        162,
+        194,
+        204
+       ]
+      },
+      {
+       "id": "E32",
+       "name": "gmii_rx_dv_d4",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 19.7,
+       "struct_score": 23.3,
+       "trace": "control_backward",
+       "why": "Delayed data valid aligned to d4 byte for start detection",
+       "lines": [
+        194,
+        207
+       ]
+      },
+      {
+       "id": "E37",
+       "name": "gmii_rx_er_d4",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 19.8,
+       "struct_score": 23.6,
+       "trace": "control_backward",
+       "why": "Delayed error aligned to output byte; aborts frame",
+       "lines": [
+        194,
+        207
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E24",
+       "name": "gmii_rxd_d1",
+       "kind": "reg"
+      },
+      {
+       "id": "E25",
+       "name": "gmii_rxd_d2",
+       "kind": "reg"
+      },
+      {
+       "id": "E26",
+       "name": "gmii_rxd_d3",
+       "kind": "reg"
+      },
+      {
+       "id": "E28",
+       "name": "gmii_rx_dv_d0",
+       "kind": "reg"
+      },
+      {
+       "id": "E29",
+       "name": "gmii_rx_dv_d1",
+       "kind": "reg"
+      },
+      {
+       "id": "E30",
+       "name": "gmii_rx_dv_d2",
+       "kind": "reg"
+      },
+      {
+       "id": "E31",
+       "name": "gmii_rx_dv_d3",
+       "kind": "reg"
+      },
+      {
+       "id": "E33",
+       "name": "gmii_rx_er_d0",
+       "kind": "reg"
+      },
+      {
+       "id": "E34",
+       "name": "gmii_rx_er_d1",
+       "kind": "reg"
+      },
+      {
+       "id": "E35",
+       "name": "gmii_rx_er_d2",
+       "kind": "reg"
+      },
+      {
+       "id": "E36",
+       "name": "gmii_rx_er_d3",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "MII adapter",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Nibble phase and frame tracking for MII/GMII clock-enable operation",
+     "anchors": [
+      {
+       "id": "E21",
+       "name": "mii_odd",
+       "role": "CLOCK_GEN",
+       "importance": "major",
+       "score": 54.5,
+       "struct_score": 49.6,
+       "trace": "control_backward",
+       "why": "MII nibble phase toggle; gates FSM and delay-line shifts every other cycle",
+       "lines": [
+        185,
+        265,
+        277
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "in_frame",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.6,
+       "struct_score": 18.7,
+       "trace": "control_backward",
+       "why": "Tracks frame presence after SFD; triggers start_packet",
+       "lines": [
+        267,
+        302
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "clk_enable",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 56.8,
+       "struct_score": 57.8,
+       "trace": "interface",
+       "why": "Clock enable holding FSM and delay line when low",
+       "lines": [
+        182,
+        263
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "mii_select",
+       "role": "COMMAND",
+       "importance": "major",
+       "score": 56.5,
+       "struct_score": 57.1,
+       "trace": "interface",
+       "why": "Selects MII nibble mode versus GMII byte mode",
+       "lines": [
+        185,
+        264
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "CRC checker",
+     "kind": "DATAPATH",
+     "description": "8-bit LFSR CRC32 over payload bytes",
+     "anchors": [
+      {
+       "id": "E53",
+       "name": "crc_state",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 57.4,
+       "struct_score": 60.2,
+       "trace": "data_backward",
+       "why": "Running CRC32 state, reset in IDLE and updated in PAYLOAD",
+       "lines": [
+        163,
+        326,
+        329
+       ]
+      },
+      {
+       "id": "E54",
+       "name": "crc_next",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 48.1,
+       "struct_score": 24.8,
+       "trace": "data_backward",
+       "why": "LFSR output compared to received FCS bytes",
+       "lines": [
+        165,
+        220
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "eth_crc_8",
+       "module": "lfsr"
+      }
+     ],
+     "members": []
+    },
+    {
+     "name": "AXI stream output",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Registered AXI-Stream byte output with last and user",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "m_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 87.2,
+       "struct_score": 66.6,
+       "trace": "interface",
+       "why": "AXI-Stream output byte",
+       "lines": [
+        143
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "m_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 86.9,
+       "struct_score": 65.5,
+       "trace": "interface",
+       "why": "AXI-Stream valid during PAYLOAD",
+       "lines": [
+        144
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "m_axis_tlast",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 58.9,
+       "struct_score": 65.5,
+       "trace": "interface",
+       "why": "Last byte marker at end of frame or error",
+       "lines": [
+        145
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "m_axis_tuser",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 18.4,
+       "struct_score": 17.8,
+       "trace": "interface",
+       "why": "Bad-frame flag plus optional timestamp",
+       "lines": [
+        146
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E38",
+       "name": "m_axis_tdata_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E39",
+       "name": "m_axis_tdata_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E40",
+       "name": "m_axis_tvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E41",
+       "name": "m_axis_tvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E42",
+       "name": "m_axis_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E43",
+       "name": "m_axis_tlast_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E44",
+       "name": "m_axis_tuser_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E45",
+       "name": "m_axis_tuser_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Status and PTP",
+     "kind": "OTHER",
+     "description": "Error/start status pulses and timestamp capture",
+     "anchors": [
+      {
+       "id": "E15",
+       "name": "error_bad_frame",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 46.0,
+       "struct_score": 16.4,
+       "trace": "interface",
+       "why": "Pulse on errored or bad-FCS frame",
+       "lines": [
+        149
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "error_bad_fcs",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 46.0,
+       "struct_score": 16.4,
+       "trace": "interface",
+       "why": "Pulse on FCS mismatch",
+       "lines": [
+        150
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "start_packet",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 18.0,
+       "struct_score": 16.4,
+       "trace": "interface",
+       "why": "Start-of-frame pulse after SFD detection",
+       "lines": [
+        148
+       ]
+      },
+      {
+       "id": "E52",
+       "name": "ptp_ts_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 22.5,
+       "struct_score": 34.4,
+       "trace": "data_backward",
+       "why": "PTP timestamp captured at frame start for tuser",
+       "lines": [
+        146,
+        259
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E46",
+       "name": "start_packet_int_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E47",
+       "name": "start_packet_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E48",
+       "name": "error_bad_frame_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E49",
+       "name": "error_bad_frame_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E50",
+       "name": "error_bad_fcs_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E51",
+       "name": "error_bad_fcs_next",
+       "kind": "comb"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "gmii_rx",
+     "protocol": "STREAM",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "gmii_rxd",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "gmii_rx_dv",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "gmii_rx_er",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axis",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E6",
+      "E7",
+      "E8",
+      "E9"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "m_axis_tdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "m_axis_tvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E8",
+       "name": "m_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "m_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "ptp",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E10",
+       "name": "ptp_ts",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "control_config",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E11",
+      "E12",
+      "E13"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "clk_enable",
+       "kind": "port_in"
+      },
+      {
+       "id": "E12",
+       "name": "mii_select",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "cfg_rx_enable",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E14",
+      "E15",
+      "E16"
+     ],
+     "members": [
+      {
+       "id": "E14",
+       "name": "start_packet",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "error_bad_frame",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "error_bad_fcs",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "axis_gmii_tx": {
+   "source": "teacher",
+   "canonical_instance": "eth_mac_mii.eth_mac_1g_inst.axis_gmii_tx_inst",
+   "file": "data/rtl/verilog-ethernet/rtl/axis_gmii_tx.v",
+   "lines": [
+    34,
+    456
+   ],
+   "summary": "AXI-Stream-to-GMII/MII transmitter: a 7-state FSM emits preamble/SFD, payload, padding and byte-serialised CRC32 FCS, then IFG; MII mode splits bytes into nibbles.",
+   "blocks": [
+    {
+     "name": "TX FSM",
+     "kind": "CONTROLLER",
+     "description": "Sequences preamble, payload, pad, FCS and IFG emission",
+     "anchors": [
+      {
+       "id": "E21",
+       "name": "state_reg",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.6,
+       "struct_score": 98.9,
+       "trace": "control_backward",
+       "why": "IDLE/PREAMBLE/PAYLOAD/LAST/PAD/FCS/IFG controller selecting GMII output and tready",
+       "lines": [
+        241,
+        406
+       ]
+      },
+      {
+       "id": "E31",
+       "name": "frame_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.1,
+       "struct_score": 16.5,
+       "trace": "control_backward",
+       "why": "Inside-frame flag for dropping rest of frame and holding IFG",
+       "lines": [
+        390,
+        408
+       ]
+      },
+      {
+       "id": "E33",
+       "name": "frame_error_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.6,
+       "struct_score": 18.5,
+       "trace": "control_backward",
+       "why": "Latched frame error driving gmii_tx_er during FCS",
+       "lines": [
+        374,
+        409
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "reset_crc",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.3,
+       "struct_score": 5.4,
+       "trace": "control_backward",
+       "why": "Reinitialises CRC in IDLE/PREAMBLE",
+       "lines": [
+        244,
+        428
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "update_crc",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.3,
+       "struct_score": 5.4,
+       "trace": "control_backward",
+       "why": "Advances CRC during payload and padding",
+       "lines": [
+        296,
+        430
+       ]
+      },
+      {
+       "id": "E40",
+       "name": "gmii_txd_next",
+       "role": "MUX_SELECT",
+       "importance": "minor",
+       "score": 25.0,
+       "struct_score": 44.4,
+       "trace": "data_backward",
+       "why": "FSM-selected output byte: preamble, SFD, payload, pad, FCS",
+       "lines": [
+        254,
+        305,
+        368
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E22",
+       "name": "state_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E32",
+       "name": "frame_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E34",
+       "name": "frame_error_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E45",
+       "name": "s_axis_tready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E46",
+       "name": "s_axis_tready_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Frame counters",
+     "kind": "COUNTER_TIMER",
+     "description": "Preamble/FCS/IFG byte pointer and minimum-length pad counter",
+     "anchors": [
+      {
+       "id": "E35",
+       "name": "frame_ptr_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 55.2,
+       "struct_score": 52.2,
+       "trace": "control_backward",
+       "why": "Counts preamble bytes, FCS byte index and IFG cycles",
+       "lines": [
+        271,
+        367,
+        390
+       ]
+      },
+      {
+       "id": "E37",
+       "name": "frame_min_count_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 52.7,
+       "struct_score": 42.9,
+       "trace": "control_backward",
+       "why": "Remaining bytes to minimum length; drives PAD state",
+       "lines": [
+        301,
+        331,
+        352
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E36",
+       "name": "frame_ptr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E38",
+       "name": "frame_min_count_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "CRC generator",
+     "kind": "DATAPATH",
+     "description": "8-bit LFSR CRC32 over payload bytes",
+     "anchors": [
+      {
+       "id": "E59",
+       "name": "crc_state",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 59.4,
+       "struct_score": 67.3,
+       "trace": "data_backward",
+       "why": "Running CRC32; bytes serialised out in FCS state",
+       "lines": [
+        368,
+        428,
+        431
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "s_tdata_reg",
+       "role": "PIPELINE_REG",
+       "importance": "major",
+       "score": 50.7,
+       "struct_score": 35.4,
+       "trace": "data_backward",
+       "why": "Payload byte register feeding GMII output and CRC LFSR",
+       "lines": [
+        172,
+        305,
+        420
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "eth_crc_8",
+       "module": "lfsr"
+      }
+     ],
+     "members": [
+      {
+       "id": "E60",
+       "name": "crc_next",
+       "kind": "wire"
+      },
+      {
+       "id": "E26",
+       "name": "s_tdata_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "MII nibble adapter",
+     "kind": "SERIALIZER",
+     "description": "Splits bytes into two MII nibbles under clock enable",
+     "anchors": [
+      {
+       "id": "E27",
+       "name": "mii_odd_reg",
+       "role": "CLOCK_GEN",
+       "importance": "major",
+       "score": 51.4,
+       "struct_score": 38.1,
+       "trace": "control_backward",
+       "why": "MII nibble phase; holds FSM and outputs high nibble on odd cycles",
+       "lines": [
+        229,
+        417
+       ]
+      },
+      {
+       "id": "E29",
+       "name": "mii_msn_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 18.6,
+       "struct_score": 18.6,
+       "trace": "data_backward",
+       "why": "Holds high nibble for second MII cycle",
+       "lines": [
+        232,
+        418
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "clk_enable",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 54.1,
+       "struct_score": 48.3,
+       "trace": "interface",
+       "why": "Clock enable holding FSM and outputs when low",
+       "lines": [
+        223
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "mii_select",
+       "role": "COMMAND",
+       "importance": "major",
+       "score": 53.4,
+       "struct_score": 45.5,
+       "trace": "interface",
+       "why": "Selects MII nibble mode versus GMII byte mode",
+       "lines": [
+        229,
+        398
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E28",
+       "name": "mii_odd_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E30",
+       "name": "mii_msn_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "GMII output",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Registered GMII data, enable and error outputs",
+     "anchors": [
+      {
+       "id": "E8",
+       "name": "gmii_txd",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 86.5,
+       "struct_score": 64.2,
+       "trace": "interface",
+       "why": "GMII transmit byte/nibble output",
+       "lines": [
+        151
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "gmii_tx_en",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 58.2,
+       "struct_score": 63.1,
+       "trace": "interface",
+       "why": "GMII transmit enable during frame",
+       "lines": [
+        152
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "gmii_tx_er",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 17.7,
+       "struct_score": 15.2,
+       "trace": "interface",
+       "why": "GMII transmit error asserted on errored frame FCS",
+       "lines": [
+        153
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E39",
+       "name": "gmii_txd_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E41",
+       "name": "gmii_tx_en_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E42",
+       "name": "gmii_tx_en_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E43",
+       "name": "gmii_tx_er_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E44",
+       "name": "gmii_tx_er_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "PTP and status",
+     "kind": "OTHER",
+     "description": "Start-of-frame timestamp capture and status pulses",
+     "anchors": [
+      {
+       "id": "E12",
+       "name": "m_axis_ptp_ts",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 37.6,
+       "struct_score": 83.8,
+       "trace": "interface",
+       "why": "Captured transmit timestamp output",
+       "lines": [
+        155
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "m_axis_ptp_ts_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 30.2,
+       "struct_score": 63.1,
+       "trace": "interface",
+       "why": "Valid pulse for timestamp and tag",
+       "lines": [
+        157
+       ]
+      },
+      {
+       "id": "E55",
+       "name": "start_packet_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 19.4,
+       "struct_score": 21.9,
+       "trace": "forward",
+       "why": "Start pulse triggering PTP timestamp and tag capture",
+       "lines": [
+        200,
+        435
+       ]
+      },
+      {
+       "id": "E19",
+       "name": "start_packet",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 17.7,
+       "struct_score": 15.2,
+       "trace": "interface",
+       "why": "Start-of-frame pulse after SFD",
+       "lines": [
+        159
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "error_underflow",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 45.7,
+       "struct_score": 15.2,
+       "trace": "interface",
+       "why": "Pulse when tvalid drops mid-frame",
+       "lines": [
+        160
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E47",
+       "name": "m_axis_ptp_ts_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E48",
+       "name": "m_axis_ptp_ts_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E49",
+       "name": "m_axis_ptp_ts_tag_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E50",
+       "name": "m_axis_ptp_ts_tag_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E51",
+       "name": "m_axis_ptp_ts_valid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E52",
+       "name": "m_axis_ptp_ts_valid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E53",
+       "name": "start_packet_int_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E54",
+       "name": "start_packet_int_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E56",
+       "name": "start_packet_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E57",
+       "name": "error_underflow_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E58",
+       "name": "error_underflow_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E13",
+       "name": "m_axis_ptp_ts_tag",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E3",
+     "name": "s_axis_tdata",
+     "role": "INTERFACE_DATA",
+     "importance": "critical",
+     "score": 85.1,
+     "struct_score": 59.1,
+     "trace": "interface",
+     "why": "AXI-Stream input byte loaded into s_tdata_reg",
+     "lines": [
+      273,
+      308
+     ]
+    },
+    {
+     "id": "E4",
+     "name": "s_axis_tvalid",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 90.9,
+     "struct_score": 77.0,
+     "trace": "interface",
+     "why": "Input valid; starts frame and detects underflow",
+     "lines": [
+      252,
+      310
+     ]
+    },
+    {
+     "id": "E5",
+     "name": "s_axis_tready",
+     "role": "HANDSHAKE_READY",
+     "importance": "critical",
+     "score": 83.9,
+     "struct_score": 54.6,
+     "trace": "interface",
+     "why": "Input ready driven by FSM",
+     "lines": [
+      149,
+      219
+     ]
+    },
+    {
+     "id": "E6",
+     "name": "s_axis_tlast",
+     "role": "HANDSHAKE_VALID",
+     "importance": "major",
+     "score": 60.8,
+     "struct_score": 71.6,
+     "trace": "interface",
+     "why": "End-of-frame marker moving FSM to LAST",
+     "lines": [
+      220,
+      310
+     ]
+    },
+    {
+     "id": "E7",
+     "name": "s_axis_tuser",
+     "role": "COMMAND",
+     "importance": "minor",
+     "score": 20.8,
+     "struct_score": 27.7,
+     "trace": "interface",
+     "why": "Bit0 marks frame error forcing tx_er; PTP tag source",
+     "lines": [
+      206,
+      312
+     ]
+    },
+    {
+     "id": "E17",
+     "name": "cfg_ifg",
+     "role": "CONFIG_REG",
+     "importance": "minor",
+     "score": 20.2,
+     "struct_score": 25.2,
+     "trace": "interface",
+     "why": "Configured inter-frame gap length",
+     "lines": [
+      390
+     ]
+    },
+    {
+     "id": "E18",
+     "name": "cfg_tx_enable",
+     "role": "CONFIG_REG",
+     "importance": "minor",
+     "score": 20.6,
+     "struct_score": 26.6,
+     "trace": "interface",
+     "why": "Transmit enable gating frame start",
+     "lines": [
+      252
+     ]
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axis",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axis_tdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_tvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_tready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_tuser",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "gmii_tx",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E8",
+       "name": "gmii_txd",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "gmii_tx_en",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "gmii_tx_er",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "ptp",
+     "protocol": "OTHER",
+     "direction": "OUT",
+     "member_ids": [
+      "E11",
+      "E12",
+      "E13",
+      "E14"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "ptp_ts",
+       "kind": "port_in"
+      },
+      {
+       "id": "E12",
+       "name": "m_axis_ptp_ts",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "m_axis_ptp_ts_tag",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "m_axis_ptp_ts_valid",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "control_config",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E15",
+      "E16",
+      "E17",
+      "E18"
+     ],
+     "members": [
+      {
+       "id": "E15",
+       "name": "clk_enable",
+       "kind": "port_in"
+      },
+      {
+       "id": "E16",
+       "name": "mii_select",
+       "kind": "port_in"
+      },
+      {
+       "id": "E17",
+       "name": "cfg_ifg",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "cfg_tx_enable",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E19",
+      "E20"
+     ],
+     "members": [
+      {
+       "id": "E19",
+       "name": "start_packet",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "error_underflow",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "eth_mac_1g": {
+   "source": "teacher",
+   "canonical_instance": "eth_mac_mii.eth_mac_1g_inst",
+   "file": "data/rtl/verilog-ethernet/rtl/eth_mac_1g.v",
+   "lines": [
+    34,
+    642
+   ],
+   "summary": "1G Ethernet MAC top that wires an AXI-Stream-to-GMII transmitter and a GMII-to-AXI-Stream receiver in separate clock domains; MAC control/pause logic is parameter-disabled, so AXIS ports pass straight through.",
+   "blocks": [
+    {
+     "name": "Transmit path",
+     "kind": "SERIALIZER",
+     "description": "axis_gmii_tx converts transmit AXI-Stream into GMII bytes with preamble, FCS and IFG.",
+     "anchors": [
+      {
+       "id": "E5",
+       "name": "tx_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 81.3,
+       "struct_score": 45.3,
+       "trace": "interface",
+       "why": "Transmit AXI-Stream payload byte forwarded to the GMII transmitter.",
+       "lines": [
+        59,
+        604
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "tx_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 81.1,
+       "struct_score": 44.6,
+       "trace": "interface",
+       "why": "Transmit AXI-Stream valid feeding the transmitter input handshake.",
+       "lines": [
+        60,
+        605
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "tx_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 77.8,
+       "struct_score": 31.6,
+       "trace": "interface",
+       "why": "Transmit AXI-Stream ready, copied from the GMII transmitter's s_axis_tready.",
+       "lines": [
+        61,
+        606
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "tx_axis_tlast",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 20.9,
+       "struct_score": 27.9,
+       "trace": "interface",
+       "why": "End-of-frame marker of the transmit stream.",
+       "lines": [
+        62,
+        607
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "gmii_txd",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 82.7,
+       "struct_score": 50.5,
+       "trace": "interface",
+       "why": "GMII transmit data byte produced by the transmitter instance.",
+       "lines": [
+        79,
+        249
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "gmii_tx_en",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 54.5,
+       "struct_score": 49.8,
+       "trace": "interface",
+       "why": "GMII transmit enable marking valid transmitted bytes.",
+       "lines": [
+        80,
+        250
+       ]
+      },
+      {
+       "id": "E65",
+       "name": "cfg_ifg",
+       "role": "CONFIG_REG",
+       "importance": "major",
+       "score": 46.8,
+       "struct_score": 19.6,
+       "trace": "interface",
+       "why": "Configured inter-frame gap length used by the transmitter.",
+       "lines": [
+        155,
+        258
+       ]
+      },
+      {
+       "id": "E66",
+       "name": "cfg_tx_enable",
+       "role": "CONFIG_REG",
+       "importance": "major",
+       "score": 44.6,
+       "struct_score": 10.7,
+       "trace": "interface",
+       "why": "Enables the transmit path in the GMII transmitter.",
+       "lines": [
+        156,
+        259
+       ]
+      },
+      {
+       "id": "E41",
+       "name": "tx_mii_select",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 16.5,
+       "struct_score": 10.1,
+       "trace": "interface",
+       "why": "Selects MII nibble mode versus GMII byte mode for transmit.",
+       "lines": [
+        123,
+        257
+       ]
+      },
+      {
+       "id": "E39",
+       "name": "tx_clk_enable",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 17.2,
+       "struct_score": 12.9,
+       "trace": "interface",
+       "why": "Clock enable qualifying transmitter cycles (for MII/lower rates).",
+       "lines": [
+        121,
+        256
+       ]
+      },
+      {
+       "id": "E43",
+       "name": "tx_error_underflow",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 16.3,
+       "struct_score": 9.4,
+       "trace": "interface",
+       "why": "Transmitter reports AXIS underflow during a frame.",
+       "lines": [
+        129,
+        261
+       ]
+      },
+      {
+       "id": "E42",
+       "name": "tx_start_packet",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 16.3,
+       "struct_score": 9.4,
+       "trace": "interface",
+       "why": "Pulse indicating transmitter started a new packet.",
+       "lines": [
+        128,
+        260
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I2",
+       "instance": "axis_gmii_tx_inst",
+       "module": "axis_gmii_tx"
+      }
+     ],
+     "members": [
+      {
+       "id": "E99",
+       "name": "tx_axis_tdata_int",
+       "kind": "wire"
+      },
+      {
+       "id": "E100",
+       "name": "tx_axis_tvalid_int",
+       "kind": "wire"
+      },
+      {
+       "id": "E101",
+       "name": "tx_axis_tready_int",
+       "kind": "wire"
+      },
+      {
+       "id": "E102",
+       "name": "tx_axis_tlast_int",
+       "kind": "wire"
+      },
+      {
+       "id": "E103",
+       "name": "tx_axis_tuser_int",
+       "kind": "wire"
+      },
+      {
+       "id": "E9",
+       "name": "tx_axis_tuser",
+       "kind": "port_in"
+      },
+      {
+       "id": "E19",
+       "name": "gmii_tx_er",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "tx_ptp_ts",
+       "kind": "port_in"
+      },
+      {
+       "id": "E22",
+       "name": "tx_axis_ptp_ts",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "tx_axis_ptp_ts_tag",
+       "kind": "port_out"
+      },
+      {
+       "id": "E24",
+       "name": "tx_axis_ptp_ts_valid",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "Receive path",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "axis_gmii_rx strips preamble, checks FCS and emits receive AXI-Stream.",
+     "anchors": [
+      {
+       "id": "E14",
+       "name": "gmii_rxd",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 81.3,
+       "struct_score": 45.3,
+       "trace": "interface",
+       "why": "GMII receive data byte entering the receiver instance.",
+       "lines": [
+        76,
+        214
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "gmii_rx_dv",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 53.1,
+       "struct_score": 44.6,
+       "trace": "interface",
+       "why": "GMII receive data valid framing incoming bytes.",
+       "lines": [
+        77,
+        215
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "rx_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 82.9,
+       "struct_score": 50.9,
+       "trace": "interface",
+       "why": "Received AXI-Stream payload byte from the GMII receiver.",
+       "lines": [
+        68,
+        610
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "rx_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 82.6,
+       "struct_score": 50.2,
+       "trace": "interface",
+       "why": "Received stream valid; no ready, receiver pushes data each cycle.",
+       "lines": [
+        69,
+        611
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "rx_axis_tuser",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 22.2,
+       "struct_score": 33.5,
+       "trace": "interface",
+       "why": "Receive sideband user bits (bad-frame flag, optional timestamp).",
+       "lines": [
+        71,
+        613
+       ]
+      },
+      {
+       "id": "E67",
+       "name": "cfg_rx_enable",
+       "role": "CONFIG_REG",
+       "importance": "major",
+       "score": 44.6,
+       "struct_score": 10.7,
+       "trace": "interface",
+       "why": "Enables the receive path in the GMII receiver.",
+       "lines": [
+        157,
+        224
+       ]
+      },
+      {
+       "id": "E40",
+       "name": "rx_mii_select",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 16.5,
+       "struct_score": 10.1,
+       "trace": "interface",
+       "why": "Selects MII nibble mode versus GMII byte mode for receive.",
+       "lines": [
+        122,
+        223
+       ]
+      },
+      {
+       "id": "E38",
+       "name": "rx_clk_enable",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 17.2,
+       "struct_score": 12.9,
+       "trace": "interface",
+       "why": "Clock enable qualifying receiver cycles.",
+       "lines": [
+        120,
+        222
+       ]
+      },
+      {
+       "id": "E46",
+       "name": "rx_error_bad_fcs",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 16.3,
+       "struct_score": 9.4,
+       "trace": "interface",
+       "why": "Receiver reports frame with failing CRC32 FCS.",
+       "lines": [
+        132,
+        227
+       ]
+      },
+      {
+       "id": "E45",
+       "name": "rx_error_bad_frame",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 16.3,
+       "struct_score": 9.4,
+       "trace": "interface",
+       "why": "Receiver reports malformed or errored frame.",
+       "lines": [
+        131,
+        226
+       ]
+      },
+      {
+       "id": "E44",
+       "name": "rx_start_packet",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 16.3,
+       "struct_score": 9.4,
+       "trace": "interface",
+       "why": "Pulse indicating receiver started a new packet.",
+       "lines": [
+        130,
+        225
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "axis_gmii_rx_inst",
+       "module": "axis_gmii_rx"
+      }
+     ],
+     "members": [
+      {
+       "id": "E104",
+       "name": "rx_axis_tdata_int",
+       "kind": "wire"
+      },
+      {
+       "id": "E105",
+       "name": "rx_axis_tvalid_int",
+       "kind": "wire"
+      },
+      {
+       "id": "E106",
+       "name": "rx_axis_tlast_int",
+       "kind": "wire"
+      },
+      {
+       "id": "E107",
+       "name": "rx_axis_tuser_int",
+       "kind": "wire"
+      },
+      {
+       "id": "E12",
+       "name": "rx_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "gmii_rx_er",
+       "kind": "port_in"
+      },
+      {
+       "id": "E21",
+       "name": "rx_ptp_ts",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Disabled MAC control",
+     "kind": "OTHER",
+     "description": "LFC/PFC pause logic disabled by MAC_CTRL_ENABLE=0; outputs tied to zero.",
+     "anchors": [],
+     "instances": [],
+     "members": [
+      {
+       "id": "E25",
+       "name": "tx_lfc_req",
+       "kind": "port_in"
+      },
+      {
+       "id": "E26",
+       "name": "tx_lfc_resend",
+       "kind": "port_in"
+      },
+      {
+       "id": "E27",
+       "name": "rx_lfc_en",
+       "kind": "port_in"
+      },
+      {
+       "id": "E28",
+       "name": "rx_lfc_req",
+       "kind": "port_out"
+      },
+      {
+       "id": "E29",
+       "name": "rx_lfc_ack",
+       "kind": "port_in"
+      },
+      {
+       "id": "E30",
+       "name": "tx_pfc_req",
+       "kind": "port_in"
+      },
+      {
+       "id": "E31",
+       "name": "tx_pfc_resend",
+       "kind": "port_in"
+      },
+      {
+       "id": "E32",
+       "name": "rx_pfc_en",
+       "kind": "port_in"
+      },
+      {
+       "id": "E33",
+       "name": "rx_pfc_req",
+       "kind": "port_out"
+      },
+      {
+       "id": "E34",
+       "name": "rx_pfc_ack",
+       "kind": "port_in"
+      },
+      {
+       "id": "E35",
+       "name": "tx_lfc_pause_en",
+       "kind": "port_in"
+      },
+      {
+       "id": "E36",
+       "name": "tx_pause_req",
+       "kind": "port_in"
+      },
+      {
+       "id": "E37",
+       "name": "tx_pause_ack",
+       "kind": "port_out"
+      },
+      {
+       "id": "E47",
+       "name": "stat_tx_mcf",
+       "kind": "port_out"
+      },
+      {
+       "id": "E48",
+       "name": "stat_rx_mcf",
+       "kind": "port_out"
+      },
+      {
+       "id": "E57",
+       "name": "stat_rx_lfc_pkt",
+       "kind": "port_out"
+      },
+      {
+       "id": "E61",
+       "name": "stat_rx_pfc_pkt",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2",
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "rx_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rx_rst",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "tx_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "tx_rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "tx_axis",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "tx_axis_tdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "tx_axis_tvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "tx_axis_tready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E8",
+       "name": "tx_axis_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "tx_axis_tuser",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "rx_axis",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E10",
+      "E11",
+      "E12",
+      "E13"
+     ],
+     "members": [
+      {
+       "id": "E10",
+       "name": "rx_axis_tdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E11",
+       "name": "rx_axis_tvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "rx_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "rx_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "gmii_rx",
+     "protocol": "STREAM",
+     "direction": "IN",
+     "member_ids": [
+      "E14",
+      "E15",
+      "E16"
+     ],
+     "members": [
+      {
+       "id": "E14",
+       "name": "gmii_rxd",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "gmii_rx_dv",
+       "kind": "port_in"
+      },
+      {
+       "id": "E16",
+       "name": "gmii_rx_er",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "gmii_tx",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E17",
+      "E18",
+      "E19"
+     ],
+     "members": [
+      {
+       "id": "E17",
+       "name": "gmii_txd",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "gmii_tx_en",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "gmii_tx_er",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "ptp",
+     "protocol": "OTHER",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E20",
+      "E21",
+      "E22",
+      "E23",
+      "E24"
+     ],
+     "members": [
+      {
+       "id": "E20",
+       "name": "tx_ptp_ts",
+       "kind": "port_in"
+      },
+      {
+       "id": "E21",
+       "name": "rx_ptp_ts",
+       "kind": "port_in"
+      },
+      {
+       "id": "E22",
+       "name": "tx_axis_ptp_ts",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "tx_axis_ptp_ts_tag",
+       "kind": "port_out"
+      },
+      {
+       "id": "E24",
+       "name": "tx_axis_ptp_ts_valid",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "flow_control",
+     "protocol": "REQ_ACK",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E25",
+      "E26",
+      "E27",
+      "E28",
+      "E29",
+      "E30",
+      "E31",
+      "E32",
+      "E33",
+      "E34"
+     ],
+     "members": [
+      {
+       "id": "E25",
+       "name": "tx_lfc_req",
+       "kind": "port_in"
+      },
+      {
+       "id": "E26",
+       "name": "tx_lfc_resend",
+       "kind": "port_in"
+      },
+      {
+       "id": "E27",
+       "name": "rx_lfc_en",
+       "kind": "port_in"
+      },
+      {
+       "id": "E28",
+       "name": "rx_lfc_req",
+       "kind": "port_out"
+      },
+      {
+       "id": "E29",
+       "name": "rx_lfc_ack",
+       "kind": "port_in"
+      },
+      {
+       "id": "E30",
+       "name": "tx_pfc_req",
+       "kind": "port_in"
+      },
+      {
+       "id": "E31",
+       "name": "tx_pfc_resend",
+       "kind": "port_in"
+      },
+      {
+       "id": "E32",
+       "name": "rx_pfc_en",
+       "kind": "port_in"
+      },
+      {
+       "id": "E33",
+       "name": "rx_pfc_req",
+       "kind": "port_out"
+      },
+      {
+       "id": "E34",
+       "name": "rx_pfc_ack",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "pause",
+     "protocol": "REQ_ACK",
+     "direction": "IN",
+     "member_ids": [
+      "E35",
+      "E36",
+      "E37"
+     ],
+     "members": [
+      {
+       "id": "E35",
+       "name": "tx_lfc_pause_en",
+       "kind": "port_in"
+      },
+      {
+       "id": "E36",
+       "name": "tx_pause_req",
+       "kind": "port_in"
+      },
+      {
+       "id": "E37",
+       "name": "tx_pause_ack",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "control",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E38",
+      "E39",
+      "E40",
+      "E41"
+     ],
+     "members": [
+      {
+       "id": "E38",
+       "name": "rx_clk_enable",
+       "kind": "port_in"
+      },
+      {
+       "id": "E39",
+       "name": "tx_clk_enable",
+       "kind": "port_in"
+      },
+      {
+       "id": "E40",
+       "name": "rx_mii_select",
+       "kind": "port_in"
+      },
+      {
+       "id": "E41",
+       "name": "tx_mii_select",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E42",
+      "E43",
+      "E44",
+      "E45",
+      "E46",
+      "E47",
+      "E48",
+      "E49",
+      "E50",
+      "E51",
+      "E52",
+      "E53",
+      "E54",
+      "E55",
+      "E56",
+      "E57",
+      "E58",
+      "E59",
+      "E60",
+      "E61",
+      "E62",
+      "E63",
+      "E64"
+     ],
+     "members": [
+      {
+       "id": "E42",
+       "name": "tx_start_packet",
+       "kind": "port_out"
+      },
+      {
+       "id": "E43",
+       "name": "tx_error_underflow",
+       "kind": "port_out"
+      },
+      {
+       "id": "E44",
+       "name": "rx_start_packet",
+       "kind": "port_out"
+      },
+      {
+       "id": "E45",
+       "name": "rx_error_bad_frame",
+       "kind": "port_out"
+      },
+      {
+       "id": "E46",
+       "name": "rx_error_bad_fcs",
+       "kind": "port_out"
+      },
+      {
+       "id": "E47",
+       "name": "stat_tx_mcf",
+       "kind": "port_out"
+      },
+      {
+       "id": "E48",
+       "name": "stat_rx_mcf",
+       "kind": "port_out"
+      },
+      {
+       "id": "E49",
+       "name": "stat_tx_lfc_pkt",
+       "kind": "port_out"
+      },
+      {
+       "id": "E50",
+       "name": "stat_tx_lfc_xon",
+       "kind": "port_out"
+      },
+      {
+       "id": "E51",
+       "name": "stat_tx_lfc_xoff",
+       "kind": "port_out"
+      },
+      {
+       "id": "E52",
+       "name": "stat_tx_lfc_paused",
+       "kind": "port_out"
+      },
+      {
+       "id": "E53",
+       "name": "stat_tx_pfc_pkt",
+       "kind": "port_out"
+      },
+      {
+       "id": "E54",
+       "name": "stat_tx_pfc_xon",
+       "kind": "port_out"
+      },
+      {
+       "id": "E55",
+       "name": "stat_tx_pfc_xoff",
+       "kind": "port_out"
+      },
+      {
+       "id": "E56",
+       "name": "stat_tx_pfc_paused",
+       "kind": "port_out"
+      },
+      {
+       "id": "E57",
+       "name": "stat_rx_lfc_pkt",
+       "kind": "port_out"
+      },
+      {
+       "id": "E58",
+       "name": "stat_rx_lfc_xon",
+       "kind": "port_out"
+      },
+      {
+       "id": "E59",
+       "name": "stat_rx_lfc_xoff",
+       "kind": "port_out"
+      },
+      {
+       "id": "E60",
+       "name": "stat_rx_lfc_paused",
+       "kind": "port_out"
+      },
+      {
+       "id": "E61",
+       "name": "stat_rx_pfc_pkt",
+       "kind": "port_out"
+      },
+      {
+       "id": "E62",
+       "name": "stat_rx_pfc_xon",
+       "kind": "port_out"
+      },
+      {
+       "id": "E63",
+       "name": "stat_rx_pfc_xoff",
+       "kind": "port_out"
+      },
+      {
+       "id": "E64",
+       "name": "stat_rx_pfc_paused",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "config",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E65",
+      "E66",
+      "E67",
+      "E68",
+      "E69",
+      "E70",
+      "E71",
+      "E72",
+      "E73",
+      "E74",
+      "E75",
+      "E76",
+      "E77",
+      "E78",
+      "E79",
+      "E80",
+      "E81",
+      "E82",
+      "E83",
+      "E84",
+      "E85",
+      "E86",
+      "E87",
+      "E88",
+      "E89",
+      "E90",
+      "E91",
+      "E92",
+      "E93",
+      "E94",
+      "E95",
+      "E96",
+      "E97",
+      "E98"
+     ],
+     "members": [
+      {
+       "id": "E65",
+       "name": "cfg_ifg",
+       "kind": "port_in"
+      },
+      {
+       "id": "E66",
+       "name": "cfg_tx_enable",
+       "kind": "port_in"
+      },
+      {
+       "id": "E67",
+       "name": "cfg_rx_enable",
+       "kind": "port_in"
+      },
+      {
+       "id": "E68",
+       "name": "cfg_mcf_rx_eth_dst_mcast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E69",
+       "name": "cfg_mcf_rx_check_eth_dst_mcast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E70",
+       "name": "cfg_mcf_rx_eth_dst_ucast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E71",
+       "name": "cfg_mcf_rx_check_eth_dst_ucast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E72",
+       "name": "cfg_mcf_rx_eth_src",
+       "kind": "port_in"
+      },
+      {
+       "id": "E73",
+       "name": "cfg_mcf_rx_check_eth_src",
+       "kind": "port_in"
+      },
+      {
+       "id": "E74",
+       "name": "cfg_mcf_rx_eth_type",
+       "kind": "port_in"
+      },
+      {
+       "id": "E75",
+       "name": "cfg_mcf_rx_opcode_lfc",
+       "kind": "port_in"
+      },
+      {
+       "id": "E76",
+       "name": "cfg_mcf_rx_check_opcode_lfc",
+       "kind": "port_in"
+      },
+      {
+       "id": "E77",
+       "name": "cfg_mcf_rx_opcode_pfc",
+       "kind": "port_in"
+      },
+      {
+       "id": "E78",
+       "name": "cfg_mcf_rx_check_opcode_pfc",
+       "kind": "port_in"
+      },
+      {
+       "id": "E79",
+       "name": "cfg_mcf_rx_forward",
+       "kind": "port_in"
+      },
+      {
+       "id": "E80",
+       "name": "cfg_mcf_rx_enable",
+       "kind": "port_in"
+      },
+      {
+       "id": "E81",
+       "name": "cfg_tx_lfc_eth_dst",
+       "kind": "port_in"
+      },
+      {
+       "id": "E82",
+       "name": "cfg_tx_lfc_eth_src",
+       "kind": "port_in"
+      },
+      {
+       "id": "E83",
+       "name": "cfg_tx_lfc_eth_type",
+       "kind": "port_in"
+      },
+      {
+       "id": "E84",
+       "name": "cfg_tx_lfc_opcode",
+       "kind": "port_in"
+      },
+      {
+       "id": "E85",
+       "name": "cfg_tx_lfc_en",
+       "kind": "port_in"
+      },
+      {
+       "id": "E86",
+       "name": "cfg_tx_lfc_quanta",
+       "kind": "port_in"
+      },
+      {
+       "id": "E87",
+       "name": "cfg_tx_lfc_refresh",
+       "kind": "port_in"
+      },
+      {
+       "id": "E88",
+       "name": "cfg_tx_pfc_eth_dst",
+       "kind": "port_in"
+      },
+      {
+       "id": "E89",
+       "name": "cfg_tx_pfc_eth_src",
+       "kind": "port_in"
+      },
+      {
+       "id": "E90",
+       "name": "cfg_tx_pfc_eth_type",
+       "kind": "port_in"
+      },
+      {
+       "id": "E91",
+       "name": "cfg_tx_pfc_opcode",
+       "kind": "port_in"
+      },
+      {
+       "id": "E92",
+       "name": "cfg_tx_pfc_en",
+       "kind": "port_in"
+      },
+      {
+       "id": "E93",
+       "name": "cfg_tx_pfc_quanta",
+       "kind": "port_in"
+      },
+      {
+       "id": "E94",
+       "name": "cfg_tx_pfc_refresh",
+       "kind": "port_in"
+      },
+      {
+       "id": "E95",
+       "name": "cfg_rx_lfc_opcode",
+       "kind": "port_in"
+      },
+      {
+       "id": "E96",
+       "name": "cfg_rx_lfc_en",
+       "kind": "port_in"
+      },
+      {
+       "id": "E97",
+       "name": "cfg_rx_pfc_opcode",
+       "kind": "port_in"
+      },
+      {
+       "id": "E98",
+       "name": "cfg_rx_pfc_en",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  },
+  "eth_mac_mii": {
+   "source": "teacher",
+   "canonical_instance": "eth_mac_mii",
+   "file": "data/rtl/verilog-ethernet/rtl/eth_mac_mii.v",
+   "lines": [
+    34,
+    172
+   ],
+   "summary": "Ethernet MAC with MII PHY interface: structural wrapper connecting an MII PHY I/O block (clocks, resets, registered nibble paths) to a 1G MAC forced into MII mode, bridging AXI-stream and MII.",
+   "blocks": [
+    {
+     "name": "mac",
+     "kind": "DATAPATH",
+     "description": "1G MAC in MII mode converting AXI-stream to/from MII nibbles.",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "tx_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 88.6,
+       "struct_score": 71.1,
+       "trace": "interface",
+       "why": "Transmit AXI-stream payload into the MAC.",
+       "lines": [
+        56,
+        143
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "tx_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 88.2,
+       "struct_score": 70.3,
+       "trace": "interface",
+       "why": "Valid of transmit AXI-stream input.",
+       "lines": [
+        57,
+        144
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "tx_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 56.1,
+       "struct_score": 55.5,
+       "trace": "interface",
+       "why": "MAC ready backpressuring the transmit stream.",
+       "lines": [
+        58,
+        145
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "rx_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 89.7,
+       "struct_score": 74.0,
+       "trace": "interface",
+       "why": "Received frame payload output from the MAC.",
+       "lines": [
+        65,
+        148
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "rx_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 89.4,
+       "struct_score": 73.1,
+       "trace": "interface",
+       "why": "Valid of received AXI-stream output.",
+       "lines": [
+        66,
+        149
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "tx_start_packet",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 19.5,
+       "struct_score": 22.2,
+       "trace": "interface",
+       "why": "Pulse indicating MAC began transmitting a frame.",
+       "lines": [
+        85,
+        162
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "tx_error_underflow",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 47.5,
+       "struct_score": 22.2,
+       "trace": "interface",
+       "why": "MAC transmit underflow error status.",
+       "lines": [
+        86,
+        163
+       ]
+      },
+      {
+       "id": "E26",
+       "name": "rx_error_bad_frame",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 47.5,
+       "struct_score": 22.2,
+       "trace": "interface",
+       "why": "MAC received bad frame error status.",
+       "lines": [
+        88,
+        165
+       ]
+      },
+      {
+       "id": "E27",
+       "name": "rx_error_bad_fcs",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 19.5,
+       "struct_score": 22.2,
+       "trace": "interface",
+       "why": "MAC received FCS error status.",
+       "lines": [
+        89,
+        166
+       ]
+      },
+      {
+       "id": "E28",
+       "name": "cfg_ifg",
+       "role": "CONFIG_REG",
+       "importance": "minor",
+       "score": 23.9,
+       "struct_score": 40.1,
+       "trace": "interface",
+       "why": "Inter-frame gap configuration for the MAC transmitter.",
+       "lines": [
+        94,
+        167
+       ]
+      },
+      {
+       "id": "E29",
+       "name": "cfg_tx_enable",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 20.9,
+       "struct_score": 28.2,
+       "trace": "interface",
+       "why": "Enables MAC transmit.",
+       "lines": [
+        95,
+        168
+       ]
+      },
+      {
+       "id": "E30",
+       "name": "cfg_rx_enable",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 20.9,
+       "struct_score": 28.2,
+       "trace": "interface",
+       "why": "Enables MAC receive.",
+       "lines": [
+        96,
+        169
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I2",
+       "instance": "eth_mac_1g_inst",
+       "module": "eth_mac_1g"
+      }
+     ],
+     "members": [
+      {
+       "id": "E9",
+       "name": "tx_axis_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "tx_axis_tuser",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "rx_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "rx_axis_tuser",
+       "kind": "port_out"
+      },
+      {
+       "id": "E25",
+       "name": "rx_start_packet",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "mii_phy_if",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "MII I/O registers, clock forwarding and reset synchronizers.",
+     "anchors": [
+      {
+       "id": "E16",
+       "name": "mii_rxd",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 86.6,
+       "struct_score": 64.4,
+       "trace": "interface",
+       "why": "PHY MII receive nibble into PHY interface block.",
+       "lines": [
+        74,
+        125
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "mii_txd",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 87.8,
+       "struct_score": 68.9,
+       "trace": "interface",
+       "why": "MII transmit nibble driven to the PHY.",
+       "lines": [
+        78,
+        129
+       ]
+      },
+      {
+       "id": "E31",
+       "name": "mac_mii_rxd",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 16.7,
+       "struct_score": 10.9,
+       "trace": "data_backward",
+       "why": "Captured MII receive data passed from PHY interface into MAC.",
+       "lines": [
+        99,
+        115,
+        152
+       ]
+      },
+      {
+       "id": "E34",
+       "name": "mac_mii_txd",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 16.7,
+       "struct_score": 10.9,
+       "trace": "data_backward",
+       "why": "MAC transmit nibble data into PHY interface block.",
+       "lines": [
+        102,
+        120,
+        155
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "rx_rst",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 22.0,
+       "struct_score": 32.4,
+       "trace": "interface",
+       "why": "Synchronized RX-domain reset generated by PHY interface for MAC.",
+       "lines": [
+        49,
+        114,
+        142
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "mii_phy_if_inst",
+       "module": "mii_phy_if"
+      }
+     ],
+     "members": [
+      {
+       "id": "E15",
+       "name": "mii_rx_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E17",
+       "name": "mii_rx_dv",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "mii_rx_er",
+       "kind": "port_in"
+      },
+      {
+       "id": "E19",
+       "name": "mii_tx_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E21",
+       "name": "mii_tx_en",
+       "kind": "port_out"
+      },
+      {
+       "id": "E22",
+       "name": "mii_tx_er",
+       "kind": "port_out"
+      },
+      {
+       "id": "E32",
+       "name": "mac_mii_rx_dv",
+       "kind": "wire"
+      },
+      {
+       "id": "E33",
+       "name": "mac_mii_rx_er",
+       "kind": "wire"
+      },
+      {
+       "id": "E35",
+       "name": "mac_mii_tx_en",
+       "kind": "wire"
+      },
+      {
+       "id": "E36",
+       "name": "mac_mii_tx_er",
+       "kind": "wire"
+      },
+      {
+       "id": "E5",
+       "name": "tx_rst",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E1",
+      "E2",
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "rst",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rx_clk",
+       "kind": "port_out"
+      },
+      {
+       "id": "E3",
+       "name": "rx_rst",
+       "kind": "port_out"
+      },
+      {
+       "id": "E4",
+       "name": "tx_clk",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "tx_rst",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "tx_axis",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "tx_axis_tdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "tx_axis_tvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "tx_axis_tready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "tx_axis_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "tx_axis_tuser",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "rx_axis",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E11",
+      "E12",
+      "E13",
+      "E14"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "rx_axis_tdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "rx_axis_tvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "rx_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "rx_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "mii_rx",
+     "protocol": "STREAM",
+     "direction": "IN",
+     "member_ids": [
+      "E15",
+      "E16",
+      "E17",
+      "E18"
+     ],
+     "members": [
+      {
+       "id": "E15",
+       "name": "mii_rx_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E16",
+       "name": "mii_rxd",
+       "kind": "port_in"
+      },
+      {
+       "id": "E17",
+       "name": "mii_rx_dv",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "mii_rx_er",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "mii_tx",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E19",
+      "E20",
+      "E21",
+      "E22"
+     ],
+     "members": [
+      {
+       "id": "E19",
+       "name": "mii_tx_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E20",
+       "name": "mii_txd",
+       "kind": "port_out"
+      },
+      {
+       "id": "E21",
+       "name": "mii_tx_en",
+       "kind": "port_out"
+      },
+      {
+       "id": "E22",
+       "name": "mii_tx_er",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E23",
+      "E24",
+      "E25",
+      "E26",
+      "E27"
+     ],
+     "members": [
+      {
+       "id": "E23",
+       "name": "tx_start_packet",
+       "kind": "port_out"
+      },
+      {
+       "id": "E24",
+       "name": "tx_error_underflow",
+       "kind": "port_out"
+      },
+      {
+       "id": "E25",
+       "name": "rx_start_packet",
+       "kind": "port_out"
+      },
+      {
+       "id": "E26",
+       "name": "rx_error_bad_frame",
+       "kind": "port_out"
+      },
+      {
+       "id": "E27",
+       "name": "rx_error_bad_fcs",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "config",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E28",
+      "E29",
+      "E30"
+     ],
+     "members": [
+      {
+       "id": "E28",
+       "name": "cfg_ifg",
+       "kind": "port_in"
+      },
+      {
+       "id": "E29",
+       "name": "cfg_tx_enable",
+       "kind": "port_in"
+      },
+      {
+       "id": "E30",
+       "name": "cfg_rx_enable",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

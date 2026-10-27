@@ -1,0 +1,971 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "wb2axip_wbsafety",
+ "tops": [
+  "wbsafety"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "skidbuffer": {
+   "source": "teacher",
+   "canonical_instance": "wbsafety.skd",
+   "file": "data/rtl/wb2axip/rtl/skidbuffer.v",
+   "lines": [
+    81,
+    501
+   ],
+   "summary": "Valid/ready skid buffer: a one-entry side register captures input data when the downstream stalls, while a registered output stage muxes skid or input data, giving full-throughput registered handshakes.",
+   "blocks": [
+    {
+     "name": "Skid register",
+     "kind": "BUFFER",
+     "description": "One-entry overflow buffer and its occupancy flag driving o_ready.",
+     "anchors": [
+      {
+       "id": "E10",
+       "name": "LOGIC.r_valid",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 58.1,
+       "struct_score": 62.8,
+       "trace": "control_backward",
+       "why": "Skid-occupied flag; set on downstream stall, drives o_ready and output mux.",
+       "lines": [
+        139,
+        160,
+        212
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "LOGIC.r_data",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 70.4,
+       "struct_score": 95.9,
+       "trace": "data_backward",
+       "why": "One-entry skid storage holding data accepted during a stall.",
+       "lines": [
+        153,
+        213
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "o_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 95.3,
+       "struct_score": 88.1,
+       "trace": "control_backward",
+       "why": "Upstream ready, low whenever skid register holds data.",
+       "lines": [
+        152,
+        160
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E9",
+       "name": "w_data",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Output register",
+     "kind": "PIPELINE_STAGE",
+     "description": "Registered valid and data selecting skid or input payload.",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "o_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 98.7,
+       "struct_score": 96.7,
+       "trace": "control_backward",
+       "why": "Downstream valid driven from registered ro_valid.",
+       "lines": [
+        137,
+        200
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "o_data",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 99.5,
+       "struct_score": 98.8,
+       "trace": "data_backward",
+       "why": "Registered output payload chosen from skid or input data.",
+       "lines": [
+        213,
+        215
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "LOGIC.REG_OUTPUT.ro_valid",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 28.0,
+       "struct_score": 55.1,
+       "trace": "control_backward",
+       "why": "Registered output valid flop behind o_valid.",
+       "lines": [
+        198,
+        200
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Input port",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Upstream valid/data and downstream ready controlling transfers.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "i_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 96.9,
+       "struct_score": 92.2,
+       "trace": "interface",
+       "why": "Upstream valid; loads skid register or output register.",
+       "lines": [
+        137,
+        198
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "i_data",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 98.3,
+       "struct_score": 95.8,
+       "trace": "interface",
+       "why": "Incoming payload captured into skid or output register.",
+       "lines": [
+        153,
+        215
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "i_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 94.2,
+       "struct_score": 85.5,
+       "trace": "interface",
+       "why": "Downstream ready; stall triggers skid capture, ready drains it.",
+       "lines": [
+        137,
+        140,
+        197
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "i_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "i_reset",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "slave_in",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "i_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "o_ready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "i_data",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "master_out",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E6",
+      "E7",
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "o_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "i_ready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "o_data",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "wbsafety": {
+   "source": "teacher",
+   "canonical_instance": "wbsafety",
+   "file": "data/rtl/wb2axip/rtl/wbsafety.v",
+   "lines": [
+    61,
+    586
+   ],
+   "summary": "Wishbone safety bridge: skid-buffers master requests to an untrusted slave, counts outstanding returns and stall/ack timeouts, flags protocol faults and resets the slave.",
+   "blocks": [
+    {
+     "name": "Upstream skid buffer",
+     "kind": "BUFFER",
+     "description": "Skid buffer capturing upstream request fields and applying downstream back-pressure.",
+     "anchors": [
+      {
+       "id": "E4",
+       "name": "i_wb_stb",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 92.1,
+       "struct_score": 80.1,
+       "trace": "interface",
+       "why": "Upstream request strobe into skid buffer.",
+       "lines": [
+        76,
+        149
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "o_wb_stall",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 55.9,
+       "struct_score": 54.8,
+       "trace": "interface",
+       "why": "Upstream stall from skid buffer not ready.",
+       "lines": [
+        80,
+        157
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "i_wb_data",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 64.1,
+       "struct_score": 80.0,
+       "trace": "interface",
+       "why": "Upstream write data packed into skid buffer.",
+       "lines": [
+        78,
+        150
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "i_wb_addr",
+       "role": "INTERFACE_ADDR",
+       "importance": "minor",
+       "score": 30.7,
+       "struct_score": 64.7,
+       "trace": "interface",
+       "why": "Upstream address packed into skid buffer.",
+       "lines": [
+        77,
+        150
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "i_wb_we",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 19.5,
+       "struct_score": 22.5,
+       "trace": "interface",
+       "why": "Upstream write/read command packed into skid buffer.",
+       "lines": [
+        76,
+        150
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "i_wb_sel",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 30.0,
+       "struct_score": 62.4,
+       "trace": "interface",
+       "why": "Upstream byte selects packed into skid buffer.",
+       "lines": [
+        79,
+        150
+       ]
+      },
+      {
+       "id": "E31",
+       "name": "skd_stb",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 22.7,
+       "struct_score": 35.3,
+       "trace": "data_backward",
+       "why": "Buffered request valid from skid buffer loading o_wb_stb.",
+       "lines": [
+        114,
+        214,
+        314
+       ]
+      },
+      {
+       "id": "E34",
+       "name": "skd_stall",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 21.6,
+       "struct_score": 30.7,
+       "trace": "control_backward",
+       "why": "Back-pressure into skid buffer from slave stall or reset.",
+       "lines": [
+        115,
+        214,
+        344
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "skd",
+       "module": "skidbuffer"
+      }
+     ],
+     "members": [
+      {
+       "id": "E32",
+       "name": "skd_o_ready",
+       "kind": "wire"
+      },
+      {
+       "id": "E33",
+       "name": "skd_we",
+       "kind": "wire"
+      },
+      {
+       "id": "E35",
+       "name": "skd_addr",
+       "kind": "wire"
+      },
+      {
+       "id": "E36",
+       "name": "skd_data",
+       "kind": "wire"
+      },
+      {
+       "id": "E37",
+       "name": "skd_sel",
+       "kind": "wire"
+      },
+      {
+       "id": "E3",
+       "name": "i_wb_cyc",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Downstream bus driver",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Registers request to untrusted slave; cyc/stb killed on error, reset or fault.",
+     "anchors": [
+      {
+       "id": "E15",
+       "name": "o_wb_stb",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 99.0,
+       "struct_score": 97.5,
+       "trace": "control_backward",
+       "why": "Downstream request strobe, killed on error, reset or fault.",
+       "lines": [
+        89,
+        312,
+        314
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "o_wb_cyc",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 70.5,
+       "struct_score": 96.1,
+       "trace": "control_backward",
+       "why": "Downstream bus cycle, dropped on error, reset or fault.",
+       "lines": [
+        89,
+        301,
+        303
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "o_wb_addr",
+       "role": "INTERFACE_ADDR",
+       "importance": "minor",
+       "score": 34.7,
+       "struct_score": 76.6,
+       "trace": "data_backward",
+       "why": "Registered downstream address from skid buffer.",
+       "lines": [
+        90,
+        323
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "o_wb_data",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 67.5,
+       "struct_score": 88.8,
+       "trace": "data_backward",
+       "why": "Registered downstream write data from skid buffer.",
+       "lines": [
+        91,
+        324
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "o_wb_we",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 23.7,
+       "struct_score": 39.4,
+       "trace": "data_backward",
+       "why": "Registered downstream write enable from skid buffer.",
+       "lines": [
+        89,
+        322
+       ]
+      },
+      {
+       "id": "E19",
+       "name": "o_wb_sel",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 35.1,
+       "struct_score": 77.5,
+       "trace": "data_backward",
+       "why": "Registered downstream byte selects.",
+       "lines": [
+        92,
+        325
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "i_wb_stall",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 63.3,
+       "struct_score": 78.1,
+       "trace": "interface",
+       "why": "Slave stall holding requests and driving stall timer.",
+       "lines": [
+        93,
+        171,
+        344
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Response return",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Filters slave ack/err/data into protocol-safe upstream ack/err responses.",
+     "anchors": [
+      {
+       "id": "E10",
+       "name": "o_wb_ack",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 96.8,
+       "struct_score": 91.9,
+       "trace": "control_backward",
+       "why": "Upstream ack forwarded only for valid, non-faulty slave acks.",
+       "lines": [
+        80,
+        370
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "o_wb_err",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 70.0,
+       "struct_score": 94.8,
+       "trace": "control_backward",
+       "why": "Upstream error on timeout, faulty return, slave err or while faulted.",
+       "lines": [
+        82,
+        368,
+        375
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "o_wb_idata",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 38.7,
+       "struct_score": 86.7,
+       "trace": "data_backward",
+       "why": "Registered read data returned upstream.",
+       "lines": [
+        81,
+        332
+       ]
+      },
+      {
+       "id": "E21",
+       "name": "i_wb_ack",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 88.3,
+       "struct_score": 70.4,
+       "trace": "interface",
+       "why": "Slave ack checked for faults and forwarded upstream.",
+       "lines": [
+        93,
+        267,
+        370
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "i_wb_err",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 34.0,
+       "struct_score": 74.8,
+       "trace": "interface",
+       "why": "Slave error ending the cycle and returning upstream error.",
+       "lines": [
+        95,
+        299,
+        365
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "i_wb_idata",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 36.4,
+       "struct_score": 80.7,
+       "trace": "interface",
+       "why": "Slave read data registered to upstream.",
+       "lines": [
+        94,
+        332
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Return counter",
+     "kind": "COUNTER_TIMER",
+     "description": "Tracks outstanding requests to validate slave returns.",
+     "anchors": [
+      {
+       "id": "E26",
+       "name": "expected_returns",
+       "role": "COUNTER",
+       "importance": "critical",
+       "score": 85.3,
+       "struct_score": 59.6,
+       "trace": "control_backward",
+       "why": "Outstanding request count; increments on issue, decrements on ack, checks returns.",
+       "lines": [
+        109,
+        216,
+        220
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "none_expected",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 21.2,
+       "struct_score": 29.2,
+       "trace": "control_backward",
+       "why": "No outstanding requests; gates wait timer and unexpected-ack reset.",
+       "lines": [
+        108,
+        184,
+        239
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Timeout checker",
+     "kind": "COUNTER_TIMER",
+     "description": "Stall and ack-wait timers generating timeout.",
+     "anchors": [
+      {
+       "id": "E27",
+       "name": "stall_timer",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 52.5,
+       "struct_score": 42.2,
+       "trace": "control_backward",
+       "why": "Counts consecutive downstream stall cycles toward timeout.",
+       "lines": [
+        110,
+        174,
+        199
+       ]
+      },
+      {
+       "id": "E28",
+       "name": "wait_timer",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 53.5,
+       "struct_score": 45.9,
+       "trace": "control_backward",
+       "why": "Counts cycles waiting for ack toward timeout.",
+       "lines": [
+        110,
+        187,
+        200
+       ]
+      },
+      {
+       "id": "E29",
+       "name": "timeout",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 50.9,
+       "struct_score": 36.2,
+       "trace": "control_backward",
+       "why": "Stall or ack-wait timeout; raises fault, slave reset and upstream error.",
+       "lines": [
+        111,
+        199,
+        284
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Fault and reset control",
+     "kind": "CONTROLLER",
+     "description": "Detects faulty returns/timeouts, latches fault and resets the slave.",
+     "anchors": [
+      {
+       "id": "E24",
+       "name": "o_fault",
+       "role": "STATUS",
+       "importance": "critical",
+       "score": 88.0,
+       "struct_score": 69.7,
+       "trace": "control_backward",
+       "why": "Sticky fault set on faulty return or timeout; blocks bus and triggers slave reset.",
+       "lines": [
+        100,
+        283,
+        285
+       ]
+      },
+      {
+       "id": "E30",
+       "name": "faulty_return",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 48.7,
+       "struct_score": 27.3,
+       "trace": "control_backward",
+       "why": "Detects unexpected or simultaneous ack/err; sets fault and error response.",
+       "lines": [
+        112,
+        267,
+        282
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "o_reset",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 65.9,
+       "struct_score": 84.6,
+       "trace": "control_backward",
+       "why": "Downstream slave reset on fault, timeout or unexpected ack; blocks bus outputs.",
+       "lines": [
+        88,
+        236,
+        241
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "i_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "i_reset",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "upstream_wb_slave",
+     "protocol": "MEMORY_BUS",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "i_wb_cyc",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "i_wb_stb",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "i_wb_we",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "i_wb_addr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "i_wb_data",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "i_wb_sel",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "o_wb_stall",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "o_wb_ack",
+       "kind": "port_out"
+      },
+      {
+       "id": "E11",
+       "name": "o_wb_idata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "o_wb_err",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "downstream_wb_master",
+     "protocol": "MEMORY_BUS",
+     "direction": "OUT",
+     "member_ids": [
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20",
+      "E21",
+      "E22",
+      "E23"
+     ],
+     "members": [
+      {
+       "id": "E14",
+       "name": "o_wb_cyc",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "o_wb_stb",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "o_wb_we",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "o_wb_addr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "o_wb_data",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "o_wb_sel",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "i_wb_stall",
+       "kind": "port_in"
+      },
+      {
+       "id": "E21",
+       "name": "i_wb_ack",
+       "kind": "port_in"
+      },
+      {
+       "id": "E22",
+       "name": "i_wb_idata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E23",
+       "name": "i_wb_err",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "fault_reset",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E13",
+      "E24"
+     ],
+     "members": [
+      {
+       "id": "E13",
+       "name": "o_reset",
+       "kind": "port_out"
+      },
+      {
+       "id": "E24",
+       "name": "o_fault",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

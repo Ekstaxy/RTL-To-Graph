@@ -1,0 +1,42 @@
+{
+  "module_summary": "IP frame demultiplexer: on header accept latches select and drop, registers the header and broadcasts it with one-hot valid, then routes payload through a skid buffer to the chosen output until tlast.",
+  "anchors": [
+    {"id": "E58", "name": "select_reg", "role": "MUX_SELECT", "importance": "critical", "trace": "control_backward", "why": "Latched output port index steering one-hot header and payload valid", "lines": [121, 184, 273]},
+    {"id": "E61", "name": "drop_reg", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Frame drop flag suppressing output valids while still consuming payload", "lines": [122, 186, 274]},
+    {"id": "E64", "name": "frame_reg", "role": "CONTROL_FLAG", "importance": "critical", "trace": "control_backward", "why": "Frame-in-progress flag; blocks new header accept until tlast", "lines": [123, 188, 220]},
+    {"id": "E57", "name": "select", "role": "COMMAND", "importance": "major", "trace": "interface", "why": "External output select captured at frame start", "lines": [116, 222]},
+    {"id": "E56", "name": "drop", "role": "COMMAND", "importance": "minor", "trace": "interface", "why": "External drop request captured at frame start", "lines": [115, 223]},
+    {"id": "E55", "name": "enable", "role": "ENABLE", "importance": "major", "trace": "interface", "why": "Gates input header and payload ready outputs", "lines": [114, 158, 160]},
+    {"id": "E3", "name": "s_ip_hdr_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Input header valid; with ready starts a frame", "lines": [54, 220]},
+    {"id": "E4", "name": "s_ip_hdr_ready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "Input header ready when idle and no pending output header", "lines": [55, 158, 220]},
+    {"id": "E20", "name": "s_ip_dest_ip", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Representative input header field latched at frame start", "lines": [71, 248]},
+    {"id": "E29", "name": "m_ip_hdr_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "One-hot output header valid for selected port", "lines": [84, 162]},
+    {"id": "E30", "name": "m_ip_hdr_ready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Per-output header ready clearing header valid bits", "lines": [85, 194]},
+    {"id": "E46", "name": "m_ip_dest_ip", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Representative registered header field broadcast to all outputs", "lines": [101, 178]},
+    {"id": "E21", "name": "s_ip_payload_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Input payload data passed to the internal datapath", "lines": [72, 255]},
+    {"id": "E23", "name": "s_ip_payload_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Input payload valid, shifted to selected output valid", "lines": [74, 212, 257]},
+    {"id": "E24", "name": "s_ip_payload_axis_tready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "Input payload ready during frame when output ready or dropping", "lines": [75, 160, 212]},
+    {"id": "E25", "name": "s_ip_payload_axis_tlast", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "End of frame; clears frame and drop flags", "lines": [76, 214]},
+    {"id": "E47", "name": "m_ip_payload_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Output payload data replicated to all output ports", "lines": [102, 321]},
+    {"id": "E49", "name": "m_ip_payload_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Per-output payload valid from skid-buffer register", "lines": [104, 323]},
+    {"id": "E50", "name": "m_ip_payload_axis_tready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Per-output ready controlling skid-buffer transfers", "lines": [105, 330, 343]},
+    {"id": "E114", "name": "m_ip_payload_axis_tdata_reg", "role": "PIPELINE_REG", "importance": "minor", "trace": "data_backward", "why": "Output payload register loaded from int or temp path", "lines": [300, 367, 374]},
+    {"id": "E122", "name": "temp_m_ip_payload_axis_tdata_reg", "role": "STORAGE", "importance": "minor", "trace": "data_backward", "why": "Skid-buffer temp register holding a beat when output stalls", "lines": [308, 383]},
+    {"id": "E108", "name": "m_ip_payload_axis_tready_int_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Registered internal ready deciding output vs temp storage", "lines": [151, 341]},
+    {"id": "E130", "name": "store_axis_int_to_output", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Load enable for output payload registers from internal path", "lines": [317, 346, 366]}
+  ],
+  "groups": [
+    {"name": "Frame route control", "kind": "CONTROLLER", "anchor_ids": ["E58", "E61", "E64", "E57", "E56", "E55"], "member_ids": ["E59", "E60", "E62", "E63", "E65", "E66"], "description": "Captures select/drop at header accept and tracks frame until tlast"},
+    {"name": "Header register", "kind": "DATAPATH", "anchor_ids": ["E3", "E4", "E20", "E29", "E30", "E46"], "member_ids": ["E67", "E68", "E71", "E72", "E73", "E75", "E77", "E79", "E81", "E83", "E85", "E87", "E89", "E91", "E93", "E95", "E97", "E99", "E101", "E103"], "description": "Registers input header fields and raises one-hot valid on selected output"},
+    {"name": "Payload input", "kind": "DATAPATH", "anchor_ids": ["E21", "E23", "E24", "E25"], "member_ids": ["E69", "E70", "E105", "E107", "E109"], "description": "Accepts input payload and forms per-output internal valid"},
+    {"name": "Output skid buffer", "kind": "BUFFER", "anchor_ids": ["E47", "E49", "E50", "E114", "E122", "E108", "E130"], "member_ids": ["E113", "E115", "E116", "E117", "E118", "E119", "E120", "E121", "E123", "E124", "E125", "E126", "E127", "E128", "E129", "E131", "E132"], "description": "Two-register skid buffer driving the replicated output payload streams"}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "s_ip_hdr", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12", "E13", "E14", "E15", "E16", "E17", "E18", "E19", "E20"]},
+    {"name": "s_ip_payload_axis", "protocol": "STREAM", "direction": "IN", "member_ids": ["E21", "E22", "E23", "E24", "E25", "E26", "E27", "E28"]},
+    {"name": "m_ip_hdr", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E29", "E30", "E31", "E32", "E33", "E34", "E35", "E36", "E37", "E38", "E39", "E40", "E41", "E42", "E43", "E44", "E45", "E46"]},
+    {"name": "m_ip_payload_axis", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E47", "E48", "E49", "E50", "E51", "E52", "E53", "E54"]},
+    {"name": "control", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E55", "E56", "E57"]}
+  ]
+}

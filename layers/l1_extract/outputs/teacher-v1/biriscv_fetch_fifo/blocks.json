@@ -1,0 +1,557 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "biriscv_fetch_fifo",
+ "tops": [
+  "fetch_fifo"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "fetch_fifo": {
+   "source": "teacher",
+   "canonical_instance": "fetch_fifo",
+   "file": "data/rtl/biriscv/src/core/biriscv_decode.v",
+   "lines": [
+    279,
+    428
+   ],
+   "summary": "Two-entry instruction fetch FIFO storing 64-bit fetch pairs with PC and info, presenting two 32-bit instruction slots that pop independently; entry retires when both slots consumed.",
+   "blocks": [
+    {
+     "name": "Entry storage",
+     "kind": "BUFFER",
+     "description": "Two entries of data, PC, info and per-slot valid bits.",
+     "anchors": [
+      {
+       "id": "E26",
+       "name": "ram_q",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 98.3,
+       "struct_score": 95.7,
+       "trace": "data_backward",
+       "why": "Entry array holding 64-bit instruction pair data.",
+       "lines": [
+        334,
+        385,
+        420
+       ]
+      },
+      {
+       "id": "E21",
+       "name": "pc_q",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 69.7,
+       "struct_score": 94.1,
+       "trace": "data_backward",
+       "why": "Per-entry PC storage driving pc0/pc1 outputs.",
+       "lines": [
+        329,
+        386,
+        418
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "valid0_q",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 64.5,
+       "struct_score": 80.9,
+       "trace": "control_backward",
+       "why": "Per-entry slot0 valid bits cleared on pop; valid1_q sibling.",
+       "lines": [
+        330,
+        389,
+        395
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E23",
+       "name": "valid1_q",
+       "kind": "mem"
+      },
+      {
+       "id": "E24",
+       "name": "info0_q",
+       "kind": "mem"
+      },
+      {
+       "id": "E25",
+       "name": "info1_q",
+       "kind": "mem"
+      }
+     ]
+    },
+    {
+     "name": "FIFO control",
+     "kind": "CONTROLLER",
+     "description": "Pointers, occupancy and pop/push qualification logic.",
+     "anchors": [
+      {
+       "id": "E27",
+       "name": "rd_ptr_q",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 67.2,
+       "struct_score": 87.8,
+       "trace": "control_backward",
+       "why": "Read pointer indexing head entry outputs, advances on pop_complete.",
+       "lines": [
+        335,
+        401,
+        420
+       ]
+      },
+      {
+       "id": "E28",
+       "name": "wr_ptr_q",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 61.1,
+       "struct_score": 72.4,
+       "trace": "control_backward",
+       "why": "Write pointer indexing pushed entry.",
+       "lines": [
+        336,
+        385,
+        391
+       ]
+      },
+      {
+       "id": "E29",
+       "name": "count_q",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 56.7,
+       "struct_score": 57.7,
+       "trace": "control_backward",
+       "why": "Occupancy count producing accept and valid outputs.",
+       "lines": [
+        337,
+        404,
+        415
+       ]
+      },
+      {
+       "id": "E33",
+       "name": "pop_complete_w",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 19.6,
+       "struct_score": 22.7,
+       "trace": "control_backward",
+       "why": "Both slots consumed; advances read pointer, decrements count.",
+       "lines": [
+        345,
+        400,
+        405
+       ]
+      },
+      {
+       "id": "E30",
+       "name": "push_w",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 20.2,
+       "struct_score": 25.2,
+       "trace": "control_backward",
+       "why": "Accepted push enabling entry write and pointer increment.",
+       "lines": [
+        342,
+        383,
+        403
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "flush_i",
+       "role": "COMMAND",
+       "importance": "major",
+       "score": 54.8,
+       "struct_score": 50.7,
+       "trace": "forward",
+       "why": "Flush resets pointers, count and info entries.",
+       "lines": [
+        296,
+        366
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E31",
+       "name": "pop1_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E32",
+       "name": "pop2_w",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Push interface",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Accepts fetch pair with PC, prediction and info.",
+     "anchors": [
+      {
+       "id": "E4",
+       "name": "push_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 89.6,
+       "struct_score": 73.6,
+       "trace": "interface",
+       "why": "Push request; with accept_o writes entry at wr_ptr_q.",
+       "lines": [
+        299,
+        342
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "accept_o",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 89.8,
+       "struct_score": 74.1,
+       "trace": "control_backward",
+       "why": "FIFO not full; qualifies push.",
+       "lines": [
+        305,
+        342,
+        415
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "data_in_i",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 94.6,
+       "struct_score": 86.2,
+       "trace": "interface",
+       "why": "64-bit fetch data written into ram_q.",
+       "lines": [
+        302,
+        385
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "pc_in_i",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 59.9,
+       "struct_score": 69.3,
+       "trace": "interface",
+       "why": "Fetch PC stored into pc_q per entry.",
+       "lines": [
+        300,
+        386
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E6",
+       "name": "pred_in_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "info0_in_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "info1_in_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Dual-slot output",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Presents two instruction slots from head entry.",
+     "anchors": [
+      {
+       "id": "E11",
+       "name": "valid0_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 96.2,
+       "struct_score": 90.5,
+       "trace": "control_backward",
+       "why": "Slot0 instruction valid output from head entry.",
+       "lines": [
+        308,
+        413
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "data0_out_o",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 94.5,
+       "struct_score": 86.1,
+       "trace": "data_backward",
+       "why": "Lower 32-bit instruction of head entry.",
+       "lines": [
+        310,
+        420
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "pop0_i",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 55.7,
+       "struct_score": 54.0,
+       "trace": "interface",
+       "why": "Consumer pop of slot0 instruction.",
+       "lines": [
+        312,
+        343
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "valid1_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 68.2,
+       "struct_score": 90.5,
+       "trace": "control_backward",
+       "why": "Slot1 instruction valid output from head entry.",
+       "lines": [
+        314,
+        414
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "data1_out_o",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 66.5,
+       "struct_score": 86.1,
+       "trace": "data_backward",
+       "why": "Upper 32-bit instruction of head entry.",
+       "lines": [
+        316,
+        421
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E12",
+       "name": "pc0_out_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "info0_out_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "pc1_out_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "info1_out_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "pop1_i",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "flush",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "flush_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "push",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "push_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "pc_in_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "pred_in_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "data_in_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "info0_in_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "info1_in_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "accept_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "slot0_out",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "valid0_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "pc0_out_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "data0_out_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "info0_out_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "pop0_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "slot1_out",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20"
+     ],
+     "members": [
+      {
+       "id": "E16",
+       "name": "valid1_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "pc1_out_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "data1_out_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "info1_out_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "pop1_i",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

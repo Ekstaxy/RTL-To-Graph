@@ -1,0 +1,24 @@
+{
+ "module_summary": "Credit-based request throttle: an up/down credit counter tracks outstanding requests and gates request valid/ready pass-through when the credit limit is reached.",
+ "anchors": [
+  {"id": "E12", "name": "credit_q", "role": "COUNTER", "importance": "critical", "trace": "control_backward", "why": "Outstanding-request counter; increments on request handshake, decrements on response handshake.", "lines": [59, 73, 82]},
+  {"id": "E13", "name": "credit_available", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Compares counter to credit limit; gates both req_valid_o and req_ready_o.", "lines": [73, 76, 79]},
+  {"id": "E5", "name": "req_valid_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Throttled request valid passed downstream only when credit available.", "lines": [31, 76]},
+  {"id": "E7", "name": "req_ready_o", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Throttled ready returned upstream only when credit available.", "lines": [35, 79]},
+  {"id": "E8", "name": "rsp_valid_i", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Response valid; with rsp_ready_i decrements the credit counter.", "lines": [38, 67]},
+  {"id": "E9", "name": "rsp_ready_i", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Response ready; qualifies response handshake for counter decrement.", "lines": [40, 67]},
+  {"id": "E10", "name": "credit_i", "role": "CONFIG_REG", "importance": "major", "trace": "interface", "why": "Configured maximum number of outstanding transfers compared against counter.", "lines": [43, 73]}
+ ],
+ "groups": [
+  {"name": "credit_counter", "kind": "COUNTER_TIMER", "anchor_ids": ["E12", "E13", "E10"], "member_ids": ["E11"], "description": "Up/down credit counter and limit comparison producing credit_available."},
+  {"name": "request_gate", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E5", "E7"], "member_ids": ["E4", "E6"], "description": "Gates request valid and ready with credit availability."},
+  {"name": "response_monitor", "kind": "OTHER", "anchor_ids": ["E8", "E9"], "member_ids": [], "description": "Observes response handshakes to return credit."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2", "E3"]},
+  {"name": "request_in", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E4", "E7"]},
+  {"name": "request_out", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E5", "E6"]},
+  {"name": "response_monitor", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E8", "E9"]},
+  {"name": "credit_config", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E10"]}
+ ]
+}

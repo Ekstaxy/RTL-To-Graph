@@ -1,0 +1,39 @@
+{
+  "module_summary": "AXI4-lite PicoRV32 wrapper: the picorv32 core's native valid/ready memory bus is bridged by a picorv32_axi_adapter child onto AW/W/B/AR/R channels; PCPI, IRQ and trace pass straight through.",
+  "anchors": [
+    {"id": "E33", "name": "mem_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "forward", "why": "Native bus request from core to adapter; launches AXI read or write channels."},
+    {"id": "E38", "name": "mem_ready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Adapter completion back to core, ending the native memory transfer."},
+    {"id": "E34", "name": "mem_addr", "role": "INTERFACE_ADDR", "importance": "major", "trace": "data_backward", "why": "Native bus address from core, forwarded to AXI awaddr/araddr."},
+    {"id": "E35", "name": "mem_wdata", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Native store data from core, forwarded to AXI wdata."},
+    {"id": "E39", "name": "mem_rdata", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Load/fetch data returned from adapter (AXI rdata) to the core."},
+    {"id": "E36", "name": "mem_wstrb", "role": "COMMAND", "importance": "minor", "trace": "data_backward", "why": "Byte write strobes; nonzero selects AXI write versus read path."},
+    {"id": "E37", "name": "mem_instr", "role": "INTERFACE_DATA", "importance": "minor", "trace": "data_backward", "why": "Instruction-fetch flag mapped to AXI prot bits by the adapter."},
+    {"id": "E4", "name": "mem_axi_awvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "AXI write-address valid driven by adapter for core stores."},
+    {"id": "E14", "name": "mem_axi_arvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "AXI read-address valid driven by adapter for core loads and fetches."},
+    {"id": "E8", "name": "mem_axi_wvalid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "AXI write-data valid from the adapter."},
+    {"id": "E10", "name": "mem_axi_wdata", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "AXI write data carrying core store data."},
+    {"id": "E18", "name": "mem_axi_rvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "AXI read response valid; completes core read via mem_ready."},
+    {"id": "E20", "name": "mem_axi_rdata", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "AXI read data returned to core through the adapter."},
+    {"id": "E12", "name": "mem_axi_bvalid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "AXI write response valid; completes core store via mem_ready."},
+    {"id": "E3", "name": "trap", "role": "STATUS", "importance": "major", "trace": "data_backward", "why": "Core trap/halt status output."},
+    {"id": "E21", "name": "pcpi_valid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Co-processor request passthrough; inactive with ENABLE_PCPI=0."},
+    {"id": "E31", "name": "trace_valid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Trace stream valid passthrough; inactive with ENABLE_TRACE=0."}
+  ],
+  "groups": [
+    {"name": "cpu_core", "kind": "OTHER", "anchor_ids": ["E3", "E21", "E31"], "member_ids": ["I2"], "description": "picorv32 core executing RV32I, issuing native bus requests; PCPI/IRQ/trace passthrough."},
+    {"name": "native_mem_bus", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E33", "E38", "E34", "E35", "E39", "E36", "E37"], "member_ids": [], "description": "Internal valid/ready memory bus linking the core to the AXI adapter."},
+    {"name": "axi_bridge", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E4", "E14", "E8", "E10", "E18", "E20", "E12"], "member_ids": ["I1", "E5", "E9", "E13", "E15", "E19", "E6", "E16", "E7", "E11", "E17"], "description": "picorv32_axi_adapter converting native transfers into AXI4-lite channel handshakes."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "axi_aw", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E4", "E5", "E6", "E7"]},
+    {"name": "axi_w", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E8", "E9", "E10", "E11"]},
+    {"name": "axi_b", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E12", "E13"]},
+    {"name": "axi_ar", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E14", "E15", "E16", "E17"]},
+    {"name": "axi_r", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E18", "E19", "E20"]},
+    {"name": "pcpi", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E21", "E22", "E23", "E24", "E25", "E26", "E27", "E28"]},
+    {"name": "irq", "protocol": "OTHER", "direction": "IN", "member_ids": ["E29", "E30"]},
+    {"name": "trace", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E31", "E32"]},
+    {"name": "trap_status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E3"]}
+  ]
+}

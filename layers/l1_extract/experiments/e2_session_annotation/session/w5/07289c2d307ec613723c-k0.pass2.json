@@ -1,0 +1,27 @@
+{
+ "module_summary": "AXI-stream skid/register slice built as a 2-entry shift register (SRL) with a read pointer selecting the output entry and a full flag deasserting input ready.",
+ "anchors": [
+  {"id": "E3", "name": "s_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Input payload packed into s_axis and shifted into data_reg[0].", "lines": [64, 105]},
+  {"id": "E5", "name": "s_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Input valid shifted into valid_reg alongside the data.", "lines": [66, 138]},
+  {"id": "E6", "name": "s_axis_tready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Input ready (not full); enables shifting data_reg and valid_reg.", "lines": [67, 102, 136]},
+  {"id": "E11", "name": "m_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Output payload sliced from the selected entry m_axis.", "lines": [76, 115]},
+  {"id": "E13", "name": "m_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Output valid read from valid_reg at ptr_reg.", "lines": [78, 113]},
+  {"id": "E14", "name": "m_axis_tready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Downstream ready; resets ptr_reg and decides full_reg.", "lines": [79, 133, 146]},
+  {"id": "E19", "name": "data_reg", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "Two-entry shift register holding packed beats (data, last, user).", "lines": [93, 137, 140]},
+  {"id": "E20", "name": "valid_reg", "role": "STORAGE", "importance": "major", "trace": "data_backward", "why": "Per-entry valid bits shifted in parallel with data_reg.", "lines": [94, 138, 141]},
+  {"id": "E21", "name": "ptr_reg", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "Read pointer selecting which shift-register entry drives the output.", "lines": [95, 100, 143]},
+  {"id": "E22", "name": "full_reg", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Full flag set when output stalled; deasserts s_axis_tready.", "lines": [96, 102, 133]},
+  {"id": "E23", "name": "s_axis", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Packed input bundle of tdata/tkeep/tlast/tuser fields.", "lines": [98, 137]},
+  {"id": "E24", "name": "m_axis", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Selected output entry unpacked to m_axis fields.", "lines": [100, 115]}
+ ],
+ "groups": [
+  {"name": "input_port", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E3", "E5", "E6", "E23"], "member_ids": ["E4", "E7", "E8", "E9", "E10"], "description": "Packs AXI-stream input fields and gates acceptance by full flag."},
+  {"name": "srl_buffer", "kind": "BUFFER", "anchor_ids": ["E19", "E20", "E21", "E22"], "member_ids": [], "description": "Two-entry shift register with output pointer and full flag."},
+  {"name": "output_port", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E11", "E13", "E14", "E24"], "member_ids": ["E12", "E15", "E16", "E17", "E18"], "description": "Unpacks selected entry onto AXI-stream output fields."}
+ ],
+ "interfaces": [
+  {"name": "clk_rst", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "s_axis", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10"]},
+  {"name": "m_axis", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E11", "E12", "E13", "E14", "E15", "E16", "E17", "E18"]}
+ ]
+}

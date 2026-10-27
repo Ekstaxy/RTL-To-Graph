@@ -1,0 +1,452 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "rtllm_adder_pipe_64bit",
+ "tops": [
+  "verified_adder_64bit"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "verified_adder_64bit": {
+   "source": "teacher",
+   "canonical_instance": "verified_adder_64bit",
+   "file": "data/rtl/RTLLM/Arithmetic/Adder/adder_pipe_64bit/verified_adder_64bit.v",
+   "lines": [
+    1,
+    195
+   ],
+   "summary": "Four-stage pipelined 64-bit ripple-carry adder: 16-bit slices add per stage with carry registers, skewed operand and sum delay registers, and an enable shift chain producing o_en.",
+   "blocks": [
+    {
+     "name": "Valid shift chain",
+     "kind": "CONTROLLER",
+     "description": "Shifts i_en through stage1-3 to o_en, enabling each slice add.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "i_en",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 88.8,
+       "struct_score": 71.6,
+       "trace": "forward",
+       "why": "Input valid; enables first slice add and enters the stage enable chain.",
+       "lines": [
+        9,
+        80,
+        142
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "stage1",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 45.8,
+       "struct_score": 15.4,
+       "trace": "control_backward",
+       "why": "Pipeline valid chain bit enabling second slice addition; stage2/stage3 replicate it.",
+       "lines": [
+        16,
+        81,
+        156
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "o_en",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 90.7,
+       "struct_score": 76.6,
+       "trace": "control_backward",
+       "why": "Output valid, delayed from stage3, marks result availability.",
+       "lines": [
+        13,
+        83
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E9",
+       "name": "stage2",
+       "kind": "reg"
+      },
+      {
+       "id": "E10",
+       "name": "stage3",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Slice adders",
+     "kind": "PIPELINE_STAGE",
+     "description": "Four 16-bit adders with registered carries chained across stages.",
+     "anchors": [
+      {
+       "id": "E35",
+       "name": "s1",
+       "role": "PIPELINE_REG",
+       "importance": "major",
+       "score": 51.0,
+       "struct_score": 36.5,
+       "trace": "data_backward",
+       "why": "First 16-bit slice sum register; s2-s4 are later stages.",
+       "lines": [
+        49,
+        143
+       ]
+      },
+      {
+       "id": "E38",
+       "name": "s4",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 49.7,
+       "struct_score": 31.3,
+       "trace": "data_backward",
+       "why": "Top slice sum computed in final stage, feeds result.",
+       "lines": [
+        52,
+        185,
+        193
+       ]
+      },
+      {
+       "id": "E31",
+       "name": "c1",
+       "role": "PIPELINE_REG",
+       "importance": "major",
+       "score": 48.0,
+       "struct_score": 24.2,
+       "trace": "data_backward",
+       "why": "Registered carry propagated between slice stages; c2-c4 replicate.",
+       "lines": [
+        44,
+        143,
+        157
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E36",
+       "name": "s2",
+       "kind": "reg"
+      },
+      {
+       "id": "E37",
+       "name": "s3",
+       "kind": "reg"
+      },
+      {
+       "id": "E32",
+       "name": "c2",
+       "kind": "reg"
+      },
+      {
+       "id": "E33",
+       "name": "c3",
+       "kind": "reg"
+      },
+      {
+       "id": "E34",
+       "name": "c4",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Operand skew",
+     "kind": "PIPELINE_STAGE",
+     "description": "Slices operands and delays upper slices to match carry arrival.",
+     "anchors": [
+      {
+       "id": "E4",
+       "name": "adda",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 96.8,
+       "struct_score": 92.0,
+       "trace": "interface",
+       "why": "64-bit operand A, split into four 16-bit slices.",
+       "lines": [
+        10,
+        63,
+        65
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "addb",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 96.8,
+       "struct_score": 92.0,
+       "trace": "interface",
+       "why": "64-bit operand B, split into four 16-bit slices.",
+       "lines": [
+        11,
+        64,
+        66
+       ]
+      },
+      {
+       "id": "E19",
+       "name": "a2_ff1",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 23.6,
+       "struct_score": 39.1,
+       "trace": "data_backward",
+       "why": "Operand skew register delaying upper slices to their stage.",
+       "lines": [
+        29,
+        103,
+        157
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E11",
+       "name": "a1",
+       "kind": "wire"
+      },
+      {
+       "id": "E12",
+       "name": "b1",
+       "kind": "wire"
+      },
+      {
+       "id": "E13",
+       "name": "a2",
+       "kind": "wire"
+      },
+      {
+       "id": "E14",
+       "name": "b2",
+       "kind": "wire"
+      },
+      {
+       "id": "E15",
+       "name": "a3",
+       "kind": "wire"
+      },
+      {
+       "id": "E16",
+       "name": "b3",
+       "kind": "wire"
+      },
+      {
+       "id": "E17",
+       "name": "a4",
+       "kind": "wire"
+      },
+      {
+       "id": "E18",
+       "name": "b4",
+       "kind": "wire"
+      },
+      {
+       "id": "E20",
+       "name": "b2_ff1",
+       "kind": "reg"
+      },
+      {
+       "id": "E21",
+       "name": "a3_ff1",
+       "kind": "reg"
+      },
+      {
+       "id": "E22",
+       "name": "b3_ff1",
+       "kind": "reg"
+      },
+      {
+       "id": "E23",
+       "name": "a3_ff2",
+       "kind": "reg"
+      },
+      {
+       "id": "E24",
+       "name": "b3_ff2",
+       "kind": "reg"
+      },
+      {
+       "id": "E25",
+       "name": "a4_ff1",
+       "kind": "reg"
+      },
+      {
+       "id": "E26",
+       "name": "b4_ff1",
+       "kind": "reg"
+      },
+      {
+       "id": "E27",
+       "name": "a4_ff2",
+       "kind": "reg"
+      },
+      {
+       "id": "E28",
+       "name": "b4_ff2",
+       "kind": "reg"
+      },
+      {
+       "id": "E29",
+       "name": "a4_ff3",
+       "kind": "reg"
+      },
+      {
+       "id": "E30",
+       "name": "b4_ff3",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Sum alignment",
+     "kind": "PIPELINE_STAGE",
+     "description": "Delays lower slice sums so all slices form result together.",
+     "anchors": [
+      {
+       "id": "E39",
+       "name": "s1_ff1",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 21.2,
+       "struct_score": 29.1,
+       "trace": "data_backward",
+       "why": "Sum alignment delay register so lower slices exit with s4.",
+       "lines": [
+        54,
+        128,
+        129
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "result",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 95.8,
+       "struct_score": 89.4,
+       "trace": "data_backward",
+       "why": "65-bit sum concatenated from final carry and aligned slice sums.",
+       "lines": [
+        12,
+        193
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E40",
+       "name": "s1_ff2",
+       "kind": "reg"
+      },
+      {
+       "id": "E41",
+       "name": "s1_ff3",
+       "kind": "reg"
+      },
+      {
+       "id": "E42",
+       "name": "s2_ff1",
+       "kind": "reg"
+      },
+      {
+       "id": "E43",
+       "name": "s2_ff2",
+       "kind": "reg"
+      },
+      {
+       "id": "E44",
+       "name": "s3_ff1",
+       "kind": "reg"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_n",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "operand_in",
+     "protocol": "STREAM",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "i_en",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "adda",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "addb",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "result_out",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "result",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "o_en",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

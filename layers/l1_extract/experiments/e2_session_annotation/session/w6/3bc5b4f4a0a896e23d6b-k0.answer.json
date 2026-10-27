@@ -1,0 +1,21 @@
+{
+  "module_summary": "Round-robin arbiter: priority token masks a doubled request vector via subtract trick to pick a one-hot grant, held until accept_i then token rotates.",
+  "anchors": [
+    {"id": "E9", "name": "tok", "role": "ARBITRATION", "importance": "critical", "trace": "control_backward", "why": "One-hot round-robin priority token; rotated past last grant on accept.", "lines": [22, 32, 36]},
+    {"id": "E4", "name": "gnt_o", "role": "ARBITRATION", "importance": "critical", "trace": "data_backward", "why": "Registered one-hot grant vector held until accepted.", "lines": [7, 45]},
+    {"id": "E6", "name": "gnt_valid_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Grant valid: busy state flag, set when any request, cleared on accept.", "lines": [9, 44]},
+    {"id": "E3", "name": "req_i", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Per-requester request vector feeding the priority pick.", "lines": [6, 21, 26]},
+    {"id": "E5", "name": "accept_i", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Grant acknowledge: clears busy, grant and advances token.", "lines": [8, 34]},
+    {"id": "E13", "name": "folded", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Next one-hot grant folded from doubled masked request pick.", "lines": [24, 40]},
+    {"id": "E14", "name": "spun", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Current grant rotated left by one; next priority token.", "lines": [25, 36]}
+  ],
+  "groups": [
+    {"name": "rr_priority_logic", "kind": "ARBITER", "anchor_ids": ["E9", "E13", "E14", "E4"], "member_ids": ["E10", "E11", "E12", "E7"], "description": "Token-based priority select over doubled request vector producing one-hot grant."},
+    {"name": "grant_handshake", "kind": "CONTROLLER", "anchor_ids": ["E6", "E5", "E3"], "member_ids": ["E8", "E15"], "description": "Idle/granted busy flag holding grant until accept_i."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "requests", "protocol": "REQ_ACK", "direction": "IN", "member_ids": ["E3"]},
+    {"name": "grant", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E4", "E6", "E5"]}
+  ]
+}

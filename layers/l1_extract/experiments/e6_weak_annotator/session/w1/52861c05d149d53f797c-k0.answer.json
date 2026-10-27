@@ -1,0 +1,194 @@
+{
+  "module_summary": "Synchronous FIFO with dual-port handshakes; push on write side when ready, pop on read side when valid.",
+  "anchors": [
+    {
+      "id": "E11",
+      "name": "mem_q",
+      "role": "STORAGE",
+      "importance": "critical",
+      "trace": "data_backward",
+      "why": "Stores FIFO data elements; read/written at wptr/rptr indices.",
+      "lines": [21, 34, 30]
+    },
+    {
+      "id": "E12",
+      "name": "wptr_q",
+      "role": "FIFO_PTR",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Write pointer; increments on push to index mem_q.",
+      "lines": [22, 47, 56]
+    },
+    {
+      "id": "E13",
+      "name": "rptr_q",
+      "role": "FIFO_PTR",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Read pointer; increments on pop to index mem_q.",
+      "lines": [22, 48, 30]
+    },
+    {
+      "id": "E14",
+      "name": "count_q",
+      "role": "FIFO_PTR",
+      "importance": "critical",
+      "trace": "control_backward",
+      "why": "Occupancy count; drives in_ready and out_valid for handshakes.",
+      "lines": [23, 26, 27]
+    },
+    {
+      "id": "E4",
+      "name": "in_valid",
+      "role": "HANDSHAKE_VALID",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Write-side valid signal; paired with in_ready for push handshake.",
+      "lines": [10, 28, 50]
+    },
+    {
+      "id": "E5",
+      "name": "in_ready",
+      "role": "HANDSHAKE_READY",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Write-side ready signal; asserted when not full.",
+      "lines": [11, 26, 48]
+    },
+    {
+      "id": "E7",
+      "name": "out_valid",
+      "role": "HANDSHAKE_VALID",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Read-side valid signal; paired with out_ready for pop handshake.",
+      "lines": [14, 27, 51]
+    },
+    {
+      "id": "E8",
+      "name": "out_ready",
+      "role": "HANDSHAKE_READY",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Read-side ready signal; enables pop when asserted.",
+      "lines": [15, 29, 48]
+    },
+    {
+      "id": "E6",
+      "name": "in_data",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "data_backward",
+      "why": "Write-side data payload; stored in mem_q on push.",
+      "lines": [12, 34, 50]
+    },
+    {
+      "id": "E9",
+      "name": "out_data",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "data_backward",
+      "why": "Read-side data payload; output from mem_q via rptr.",
+      "lines": [16, 30, 51]
+    },
+    {
+      "id": "E3",
+      "name": "flush_i",
+      "role": "CONTROL_FLAG",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Flush control; resets pointers and count to empty state.",
+      "lines": [8, 42, 45]
+    },
+    {
+      "id": "E15",
+      "name": "do_push",
+      "role": "ENABLE",
+      "importance": "major",
+      "trace": "forward",
+      "why": "Push gating signal; enables mem_q write and wptr increment.",
+      "lines": [24, 28, 34]
+    },
+    {
+      "id": "E16",
+      "name": "do_pop",
+      "role": "ENABLE",
+      "importance": "major",
+      "trace": "forward",
+      "why": "Pop gating signal; enables rptr increment and count decrement.",
+      "lines": [24, 29, 48]
+    },
+    {
+      "id": "E10",
+      "name": "count_o",
+      "role": "STATUS",
+      "importance": "major",
+      "trace": "forward",
+      "why": "Occupancy output; mirrors count_q for external monitoring.",
+      "lines": [17, 31, 51]
+    }
+  ],
+  "groups": [
+    {
+      "name": "FIFO Memory",
+      "kind": "BUFFER",
+      "anchor_ids": ["E11"],
+      "member_ids": [],
+      "description": "Circular buffer array storing data elements indexed by read/write pointers."
+    },
+    {
+      "name": "Write Handshake",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E4", "E5", "E6"],
+      "member_ids": [],
+      "description": "Write-side VALID/READY protocol and data payload."
+    },
+    {
+      "name": "Read Handshake",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E7", "E8", "E9"],
+      "member_ids": [],
+      "description": "Read-side VALID/READY protocol and data payload."
+    },
+    {
+      "name": "Control Logic",
+      "kind": "CONTROLLER",
+      "anchor_ids": ["E12", "E13", "E14", "E15", "E16", "E3"],
+      "member_ids": [],
+      "description": "Pointers, occupancy counter, and push/pop gating; flush control."
+    },
+    {
+      "name": "Status",
+      "kind": "OTHER",
+      "anchor_ids": ["E10"],
+      "member_ids": [],
+      "description": "Occupancy count output."
+    }
+  ],
+  "interfaces": [
+    {
+      "name": "write_handshake",
+      "protocol": "VALID_READY",
+      "direction": "IN",
+      "member_ids": ["E4", "E5", "E6"]
+    },
+    {
+      "name": "read_handshake",
+      "protocol": "VALID_READY",
+      "direction": "OUT",
+      "member_ids": ["E7", "E8", "E9"]
+    },
+    {
+      "name": "control",
+      "protocol": "SIMPLE",
+      "direction": "IN",
+      "member_ids": ["E3"]
+    },
+    {
+      "name": "status",
+      "protocol": "SIMPLE",
+      "direction": "OUT",
+      "member_ids": ["E10"]
+    }
+  ]
+}

@@ -1,0 +1,396 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "S2_width_8to16",
+ "tops": [
+  "verified_width_8to16"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "w8_phase_hold": {
+   "source": "teacher",
+   "canonical_instance": "verified_width_8to16.u_ph",
+   "file": "experiments/e3_perturb_benchmark/data/width_8to16/S2/verified_width_8to16.v",
+   "lines": [
+    3,
+    24
+   ],
+   "summary": "Byte-pair phase tracker: a toggle flop alternates on each strobe and the first (even-phase) byte of each pair is latched into a holding register.",
+   "blocks": [
+    {
+     "name": "phase_capture",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Phase toggle and capture enable latch first byte of each strobed pair.",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "odd_q",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 100.0,
+       "struct_score": 99.9,
+       "trace": "control_backward",
+       "why": "Two-state even/odd phase toggled on each strobe; gates byte capture.",
+       "lines": [
+        11,
+        21
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "hi_byte",
+       "role": "HOLDING_REG",
+       "importance": "critical",
+       "score": 97.7,
+       "struct_score": 94.1,
+       "trace": "data_backward",
+       "why": "Latches bus byte on even-phase strobe, held through the pair.",
+       "lines": [
+        8,
+        19
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "stb",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 98.0,
+       "struct_score": 95.0,
+       "trace": "interface",
+       "why": "Input data strobe; toggles phase and qualifies capture.",
+       "lines": [
+        6,
+        11,
+        20
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "bus_i",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 96.9,
+       "struct_score": 92.1,
+       "trace": "interface",
+       "why": "Incoming byte bus captured into holding register.",
+       "lines": [
+        7,
+        19
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "grab_w",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 25.0,
+       "struct_score": 44.4,
+       "trace": "control_backward",
+       "why": "Capture enable: strobe in even phase loads hi_byte.",
+       "lines": [
+        11,
+        18
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "ck",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "arst_b",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "byte_in",
+     "protocol": "STREAM",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "stb",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "bus_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "held_out",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E5",
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "hi_byte",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "odd_q",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "verified_width_8to16": {
+   "source": "teacher",
+   "canonical_instance": "verified_width_8to16",
+   "file": "experiments/e3_perturb_benchmark/data/width_8to16/S2/verified_width_8to16.v",
+   "lines": [
+    26,
+    61
+   ],
+   "summary": "8-to-16 bit width converter: a child phase tracker toggles on each valid byte and holds the first byte; on the second byte the pair is registered as a 16-bit word with a valid pulse.",
+   "blocks": [
+    {
+     "name": "phase_tracker",
+     "kind": "CONTROLLER",
+     "description": "w8_phase_hold toggle decides when a byte pair is complete.",
+     "anchors": [
+      {
+       "id": "E8",
+       "name": "u_parity",
+       "role": "FSM_STATE",
+       "importance": "major",
+       "score": 69.7,
+       "struct_score": 94.2,
+       "trace": "control_backward",
+       "why": "Byte phase toggle from child; marks second byte of a pair.",
+       "lines": [
+        36,
+        40,
+        49
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "fire_k",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 53.3,
+       "struct_score": 45.4,
+       "trace": "control_backward",
+       "why": "Second-byte strobe: loads data_out and raises valid_out.",
+       "lines": [
+        37,
+        40,
+        58
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "u_ph",
+       "module": "w8_phase_hold"
+      }
+     ],
+     "members": [
+      {
+       "id": "E10",
+       "name": "spare_tap",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "word_packer",
+     "kind": "DATAPATH",
+     "description": "Holds first byte and registers the 16-bit word with its valid.",
+     "anchors": [
+      {
+       "id": "E7",
+       "name": "u_pending",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 51.0,
+       "struct_score": 36.7,
+       "trace": "data_backward",
+       "why": "First byte of the pair held by the child, forms upper half of output.",
+       "lines": [
+        35,
+        48,
+        58
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "data_out",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 99.4,
+       "struct_score": 98.5,
+       "trace": "data_backward",
+       "why": "Assembled 16-bit word {held byte, current byte}, loaded on fire_k.",
+       "lines": [
+        33,
+        58
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "valid_out",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 98.4,
+       "struct_score": 95.9,
+       "trace": "control_backward",
+       "why": "Registered one-cycle valid accompanying each assembled 16-bit word.",
+       "lines": [
+        32,
+        57
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "u_ph",
+       "module": "w8_phase_hold"
+      }
+     ],
+     "members": []
+    },
+    {
+     "name": "byte_input",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Incoming byte stream with valid strobe.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "valid_in",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 97.1,
+       "struct_score": 92.8,
+       "trace": "interface",
+       "why": "Input byte strobe; toggles phase tracker and qualifies word output.",
+       "lines": [
+        29,
+        40,
+        46
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "data_in",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 96.9,
+       "struct_score": 92.1,
+       "trace": "interface",
+       "why": "Input byte: held as high byte or concatenated as low byte.",
+       "lines": [
+        30,
+        47,
+        58
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_n",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "byte_in",
+     "protocol": "STREAM",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "valid_in",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "data_in",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "word_out",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E5",
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "valid_out",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "data_out",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

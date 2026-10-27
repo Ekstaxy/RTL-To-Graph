@@ -1,0 +1,561 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "S2_ugly_mul",
+ "tops": [
+  "ugly_mul"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "um_core": {
+   "source": "teacher",
+   "canonical_instance": "ugly_mul.u_core",
+   "file": "experiments/e3_perturb_benchmark/data/ugly_mul/S2/ugly_mul.v",
+   "lines": [
+    1,
+    33
+   ],
+   "summary": "Sequential 16x16 shift-add multiplier: load latches operands, each go step adds the shifted multiplicand gated by multiplier LSB into an accumulator; a step counter flags completion.",
+   "blocks": [
+    {
+     "name": "shift_add_datapath",
+     "kind": "DATAPATH",
+     "description": "Operand shift registers, gated partial product and accumulator.",
+     "anchors": [
+      {
+       "id": "E8",
+       "name": "sum",
+       "role": "DATAPATH_MAJOR",
+       "importance": "critical",
+       "score": 98.1,
+       "struct_score": 95.2,
+       "trace": "data_backward",
+       "why": "Product accumulator, cleared on load, adds partial product each step; module result.",
+       "lines": [
+        17,
+        20
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "mcand",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 59.5,
+       "struct_score": 67.9,
+       "trace": "data_backward",
+       "why": "Multiplicand latched from ia, shifted left each step.",
+       "lines": [
+        18,
+        21
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "mplier",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 57.8,
+       "struct_score": 61.5,
+       "trace": "data_backward",
+       "why": "Multiplier latched from ib, shifted right; LSB gates the addend.",
+       "lines": [
+        10,
+        28,
+        29
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "addend",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 27.6,
+       "struct_score": 53.8,
+       "trace": "data_backward",
+       "why": "Partial product: multiplicand gated by multiplier LSB.",
+       "lines": [
+        10,
+        20
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "ia",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 95.8,
+       "struct_score": 89.3,
+       "trace": "interface",
+       "why": "Multiplicand operand input.",
+       "lines": [
+        3,
+        18
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "ib",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 95.8,
+       "struct_score": 89.3,
+       "trace": "interface",
+       "why": "Multiplier operand input.",
+       "lines": [
+        3,
+        28
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "step_counter",
+     "kind": "COUNTER_TIMER",
+     "description": "Counts go steps after load and signals completion at 16.",
+     "anchors": [
+      {
+       "id": "E11",
+       "name": "lap",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 59.9,
+       "struct_score": 69.1,
+       "trace": "control_backward",
+       "why": "Step counter cleared on load, incremented per go; reaching 16 raises last.",
+       "lines": [
+        11,
+        30,
+        31
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "last",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 52.9,
+       "struct_score": 43.8,
+       "trace": "control_backward",
+       "why": "Completion indication when step counter reaches 16.",
+       "lines": [
+        5,
+        11
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "ld",
+       "role": "COMMAND",
+       "importance": "critical",
+       "score": 87.6,
+       "struct_score": 68.2,
+       "trace": "interface",
+       "why": "Load command: latches operands, clears accumulator and counter.",
+       "lines": [
+        16,
+        28,
+        30
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "go",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 59.2,
+       "struct_score": 66.8,
+       "trace": "interface",
+       "why": "Step enable: performs one shift-add iteration and counts it.",
+       "lines": [
+        19,
+        29,
+        31
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "ck",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "nr",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "control",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "ld",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "go",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "last",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "operands",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E5",
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "ia",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "ib",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "product",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E8",
+       "name": "sum",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "ugly_mul": {
+   "source": "teacher",
+   "canonical_instance": "ugly_mul",
+   "file": "experiments/e3_perturb_benchmark/data/ugly_mul/S2/ugly_mul.v",
+   "lines": [
+    35,
+    59
+   ],
+   "summary": "16x16 sequential multiplier wrapper: a one-hot idle/run/finish FSM loads operands into a shift-add core child on start, steps it until its last flag, then pulses done.",
+   "blocks": [
+    {
+     "name": "sequencer",
+     "kind": "CONTROLLER",
+     "description": "One-hot FSM issuing load and step to the core until its last flag.",
+     "anchors": [
+      {
+       "id": "E9",
+       "name": "w",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.6,
+       "struct_score": 98.9,
+       "trace": "control_backward",
+       "why": "One-hot state (idle/run/finish) sequencing load, stepping and completion of the core.",
+       "lines": [
+        40,
+        53,
+        54
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "s",
+       "role": "COMMAND",
+       "importance": "critical",
+       "score": 82.1,
+       "struct_score": 48.4,
+       "trace": "interface",
+       "why": "Start input: in idle loads operands into core and enters run.",
+       "lines": [
+        36,
+        46,
+        53
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "hot_r",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 49.9,
+       "struct_score": 32.3,
+       "trace": "control_backward",
+       "why": "Run-state decode driving the core go/step enable.",
+       "lines": [
+        44,
+        46,
+        54
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "ends",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 48.1,
+       "struct_score": 24.6,
+       "trace": "data_backward",
+       "why": "Core step-counter completion flag; moves FSM run to finish.",
+       "lines": [
+        42,
+        46,
+        54
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "hot_i",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 22.9,
+       "struct_score": 36.2,
+       "trace": "control_backward",
+       "why": "Idle-state decode; with start forms the core load strobe.",
+       "lines": [
+        43,
+        46,
+        53
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "hot_f",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 21.5,
+       "struct_score": 30.6,
+       "trace": "control_backward",
+       "why": "Finish-state decode registered into fin for the done pulse.",
+       "lines": [
+        45,
+        52
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "multiplier_core",
+     "kind": "DATAPATH",
+     "description": "um_core shift-add multiplier child producing the 32-bit product.",
+     "anchors": [
+      {
+       "id": "E4",
+       "name": "a",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 95.0,
+       "struct_score": 87.5,
+       "trace": "interface",
+       "why": "Multiplicand operand passed to the core.",
+       "lines": [
+        37,
+        46
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "b",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 95.0,
+       "struct_score": 87.5,
+       "trace": "interface",
+       "why": "Multiplier operand passed to the core.",
+       "lines": [
+        37,
+        46
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "p",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 96.7,
+       "struct_score": 91.5,
+       "trace": "data_backward",
+       "why": "Product output, driven by the core accumulator.",
+       "lines": [
+        39,
+        46
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "u_core",
+       "module": "um_core"
+      }
+     ],
+     "members": []
+    },
+    {
+     "name": "status_out",
+     "kind": "OTHER",
+     "description": "Done pulse register and busy level outputs.",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "d",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 94.6,
+       "struct_score": 86.4,
+       "trace": "control_backward",
+       "why": "One-cycle done pulse from fin register after the finish state.",
+       "lines": [
+        38,
+        57
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "bz",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 52.6,
+       "struct_score": 42.8,
+       "trace": "control_backward",
+       "why": "Busy level while FSM is in the run state.",
+       "lines": [
+        38,
+        58
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E10",
+       "name": "fin",
+       "kind": "reg"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "c",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rn",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "start_operands",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "a",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "b",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "result",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E6",
+      "E7",
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "d",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "bz",
+       "kind": "port_out"
+      },
+      {
+       "id": "E8",
+       "name": "p",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

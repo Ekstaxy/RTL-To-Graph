@@ -1,0 +1,310 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "common_cells_cc_rstgen",
+ "tops": [
+  "cc_rstgen"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "cc_rstgen_bypass": {
+   "source": "teacher",
+   "canonical_instance": "cc_rstgen.i_rstgen_bypass",
+   "file": "data/rtl/common_cells/src/cc_rstgen_bypass.sv",
+   "lines": [
+    15,
+    67
+   ],
+   "summary": "Reset synchronizer with test bypass: a shift register of ones releases reset synchronously, with clock muxes selecting test-mode reset sources.",
+   "blocks": [
+    {
+     "name": "Reset synchronizer",
+     "kind": "COUNTER_TIMER",
+     "description": "NumRegs-deep shift register asynchronously cleared, synchronously released.",
+     "anchors": [
+      {
+       "id": "E8",
+       "name": "synch_regs_q",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 87.5,
+       "struct_score": 67.8,
+       "trace": "data_backward",
+       "why": "Reset-release shift register shifting ones in; last stage drives rst_no and init_no.",
+       "lines": [
+        40,
+        47,
+        57
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E7",
+       "name": "rst_n",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Test bypass muxes",
+     "kind": "OTHER",
+     "description": "Clock muxes choosing functional or test-mode reset for input and outputs.",
+     "anchors": [
+      {
+       "id": "E4",
+       "name": "test_mode_i",
+       "role": "MUX_SELECT",
+       "importance": "major",
+       "score": 60.9,
+       "struct_score": 72.0,
+       "trace": "interface",
+       "why": "Selects test-mode reset sources over synchronized reset in all three muxes.",
+       "lines": [
+        35,
+        42,
+        49
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "rst_no",
+       "role": "CLOCK_GEN",
+       "importance": "critical",
+       "score": 88.7,
+       "struct_score": 71.6,
+       "trace": "data_backward",
+       "why": "Generated synchronized reset output, or test-mode reset when bypassed.",
+       "lines": [
+        43
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "init_no",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 53.6,
+       "struct_score": 46.5,
+       "trace": "data_backward",
+       "why": "Init-done indication from last synchronizer stage, forced high in test mode.",
+       "lines": [
+        50
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "rst_test_mode_ni",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 33.0,
+       "struct_score": 72.3,
+       "trace": "interface",
+       "why": "Test-mode reset source muxed onto internal reset and rst_no.",
+       "lines": [
+        34,
+        41
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "Clock/reset in",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2",
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_ni",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "rst_test_mode_ni",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Test mode",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "test_mode_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Reset outputs",
+     "protocol": "CLOCK_RESET",
+     "direction": "OUT",
+     "member_ids": [
+      "E5",
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "rst_no",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "init_no",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "cc_rstgen": {
+   "source": "teacher",
+   "canonical_instance": "cc_rstgen",
+   "file": "data/rtl/common_cells/src/cc_rstgen.sv",
+   "lines": [
+    13,
+    30
+   ],
+   "summary": "Reset generator wrapper: cc_rstgen_bypass synchronizes release of rst_ni through a shift register, with test-mode bypass of the reset outputs.",
+   "blocks": [
+    {
+     "name": "reset_synchronizer",
+     "kind": "OTHER",
+     "description": "Child reset synchronizer shift register with test bypass, driving rst_no and init_no.",
+     "anchors": [
+      {
+       "id": "E5",
+       "name": "init_no",
+       "role": "STATUS",
+       "importance": "critical",
+       "score": 83.8,
+       "struct_score": 54.3,
+       "trace": "data_backward",
+       "why": "Initialization indication from child, low until reset synchronizer releases.",
+       "lines": [
+        18,
+        27
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "test_mode_i",
+       "role": "MUX_SELECT",
+       "importance": "major",
+       "score": 65.6,
+       "struct_score": 83.9,
+       "trace": "interface",
+       "why": "Selects test-mode reset source in child bypass muxes.",
+       "lines": [
+        16,
+        25
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "i_rstgen_bypass",
+       "module": "cc_rstgen_bypass"
+      }
+     ],
+     "members": [
+      {
+       "id": "E2",
+       "name": "rst_ni",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "rst_no",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset_in",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_ni",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "test_mode",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "test_mode_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "reset_outputs",
+     "protocol": "CLOCK_RESET",
+     "direction": "OUT",
+     "member_ids": [
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "rst_no",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "init_no",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,191 @@
+{
+  "module_summary": "UART receiver controller decodes serial input using programmable timer and phase counter; outputs received bytes via AXI Stream handshake with error flags.",
+  "anchors": [
+    {
+      "id": "E6",
+      "name": "rxd",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Serial input line, sampled and synchronized for bit reception.",
+      "lines": [60, 115]
+    },
+    {
+      "id": "E10",
+      "name": "prescale",
+      "role": "CONFIG_REG",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Configurable divisor for baud rate timing.",
+      "lines": [66, 101]
+    },
+    {
+      "id": "E3",
+      "name": "m_axis_tdata",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Received byte data output.",
+      "lines": [56, 90]
+    },
+    {
+      "id": "E4",
+      "name": "m_axis_tvalid",
+      "role": "HANDSHAKE_VALID",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Output valid pulse when byte reception completes.",
+      "lines": [57, 91]
+    },
+    {
+      "id": "E5",
+      "name": "m_axis_tready",
+      "role": "HANDSHAKE_READY",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Input ready signal, gates acknowledgment of received data.",
+      "lines": [58, 144]
+    },
+    {
+      "id": "E11",
+      "name": "smp",
+      "role": "HOLDING_REG",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Synchronization flip-flop for rxd edge detection and start-bit sensing.",
+      "lines": [70, 115]
+    },
+    {
+      "id": "E12",
+      "name": "phase_k",
+      "role": "COUNTER",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Bit counter during frame reception, counts from DATA_WIDTH+2 down to 0.",
+      "lines": [71, 121]
+    },
+    {
+      "id": "E18",
+      "name": "tick_ok",
+      "role": "HANDSHAKE_VALID",
+      "importance": "major",
+      "trace": "data_backward",
+      "why": "Timer tick output from child urx_tmr, gates phase advancement.",
+      "lines": [78, 82]
+    },
+    {
+      "id": "E19",
+      "name": "frag",
+      "role": "INTERFACE_DATA",
+      "importance": "major",
+      "trace": "data_backward",
+      "why": "Received byte from child urx_sipo shift register.",
+      "lines": [79, 142]
+    },
+    {
+      "id": "E21",
+      "name": "t_go",
+      "role": "CONTROL_FLAG",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Combines tick_ok and active-sequence detection; advances phase counter each cycle.",
+      "lines": [82, 125]
+    },
+    {
+      "id": "E26",
+      "name": "kick",
+      "role": "CONTROL_FLAG",
+      "importance": "major",
+      "trace": "forward",
+      "why": "Resets timer and shift register for new frame reception when idle.",
+      "lines": [87, 100]
+    },
+    {
+      "id": "E27",
+      "name": "tail_good",
+      "role": "CONTROL_FLAG",
+      "importance": "major",
+      "trace": "forward",
+      "why": "Validates received byte and latches it into output register.",
+      "lines": [88, 141]
+    },
+    {
+      "id": "E24",
+      "name": "in_body",
+      "role": "DECODE",
+      "importance": "major",
+      "trace": "forward",
+      "why": "Decodes data-bit phase; controls shift-register advance and timer reload.",
+      "lines": [85, 99]
+    }
+  ],
+  "groups": [
+    {
+      "name": "Serial Input Interface",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E6", "E10"],
+      "member_ids": [],
+      "description": "Serial input line and baud-rate configuration."
+    },
+    {
+      "name": "Synchronization and Timer",
+      "kind": "COUNTER_TIMER",
+      "anchor_ids": ["E11", "E18"],
+      "member_ids": ["I1"],
+      "description": "Synchronizes serial input and manages bit-rate timing via programmable counter."
+    },
+    {
+      "name": "Bit Counter and Shift Register",
+      "kind": "REGISTER_BANK",
+      "anchor_ids": ["E12", "E19"],
+      "member_ids": ["I2"],
+      "description": "Counts bit positions and collects shifted-in data from serial stream."
+    },
+    {
+      "name": "Reception Phase Control",
+      "kind": "DECODER",
+      "anchor_ids": ["E24", "E21", "E26", "E27"],
+      "member_ids": ["E23", "E25", "E20", "E22"],
+      "description": "Decodes receive phases and generates control signals for timer and shift register sequencing."
+    },
+    {
+      "name": "Output Handshake",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E3", "E4", "E5"],
+      "member_ids": [],
+      "description": "AXI Stream output with received byte and valid/ready handshake."
+    }
+  ],
+  "interfaces": [
+    {
+      "name": "Serial Input",
+      "protocol": "SERIAL",
+      "direction": "IN",
+      "member_ids": ["E6"]
+    },
+    {
+      "name": "Baud Configuration",
+      "protocol": "SIMPLE",
+      "direction": "IN",
+      "member_ids": ["E10"]
+    },
+    {
+      "name": "Output Data Stream",
+      "protocol": "VALID_READY",
+      "direction": "OUT",
+      "member_ids": ["E3", "E4", "E5"]
+    },
+    {
+      "name": "Status Outputs",
+      "protocol": "SIMPLE",
+      "direction": "OUT",
+      "member_ids": ["E7", "E8", "E9"]
+    },
+    {
+      "name": "Clock and Reset",
+      "protocol": "CLOCK_RESET",
+      "direction": "IN",
+      "member_ids": ["E1", "E2"]
+    }
+  ]
+}

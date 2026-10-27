@@ -1,0 +1,1416 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "wb2axip_axixclk",
+ "tops": [
+  "axixclk"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "afifo": {
+   "source": "teacher",
+   "canonical_instance": "axixclk.WRITE_FIFO.awfifo",
+   "file": "data/rtl/wb2axip/rtl/afifo.v",
+   "lines": [
+    36,
+    804
+   ],
+   "summary": "Asynchronous dual-clock FIFO: memory array addressed by binary write/read pointers, Gray-coded pointers crossed via NFF synchronizers to generate full and empty flags, with optional registered read output.",
+   "blocks": [
+    {
+     "name": "FIFO memory",
+     "kind": "MEMORY",
+     "description": "Dual-clock storage array written in write domain, read in read domain",
+     "anchors": [
+      {
+       "id": "E11",
+       "name": "mem",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 97.6,
+       "struct_score": 94.0,
+       "trace": "data_backward",
+       "why": "FIFO data array written from i_wr_data at wr_addr, read at rd_addr",
+       "lines": [
+        98,
+        151,
+        172
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "lcl_rd_data",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 23.3,
+       "struct_score": 37.8,
+       "trace": "data_backward",
+       "why": "Asynchronous memory read value feeding o_rd_data",
+       "lines": [
+        172,
+        232
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Write pointer and full logic",
+     "kind": "CONTROLLER",
+     "description": "Write-domain binary/Gray pointer and full comparison against synchronized read pointer",
+     "anchors": [
+      {
+       "id": "E13",
+       "name": "wr_addr",
+       "role": "FIFO_PTR",
+       "importance": "critical",
+       "score": 86.6,
+       "struct_score": 64.4,
+       "trace": "control_backward",
+       "why": "Binary write pointer, increments on accepted write, addresses memory write",
+       "lines": [
+        138,
+        142,
+        151
+       ]
+      },
+      {
+       "id": "E19",
+       "name": "wgray",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 59.0,
+       "struct_score": 65.9,
+       "trace": "forward",
+       "why": "Gray-coded write pointer sent to read clock domain synchronizer",
+       "lines": [
+        143,
+        198,
+        211
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "o_wr_full",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 93.8,
+       "struct_score": 84.3,
+       "trace": "control_backward",
+       "why": "Full flag back-pressures writer; blocks pointer increment and memory write",
+       "lines": [
+        140,
+        150,
+        211
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E17",
+       "name": "next_wr_addr",
+       "kind": "wire"
+      },
+      {
+       "id": "E22",
+       "name": "wclk",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Read pointer and empty logic",
+     "kind": "CONTROLLER",
+     "description": "Read-domain pointer, empty compare and registered read output stage",
+     "anchors": [
+      {
+       "id": "E12",
+       "name": "rd_addr",
+       "role": "FIFO_PTR",
+       "importance": "critical",
+       "score": 87.6,
+       "struct_score": 68.2,
+       "trace": "control_backward",
+       "why": "Binary read pointer, increments on local read, addresses memory read",
+       "lines": [
+        160,
+        164,
+        172
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "rgray",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 59.7,
+       "struct_score": 68.5,
+       "trace": "forward",
+       "why": "Gray-coded read pointer sent to write clock domain; compared for empty",
+       "lines": [
+        165,
+        189,
+        214
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "lcl_rd_empty",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 21.2,
+       "struct_score": 29.2,
+       "trace": "control_backward",
+       "why": "Combinational empty compare gating read pointer advance",
+       "lines": [
+        162,
+        214,
+        228
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "lcl_read",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 21.1,
+       "struct_score": 28.8,
+       "trace": "control_backward",
+       "why": "Local read enable advancing rd_addr and loading output registers",
+       "lines": [
+        162,
+        222,
+        231
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "o_rd_empty",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 97.9,
+       "struct_score": 94.8,
+       "trace": "control_backward",
+       "why": "Empty flag to reader, registered from lcl_rd_empty; inverse of read data valid",
+       "lines": [
+        222,
+        226,
+        228
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "o_rd_data",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 97.8,
+       "struct_score": 94.4,
+       "trace": "data_backward",
+       "why": "Read data output, registered from memory read on lcl_read",
+       "lines": [
+        84,
+        232,
+        243
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E16",
+       "name": "next_rd_addr",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Clock domain crossing synchronizers",
+     "kind": "PIPELINE_STAGE",
+     "description": "NFF-stage synchronizers crossing Gray pointers between write and read clocks",
+     "anchors": [
+      {
+       "id": "E15",
+       "name": "wr_rgray",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 53.9,
+       "struct_score": 47.5,
+       "trace": "data_backward",
+       "why": "Read Gray pointer synchronized into write domain, compared for full flag",
+       "lines": [
+        187,
+        189,
+        211
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "rd_wgray",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 53.6,
+       "struct_score": 46.4,
+       "trace": "data_backward",
+       "why": "Write Gray pointer synchronized into read domain, compared for empty flag",
+       "lines": [
+        196,
+        198,
+        214
+       ]
+      },
+      {
+       "id": "E21",
+       "name": "wgray_cross",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 23.0,
+       "struct_score": 36.7,
+       "trace": "data_backward",
+       "why": "Intermediate synchronizer flops carrying wgray into read clock domain",
+       "lines": [
+        196,
+        198
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "rgray_cross",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 23.0,
+       "struct_score": 36.7,
+       "trace": "data_backward",
+       "why": "Intermediate synchronizer flops carrying rgray into write clock domain",
+       "lines": [
+        187,
+        189
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E3",
+     "name": "i_wr",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 92.8,
+     "struct_score": 81.9,
+     "trace": "interface",
+     "why": "Write request; with !o_wr_full enables memory write and pointer advance",
+     "lines": [
+      140,
+      150
+     ]
+    },
+    {
+     "id": "E4",
+     "name": "i_wr_data",
+     "role": "INTERFACE_DATA",
+     "importance": "critical",
+     "score": 94.8,
+     "struct_score": 86.8,
+     "trace": "interface",
+     "why": "Incoming write data stored into mem",
+     "lines": [
+      79,
+      151
+     ]
+    },
+    {
+     "id": "E8",
+     "name": "i_rd",
+     "role": "HANDSHAKE_READY",
+     "importance": "major",
+     "score": 59.4,
+     "struct_score": 67.3,
+     "trace": "interface",
+     "why": "Reader acknowledge/pop that drives lcl_read",
+     "lines": [
+      222,
+      237
+     ]
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "write_clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "i_wclk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "i_wr_reset_n",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "read_clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "i_rclk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "i_rd_reset_n",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "write_port",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "i_wr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "i_wr_data",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "o_wr_full",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "read_port",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E8",
+       "name": "i_rd",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "o_rd_data",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "o_rd_empty",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "axixclk": {
+   "source": "teacher",
+   "canonical_instance": "axixclk",
+   "file": "data/rtl/wb2axip/rtl/axixclk.v",
+   "lines": [
+    37,
+    311
+   ],
+   "summary": "AXI4 clock-domain crossing bridge that carries each AW, W, B, AR and R channel through its own asynchronous dual-clock FIFO, deriving valid/ready from FIFO empty/full flags.",
+   "blocks": [
+    {
+     "name": "write_cdc_fifos",
+     "kind": "BUFFER",
+     "description": "AW, W and B async FIFOs crossing write traffic between slave and master clocks.",
+     "anchors": [
+      {
+       "id": "E4",
+       "name": "S_AXI_AWADDR",
+       "role": "INTERFACE_ADDR",
+       "importance": "critical",
+       "score": 78.3,
+       "struct_score": 33.9,
+       "trace": "interface",
+       "why": "Slave write address packed into the AW async FIFO.",
+       "lines": [
+        63,
+        205
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "S_AXI_WDATA",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 87.2,
+       "struct_score": 66.6,
+       "trace": "interface",
+       "why": "Slave write data packed into the W async FIFO.",
+       "lines": [
+        74,
+        224
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "S_AXI_AWVALID",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 54.4,
+       "struct_score": 49.3,
+       "trace": "interface",
+       "why": "AW valid; with AWREADY forms write strobe of AW FIFO.",
+       "lines": [
+        71,
+        204
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "S_AXI_AWREADY",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 54.6,
+       "struct_score": 50.1,
+       "trace": "control_backward",
+       "why": "AW ready derived from not-full of the AW FIFO.",
+       "lines": [
+        72,
+        218
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "S_AXI_WREADY",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 54.6,
+       "struct_score": 50.1,
+       "trace": "control_backward",
+       "why": "W ready derived from not-full of the W FIFO.",
+       "lines": [
+        78,
+        231
+       ]
+      },
+      {
+       "id": "E21",
+       "name": "S_AXI_BVALID",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 55.9,
+       "struct_score": 54.9,
+       "trace": "control_backward",
+       "why": "B response valid derived from not-empty of the B FIFO.",
+       "lines": [
+        82,
+        241
+       ]
+      },
+      {
+       "id": "E53",
+       "name": "M_AXI_WDATA",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 60.4,
+       "struct_score": 70.8,
+       "trace": "interface",
+       "why": "Write data read out of W FIFO in master clock domain.",
+       "lines": [
+        122,
+        227
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "S_AXI_WVALID",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 26.4,
+       "struct_score": 49.3,
+       "trace": "interface",
+       "why": "W valid gating W FIFO write.",
+       "lines": [
+        77,
+        223
+       ]
+      },
+      {
+       "id": "E51",
+       "name": "M_AXI_AWVALID",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 27.9,
+       "struct_score": 54.9,
+       "trace": "control_backward",
+       "why": "Master AW valid from not-empty of AW FIFO.",
+       "lines": [
+        119,
+        217
+       ]
+      },
+      {
+       "id": "E56",
+       "name": "M_AXI_WVALID",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 27.9,
+       "struct_score": 54.9,
+       "trace": "control_backward",
+       "why": "Master W valid from not-empty of W FIFO.",
+       "lines": [
+        125,
+        230
+       ]
+      },
+      {
+       "id": "E61",
+       "name": "M_AXI_BREADY",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 26.6,
+       "struct_score": 50.1,
+       "trace": "control_backward",
+       "why": "Master B ready from not-full of B FIFO.",
+       "lines": [
+        131,
+        242
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "WRITE_FIFO.awfifo",
+       "module": "afifo"
+      },
+      {
+       "id": "I2",
+       "instance": "WRITE_FIFO.wfifo",
+       "module": "afifo"
+      },
+      {
+       "id": "I3",
+       "instance": "WRITE_FIFO.bfifo",
+       "module": "afifo"
+      }
+     ],
+     "members": [
+      {
+       "id": "E80",
+       "name": "WRITE_FIFO.awfull",
+       "kind": "wire"
+      },
+      {
+       "id": "E81",
+       "name": "WRITE_FIFO.awempty",
+       "kind": "wire"
+      },
+      {
+       "id": "E82",
+       "name": "WRITE_FIFO.wfull",
+       "kind": "wire"
+      },
+      {
+       "id": "E83",
+       "name": "WRITE_FIFO.wempty",
+       "kind": "wire"
+      },
+      {
+       "id": "E84",
+       "name": "WRITE_FIFO.bfull",
+       "kind": "wire"
+      },
+      {
+       "id": "E85",
+       "name": "WRITE_FIFO.bempty",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "read_cdc_fifos",
+     "kind": "BUFFER",
+     "description": "AR and R async FIFOs crossing read traffic between clock domains.",
+     "anchors": [
+      {
+       "id": "E24",
+       "name": "S_AXI_ARADDR",
+       "role": "INTERFACE_ADDR",
+       "importance": "critical",
+       "score": 78.3,
+       "struct_score": 33.9,
+       "trace": "interface",
+       "why": "Slave read address packed into the AR async FIFO.",
+       "lines": [
+        86,
+        280
+       ]
+      },
+      {
+       "id": "E35",
+       "name": "S_AXI_RDATA",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 88.4,
+       "struct_score": 70.8,
+       "trace": "interface",
+       "why": "Read data delivered to slave clock domain from R async FIFO.",
+       "lines": [
+        98,
+        303
+       ]
+      },
+      {
+       "id": "E38",
+       "name": "S_AXI_RVALID",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 55.9,
+       "struct_score": 54.9,
+       "trace": "control_backward",
+       "why": "Read valid derived from not-empty of the R FIFO.",
+       "lines": [
+        101,
+        306
+       ]
+      },
+      {
+       "id": "E74",
+       "name": "M_AXI_RDATA",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 59.2,
+       "struct_score": 66.6,
+       "trace": "interface",
+       "why": "Downstream read data written into the R async FIFO.",
+       "lines": [
+        146,
+        300
+       ]
+      },
+      {
+       "id": "E32",
+       "name": "S_AXI_ARVALID",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 26.4,
+       "struct_score": 49.3,
+       "trace": "interface",
+       "why": "AR valid gating AR FIFO write.",
+       "lines": [
+        94,
+        279
+       ]
+      },
+      {
+       "id": "E33",
+       "name": "S_AXI_ARREADY",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 26.6,
+       "struct_score": 50.1,
+       "trace": "control_backward",
+       "why": "AR ready from not-full of AR FIFO.",
+       "lines": [
+        95,
+        293
+       ]
+      },
+      {
+       "id": "E71",
+       "name": "M_AXI_ARVALID",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 27.9,
+       "struct_score": 54.9,
+       "trace": "control_backward",
+       "why": "Master AR valid from not-empty of AR FIFO.",
+       "lines": [
+        142,
+        292
+       ]
+      },
+      {
+       "id": "E78",
+       "name": "M_AXI_RREADY",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 26.6,
+       "struct_score": 50.1,
+       "trace": "control_backward",
+       "why": "Master R ready from not-full of R FIFO.",
+       "lines": [
+        150,
+        307
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I4",
+       "instance": "READ_FIFO.arfifo",
+       "module": "afifo"
+      },
+      {
+       "id": "I5",
+       "instance": "READ_FIFO.rfifo",
+       "module": "afifo"
+      }
+     ],
+     "members": [
+      {
+       "id": "E86",
+       "name": "READ_FIFO.arfull",
+       "kind": "wire"
+      },
+      {
+       "id": "E87",
+       "name": "READ_FIFO.arempty",
+       "kind": "wire"
+      },
+      {
+       "id": "E88",
+       "name": "READ_FIFO.rfull",
+       "kind": "wire"
+      },
+      {
+       "id": "E89",
+       "name": "READ_FIFO.rempty",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "reset_synchronizer",
+     "kind": "OTHER",
+     "description": "Shift register synchronizing reset release into master clock domain.",
+     "anchors": [
+      {
+       "id": "E79",
+       "name": "mreset",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 45.3,
+       "struct_score": 13.3,
+       "trace": "control_backward",
+       "why": "Three-stage reset synchronizer generating M_AXI_ARESETN in master clock domain.",
+       "lines": [
+        154,
+        161,
+        163
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E41",
+       "name": "M_AXI_ARESETN",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2",
+      "E40",
+      "E41"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "S_AXI_ACLK",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "S_AXI_ARESETN",
+       "kind": "port_in"
+      },
+      {
+       "id": "E40",
+       "name": "M_AXI_ACLK",
+       "kind": "port_in"
+      },
+      {
+       "id": "E41",
+       "name": "M_AXI_ARESETN",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "s_axi_aw",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12",
+      "E13"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "S_AXI_AWID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "S_AXI_AWADDR",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "S_AXI_AWLEN",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "S_AXI_AWSIZE",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "S_AXI_AWBURST",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "S_AXI_AWLOCK",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "S_AXI_AWCACHE",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "S_AXI_AWPROT",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "S_AXI_AWQOS",
+       "kind": "port_in"
+      },
+      {
+       "id": "E12",
+       "name": "S_AXI_AWVALID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "S_AXI_AWREADY",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "s_axi_w",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18"
+     ],
+     "members": [
+      {
+       "id": "E14",
+       "name": "S_AXI_WDATA",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "S_AXI_WSTRB",
+       "kind": "port_in"
+      },
+      {
+       "id": "E16",
+       "name": "S_AXI_WLAST",
+       "kind": "port_in"
+      },
+      {
+       "id": "E17",
+       "name": "S_AXI_WVALID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "S_AXI_WREADY",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "s_axi_b",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E19",
+      "E20",
+      "E21",
+      "E22"
+     ],
+     "members": [
+      {
+       "id": "E19",
+       "name": "S_AXI_BID",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "S_AXI_BRESP",
+       "kind": "port_out"
+      },
+      {
+       "id": "E21",
+       "name": "S_AXI_BVALID",
+       "kind": "port_out"
+      },
+      {
+       "id": "E22",
+       "name": "S_AXI_BREADY",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axi_ar",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E23",
+      "E24",
+      "E25",
+      "E26",
+      "E27",
+      "E28",
+      "E29",
+      "E30",
+      "E31",
+      "E32",
+      "E33"
+     ],
+     "members": [
+      {
+       "id": "E23",
+       "name": "S_AXI_ARID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E24",
+       "name": "S_AXI_ARADDR",
+       "kind": "port_in"
+      },
+      {
+       "id": "E25",
+       "name": "S_AXI_ARLEN",
+       "kind": "port_in"
+      },
+      {
+       "id": "E26",
+       "name": "S_AXI_ARSIZE",
+       "kind": "port_in"
+      },
+      {
+       "id": "E27",
+       "name": "S_AXI_ARBURST",
+       "kind": "port_in"
+      },
+      {
+       "id": "E28",
+       "name": "S_AXI_ARLOCK",
+       "kind": "port_in"
+      },
+      {
+       "id": "E29",
+       "name": "S_AXI_ARCACHE",
+       "kind": "port_in"
+      },
+      {
+       "id": "E30",
+       "name": "S_AXI_ARPROT",
+       "kind": "port_in"
+      },
+      {
+       "id": "E31",
+       "name": "S_AXI_ARQOS",
+       "kind": "port_in"
+      },
+      {
+       "id": "E32",
+       "name": "S_AXI_ARVALID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E33",
+       "name": "S_AXI_ARREADY",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "s_axi_r",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E34",
+      "E35",
+      "E36",
+      "E37",
+      "E38",
+      "E39"
+     ],
+     "members": [
+      {
+       "id": "E34",
+       "name": "S_AXI_RID",
+       "kind": "port_out"
+      },
+      {
+       "id": "E35",
+       "name": "S_AXI_RDATA",
+       "kind": "port_out"
+      },
+      {
+       "id": "E36",
+       "name": "S_AXI_RRESP",
+       "kind": "port_out"
+      },
+      {
+       "id": "E37",
+       "name": "S_AXI_RLAST",
+       "kind": "port_out"
+      },
+      {
+       "id": "E38",
+       "name": "S_AXI_RVALID",
+       "kind": "port_out"
+      },
+      {
+       "id": "E39",
+       "name": "S_AXI_RREADY",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axi_aw",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E42",
+      "E43",
+      "E44",
+      "E45",
+      "E46",
+      "E47",
+      "E48",
+      "E49",
+      "E50",
+      "E51",
+      "E52"
+     ],
+     "members": [
+      {
+       "id": "E42",
+       "name": "M_AXI_AWID",
+       "kind": "port_out"
+      },
+      {
+       "id": "E43",
+       "name": "M_AXI_AWADDR",
+       "kind": "port_out"
+      },
+      {
+       "id": "E44",
+       "name": "M_AXI_AWLEN",
+       "kind": "port_out"
+      },
+      {
+       "id": "E45",
+       "name": "M_AXI_AWSIZE",
+       "kind": "port_out"
+      },
+      {
+       "id": "E46",
+       "name": "M_AXI_AWBURST",
+       "kind": "port_out"
+      },
+      {
+       "id": "E47",
+       "name": "M_AXI_AWLOCK",
+       "kind": "port_out"
+      },
+      {
+       "id": "E48",
+       "name": "M_AXI_AWCACHE",
+       "kind": "port_out"
+      },
+      {
+       "id": "E49",
+       "name": "M_AXI_AWPROT",
+       "kind": "port_out"
+      },
+      {
+       "id": "E50",
+       "name": "M_AXI_AWQOS",
+       "kind": "port_out"
+      },
+      {
+       "id": "E51",
+       "name": "M_AXI_AWVALID",
+       "kind": "port_out"
+      },
+      {
+       "id": "E52",
+       "name": "M_AXI_AWREADY",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axi_w",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E53",
+      "E54",
+      "E55",
+      "E56",
+      "E57"
+     ],
+     "members": [
+      {
+       "id": "E53",
+       "name": "M_AXI_WDATA",
+       "kind": "port_out"
+      },
+      {
+       "id": "E54",
+       "name": "M_AXI_WSTRB",
+       "kind": "port_out"
+      },
+      {
+       "id": "E55",
+       "name": "M_AXI_WLAST",
+       "kind": "port_out"
+      },
+      {
+       "id": "E56",
+       "name": "M_AXI_WVALID",
+       "kind": "port_out"
+      },
+      {
+       "id": "E57",
+       "name": "M_AXI_WREADY",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axi_b",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E58",
+      "E59",
+      "E60",
+      "E61"
+     ],
+     "members": [
+      {
+       "id": "E58",
+       "name": "M_AXI_BID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E59",
+       "name": "M_AXI_BRESP",
+       "kind": "port_in"
+      },
+      {
+       "id": "E60",
+       "name": "M_AXI_BVALID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E61",
+       "name": "M_AXI_BREADY",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "m_axi_ar",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E62",
+      "E63",
+      "E64",
+      "E65",
+      "E66",
+      "E67",
+      "E68",
+      "E69",
+      "E70",
+      "E71",
+      "E72"
+     ],
+     "members": [
+      {
+       "id": "E62",
+       "name": "M_AXI_ARID",
+       "kind": "port_out"
+      },
+      {
+       "id": "E63",
+       "name": "M_AXI_ARADDR",
+       "kind": "port_out"
+      },
+      {
+       "id": "E64",
+       "name": "M_AXI_ARLEN",
+       "kind": "port_out"
+      },
+      {
+       "id": "E65",
+       "name": "M_AXI_ARSIZE",
+       "kind": "port_out"
+      },
+      {
+       "id": "E66",
+       "name": "M_AXI_ARBURST",
+       "kind": "port_out"
+      },
+      {
+       "id": "E67",
+       "name": "M_AXI_ARLOCK",
+       "kind": "port_out"
+      },
+      {
+       "id": "E68",
+       "name": "M_AXI_ARCACHE",
+       "kind": "port_out"
+      },
+      {
+       "id": "E69",
+       "name": "M_AXI_ARPROT",
+       "kind": "port_out"
+      },
+      {
+       "id": "E70",
+       "name": "M_AXI_ARQOS",
+       "kind": "port_out"
+      },
+      {
+       "id": "E71",
+       "name": "M_AXI_ARVALID",
+       "kind": "port_out"
+      },
+      {
+       "id": "E72",
+       "name": "M_AXI_ARREADY",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axi_r",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E73",
+      "E74",
+      "E75",
+      "E76",
+      "E77",
+      "E78"
+     ],
+     "members": [
+      {
+       "id": "E73",
+       "name": "M_AXI_RID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E74",
+       "name": "M_AXI_RDATA",
+       "kind": "port_in"
+      },
+      {
+       "id": "E75",
+       "name": "M_AXI_RRESP",
+       "kind": "port_in"
+      },
+      {
+       "id": "E76",
+       "name": "M_AXI_RLAST",
+       "kind": "port_in"
+      },
+      {
+       "id": "E77",
+       "name": "M_AXI_RVALID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E78",
+       "name": "M_AXI_RREADY",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

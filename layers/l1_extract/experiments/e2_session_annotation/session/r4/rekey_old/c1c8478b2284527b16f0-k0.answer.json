@@ -1,0 +1,38 @@
+{
+ "module_summary": "COBS encoder for AXI-stream: an input FSM counts segment bytes into a data FIFO and pushes code bytes into a code FIFO; an output FSM interleaves codes and data through a skid-buffered output register.",
+ "anchors": [
+  {"id": "E13", "name": "input_state_reg", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Input encoder FSM: idle, segment, final-zero, append-zero; drives FIFO pushes and input ready mask.", "lines": [69, 208, 414]},
+  {"id": "E15", "name": "output_state_reg", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Output FSM alternating between emitting a code byte and streaming segment data bytes.", "lines": [75, 366, 415]},
+  {"id": "E17", "name": "input_count_reg", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Segment length counter forming the COBS code byte; wraps at 254 bytes.", "lines": [265, 277, 280]},
+  {"id": "E19", "name": "output_count_reg", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Counts remaining data bytes of current segment, loaded from code byte, ends segment output.", "lines": [396, 399, 418]},
+  {"id": "E21", "name": "fail_frame_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Remembers errored frame (tuser) to emit error code and tuser on frame close.", "lines": [313, 341, 419]},
+  {"id": "E29", "name": "s_axis_tready_mask", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "FSM-driven mask blocking input acceptance while final/append zero codes are pushed.", "lines": [113, 211, 309]},
+  {"id": "E3", "name": "s_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Raw input byte stream; zero bytes terminate segments, others go to data FIFO.", "lines": [217, 232]},
+  {"id": "E4", "name": "s_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Input stream valid; with tready advances the input encoder FSM.", "lines": [214, 260]},
+  {"id": "E5", "name": "s_axis_tready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Input ready: both FIFOs ready and FSM mask set.", "lines": [113, 214]},
+  {"id": "E8", "name": "m_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Encoded COBS output byte stream from the output register.", "lines": [443]},
+  {"id": "E9", "name": "m_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Output stream valid driven by output register valid.", "lines": [444]},
+  {"id": "E10", "name": "m_axis_tready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Downstream ready controlling skid buffer transfers to output register.", "lines": [449, 462, 471]},
+  {"id": "E30", "name": "code_fifo_in_tdata", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Computed COBS code byte (segment count, 1, 2 or 0) pushed into code FIFO.", "lines": [265, 282, 339]},
+  {"id": "E34", "name": "code_fifo_in_tready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "forward", "why": "Code FIFO ready gating input ready and final/append zero code pushes.", "lines": [113, 311, 337]},
+  {"id": "E35", "name": "code_fifo_out_tdata", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Code byte read from code FIFO, output and used to load output segment counter.", "lines": [372, 375, 378]},
+  {"id": "E36", "name": "code_fifo_out_tvalid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "forward", "why": "Code FIFO has a code byte; starts output of next segment in idle state.", "lines": [370]},
+  {"id": "E45", "name": "data_fifo_out_tvalid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "forward", "why": "Data FIFO has a byte; enables segment data transfer in output FSM.", "lines": [392]},
+  {"id": "E23", "name": "m_axis_tdata_int", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Muxed code or data byte feeding the output skid buffer.", "lines": [372, 394, 486]},
+  {"id": "E25", "name": "m_axis_tready_int_reg", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Internal registered ready gating output FSM transfers and skid buffer stores.", "lines": [370, 392, 460]},
+  {"id": "E53", "name": "temp_m_axis_tdata_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Skid buffer temp register holding a byte when output is stalled.", "lines": [490, 496]},
+  {"id": "E58", "name": "store_axis_int_to_output", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Load enable moving internal byte directly into output register.", "lines": [465, 485]}
+ ],
+ "groups": [
+  {"name": "input_encoder", "kind": "CONTROLLER", "anchor_ids": ["E13", "E17", "E21", "E29", "E30", "E3", "E4", "E5"], "member_ids": ["E14", "E18", "E22", "E31", "E32", "E33", "E40", "E41", "E42", "E6", "E7"], "description": "Input FSM splitting bytes into segments, counting length, generating code bytes."},
+  {"name": "code_fifo", "kind": "BUFFER", "anchor_ids": ["E34", "E35", "E36"], "member_ids": ["I1", "E37", "E38", "E39"], "description": "256-deep FIFO holding COBS code bytes with error flag."},
+  {"name": "data_fifo", "kind": "BUFFER", "anchor_ids": ["E45"], "member_ids": ["I2", "E43", "E44", "E46", "E47"], "description": "256-deep FIFO holding non-zero segment data bytes."},
+  {"name": "output_sequencer", "kind": "CONTROLLER", "anchor_ids": ["E15", "E19", "E23"], "member_ids": ["E16", "E20", "E24", "E26", "E27"], "description": "Output FSM emitting a code byte then its segment's data bytes."},
+  {"name": "output_skid_buffer", "kind": "PIPELINE_STAGE", "anchor_ids": ["E25", "E53", "E58", "E8", "E9", "E10"], "member_ids": ["E28", "E48", "E49", "E50", "E51", "E52", "E54", "E55", "E56", "E57", "E59", "E60", "E11", "E12"], "description": "Output register plus temp register skid buffer for AXI-stream backpressure."}
+ ],
+ "interfaces": [
+  {"name": "clk_rst", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "s_axis", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7"]},
+  {"name": "m_axis", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E8", "E9", "E10", "E11", "E12"]}
+ ]
+}

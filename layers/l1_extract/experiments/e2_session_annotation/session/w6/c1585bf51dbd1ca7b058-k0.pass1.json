@@ -1,0 +1,25 @@
+{
+  "module_summary": "Traffic light controller: 2-bit state FSM advances when a down-counting timer hits 3; decoded lamps pass through two register stages and their rising edges reload the timer.",
+  "anchors": [
+    {"id": "E8", "name": "lamp", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Light state register: boot, stop, go, slow; decoded into lamp outputs.", "lines": [17, 34, 42]},
+    {"id": "E10", "name": "tmr", "role": "COUNTER", "importance": "critical", "trace": "control_backward", "why": "Down-counting phase timer reloaded per light; value 3 advances FSM.", "lines": [23, 57, 61]},
+    {"id": "E5", "name": "red", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Red lamp output, delayed decode of STOP state.", "lines": [7, 49]},
+    {"id": "E6", "name": "yellow", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Yellow lamp output, delayed decode of SLOW state.", "lines": [8, 49]},
+    {"id": "E7", "name": "green", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Green lamp output, delayed decode of GO; enables pedestrian cut.", "lines": [9, 24, 49]},
+    {"id": "E3", "name": "pass_request", "role": "COMMAND", "importance": "major", "trace": "interface", "why": "Pedestrian request shortening a long green by reloading timer.", "lines": [5, 24]},
+    {"id": "E13", "name": "hg", "role": "PIPELINE_REG", "importance": "minor", "trace": "control_backward", "why": "First-stage decoded lamp register (representative of hr/hy/hg) feeding outputs.", "lines": [25, 49, 50]},
+    {"id": "E16", "name": "fresh_g", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Green onset edge reloading timer with 60 (representative of fresh_y/fresh_r).", "lines": [25, 58]},
+    {"id": "E15", "name": "cut_short", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Request during long green; reloads timer to 10.", "lines": [24, 57]},
+    {"id": "E14", "name": "hit3", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Timer equals 3; triggers FSM transition.", "lines": [23, 33]}
+  ],
+  "groups": [
+    {"name": "light_fsm", "kind": "CONTROLLER", "anchor_ids": ["E8", "E14"], "member_ids": ["E9"], "description": "Boot/stop/go/slow state machine advancing on timer hit."},
+    {"name": "phase_timer", "kind": "COUNTER_TIMER", "anchor_ids": ["E10", "E16", "E15"], "member_ids": ["E17", "E18", "E4"], "description": "Down counter reloaded on lamp onset or pedestrian cut; exported as clock."},
+    {"name": "lamp_outputs", "kind": "PIPELINE_STAGE", "anchor_ids": ["E13", "E5", "E6", "E7"], "member_ids": ["E11", "E12"], "description": "Two register stages of decoded lamp state driving red/yellow/green."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "pedestrian", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E3"]},
+    {"name": "lamps_display", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E4", "E5", "E6", "E7"]}
+  ]
+}

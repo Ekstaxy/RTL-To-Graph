@@ -1,0 +1,640 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-ethernet_axis_pipeline_fifo",
+ "tops": [
+  "axis_pipeline_fifo"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "axis_pipeline_fifo": {
+   "source": "teacher",
+   "canonical_instance": "axis_pipeline_fifo",
+   "file": "data/rtl/verilog-ethernet/lib/axis/rtl/axis_pipeline_fifo.v",
+   "lines": [
+    34,
+    262
+   ],
+   "summary": "AXI-stream pipeline: LENGTH register stages forward data/valid and pipeline ready backward, terminated by a small output FIFO whose half-full flag provides ready so in-flight beats are absorbed.",
+   "blocks": [
+    {
+     "name": "register_pipeline",
+     "kind": "PIPELINE_STAGE",
+     "description": "LENGTH stages registering forward payload/valid and backward ready.",
+     "anchors": [
+      {
+       "id": "E27",
+       "name": "stage[*].axis_tdata_reg",
+       "role": "PIPELINE_REG",
+       "importance": "critical",
+       "score": 74.4,
+       "struct_score": 18.0,
+       "trace": "data_backward",
+       "why": "Per-stage data register; representative of forwarded tdata/tkeep/tlast/tuser stage registers.",
+       "lines": [
+        106,
+        133
+       ]
+      },
+      {
+       "id": "E29",
+       "name": "stage[*].axis_tvalid_reg",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 16.5,
+       "struct_score": 10.2,
+       "trace": "control_backward",
+       "why": "Per-stage valid register carrying beat validity forward.",
+       "lines": [
+        110,
+        135
+       ]
+      },
+      {
+       "id": "E30",
+       "name": "stage[*].axis_tready_reg",
+       "role": "PIPELINE_REG",
+       "importance": "major",
+       "score": 44.5,
+       "struct_score": 10.2,
+       "trace": "control_backward",
+       "why": "Per-stage ready register delaying FIFO ready backward to s_axis_tready.",
+       "lines": [
+        112,
+        141
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E19",
+       "name": "axis_tdata_pipe",
+       "kind": "mem"
+      },
+      {
+       "id": "E20",
+       "name": "axis_tkeep_pipe",
+       "kind": "mem"
+      },
+      {
+       "id": "E21",
+       "name": "axis_tvalid_pipe",
+       "kind": "mem"
+      },
+      {
+       "id": "E22",
+       "name": "axis_tready_pipe",
+       "kind": "mem"
+      },
+      {
+       "id": "E23",
+       "name": "axis_tlast_pipe",
+       "kind": "mem"
+      },
+      {
+       "id": "E24",
+       "name": "axis_tid_pipe",
+       "kind": "mem"
+      },
+      {
+       "id": "E25",
+       "name": "axis_tdest_pipe",
+       "kind": "mem"
+      },
+      {
+       "id": "E26",
+       "name": "axis_tuser_pipe",
+       "kind": "mem"
+      },
+      {
+       "id": "E28",
+       "name": "stage[*].axis_tkeep_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E31",
+       "name": "stage[*].axis_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E32",
+       "name": "stage[*].axis_tid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E33",
+       "name": "stage[*].axis_tdest_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E34",
+       "name": "stage[*].axis_tuser_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "output_fifo",
+     "kind": "BUFFER",
+     "description": "Distributed-RAM FIFO with pointers and half-full ready generation.",
+     "anchors": [
+      {
+       "id": "E55",
+       "name": "fifo.out_fifo_tdata",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 90.0,
+       "struct_score": 74.8,
+       "trace": "data_backward",
+       "why": "Output FIFO data RAM absorbing beats in flight in the pipeline.",
+       "lines": [
+        190,
+        218,
+        228
+       ]
+      },
+      {
+       "id": "E50",
+       "name": "fifo.out_fifo_wr_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 60.9,
+       "struct_score": 71.8,
+       "trace": "control_backward",
+       "why": "FIFO write pointer addressing out_fifo arrays on pipeline output valid.",
+       "lines": [
+        182,
+        218,
+        224
+       ]
+      },
+      {
+       "id": "E51",
+       "name": "fifo.out_fifo_rd_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 61.1,
+       "struct_score": 72.4,
+       "trace": "control_backward",
+       "why": "FIFO read pointer addressing out_fifo arrays into the output register.",
+       "lines": [
+        183,
+        228,
+        235
+       ]
+      },
+      {
+       "id": "E52",
+       "name": "fifo.out_fifo_half_full_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 44.9,
+       "struct_score": 11.8,
+       "trace": "control_backward",
+       "why": "Half-full flag; its inverse is ready fed into the ready pipeline.",
+       "lines": [
+        184,
+        202,
+        215
+       ]
+      },
+      {
+       "id": "E53",
+       "name": "fifo.out_fifo_full",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.2,
+       "struct_score": 17.2,
+       "trace": "control_backward",
+       "why": "Full flag blocking FIFO writes.",
+       "lines": [
+        186,
+        217
+       ]
+      },
+      {
+       "id": "E54",
+       "name": "fifo.out_fifo_empty",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.5,
+       "struct_score": 18.4,
+       "trace": "control_backward",
+       "why": "Empty flag blocking FIFO reads into output register.",
+       "lines": [
+        187,
+        227
+       ]
+      },
+      {
+       "id": "E37",
+       "name": "fifo.m_axis_tvalid_int",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 16.8,
+       "struct_score": 11.3,
+       "trace": "control_backward",
+       "why": "Last-stage valid acting as FIFO write enable.",
+       "lines": [
+        164,
+        217
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E56",
+       "name": "fifo.out_fifo_tkeep",
+       "kind": "mem"
+      },
+      {
+       "id": "E57",
+       "name": "fifo.out_fifo_tlast",
+       "kind": "mem"
+      },
+      {
+       "id": "E58",
+       "name": "fifo.out_fifo_tid",
+       "kind": "mem"
+      },
+      {
+       "id": "E59",
+       "name": "fifo.out_fifo_tdest",
+       "kind": "mem"
+      },
+      {
+       "id": "E60",
+       "name": "fifo.out_fifo_tuser",
+       "kind": "mem"
+      },
+      {
+       "id": "E35",
+       "name": "fifo.m_axis_tdata_int",
+       "kind": "wire"
+      },
+      {
+       "id": "E36",
+       "name": "fifo.m_axis_tkeep_int",
+       "kind": "wire"
+      },
+      {
+       "id": "E38",
+       "name": "fifo.m_axis_tready_int",
+       "kind": "wire"
+      },
+      {
+       "id": "E39",
+       "name": "fifo.m_axis_tlast_int",
+       "kind": "wire"
+      },
+      {
+       "id": "E40",
+       "name": "fifo.m_axis_tid_int",
+       "kind": "wire"
+      },
+      {
+       "id": "E41",
+       "name": "fifo.m_axis_tdest_int",
+       "kind": "wire"
+      },
+      {
+       "id": "E42",
+       "name": "fifo.m_axis_tuser_int",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "input_port",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "AXI-stream input driving pipeline stage 0.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "s_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 85.2,
+       "struct_score": 59.4,
+       "trace": "interface",
+       "why": "Input payload entering the first pipeline stage.",
+       "lines": [
+        66,
+        153
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 84.9,
+       "struct_score": 58.4,
+       "trace": "interface",
+       "why": "Input valid qualified by ready into the valid pipeline.",
+       "lines": [
+        68,
+        155
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 85.1,
+       "struct_score": 59.1,
+       "trace": "interface",
+       "why": "Input ready taken from the head of the delayed ready pipeline.",
+       "lines": [
+        69,
+        160
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E4",
+       "name": "s_axis_tkeep",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_axis_tid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_axis_tdest",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "s_axis_tuser",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "output_register",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Output registers loaded from FIFO driving AXI-stream output.",
+     "anchors": [
+      {
+       "id": "E11",
+       "name": "m_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 86.6,
+       "struct_score": 64.5,
+       "trace": "interface",
+       "why": "Output payload from the FIFO output register.",
+       "lines": [
+        78,
+        204
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "m_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 86.3,
+       "struct_score": 63.4,
+       "trace": "interface",
+       "why": "Output valid from m_axis_tvalid_reg, set when FIFO non-empty.",
+       "lines": [
+        80,
+        206
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "m_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 84.8,
+       "struct_score": 58.1,
+       "trace": "interface",
+       "why": "Downstream ready; clears output valid and permits FIFO reads.",
+       "lines": [
+        81,
+        213,
+        227
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E43",
+       "name": "fifo.m_axis_tdata_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E44",
+       "name": "fifo.m_axis_tkeep_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E45",
+       "name": "fifo.m_axis_tvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E46",
+       "name": "fifo.m_axis_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E47",
+       "name": "fifo.m_axis_tid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E48",
+       "name": "fifo.m_axis_tdest_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E49",
+       "name": "fifo.m_axis_tuser_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E12",
+       "name": "m_axis_tkeep",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "m_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "m_axis_tid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "m_axis_tdest",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "m_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clk_rst",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axis",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axis_tdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_tkeep",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_tvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_tready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_axis_tid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_axis_tdest",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "s_axis_tuser",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axis",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "m_axis_tdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "m_axis_tkeep",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "m_axis_tvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "m_axis_tready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "m_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "m_axis_tid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "m_axis_tdest",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "m_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

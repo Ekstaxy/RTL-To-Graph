@@ -1,0 +1,352 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "S2_uart_tx",
+ "tops": [
+  "uart_tx"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "ux_pacer": {
+   "source": "heuristic",
+   "canonical_instance": "uart_tx.u_pace",
+   "file": "experiments/e3_perturb_benchmark/data/uart_tx/S2/uart_tx.sv",
+   "lines": [
+    1,
+    22
+   ],
+   "summary": "ux_pacer (heuristic)",
+   "blocks": [],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "ck",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "arst_b",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "misc",
+     "protocol": "SIMPLE",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "park",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "fire",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "uart_tx": {
+   "source": "teacher",
+   "canonical_instance": "uart_tx",
+   "file": "experiments/e3_perturb_benchmark/data/uart_tx/S2/uart_tx.sv",
+   "lines": [
+    24,
+    94
+   ],
+   "summary": "UART transmitter: one-hot 4-phase FSM (rest/start/data/stop) shifts a latched byte LSB-first, paced by a baud-tick sub-module.",
+   "blocks": [
+    {
+     "name": "tx_controller",
+     "kind": "CONTROLLER",
+     "description": "One-hot phase FSM sequencing start, data and stop bits; idle decode drives busy/ready.",
+     "anchors": [
+      {
+       "id": "E9",
+       "name": "phase_r",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.7,
+       "struct_score": 99.1,
+       "trace": "control_backward",
+       "why": "One-hot rest/start/data/stop state; selects line level and shift/count actions.",
+       "lines": [
+        67,
+        72,
+        77
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "at_rest",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 24.9,
+       "struct_score": 43.7,
+       "trace": "forward",
+       "why": "Idle decode of FSM; parks the baud pacer and drives busy.",
+       "lines": [
+        56,
+        61,
+        91
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "busy_o",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 56.8,
+       "struct_score": 58.0,
+       "trace": "control_backward",
+       "why": "Level busy indication while FSM not in rest phase.",
+       "lines": [
+        33,
+        91
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E13",
+       "name": "shadow_q",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "baud_pacer",
+     "kind": "COUNTER_TIMER",
+     "description": "Sub-instance divides clock into baud strobes, parked while idle.",
+     "anchors": [
+      {
+       "id": "E11",
+       "name": "strobe",
+       "role": "CLOCK_GEN",
+       "importance": "major",
+       "score": 51.2,
+       "struct_score": 37.4,
+       "trace": "control_backward",
+       "why": "Baud tick from pacer; advances FSM phases and shifts the data register.",
+       "lines": [
+        62,
+        77,
+        79
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "u_pace",
+       "module": "ux_pacer"
+      }
+     ],
+     "members": [
+      {
+       "id": "E12",
+       "name": "at_rest",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "tx_serializer",
+     "kind": "SERIALIZER",
+     "description": "Shift register and bit counter serialize the byte onto tx_o.",
+     "anchors": [
+      {
+       "id": "E8",
+       "name": "hold_reg",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 93.4,
+       "struct_score": 83.3,
+       "trace": "data_backward",
+       "why": "Shift register loaded with tx_data, shifted right each baud tick; LSB drives line.",
+       "lines": [
+        73,
+        80,
+        93
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "nib",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 57.9,
+       "struct_score": 62.1,
+       "trace": "control_backward",
+       "why": "Bit counter of data bits sent; terminal count moves FSM to stop phase.",
+       "lines": [
+        74,
+        81,
+        82
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "tx_o",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 93.0,
+       "struct_score": 82.2,
+       "trace": "interface",
+       "why": "Serial line output: start low, data LSB, stop/idle high.",
+       "lines": [
+        32,
+        93
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E3",
+     "name": "tx_valid",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 95.9,
+     "struct_score": 89.6,
+     "trace": "interface",
+     "why": "Input request; in rest phase loads byte and starts transmission.",
+     "lines": [
+      29,
+      71
+     ]
+    },
+    {
+     "id": "E4",
+     "name": "tx_ready",
+     "role": "HANDSHAKE_READY",
+     "importance": "critical",
+     "score": 92.6,
+     "struct_score": 81.4,
+     "trace": "interface",
+     "why": "Ready when transmitter idle (inverse of busy).",
+     "lines": [
+      30,
+      92
+     ]
+    },
+    {
+     "id": "E5",
+     "name": "tx_data",
+     "role": "INTERFACE_DATA",
+     "importance": "critical",
+     "score": 94.2,
+     "struct_score": 85.4,
+     "trace": "interface",
+     "why": "Parallel byte to transmit, latched into the shift register.",
+     "lines": [
+      31,
+      73
+     ]
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_n",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "tx_in",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "tx_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "tx_ready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "tx_data",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "serial_out",
+     "protocol": "SERIAL",
+     "direction": "OUT",
+     "member_ids": [
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "tx_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E7",
+       "name": "busy_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

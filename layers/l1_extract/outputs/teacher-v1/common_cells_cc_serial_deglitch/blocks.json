@@ -1,0 +1,259 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "common_cells_cc_serial_deglitch",
+ "tops": [
+  "cc_serial_deglitch"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "cc_serial_deglitch": {
+   "source": "teacher",
+   "canonical_instance": "cc_serial_deglitch",
+   "file": "data/rtl/common_cells/src/cc_serial_deglitch.sv",
+   "lines": [
+    25,
+    61
+   ],
+   "summary": "Serial deglitcher: a mismatch counter counts consecutive enabled cycles where input differs from the registered output, updating the output only after Threshold stable cycles.",
+   "blocks": [
+    {
+     "name": "Mismatch counter",
+     "kind": "COUNTER_TIMER",
+     "description": "Counts mismatching cycles and signals stable edge at Threshold.",
+     "anchors": [
+      {
+       "id": "E8",
+       "name": "count_q",
+       "role": "COUNTER",
+       "importance": "critical",
+       "score": 92.6,
+       "struct_score": 81.4,
+       "trace": "control_backward",
+       "why": "Counts consecutive mismatch cycles toward Threshold.",
+       "lines": [
+        38,
+        44,
+        54
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "mismatch",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 53.8,
+       "struct_score": 47.2,
+       "trace": "control_backward",
+       "why": "Input differs from output; drives counting and clearing.",
+       "lines": [
+        39,
+        43,
+        47
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "stable_edge",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 54.5,
+       "struct_score": 49.8,
+       "trace": "control_backward",
+       "why": "Threshold reached; loads input into output and clears counter.",
+       "lines": [
+        39,
+        47,
+        52
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "count_load",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 23.0,
+       "struct_score": 36.4,
+       "trace": "control_backward",
+       "why": "Increments counter while mismatch persists.",
+       "lines": [
+        40,
+        50,
+        54
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "en_i",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 57.9,
+       "struct_score": 62.0,
+       "trace": "interface",
+       "why": "Sample enable gating counting and output update.",
+       "lines": [
+        32,
+        47,
+        50
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E9",
+       "name": "count_d",
+       "kind": "wire"
+      },
+      {
+       "id": "E13",
+       "name": "count_clear",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Output register",
+     "kind": "DATAPATH",
+     "description": "Holds deglitched value, updated from input on stable edge.",
+     "anchors": [
+      {
+       "id": "E7",
+       "name": "q_o",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 99.3,
+       "struct_score": 98.3,
+       "trace": "data_backward",
+       "why": "Registered deglitched output, updated on stable edge or restart.",
+       "lines": [
+        34,
+        43,
+        55
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "d_i",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 93.7,
+       "struct_score": 84.1,
+       "trace": "interface",
+       "why": "Raw serial input compared against output and loaded on stable edge.",
+       "lines": [
+        33,
+        43,
+        52
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "restart_i",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 29.4,
+       "struct_score": 60.2,
+       "trace": "interface",
+       "why": "Forces output to input immediately and clears counter.",
+       "lines": [
+        31,
+        49,
+        52
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E14",
+       "name": "q_d",
+       "kind": "wire"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2",
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_ni",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "clr_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "control",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "restart_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "en_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "serial_in",
+     "protocol": "SERIAL",
+     "direction": "IN",
+     "member_ids": [
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "d_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "serial_out",
+     "protocol": "SERIAL",
+     "direction": "OUT",
+     "member_ids": [
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E7",
+       "name": "q_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

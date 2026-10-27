@@ -1,0 +1,132 @@
+[
+ {
+  "module": "ip_eth_rx",
+  "instance": "ip_eth_rx",
+  "state": "state_reg",
+  "next": "state_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "STATE_IDLE",
+    "value": "3'b0"
+   },
+   {
+    "name": "STATE_READ_HEADER",
+    "value": "3'b1"
+   },
+   {
+    "name": "STATE_WAIT_LAST",
+    "value": "3'b100"
+   },
+   {
+    "name": "STATE_READ_PAYLOAD",
+    "value": "3'b10"
+   },
+   {
+    "name": "STATE_READ_PAYLOAD_LAST",
+    "value": "3'b11"
+   }
+  ],
+  "reset_state": "STATE_IDLE",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_READ_HEADER",
+    "cond": "s_eth_hdr_ready && s_eth_hdr_valid"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_IDLE",
+    "cond": "!(s_eth_hdr_ready && s_eth_hdr_valid)"
+   },
+   {
+    "src": "STATE_READ_HEADER",
+    "dst": "STATE_READ_HEADER",
+    "cond": "s_eth_payload_axis_tready && s_eth_payload_axis_tvalid"
+   },
+   {
+    "src": "STATE_READ_HEADER",
+    "dst": "STATE_WAIT_LAST",
+    "cond": "s_eth_payload_axis_tready && s_eth_payload_axis_tvalid && hdr_ptr_reg == 6'h13 && (m_ip_version_reg != 4'd4 || m_ip_ihl_reg != 4'd5)"
+   },
+   {
+    "src": "STATE_READ_HEADER",
+    "dst": "STATE_WAIT_LAST",
+    "cond": "s_eth_payload_axis_tready && s_eth_payload_axis_tvalid && hdr_ptr_reg == 6'h13 && !(m_ip_version_reg != 4'd4 || m_ip_ihl_reg != 4'd5) && hdr_sum_next != 16'hffff"
+   },
+   {
+    "src": "STATE_READ_HEADER",
+    "dst": "STATE_READ_PAYLOAD",
+    "cond": "s_eth_payload_axis_tready && s_eth_payload_axis_tvalid && hdr_ptr_reg == 6'h13 && !(m_ip_version_reg != 4'd4 || m_ip_ihl_reg != 4'd5) && !(hdr_sum_next != 16'hffff)"
+   },
+   {
+    "src": "STATE_READ_HEADER",
+    "dst": "STATE_IDLE",
+    "cond": "s_eth_payload_axis_tready && s_eth_payload_axis_tvalid && s_eth_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_READ_HEADER",
+    "dst": "STATE_READ_HEADER",
+    "cond": "!(s_eth_payload_axis_tready && s_eth_payload_axis_tvalid)"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD",
+    "dst": "STATE_IDLE",
+    "cond": "s_eth_payload_axis_tready && s_eth_payload_axis_tvalid && s_eth_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD",
+    "dst": "STATE_READ_PAYLOAD_LAST",
+    "cond": "s_eth_payload_axis_tready && s_eth_payload_axis_tvalid && !s_eth_payload_axis_tlast && word_count_reg == 16'd1"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD",
+    "dst": "STATE_READ_PAYLOAD",
+    "cond": "s_eth_payload_axis_tready && s_eth_payload_axis_tvalid && !s_eth_payload_axis_tlast && !(word_count_reg == 16'd1)"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD",
+    "dst": "STATE_READ_PAYLOAD",
+    "cond": "!(s_eth_payload_axis_tready && s_eth_payload_axis_tvalid)"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD_LAST",
+    "dst": "STATE_IDLE",
+    "cond": "s_eth_payload_axis_tready && s_eth_payload_axis_tvalid && s_eth_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD_LAST",
+    "dst": "STATE_READ_PAYLOAD_LAST",
+    "cond": "s_eth_payload_axis_tready && s_eth_payload_axis_tvalid && !s_eth_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD_LAST",
+    "dst": "STATE_READ_PAYLOAD_LAST",
+    "cond": "!(s_eth_payload_axis_tready && s_eth_payload_axis_tvalid)"
+   },
+   {
+    "src": "STATE_WAIT_LAST",
+    "dst": "STATE_IDLE",
+    "cond": "s_eth_payload_axis_tready && s_eth_payload_axis_tvalid && s_eth_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_WAIT_LAST",
+    "dst": "STATE_WAIT_LAST",
+    "cond": "s_eth_payload_axis_tready && s_eth_payload_axis_tvalid && !s_eth_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_WAIT_LAST",
+    "dst": "STATE_WAIT_LAST",
+    "cond": "!(s_eth_payload_axis_tready && s_eth_payload_axis_tvalid)"
+   }
+  ],
+  "outputs": [],
+  "warnings": [],
+  "semantic_check": "consistent-subset"
+ }
+]

@@ -1,0 +1,25 @@
+{
+ "module_summary": "Source half of a 2-phase CDC: accepts valid/ready data, toggles a request register and holds data, synchronizing the async ack to regenerate ready.",
+ "anchors": [
+  {"id": "E9", "name": "req_src_q", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "2-phase request toggle register; flips on each accepted item and drives async_req_o.", "lines": [141, 145, 146]},
+  {"id": "E11", "name": "data_src_q", "role": "HOLDING_REG", "importance": "critical", "trace": "data_backward", "why": "Holds accepted data stable for the destination domain until acknowledged.", "lines": [142, 147]},
+  {"id": "E12", "name": "src_accept", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Valid and ready handshake; enables toggle of req_src_q and load of data_src_q.", "lines": [124, 141, 142]},
+  {"id": "E10", "name": "ack_synced", "role": "HANDSHAKE_READY", "importance": "major", "trace": "data_backward", "why": "Ack synchronized into source clock; compared with req_src_q to form ready.", "lines": [137, 145]},
+  {"id": "E4", "name": "valid_i", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Source-side valid of the incoming data item.", "lines": [111, 124]},
+  {"id": "E5", "name": "ready_o", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Ready when request and synchronized ack phases match.", "lines": [112, 145]},
+  {"id": "E3", "name": "data_i", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Input data captured into data_src_q on accept.", "lines": [110, 142]},
+  {"id": "E6", "name": "async_req_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Async 2-phase request to destination domain, copy of req_src_q.", "lines": [113, 146]},
+  {"id": "E7", "name": "async_ack_i", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Async 2-phase acknowledge from destination, synchronized via tc_sync.", "lines": [114, 136]},
+  {"id": "E8", "name": "async_data_o", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Async data bus to destination, driven by data_src_q.", "lines": [115, 147]}
+ ],
+ "groups": [
+  {"name": "Source handshake", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E4", "E5", "E3", "E12"], "member_ids": [], "description": "Valid/ready input side; accept enables request toggle and data capture."},
+  {"name": "2-phase request/data", "kind": "CONTROLLER", "anchor_ids": ["E9", "E11", "E6", "E8"], "member_ids": [], "description": "Toggle request register and held data driving the async CDC bus."},
+  {"name": "Ack synchronizer", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E7", "E10"], "member_ids": [], "description": "Multi-stage synchronizer bringing async ack into source clock domain."}
+ ],
+ "interfaces": [
+  {"name": "Clock/reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "Source valid/ready", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5"]},
+  {"name": "Async CDC", "protocol": "REQ_ACK", "direction": "OUT", "member_ids": ["E6", "E7", "E8"]}
+ ]
+}

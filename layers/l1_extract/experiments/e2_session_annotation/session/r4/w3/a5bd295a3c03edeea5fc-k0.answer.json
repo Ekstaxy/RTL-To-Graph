@@ -1,0 +1,48 @@
+{
+ "module_summary": "IPv4 layer wrapper: an RX parser and TX framer child handle Ethernet/IP conversion, while a 3-state FSM resolves the destination MAC via ARP before forwarding or dropping each outgoing packet.",
+ "anchors": [
+  {"id": "E81", "name": "state_reg", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "IDLE/ARP_QUERY/WAIT_PACKET controller sequencing ARP lookup and outgoing packet transfer.", "lines": [282, 337]},
+  {"id": "E32", "name": "s_ip_hdr_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Outgoing IP header request; starts ARP query from IDLE.", "lines": [285]},
+  {"id": "E8", "name": "s_eth_payload_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Received Ethernet payload stream fed to the IP RX parser.", "lines": [171]},
+  {"id": "E65", "name": "m_ip_payload_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Parsed IP payload output stream from the RX parser.", "lines": [196]},
+  {"id": "E19", "name": "m_eth_payload_axis_tdata", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Transmitted Ethernet frame payload from the TX framer.", "lines": [242]},
+  {"id": "E44", "name": "s_ip_payload_axis_tready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "Outgoing payload ready: TX child ready or forced by drop_packet; ends WAIT_PACKET.", "lines": [262, 319]},
+  {"id": "E25", "name": "arp_request_valid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "ARP lookup request for destination IP, raised from IDLE.", "lines": [264]},
+  {"id": "E28", "name": "arp_response_valid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "ARP response arrival; moves FSM to WAIT_PACKET.", "lines": [297]},
+  {"id": "E31", "name": "arp_response_mac", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Resolved destination MAC latched into outgoing_eth_dest_mac.", "lines": [308]},
+  {"id": "E95", "name": "drop_packet_reg", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Set on ARP error; sinks outgoing payload by forcing tready.", "lines": [262, 316, 341]},
+  {"id": "E83", "name": "outgoing_ip_hdr_valid_reg", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "forward", "why": "Header valid into TX framer after successful ARP resolution.", "lines": [215, 279, 345]},
+  {"id": "E86", "name": "outgoing_eth_dest_mac_reg", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Holds ARP-resolved destination MAC for the packet being transmitted.", "lines": [217, 348]},
+  {"id": "E33", "name": "s_ip_hdr_ready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Accepts outgoing IP header once ARP response received.", "lines": [261]},
+  {"id": "E41", "name": "s_ip_payload_axis_tdata", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Outgoing IP payload data passed to TX framer.", "lines": [230]},
+  {"id": "E29", "name": "arp_response_ready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Ready for ARP response, asserted during ARP query.", "lines": [266]},
+  {"id": "E27", "name": "arp_request_ip", "role": "INTERFACE_ADDR", "importance": "minor", "trace": "interface", "why": "IP address looked up by ARP, copy of s_ip_dest_ip.", "lines": [265]},
+  {"id": "E78", "name": "tx_error_arp_failed", "role": "STATUS", "importance": "minor", "trace": "none", "why": "Reports ARP lookup failure causing packet drop.", "lines": [268]},
+  {"id": "E3", "name": "s_eth_hdr_valid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Received Ethernet header valid into RX parser.", "lines": [166]},
+  {"id": "E47", "name": "m_ip_hdr_valid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Parsed IP header valid output from RX parser.", "lines": [178]},
+  {"id": "E14", "name": "m_eth_hdr_valid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Outgoing Ethernet header valid from TX framer.", "lines": [237]},
+  {"id": "E71", "name": "rx_busy", "role": "STATUS", "importance": "minor", "trace": "none", "why": "RX parser busy indication.", "lines": [203]},
+  {"id": "E72", "name": "tx_busy", "role": "STATUS", "importance": "minor", "trace": "none", "why": "TX framer busy indication.", "lines": [249]},
+  {"id": "E79", "name": "local_mac", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Local MAC configuration used as source MAC of transmitted frames.", "lines": [218]}
+ ],
+ "groups": [
+  {"name": "ARP resolution controller", "kind": "CONTROLLER", "anchor_ids": ["E81", "E32", "E25", "E28", "E31", "E95", "E83", "E86", "E44", "E33", "E29", "E27", "E78"], "member_ids": ["E82", "E84", "E87", "E89", "E90", "E91", "E92", "E93", "E94", "E96", "E30", "E85", "E88"], "description": "FSM requesting ARP lookup, latching resolved MAC, then forwarding or dropping the outgoing packet."},
+  {"name": "IP receive path", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E8", "E3", "E65", "E47", "E71"], "member_ids": ["I1", "E73", "E74", "E75", "E76"], "description": "ip_eth_rx_64 child parsing Ethernet frames into IP header fields and payload."},
+  {"name": "IP transmit path", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E19", "E14", "E41", "E72", "E79"], "member_ids": ["I2", "E77"], "description": "ip_eth_tx_64 child building Ethernet frames from IP header and payload."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "s_eth_hdr", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7"]},
+  {"name": "s_eth_payload_axis", "protocol": "STREAM", "direction": "IN", "member_ids": ["E8", "E9", "E10", "E11", "E12", "E13"]},
+  {"name": "m_eth_hdr", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E14", "E15", "E16", "E17", "E18"]},
+  {"name": "m_eth_payload_axis", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E19", "E20", "E21", "E22", "E23", "E24"]},
+  {"name": "arp_request", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E25", "E26", "E27"]},
+  {"name": "arp_response", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E28", "E29", "E30", "E31"]},
+  {"name": "s_ip_hdr", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E32", "E33", "E34", "E35", "E36", "E37", "E38", "E39", "E40"]},
+  {"name": "s_ip_payload_axis", "protocol": "STREAM", "direction": "IN", "member_ids": ["E41", "E42", "E43", "E44", "E45", "E46"]},
+  {"name": "m_ip_hdr", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E47", "E48", "E49", "E50", "E51", "E52", "E53", "E54", "E55", "E56", "E57", "E58", "E59", "E60", "E61", "E62", "E63", "E64"]},
+  {"name": "m_ip_payload_axis", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E65", "E66", "E67", "E68", "E69", "E70"]},
+  {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E71", "E72", "E73", "E74", "E75", "E76", "E77", "E78"]},
+  {"name": "config", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E79", "E80"]}
+ ]
+}

@@ -1,0 +1,1416 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "biriscv_biriscv_pipe_ctrl",
+ "tops": [
+  "biriscv_pipe_ctrl"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "biriscv_pipe_ctrl": {
+   "source": "teacher",
+   "canonical_instance": "biriscv_pipe_ctrl",
+   "file": "data/rtl/biriscv/src/core/biriscv_pipe_ctrl.v",
+   "lines": [
+    25,
+    461
+   ],
+   "summary": "Three-stage (E1, E2, WB) instruction pipeline controller: registers issued instruction info and control bits per stage, muxes ALU/CSR/div/mem/mul results, generates stall and exception-driven squash, and drives commit outputs.",
+   "blocks": [
+    {
+     "name": "E1 stage",
+     "kind": "PIPELINE_STAGE",
+     "description": "Registers issued instruction, decoded class bits and early exception.",
+     "anchors": [
+      {
+       "id": "E63",
+       "name": "valid_e1_q",
+       "role": "PIPELINE_REG",
+       "importance": "critical",
+       "score": 72.2,
+       "struct_score": 9.0,
+       "trace": "control_backward",
+       "why": "E1 stage valid bit, advanced into valid_e2_q.",
+       "lines": [
+        141,
+        167,
+        264
+       ]
+      },
+      {
+       "id": "E64",
+       "name": "ctrl_e1_q",
+       "role": "DECODE",
+       "importance": "critical",
+       "score": 82.9,
+       "struct_score": 51.2,
+       "trace": "control_backward",
+       "why": "E1 decoded class bits (alu/load/store/csr/div/mul/branch/rd) steering result mux and outputs.",
+       "lines": [
+        142,
+        168,
+        286
+       ]
+      },
+      {
+       "id": "E65",
+       "name": "pc_e1_q",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 23.1,
+       "struct_score": 36.9,
+       "trace": "data_backward",
+       "why": "E1 stage PC register, output on pc_e1_o.",
+       "lines": [
+        143,
+        179,
+        268
+       ]
+      },
+      {
+       "id": "E67",
+       "name": "opcode_e1_q",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 24.7,
+       "struct_score": 43.0,
+       "trace": "data_backward",
+       "why": "E1 stage opcode register providing rd index.",
+       "lines": [
+        145,
+        181,
+        207
+       ]
+      },
+      {
+       "id": "E68",
+       "name": "operand_ra_e1_q",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 23.1,
+       "struct_score": 36.9,
+       "trace": "data_backward",
+       "why": "E1 stage operand A register.",
+       "lines": [
+        146,
+        182,
+        271
+       ]
+      },
+      {
+       "id": "E70",
+       "name": "exception_e1_q",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 18.3,
+       "struct_score": 17.6,
+       "trace": "control_backward",
+       "why": "E1 exception code incl. misaligned fetch, propagated to E2.",
+       "lines": [
+        148,
+        184,
+        278
+       ]
+      },
+      {
+       "id": "E66",
+       "name": "npc_e1_q",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 21.2,
+       "struct_score": 29.2,
+       "trace": "data_backward",
+       "why": "E1 next-PC from branch target or pc+4.",
+       "lines": [
+        144,
+        180
+       ]
+      },
+      {
+       "id": "E62",
+       "name": "branch_misaligned_w",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 15.1,
+       "struct_score": 4.5,
+       "trace": "control_backward",
+       "why": "Taken branch target misaligned, raises fetch exception into E1.",
+       "lines": [
+        122,
+        185
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E69",
+       "name": "operand_rb_e1_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E71",
+       "name": "alu_e1_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E72",
+       "name": "csr_e1_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E73",
+       "name": "div_e1_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E26",
+       "name": "load_e1_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E27",
+       "name": "store_e1_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E28",
+       "name": "mul_e1_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E29",
+       "name": "branch_e1_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E31",
+       "name": "pc_e1_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E32",
+       "name": "opcode_e1_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E33",
+       "name": "operand_ra_e1_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E34",
+       "name": "operand_rb_e1_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "E2 stage",
+     "kind": "PIPELINE_STAGE",
+     "description": "Result selection, mem/mul bypass and final exception resolution.",
+     "anchors": [
+      {
+       "id": "E74",
+       "name": "valid_e2_q",
+       "role": "PIPELINE_REG",
+       "importance": "major",
+       "score": 47.0,
+       "struct_score": 20.3,
+       "trace": "control_backward",
+       "why": "E2 stage valid bit, cleared on squash or E1 exception.",
+       "lines": [
+        216,
+        264,
+        280
+       ]
+      },
+      {
+       "id": "E75",
+       "name": "ctrl_e2_q",
+       "role": "DECODE",
+       "importance": "major",
+       "score": 54.3,
+       "struct_score": 48.9,
+       "trace": "control_backward",
+       "why": "E2 control bits selecting mem/mul bypass and stall on load/store.",
+       "lines": [
+        217,
+        303,
+        316
+       ]
+      },
+      {
+       "id": "E78",
+       "name": "result_e2_q",
+       "role": "PIPELINE_REG",
+       "importance": "major",
+       "score": 51.3,
+       "struct_score": 37.7,
+       "trace": "data_backward",
+       "why": "E2 result register selected from div, CSR or ALU result.",
+       "lines": [
+        220,
+        287,
+        291
+       ]
+      },
+      {
+       "id": "E85",
+       "name": "result_e2_r",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 45.4,
+       "struct_score": 14.0,
+       "trace": "data_backward",
+       "why": "E2 bypass result mux choosing mem or mul result over result_e2_q.",
+       "lines": [
+        294,
+        304,
+        313
+       ]
+      },
+      {
+       "id": "E88",
+       "name": "exception_e2_r",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 44.8,
+       "struct_score": 11.6,
+       "trace": "control_backward",
+       "why": "Final E2 exception code from memory or pipeline; triggers squash and WB.",
+       "lines": [
+        318,
+        322,
+        327
+       ]
+      },
+      {
+       "id": "E84",
+       "name": "exception_e2_q",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 18.3,
+       "struct_score": 17.6,
+       "trace": "control_backward",
+       "why": "E2 exception register: interrupt, E1 or CSR exception.",
+       "lines": [
+        226,
+        276,
+        284
+       ]
+      },
+      {
+       "id": "E76",
+       "name": "csr_wr_e2_q",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 16.1,
+       "struct_score": 8.7,
+       "trace": "data_backward",
+       "why": "E2 CSR write request carried to writeback.",
+       "lines": [
+        218,
+        266,
+        401
+       ]
+      },
+      {
+       "id": "E86",
+       "name": "valid_e2_w",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.4,
+       "struct_score": 5.5,
+       "trace": "control_backward",
+       "why": "E2 valid and not stalled; enables bypass selection and rd_e2_o.",
+       "lines": [
+        296,
+        303,
+        312
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E77",
+       "name": "csr_wdata_e2_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E79",
+       "name": "pc_e2_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E80",
+       "name": "npc_e2_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E81",
+       "name": "opcode_e2_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E82",
+       "name": "operand_ra_e2_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E83",
+       "name": "operand_rb_e2_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E87",
+       "name": "load_store_e2_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E39",
+       "name": "load_e2_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E40",
+       "name": "mul_e2_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "Writeback stage",
+     "kind": "PIPELINE_STAGE",
+     "description": "Commit registers driving register-file and CSR writeback.",
+     "anchors": [
+      {
+       "id": "E90",
+       "name": "valid_wb_q",
+       "role": "PIPELINE_REG",
+       "importance": "major",
+       "score": 44.2,
+       "struct_score": 9.1,
+       "trace": "control_backward",
+       "why": "WB stage valid, cleared on memory fault exceptions.",
+       "lines": [
+        342,
+        396,
+        398
+       ]
+      },
+      {
+       "id": "E91",
+       "name": "ctrl_wb_q",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 22.2,
+       "struct_score": 33.2,
+       "trace": "control_backward",
+       "why": "WB control bits, rd_valid cleared on exception.",
+       "lines": [
+        343,
+        406,
+        430
+       ]
+      },
+      {
+       "id": "E94",
+       "name": "result_wb_q",
+       "role": "PIPELINE_REG",
+       "importance": "major",
+       "score": 48.5,
+       "struct_score": 26.6,
+       "trace": "data_backward",
+       "why": "WB result register from mem, mul or E2 result.",
+       "lines": [
+        346,
+        418,
+        422
+       ]
+      },
+      {
+       "id": "E97",
+       "name": "opcode_wb_q",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 23.3,
+       "struct_score": 37.6,
+       "trace": "data_backward",
+       "why": "WB opcode providing rd index and CSR address.",
+       "lines": [
+        349,
+        430,
+        440
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E92",
+       "name": "csr_wr_wb_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E93",
+       "name": "csr_wdata_wb_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E95",
+       "name": "pc_wb_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E96",
+       "name": "npc_wb_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E98",
+       "name": "operand_ra_wb_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E99",
+       "name": "operand_rb_wb_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E100",
+       "name": "exception_wb_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E101",
+       "name": "complete_wb_w",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Hazard and flush control",
+     "kind": "CONTROLLER",
+     "description": "Stall generation and exception-driven squash of pipeline stages.",
+     "anchors": [
+      {
+       "id": "E5",
+       "name": "issue_stall_i",
+       "role": "CONTROL_FLAG",
+       "importance": "critical",
+       "score": 85.9,
+       "struct_score": 61.9,
+       "trace": "interface",
+       "why": "Global pipeline stall holding E1, E2 and WB registers and gating outputs.",
+       "lines": [
+        43,
+        163,
+        244
+       ]
+      },
+      {
+       "id": "E57",
+       "name": "stall_o",
+       "role": "CONTROL_FLAG",
+       "importance": "critical",
+       "score": 82.8,
+       "struct_score": 50.9,
+       "trace": "control_backward",
+       "why": "Stall when divide or load/store result not complete; gates rd outputs.",
+       "lines": [
+        110,
+        316,
+        430
+       ]
+      },
+      {
+       "id": "E58",
+       "name": "squash_e1_e2_o",
+       "role": "CONTROL_FLAG",
+       "importance": "critical",
+       "score": 87.9,
+       "struct_score": 69.4,
+       "trace": "control_backward",
+       "why": "Exception squash flushing E1 and E2 stages.",
+       "lines": [
+        111,
+        247,
+        337
+       ]
+      },
+      {
+       "id": "E89",
+       "name": "squash_e1_e2_q",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.5,
+       "struct_score": 10.1,
+       "trace": "control_backward",
+       "why": "Registered squash extending flush one cycle.",
+       "lines": [
+        329,
+        335,
+        337
+       ]
+      },
+      {
+       "id": "E59",
+       "name": "squash_e1_e2_i",
+       "role": "COMMAND",
+       "importance": "major",
+       "score": 50.3,
+       "struct_score": 33.5,
+       "trace": "interface",
+       "why": "External flush request clearing E1/E2 stages.",
+       "lines": [
+        112,
+        165,
+        247
+       ]
+      },
+      {
+       "id": "E60",
+       "name": "squash_wb_i",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 20.3,
+       "struct_score": 25.6,
+       "trace": "interface",
+       "why": "External flush request clearing WB stage.",
+       "lines": [
+        113,
+        372
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E61",
+       "name": "squash_e1_e2_w",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Issue interface",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Instruction issue from decode.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "issue_valid_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 86.8,
+       "struct_score": 65.1,
+       "trace": "interface",
+       "why": "Issued instruction valid; with accept loads E1 stage registers.",
+       "lines": [
+        41,
+        165
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "issue_accept_i",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 53.5,
+       "struct_score": 46.1,
+       "trace": "interface",
+       "why": "Issue accept qualifying entry of instruction into E1.",
+       "lines": [
+        42,
+        165
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E6",
+       "name": "issue_lsu_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "issue_csr_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "issue_div_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "issue_mul_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "issue_branch_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "issue_rd_valid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E12",
+       "name": "issue_rd_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "issue_exception_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E14",
+       "name": "take_interrupt_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "issue_branch_taken_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E16",
+       "name": "issue_branch_target_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E17",
+       "name": "issue_pc_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "issue_opcode_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E19",
+       "name": "issue_operand_ra_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E20",
+       "name": "issue_operand_rb_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Commit interface",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Retired instruction results to regfile and CSR.",
+     "anchors": [
+      {
+       "id": "E45",
+       "name": "valid_wb_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 88.1,
+       "struct_score": 69.9,
+       "trace": "data_backward",
+       "why": "Commit valid for retiring instruction.",
+       "lines": [
+        97,
+        428
+       ]
+      },
+      {
+       "id": "E48",
+       "name": "result_wb_o",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 87.6,
+       "struct_score": 68.2,
+       "trace": "data_backward",
+       "why": "Writeback result data to register file.",
+       "lines": [
+        100,
+        431
+       ]
+      },
+      {
+       "id": "E47",
+       "name": "rd_wb_o",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 52.3,
+       "struct_score": 41.8,
+       "trace": "data_backward",
+       "why": "Writeback destination register index, zeroed when not writing.",
+       "lines": [
+        99,
+        430
+       ]
+      },
+      {
+       "id": "E53",
+       "name": "exception_wb_o",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 46.1,
+       "struct_score": 16.5,
+       "trace": "data_backward",
+       "why": "Committed exception code output.",
+       "lines": [
+        105,
+        437
+       ]
+      },
+      {
+       "id": "E54",
+       "name": "csr_write_wb_o",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 18.3,
+       "struct_score": 17.5,
+       "trace": "data_backward",
+       "why": "CSR write enable at commit.",
+       "lines": [
+        106,
+        439
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E46",
+       "name": "csr_wb_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E49",
+       "name": "pc_wb_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E50",
+       "name": "opcode_wb_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E51",
+       "name": "operand_ra_wb_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E52",
+       "name": "operand_rb_wb_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E55",
+       "name": "csr_waddr_wb_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E56",
+       "name": "csr_wdata_wb_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "Execution unit results",
+     "kind": "DATAPATH",
+     "description": "Results from ALU, CSR, memory, multiplier and divider plus forwarding outputs.",
+     "anchors": [
+      {
+       "id": "E42",
+       "name": "result_e2_o",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 32.5,
+       "struct_score": 71.0,
+       "trace": "data_backward",
+       "why": "E2 bypass result output for forwarding.",
+       "lines": [
+        90,
+        313
+       ]
+      },
+      {
+       "id": "E41",
+       "name": "rd_e2_o",
+       "role": "INTERFACE_ADDR",
+       "importance": "minor",
+       "score": 24.2,
+       "struct_score": 41.5,
+       "trace": "data_backward",
+       "why": "E2 destination register for forwarding/hazard detection.",
+       "lines": [
+        89,
+        312
+       ]
+      },
+      {
+       "id": "E30",
+       "name": "rd_e1_o",
+       "role": "INTERFACE_ADDR",
+       "importance": "minor",
+       "score": 23.1,
+       "struct_score": 37.1,
+       "trace": "data_backward",
+       "why": "E1 destination register for hazard detection.",
+       "lines": [
+        74,
+        207
+       ]
+      },
+      {
+       "id": "E21",
+       "name": "alu_result_e1_i",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 30.5,
+       "struct_score": 64.1,
+       "trace": "interface",
+       "why": "ALU result captured into result_e2_q.",
+       "lines": [
+        61,
+        291
+       ]
+      },
+      {
+       "id": "E36",
+       "name": "mem_result_e2_i",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 33.3,
+       "struct_score": 73.0,
+       "trace": "interface",
+       "why": "Load result bypassed into E2 and WB results.",
+       "lines": [
+        82,
+        304,
+        418
+       ]
+      },
+      {
+       "id": "E35",
+       "name": "mem_complete_i",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 24.6,
+       "struct_score": 42.7,
+       "trace": "interface",
+       "why": "Memory completion clearing load/store stall.",
+       "lines": [
+        81,
+        316
+       ]
+      },
+      {
+       "id": "E43",
+       "name": "div_complete_i",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 21.7,
+       "struct_score": 31.2,
+       "trace": "interface",
+       "why": "Divider completion clearing divide stall.",
+       "lines": [
+        93,
+        316
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E22",
+       "name": "csr_result_value_e1_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E23",
+       "name": "csr_result_write_e1_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E24",
+       "name": "csr_result_wdata_e1_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E25",
+       "name": "csr_result_exception_e1_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E37",
+       "name": "mem_exception_e2_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E38",
+       "name": "mul_result_e2_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E44",
+       "name": "div_result_i",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "issue",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "issue_valid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "issue_accept_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "issue_stall_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "issue_lsu_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "issue_csr_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "issue_div_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "issue_mul_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "issue_branch_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "issue_rd_valid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E12",
+       "name": "issue_rd_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "issue_exception_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E14",
+       "name": "take_interrupt_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "issue_branch_taken_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E16",
+       "name": "issue_branch_target_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E17",
+       "name": "issue_pc_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "issue_opcode_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E19",
+       "name": "issue_operand_ra_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E20",
+       "name": "issue_operand_rb_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "e1_results",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E21",
+      "E22",
+      "E23",
+      "E24",
+      "E25"
+     ],
+     "members": [
+      {
+       "id": "E21",
+       "name": "alu_result_e1_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E22",
+       "name": "csr_result_value_e1_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E23",
+       "name": "csr_result_write_e1_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E24",
+       "name": "csr_result_wdata_e1_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E25",
+       "name": "csr_result_exception_e1_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "e1_outputs",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E26",
+      "E27",
+      "E28",
+      "E29",
+      "E30",
+      "E31",
+      "E32",
+      "E33",
+      "E34"
+     ],
+     "members": [
+      {
+       "id": "E26",
+       "name": "load_e1_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E27",
+       "name": "store_e1_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E28",
+       "name": "mul_e1_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E29",
+       "name": "branch_e1_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E30",
+       "name": "rd_e1_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E31",
+       "name": "pc_e1_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E32",
+       "name": "opcode_e1_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E33",
+       "name": "operand_ra_e1_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E34",
+       "name": "operand_rb_e1_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "e2_results",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E35",
+      "E36",
+      "E37",
+      "E38"
+     ],
+     "members": [
+      {
+       "id": "E35",
+       "name": "mem_complete_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E36",
+       "name": "mem_result_e2_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E37",
+       "name": "mem_exception_e2_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E38",
+       "name": "mul_result_e2_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "e2_outputs",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E39",
+      "E40",
+      "E41",
+      "E42"
+     ],
+     "members": [
+      {
+       "id": "E39",
+       "name": "load_e2_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E40",
+       "name": "mul_e2_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E41",
+       "name": "rd_e2_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E42",
+       "name": "result_e2_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "divider",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E43",
+      "E44"
+     ],
+     "members": [
+      {
+       "id": "E43",
+       "name": "div_complete_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E44",
+       "name": "div_result_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "commit",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E45",
+      "E46",
+      "E47",
+      "E48",
+      "E49",
+      "E50",
+      "E51",
+      "E52",
+      "E53",
+      "E54",
+      "E55",
+      "E56"
+     ],
+     "members": [
+      {
+       "id": "E45",
+       "name": "valid_wb_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E46",
+       "name": "csr_wb_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E47",
+       "name": "rd_wb_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E48",
+       "name": "result_wb_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E49",
+       "name": "pc_wb_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E50",
+       "name": "opcode_wb_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E51",
+       "name": "operand_ra_wb_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E52",
+       "name": "operand_rb_wb_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E53",
+       "name": "exception_wb_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E54",
+       "name": "csr_write_wb_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E55",
+       "name": "csr_waddr_wb_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E56",
+       "name": "csr_wdata_wb_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "pipeline_control",
+     "protocol": "OTHER",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E57",
+      "E58",
+      "E59",
+      "E60"
+     ],
+     "members": [
+      {
+       "id": "E57",
+       "name": "stall_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E58",
+       "name": "squash_e1_e2_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E59",
+       "name": "squash_e1_e2_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E60",
+       "name": "squash_wb_i",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,38 @@
+{
+  "module_summary": "Per-ID FIFO queue: a head-tail table maps each ID to head/tail indices of linked lists in a shared linked-data pool, with free-slot search, push/pop by ID and a masked data exists-lookup.",
+  "anchors": [
+    {"id": "E22", "name": "head_tail_q", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "Head-tail table storing per-ID head/tail pointers and free bit of each subqueue.", "lines": [147, 246]},
+    {"id": "E24", "name": "linked_data_q", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "Linked data pool storing data, next pointer and free bit per entry.", "lines": [186, 246]},
+    {"id": "E39", "name": "match_in_idx", "role": "INDEX", "importance": "major", "trace": "control_backward", "why": "Head-tail index matching the requested ID; selects subqueue for append or pop.", "lines": [234, 246]},
+    {"id": "E38", "name": "head_tail_free_idx", "role": "INDEX", "importance": "minor", "trace": "control_backward", "why": "First free head-tail slot for allocating a new ID entry.", "lines": [226]},
+    {"id": "E41", "name": "linked_data_free_idx", "role": "INDEX", "importance": "minor", "trace": "control_backward", "why": "First free linked-data slot where incoming data is written.", "lines": [228, 237]},
+    {"id": "E29", "name": "no_in_id_match", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "ID miss flag: allocates new head-tail entry on push, suppresses output on pop.", "lines": [225, 245]},
+    {"id": "E26", "name": "full", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "No free linked-data entry; blocks pushes and drops input grant.", "lines": [198, 221]},
+    {"id": "E6", "name": "inp_req_i", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Push request inserting data into the ID subqueue.", "lines": [221]},
+    {"id": "E7", "name": "inp_gnt_o", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Push grant when pool not full.", "lines": [206]},
+    {"id": "E5", "name": "inp_data_i", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Pushed data written into free linked-data entry.", "lines": [238]},
+    {"id": "E4", "name": "inp_id_i", "role": "INTERFACE_ADDR", "importance": "major", "trace": "interface", "why": "ID of pushed data, matched against head-tail table.", "lines": [222, 227]},
+    {"id": "E15", "name": "oup_req_i", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Output read request for an ID's head entry.", "lines": [242]},
+    {"id": "E13", "name": "oup_id_i", "role": "INTERFACE_ADDR", "importance": "major", "trace": "interface", "why": "ID whose subqueue head is read or popped.", "lines": [243]},
+    {"id": "E14", "name": "oup_pop_i", "role": "COMMAND", "importance": "major", "trace": "interface", "why": "Pop command freeing head entry and advancing subqueue head.", "lines": [248]},
+    {"id": "E16", "name": "oup_data_o", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Head data of requested ID's subqueue.", "lines": [246]},
+    {"id": "E17", "name": "oup_data_valid_o", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "Indicates requested ID existed and output data is valid.", "lines": [247]},
+    {"id": "E18", "name": "oup_gnt_o", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Output request grant, always given when requested.", "lines": [262]},
+    {"id": "E10", "name": "exists_req_i", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Exists-lookup request per compare port.", "lines": [386]},
+    {"id": "E11", "name": "exists_o", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "Lookup result: some occupied entry matches masked query data.", "lines": [388]},
+    {"id": "E20", "name": "empty_o", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "Queue-empty status output (all linked-data entries free).", "lines": [413]}
+  ],
+  "groups": [
+    {"name": "Head-tail table", "kind": "MEMORY", "anchor_ids": ["E22", "E39", "E38"], "member_ids": ["E21", "E31", "E32", "E33", "E36", "E37", "E27", "E28", "E30", "E40", "I1"], "description": "ID-to-subqueue head/tail table with ID match and free-slot search."},
+    {"name": "Linked data pool", "kind": "MEMORY", "anchor_ids": ["E24", "E41", "E26"], "member_ids": ["E23", "E35", "E42", "E25"], "description": "Shared pool of data entries chained by next pointers; free search gives full/empty."},
+    {"name": "Push/pop control", "kind": "CONTROLLER", "anchor_ids": ["E6", "E7", "E5", "E4", "E15", "E13", "E14", "E16", "E17", "E18", "E29", "E20"], "member_ids": ["E43", "E44", "E19"], "description": "Combinational push/append and read/pop logic updating both tables."},
+    {"name": "Exists lookup", "kind": "DATAPATH", "anchor_ids": ["E10", "E11"], "member_ids": ["E34", "E8", "E9", "E12"], "description": "Masked compare of query data against all occupied entries."}
+  ],
+  "interfaces": [
+    {"name": "clock/reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2", "E3"]},
+    {"name": "input push", "protocol": "REQ_ACK", "direction": "IN", "member_ids": ["E4", "E5", "E6", "E7"]},
+    {"name": "exists lookup", "protocol": "REQ_ACK", "direction": "IN", "member_ids": ["E8", "E9", "E10", "E11", "E12"]},
+    {"name": "output read/pop", "protocol": "REQ_ACK", "direction": "OUT", "member_ids": ["E13", "E14", "E15", "E16", "E17", "E18"]},
+    {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E19", "E20"]}
+  ]
+}

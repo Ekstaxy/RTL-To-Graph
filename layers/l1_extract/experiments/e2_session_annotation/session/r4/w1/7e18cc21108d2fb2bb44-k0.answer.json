@@ -1,0 +1,24 @@
+{
+ "module_summary": "Serial accumulator summing four 8-bit inputs: a 2-bit counter tracks accepted samples, an accumulator register adds data_in, and valid_out pulses when the fourth sample arrives.",
+ "anchors": [
+  {"id": "E3", "name": "data_in", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "8-bit sample loaded or added into accumulator.", "lines": [6, 54, 57]},
+  {"id": "E4", "name": "valid_in", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Input valid enabling accumulation via ready_add.", "lines": [7, 62]},
+  {"id": "E7", "name": "count", "role": "COUNTER", "importance": "critical", "trace": "control_backward", "why": "Counts accepted samples 0..3; restarts accumulation at zero.", "lines": [13, 31, 53]},
+  {"id": "E6", "name": "data_out", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "10-bit accumulator register outputting the four-sample sum.", "lines": [10, 54, 57]},
+  {"id": "E5", "name": "valid_out", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "One-cycle pulse when fourth sample accumulated.", "lines": [9, 70, 73]},
+  {"id": "E8", "name": "add_cnt", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Accumulate/count enable for counter and data registers.", "lines": [14, 30, 56]},
+  {"id": "E10", "name": "end_cnt", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Fourth-sample flag resetting count and setting valid_out.", "lines": [16, 20, 69]},
+  {"id": "E9", "name": "ready_add", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Accept condition from valid_in or idle output.", "lines": [15, 19, 62]},
+  {"id": "E11", "name": "data_out_reg", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Duplicate unused accumulator register mirroring data_out.", "lines": [17, 41, 44]}
+ ],
+ "groups": [
+  {"name": "Sample counter", "kind": "COUNTER_TIMER", "anchor_ids": ["E7", "E8", "E10", "E9"], "member_ids": [], "description": "Counts four accepted samples, generates enables and end flag."},
+  {"name": "Accumulator", "kind": "DATAPATH", "anchor_ids": ["E6", "E11", "E3"], "member_ids": [], "description": "Loads first sample then adds subsequent samples."},
+  {"name": "Output valid", "kind": "CONTROLLER", "anchor_ids": ["E5", "E4"], "member_ids": [], "description": "Pulses valid_out when four samples accumulated."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "input_stream", "protocol": "STREAM", "direction": "IN", "member_ids": ["E3", "E4"]},
+  {"name": "output_result", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E5", "E6"]}
+ ]
+}

@@ -1,0 +1,291 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "common_cells_cc_cdc_4phase_src",
+ "tops": [
+  "cc_cdc_4phase_src"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "cc_cdc_4phase_src": {
+   "source": "teacher",
+   "canonical_instance": "cc_cdc_4phase_src",
+   "file": "data/rtl/common_cells/src/cc_cdc_4phase.sv",
+   "lines": [
+    105,
+    206
+   ],
+   "summary": "Source side of a 4-phase CDC handshake: a 3-state FSM samples data on valid, drives a glitch-free registered req and data, and waits on a synchronized ack.",
+   "blocks": [
+    {
+     "name": "Handshake FSM",
+     "kind": "CONTROLLER",
+     "description": "4-phase req/ack sequencer driving request and ready.",
+     "anchors": [
+      {
+       "id": "E15",
+       "name": "state_q",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.8,
+       "struct_score": 99.5,
+       "trace": "control_backward",
+       "why": "IDLE/WAIT_ACK_ASSERT/WAIT_ACK_DEASSERT handshake FSM; drives ready_o and req.",
+       "lines": [
+        130,
+        169,
+        196
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "ready_o",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 91.3,
+       "struct_score": 78.1,
+       "trace": "control_backward",
+       "why": "Source ready decoded from FSM state and synced ack.",
+       "lines": [
+        116,
+        153,
+        156
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "req_src_q",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 21.8,
+       "struct_score": 31.7,
+       "trace": "control_backward",
+       "why": "Registered request filtering combinational glitches before async_req_o.",
+       "lines": [
+        123,
+        199,
+        203
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E14",
+       "name": "state_d",
+       "kind": "comb"
+      },
+      {
+       "id": "E9",
+       "name": "req_src_d",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Ack synchronizer",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "tc_sync multi-stage synchronizer for async ack.",
+     "anchors": [
+      {
+       "id": "E13",
+       "name": "ack_synced",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 50.6,
+       "struct_score": 35.0,
+       "trace": "control_backward",
+       "why": "Synchronized ack steering FSM transitions and ready_o.",
+       "lines": [
+        127,
+        145,
+        180
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "async_ack_i",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 84.1,
+       "struct_score": 55.4,
+       "trace": "interface",
+       "why": "Asynchronous ack from destination, synchronized by i_sync.",
+       "lines": [
+        118,
+        144
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Data holding",
+     "kind": "DATAPATH",
+     "description": "Captures data_i and holds it stable on async_data_o.",
+     "anchors": [
+      {
+       "id": "E12",
+       "name": "data_src_q",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 52.5,
+       "struct_score": 42.2,
+       "trace": "data_backward",
+       "why": "Holds sampled data across the whole handshake.",
+       "lines": [
+        125,
+        200,
+        204
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "async_data_o",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 90.8,
+       "struct_score": 76.8,
+       "trace": "data_backward",
+       "why": "Asynchronous data output held stable from data_src_q.",
+       "lines": [
+        119,
+        204
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "data_i",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 61.3,
+       "struct_score": 73.1,
+       "trace": "interface",
+       "why": "Input payload sampled into data_src on valid in IDLE.",
+       "lines": [
+        114,
+        173
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E11",
+       "name": "data_src_d",
+       "kind": "comb"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E4",
+     "name": "valid_i",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 95.6,
+     "struct_score": 88.9,
+     "trace": "interface",
+     "why": "Source valid; in IDLE samples data_i and starts request.",
+     "lines": [
+      115,
+      172
+     ]
+    },
+    {
+     "id": "E6",
+     "name": "async_req_o",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 94.3,
+     "struct_score": 85.6,
+     "trace": "data_backward",
+     "why": "Asynchronous 4-phase request to destination, from req_src_q.",
+     "lines": [
+      117,
+      203
+     ]
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "rst_ni",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "clk_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "src_stream",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "data_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "valid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "ready_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "async_link",
+     "protocol": "REQ_ACK",
+     "direction": "OUT",
+     "member_ids": [
+      "E6",
+      "E7",
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "async_req_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "async_ack_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "async_data_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

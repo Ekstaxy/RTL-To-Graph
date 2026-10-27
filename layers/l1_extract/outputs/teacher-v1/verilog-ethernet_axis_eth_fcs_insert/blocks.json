@@ -1,0 +1,671 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-ethernet_axis_eth_fcs_insert",
+ "tops": [
+  "axis_eth_fcs_insert"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "lfsr": {
+   "source": "heuristic",
+   "canonical_instance": "axis_eth_fcs_insert.eth_crc_8",
+   "file": "data/rtl/verilog-ethernet/rtl/lfsr.v",
+   "lines": [
+    34,
+    445
+   ],
+   "summary": "lfsr (heuristic)",
+   "blocks": [],
+   "ungrouped_anchors": [
+    {
+     "id": "E1",
+     "name": "data_in",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 41.8,
+     "struct_score": 94.5,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    },
+    {
+     "id": "E2",
+     "name": "state_in",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 42.8,
+     "struct_score": 97.0,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    },
+    {
+     "id": "E3",
+     "name": "data_out",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 41.9,
+     "struct_score": 94.6,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    },
+    {
+     "id": "E4",
+     "name": "state_out",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 43.6,
+     "struct_score": 99.0,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "data",
+     "protocol": "SIMPLE",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E1",
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "data_in",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "data_out",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "state",
+     "protocol": "SIMPLE",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E2",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E2",
+       "name": "state_in",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "state_out",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "axis_eth_fcs_insert": {
+   "source": "teacher",
+   "canonical_instance": "axis_eth_fcs_insert",
+   "file": "data/rtl/verilog-ethernet/rtl/axis_eth_fcs_insert.v",
+   "lines": [
+    34,
+    370
+   ],
+   "summary": "AXI-stream Ethernet FCS inserter: a 4-state FSM passes payload, optionally pads to minimum length, then appends four CRC32 bytes from an LFSR child, using a byte counter and skid-buffered output.",
+   "blocks": [
+    {
+     "name": "FCS insert controller",
+     "kind": "CONTROLLER",
+     "description": "FSM and byte counter sequencing payload, padding and FCS byte emission",
+     "anchors": [
+      {
+       "id": "E14",
+       "name": "state_reg",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.6,
+       "struct_score": 98.9,
+       "trace": "control_backward",
+       "why": "IDLE/PAYLOAD/PAD/FCS controller selecting output byte source and input ready",
+       "lines": [
+        131,
+        272
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "frame_ptr_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 59.5,
+       "struct_score": 67.8,
+       "trace": "control_backward",
+       "why": "Frame byte counter for padding length and FCS byte selection",
+       "lines": [
+        180,
+        217,
+        231
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "update_crc",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.9,
+       "struct_score": 7.9,
+       "trace": "control_backward",
+       "why": "Enables CRC state update on each payload or pad byte",
+       "lines": [
+        181,
+        283
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E15",
+       "name": "state_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E16",
+       "name": "reset_crc",
+       "kind": "comb"
+      },
+      {
+       "id": "E19",
+       "name": "frame_ptr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E20",
+       "name": "busy_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E21",
+       "name": "s_axis_tready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E22",
+       "name": "s_axis_tready_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "CRC datapath",
+     "kind": "DATAPATH",
+     "description": "Output byte mux feeding LFSR CRC32 child and CRC state register",
+     "anchors": [
+      {
+       "id": "E23",
+       "name": "crc_state",
+       "role": "HOLDING_REG",
+       "importance": "critical",
+       "score": 81.2,
+       "struct_score": 44.9,
+       "trace": "data_backward",
+       "why": "Running CRC32 accumulated over payload; inverted bytes emitted as FCS",
+       "lines": [
+        111,
+        232,
+        284
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "crc_next",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 18.9,
+       "struct_score": 19.9,
+       "trace": "data_backward",
+       "why": "LFSR child next CRC state loaded into crc_state",
+       "lines": [
+        113,
+        284
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "m_axis_tdata_int",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 48.4,
+       "struct_score": 25.8,
+       "trace": "data_backward",
+       "why": "Muxed output byte: payload, pad zero or FCS byte; also CRC input",
+       "lines": [
+        110,
+        174,
+        232
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "eth_crc_8",
+       "module": "lfsr"
+      }
+     ],
+     "members": [
+      {
+       "id": "E26",
+       "name": "m_axis_tvalid_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E28",
+       "name": "m_axis_tlast_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E29",
+       "name": "m_axis_tuser_int",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Output skid buffer",
+     "kind": "BUFFER",
+     "description": "Output and temp registers decoupling downstream ready",
+     "anchors": [
+      {
+       "id": "E27",
+       "name": "m_axis_tready_int_reg",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 54.8,
+       "struct_score": 50.7,
+       "trace": "control_backward",
+       "why": "Internal ready advancing pad/FCS states and skid buffer stores",
+       "lines": [
+        214,
+        241,
+        322
+       ]
+      },
+      {
+       "id": "E37",
+       "name": "temp_m_axis_tvalid_reg",
+       "role": "STORAGE",
+       "importance": "minor",
+       "score": 27.2,
+       "struct_score": 52.2,
+       "trace": "data_backward",
+       "why": "Skid buffer temp slot valid holding stalled beat",
+       "lines": [
+        311,
+        330,
+        344
+       ]
+      },
+      {
+       "id": "E41",
+       "name": "store_axis_int_to_output",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 17.0,
+       "struct_score": 12.3,
+       "trace": "control_backward",
+       "why": "Loads internal beat into output registers",
+       "lines": [
+        327,
+        347
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E30",
+       "name": "m_axis_tready_int_early",
+       "kind": "wire"
+      },
+      {
+       "id": "E31",
+       "name": "m_axis_tdata_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E32",
+       "name": "m_axis_tvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E33",
+       "name": "m_axis_tvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E34",
+       "name": "m_axis_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E35",
+       "name": "m_axis_tuser_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E36",
+       "name": "temp_m_axis_tdata_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E38",
+       "name": "temp_m_axis_tvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E39",
+       "name": "temp_m_axis_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E40",
+       "name": "temp_m_axis_tuser_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E42",
+       "name": "store_axis_int_to_temp",
+       "kind": "comb"
+      },
+      {
+       "id": "E43",
+       "name": "store_axis_temp_to_output",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Stream interfaces",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "AXI-stream input and output ports plus busy status",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "s_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 87.7,
+       "struct_score": 68.5,
+       "trace": "interface",
+       "why": "Input payload byte forwarded to output and CRC",
+       "lines": [
+        46,
+        174
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 93.6,
+       "struct_score": 83.9,
+       "trace": "interface",
+       "why": "Input beat valid qualifying transfers",
+       "lines": [
+        47,
+        179
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 93.0,
+       "struct_score": 82.2,
+       "trace": "interface",
+       "why": "Input ready, deasserted during pad and FCS insertion",
+       "lines": [
+        48,
+        96,
+        179
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_tlast",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 60.6,
+       "struct_score": 71.2,
+       "trace": "interface",
+       "why": "End of frame marker starting pad or FCS insertion",
+       "lines": [
+        49,
+        182
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_tuser",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 32.6,
+       "struct_score": 71.2,
+       "trace": "interface",
+       "why": "Input bad-frame flag; aborts FCS insertion and propagates error",
+       "lines": [
+        50,
+        183
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "m_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 88.8,
+       "struct_score": 71.6,
+       "trace": "interface",
+       "why": "Output stream byte including appended FCS",
+       "lines": [
+        55,
+        305
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "m_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 88.4,
+       "struct_score": 70.8,
+       "trace": "interface",
+       "why": "Output valid from skid buffer register",
+       "lines": [
+        56,
+        306
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "m_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 88.0,
+       "struct_score": 69.6,
+       "trace": "interface",
+       "why": "Downstream ready controlling skid buffer transfers",
+       "lines": [
+        57,
+        311,
+        324
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "m_axis_tlast",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 27.8,
+       "struct_score": 54.2,
+       "trace": "interface",
+       "why": "Output end-of-frame after last FCS byte",
+       "lines": [
+        58,
+        307
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "busy",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 18.9,
+       "struct_score": 19.8,
+       "trace": "interface",
+       "why": "Level indicating frame in progress",
+       "lines": [
+        64,
+        98
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E12",
+       "name": "m_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axis",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axis_tdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_tvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_tready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_tuser",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axis",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12"
+     ],
+     "members": [
+      {
+       "id": "E8",
+       "name": "m_axis_tdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "m_axis_tvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "m_axis_tready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "m_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "m_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E13"
+     ],
+     "members": [
+      {
+       "id": "E13",
+       "name": "busy",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

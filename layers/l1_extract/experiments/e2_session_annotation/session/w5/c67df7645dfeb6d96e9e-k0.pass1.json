@@ -1,0 +1,42 @@
+{
+ "module_summary": "AXI-stream FIFO: packs stream fields into a RAM addressed by Gray-free binary write/commit/read pointers, reads through a RAM output pipeline, with optional frame drop/mark modes and depth status.",
+ "anchors": [
+  {"id": "E29", "name": "mem", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "FIFO RAM storing packed stream words, written at wr_ptr, read at rd_ptr.", "lines": [192, 338, 393]},
+  {"id": "E26", "name": "wr_ptr_reg", "role": "FIFO_PTR", "importance": "critical", "trace": "control_backward", "why": "Write pointer addressing mem; increments per accepted beat, rewinds on dropped frames.", "lines": [187, 338, 339]},
+  {"id": "E28", "name": "rd_ptr_reg", "role": "FIFO_PTR", "importance": "critical", "trace": "control_backward", "why": "Read pointer addressing mem; increments when data moved into output pipeline.", "lines": [189, 393, 397]},
+  {"id": "E27", "name": "wr_ptr_commit_reg", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "Committed write pointer visible to reader; defines empty and frame rollback point.", "lines": [188, 202, 340]},
+  {"id": "E33", "name": "full", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "FIFO full from pointer MSB compare; deasserts s_axis_tready.", "lines": [200, 217]},
+  {"id": "E34", "name": "empty", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "FIFO empty (commit ptr == rd ptr); blocks reads into pipeline.", "lines": [202, 394]},
+  {"id": "E35", "name": "full_wr", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Frame larger than FIFO detect; frame-FIFO mode only.", "lines": [204, 275]},
+  {"id": "E37", "name": "drop_frame_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Currently dropping frame flag (frame/mark modes, disabled by default).", "lines": [208, 275, 278]},
+  {"id": "E38", "name": "mark_frame_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Marking frame bad when full; forces tlast/tuser (MARK_WHEN_FULL only).", "lines": [209, 224, 331]},
+  {"id": "E39", "name": "send_frame_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Oversize frame being passed through in frame mode.", "lines": [210, 289, 291]},
+  {"id": "E36", "name": "s_frame_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Input in-frame tracker used when marking frames.", "lines": [206, 268, 331]},
+  {"id": "E31", "name": "m_axis_pipe_reg", "role": "PIPELINE_REG", "importance": "major", "trace": "data_backward", "why": "RAM read pipeline stages carrying words from mem to output.", "lines": [196, 385, 393]},
+  {"id": "E32", "name": "m_axis_tvalid_pipe_reg", "role": "PIPELINE_REG", "importance": "minor", "trace": "control_backward", "why": "Valid bits of read pipeline stages; bubble detection for advancing.", "lines": [197, 384, 396]},
+  {"id": "E47", "name": "m_axis_tready_pipe", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Ready into read pipeline from output stage.", "lines": [376, 382, 413]},
+  {"id": "E45", "name": "s_axis", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Packed input word (data, last, user, mark) written into mem.", "lines": [219, 222, 338]},
+  {"id": "E46", "name": "m_axis", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Packed word from last pipeline stage, unpacked to output fields.", "lines": [230, 235]},
+  {"id": "E40", "name": "depth_reg", "role": "FIFO_PTR", "importance": "minor", "trace": "data_backward", "why": "Registered occupancy wr_ptr - rd_ptr driving status_depth.", "lines": [211, 254, 368]},
+  {"id": "E23", "name": "status_overflow", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Pulse when a frame was dropped/overflowed.", "lines": [132, 256]},
+  {"id": "E3", "name": "s_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Input payload packed into the FIFO word.", "lines": [100, 222]},
+  {"id": "E5", "name": "s_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Input valid; with ready writes mem and advances wr_ptr.", "lines": [102, 311]},
+  {"id": "E6", "name": "s_axis_tready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Input ready, low when full (unless drop/mark modes).", "lines": [103, 217, 311]},
+  {"id": "E11", "name": "m_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Output payload unpacked from the read pipeline.", "lines": [112, 551]},
+  {"id": "E13", "name": "m_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Output valid from last pipeline stage (gated by pause if enabled).", "lines": [114, 549]},
+  {"id": "E14", "name": "m_axis_tready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Downstream ready advancing the read pipeline.", "lines": [115, 548]}
+ ],
+ "groups": [
+  {"name": "FIFO RAM", "kind": "MEMORY", "anchor_ids": ["E29", "E45"], "member_ids": ["E30"], "description": "Packed stream word storage."},
+  {"name": "Write control", "kind": "CONTROLLER", "anchor_ids": ["E26", "E27", "E33", "E35", "E37", "E38", "E39", "E36", "E3", "E5", "E6"], "member_ids": ["E4", "E7", "E8", "E9", "E10"], "description": "Write/commit pointers, full detection and frame drop/mark logic."},
+  {"name": "Read pipeline", "kind": "PIPELINE_STAGE", "anchor_ids": ["E28", "E34", "E31", "E32", "E47", "E46", "E11", "E13", "E14"], "member_ids": ["E48", "E49", "E50", "E51", "E52", "E53", "E54", "E55", "E56", "E57", "E58", "E59", "E60", "E61", "E62", "E63", "E12", "E15", "E16", "E17", "E18"], "description": "Read pointer, empty and RAM output pipeline to m_axis."},
+  {"name": "Status", "kind": "OTHER", "anchor_ids": ["E40", "E23"], "member_ids": ["E41", "E42", "E43", "E44", "E21", "E22", "E24", "E25"], "description": "Depth and frame/overflow status outputs."}
+ ],
+ "interfaces": [
+  {"name": "clock/reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "s_axis", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10"]},
+  {"name": "m_axis", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E11", "E12", "E13", "E14", "E15", "E16", "E17", "E18"]},
+  {"name": "pause", "protocol": "REQ_ACK", "direction": "IN", "member_ids": ["E19", "E20"]},
+  {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E21", "E22", "E23", "E24", "E25"]}
+ ]
+}

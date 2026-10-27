@@ -1,0 +1,1552 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "wb2axip_demofull",
+ "tops": [
+  "demofull"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "skidbuffer": {
+   "source": "teacher",
+   "canonical_instance": "demofull.awbuf",
+   "file": "data/rtl/wb2axip/rtl/skidbuffer.v",
+   "lines": [
+    81,
+    501
+   ],
+   "summary": "Valid/ready skid buffer: a one-entry side register (r_data/r_valid) captures input when output stalls, with optional registered output stage.",
+   "blocks": [
+    {
+     "name": "skid_register",
+     "kind": "BUFFER",
+     "description": "One-entry overflow buffer capturing input while downstream stalls.",
+     "anchors": [
+      {
+       "id": "E10",
+       "name": "LOGIC.r_valid",
+       "role": "CONTROL_FLAG",
+       "importance": "critical",
+       "score": 87.4,
+       "struct_score": 67.3,
+       "trace": "control_backward",
+       "why": "Skid-full flag; set when input accepted while output stalled, deasserts o_ready, selects r_data to output.",
+       "lines": [
+        128,
+        137,
+        160
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "LOGIC.r_data",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 97.7,
+       "struct_score": 94.3,
+       "trace": "data_backward",
+       "why": "One-entry skid register holding input data while downstream is stalled.",
+       "lines": [
+        129,
+        153,
+        213
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "w_data",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 24.5,
+       "struct_score": 42.5,
+       "trace": "none",
+       "why": "Debug/formal view of skid register contents r_data.",
+       "lines": [
+        102,
+        155
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "output_stage",
+     "kind": "PIPELINE_STAGE",
+     "description": "Registered output valid/data, muxing skid data or fresh input.",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "o_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 98.7,
+       "struct_score": 96.8,
+       "trace": "control_backward",
+       "why": "Downstream valid, registered from i_valid or skid-full flag.",
+       "lines": [
+        96,
+        172,
+        200
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "o_data",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 98.4,
+       "struct_score": 96.0,
+       "trace": "data_backward",
+       "why": "Output payload register, chooses r_data when skid full else i_data.",
+       "lines": [
+        98,
+        213,
+        215
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "i_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 63.8,
+       "struct_score": 79.3,
+       "trace": "interface",
+       "why": "Downstream ready; clears skid flag and advances output register.",
+       "lines": [
+        97,
+        140,
+        209
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "input_handshake",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Upstream valid/ready/data interface.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "i_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 97.4,
+       "struct_score": 93.3,
+       "trace": "interface",
+       "why": "Upstream valid; with o_ready accepts data into skid or output register.",
+       "lines": [
+        93,
+        137,
+        198
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "o_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 95.9,
+       "struct_score": 89.6,
+       "trace": "interface",
+       "why": "Upstream ready, inverse of skid-full flag r_valid.",
+       "lines": [
+        94,
+        160
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "i_data",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 97.5,
+       "struct_score": 93.8,
+       "trace": "interface",
+       "why": "Incoming payload loaded into r_data or directly into o_data.",
+       "lines": [
+        95,
+        153,
+        215
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "i_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "i_reset",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "slave_stream",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "i_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "o_ready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "i_data",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "master_stream",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E6",
+      "E7",
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "o_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "i_ready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "o_data",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "axi_addr": {
+   "source": "heuristic",
+   "canonical_instance": "demofull.get_next_wr_addr",
+   "file": "data/rtl/wb2axip/rtl/axi_addr.v",
+   "lines": [
+    45,
+    234
+   ],
+   "summary": "axi_addr (heuristic)",
+   "blocks": [],
+   "ungrouped_anchors": [
+    {
+     "id": "E1",
+     "name": "i_last_addr",
+     "role": "INTERFACE_ADDR",
+     "importance": "minor",
+     "score": 37.2,
+     "struct_score": 82.8,
+     "trace": "interface",
+     "why": "address port",
+     "lines": []
+    },
+    {
+     "id": "E4",
+     "name": "i_len",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 40.6,
+     "struct_score": 91.3,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    },
+    {
+     "id": "E5",
+     "name": "o_next_addr",
+     "role": "INTERFACE_ADDR",
+     "importance": "minor",
+     "score": 40.4,
+     "struct_score": 91.0,
+     "trace": "interface",
+     "why": "address port",
+     "lines": []
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "i",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2",
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "i_last_addr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "i_size",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "i_burst",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "i_len",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "o",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "o_next_addr",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "demofull": {
+   "source": "teacher",
+   "canonical_instance": "demofull",
+   "file": "data/rtl/wb2axip/rtl/demofull.v",
+   "lines": [
+    45,
+    1282
+   ],
+   "summary": "AXI4 full slave bridging to a simple register-style peripheral: AW skid buffer plus write burst address generator drive o_we/o_waddr, a read burst counter and address generator drive o_rd/o_raddr, and an output skid buffer returns read data.",
+   "blocks": [
+    {
+     "name": "AW skid buffer",
+     "kind": "BUFFER",
+     "description": "Buffers write address channel fields; m_awready pops next burst address.",
+     "anchors": [
+      {
+       "id": "E19",
+       "name": "S_AXI_AWVALID",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 82.5,
+       "struct_score": 49.8,
+       "trace": "interface",
+       "why": "Write address valid into the AW skid buffer.",
+       "lines": [
+        137,
+        324
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "S_AXI_AWREADY",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 22.9,
+       "struct_score": 36.1,
+       "trace": "interface",
+       "why": "Write address ready produced by the AW skid buffer.",
+       "lines": [
+        141,
+        324
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "S_AXI_AWADDR",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 50.4,
+       "struct_score": 34.3,
+       "trace": "interface",
+       "why": "Write burst start address entering the AW skid buffer.",
+       "lines": [
+        108,
+        325
+       ]
+      },
+      {
+       "id": "E58",
+       "name": "m_awvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 19.8,
+       "struct_score": 23.4,
+       "trace": "control_backward",
+       "why": "Skid-buffered write address valid; accepting it starts the write data phase.",
+       "lines": [
+        327,
+        350
+       ]
+      },
+      {
+       "id": "E60",
+       "name": "m_awready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 20.0,
+       "struct_score": 24.4,
+       "trace": "control_backward",
+       "why": "Accepts next buffered write address; loads waddr, wlen, wsize, wburst.",
+       "lines": [
+        405,
+        502,
+        505
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "awbuf",
+       "module": "skidbuffer"
+      }
+     ],
+     "members": [
+      {
+       "id": "E61",
+       "name": "m_awaddr",
+       "kind": "wire"
+      },
+      {
+       "id": "E62",
+       "name": "m_awburst",
+       "kind": "wire"
+      },
+      {
+       "id": "E63",
+       "name": "m_awsize",
+       "kind": "wire"
+      },
+      {
+       "id": "E64",
+       "name": "m_awlen",
+       "kind": "wire"
+      },
+      {
+       "id": "E65",
+       "name": "m_awid",
+       "kind": "wire"
+      },
+      {
+       "id": "E59",
+       "name": "m_awlock",
+       "kind": "wire"
+      },
+      {
+       "id": "E10",
+       "name": "S_AXI_AWID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E12",
+       "name": "S_AXI_AWLEN",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "S_AXI_AWSIZE",
+       "kind": "port_in"
+      },
+      {
+       "id": "E14",
+       "name": "S_AXI_AWBURST",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "S_AXI_AWLOCK",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Write channel control",
+     "kind": "CONTROLLER",
+     "description": "Sequences address phase vs data burst via axi_awready/axi_wready; exclusive-write flags.",
+     "anchors": [
+      {
+       "id": "E51",
+       "name": "axi_awready",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 45.3,
+       "struct_score": 13.5,
+       "trace": "control_backward",
+       "why": "Write-phase control: high while waiting for an address, low during data burst.",
+       "lines": [
+        352,
+        356,
+        502
+       ]
+      },
+      {
+       "id": "E52",
+       "name": "axi_wready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 74.4,
+       "struct_score": 18.0,
+       "trace": "control_backward",
+       "why": "Write data ready register, set after address accepted, cleared on WLAST; drives S_AXI_WREADY.",
+       "lines": [
+        353,
+        357,
+        517
+       ]
+      },
+      {
+       "id": "E80",
+       "name": "exclusive_write",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.9,
+       "struct_score": 11.6,
+       "trace": "control_backward",
+       "why": "Current write burst is a valid exclusive write; disabled when OPT_LOCK=0.",
+       "lines": [
+        381,
+        395
+       ]
+      },
+      {
+       "id": "E81",
+       "name": "block_write",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.5,
+       "struct_score": 10.3,
+       "trace": "control_backward",
+       "why": "Failed exclusive write; suppresses o_wstrb. Disabled when OPT_LOCK=0.",
+       "lines": [
+        383,
+        433
+       ]
+      },
+      {
+       "id": "E82",
+       "name": "write_lock_valid",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 15.5,
+       "struct_score": 6.0,
+       "trace": "control_backward",
+       "why": "Exclusive-access monitor result; constant zero without locking.",
+       "lines": [
+        380,
+        960
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E25",
+       "name": "S_AXI_WREADY",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "S_AXI_WLAST",
+       "kind": "port_in"
+      },
+      {
+       "id": "E24",
+       "name": "S_AXI_WVALID",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Write address generator",
+     "kind": "DATAPATH",
+     "description": "Holds burst parameters and advances write address each beat via axi_addr.",
+     "anchors": [
+      {
+       "id": "E53",
+       "name": "waddr",
+       "role": "INDEX",
+       "importance": "major",
+       "score": 44.6,
+       "struct_score": 10.6,
+       "trace": "data_backward",
+       "why": "Current write beat address, loaded from AW and advanced by next_wr_addr each beat.",
+       "lines": [
+        407,
+        412,
+        431
+       ]
+      },
+      {
+       "id": "E54",
+       "name": "next_wr_addr",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 15.6,
+       "struct_score": 6.5,
+       "trace": "data_backward",
+       "why": "Next burst write address computed by axi_addr instance.",
+       "lines": [
+        412,
+        421
+       ]
+      },
+      {
+       "id": "E55",
+       "name": "wlen",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 16.8,
+       "struct_score": 11.3,
+       "trace": "data_backward",
+       "why": "Latched write burst length used for address increment; with wsize, wburst.",
+       "lines": [
+        410,
+        420
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I2",
+       "instance": "get_next_wr_addr",
+       "module": "axi_addr"
+      }
+     ],
+     "members": [
+      {
+       "id": "E56",
+       "name": "wsize",
+       "kind": "reg"
+      },
+      {
+       "id": "E57",
+       "name": "wburst",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Write response",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Double-buffered B channel response with ID and exclusive status.",
+     "anchors": [
+      {
+       "id": "E28",
+       "name": "S_AXI_BVALID",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 64.4,
+       "struct_score": 80.7,
+       "trace": "control_backward",
+       "why": "Write response valid driven by axi_bvalid after WLAST beat.",
+       "lines": [
+        173,
+        518
+       ]
+      },
+      {
+       "id": "E29",
+       "name": "S_AXI_BREADY",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 26.8,
+       "struct_score": 50.7,
+       "trace": "interface",
+       "why": "Master accepts write response; frees double-buffered response.",
+       "lines": [
+        176,
+        462,
+        494
+       ]
+      },
+      {
+       "id": "E48",
+       "name": "r_bvalid",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.7,
+       "struct_score": 15.2,
+       "trace": "control_backward",
+       "why": "Second pending write response when BVALID is stalled; holds off axi_awready.",
+       "lines": [
+        461,
+        462,
+        495
+       ]
+      },
+      {
+       "id": "E47",
+       "name": "r_bid",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 16.1,
+       "struct_score": 8.5,
+       "trace": "data_backward",
+       "why": "Latched write ID for response, double-buffered into axi_bid.",
+       "lines": [
+        473,
+        476
+       ]
+      },
+      {
+       "id": "E27",
+       "name": "S_AXI_BRESP",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 17.4,
+       "struct_score": 13.6,
+       "trace": "data_backward",
+       "why": "Write response code reporting exclusive write success.",
+       "lines": [
+        169,
+        523
+       ]
+      },
+      {
+       "id": "E83",
+       "name": "axi_exclusive_write",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 15.1,
+       "struct_score": 4.5,
+       "trace": "data_backward",
+       "why": "Registered exclusive-okay flag driving BRESP; disabled when OPT_LOCK=0.",
+       "lines": [
+        395,
+        523
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E50",
+       "name": "axi_bvalid",
+       "kind": "reg"
+      },
+      {
+       "id": "E49",
+       "name": "axi_bid",
+       "kind": "reg"
+      },
+      {
+       "id": "E26",
+       "name": "S_AXI_BID",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "Peripheral port",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Simple peripheral write strobe/address/data and read strobe/address/data.",
+     "anchors": [
+      {
+       "id": "E1",
+       "name": "o_we",
+       "role": "ENABLE",
+       "importance": "critical",
+       "score": 77.0,
+       "struct_score": 28.3,
+       "trace": "control_backward",
+       "why": "Peripheral write strobe, registered from W handshake.",
+       "lines": [
+        84,
+        430
+       ]
+      },
+      {
+       "id": "E2",
+       "name": "o_waddr",
+       "role": "INTERFACE_ADDR",
+       "importance": "minor",
+       "score": 26.1,
+       "struct_score": 48.0,
+       "trace": "data_backward",
+       "why": "Peripheral word write address from waddr.",
+       "lines": [
+        85,
+        431
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "o_wdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 92.1,
+       "struct_score": 80.0,
+       "trace": "data_backward",
+       "why": "Registered write data to peripheral.",
+       "lines": [
+        86,
+        432
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "o_wstrb",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 30.6,
+       "struct_score": 64.4,
+       "trace": "data_backward",
+       "why": "Byte strobes to peripheral, zeroed when block_write.",
+       "lines": [
+        87,
+        434,
+        436
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "o_rd",
+       "role": "ENABLE",
+       "importance": "critical",
+       "score": 82.1,
+       "struct_score": 48.1,
+       "trace": "control_backward",
+       "why": "Peripheral read strobe, gated by RVALID stall and skid ready; steps read counter.",
+       "lines": [
+        612,
+        614,
+        616
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "o_raddr",
+       "role": "INTERFACE_ADDR",
+       "importance": "minor",
+       "score": 24.0,
+       "struct_score": 40.7,
+       "trace": "data_backward",
+       "why": "Peripheral read address muxed from ARADDR or raddr.",
+       "lines": [
+        90,
+        617
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "i_rdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 87.3,
+       "struct_score": 67.1,
+       "trace": "interface",
+       "why": "Peripheral read data fed into read skid buffer.",
+       "lines": [
+        91,
+        690
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Read burst control",
+     "kind": "COUNTER_TIMER",
+     "description": "Accepts AR requests and counts remaining read beats to reassert ARREADY.",
+     "anchors": [
+      {
+       "id": "E39",
+       "name": "S_AXI_ARVALID",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 90.2,
+       "struct_score": 75.3,
+       "trace": "interface",
+       "why": "Read address valid; starts read burst and o_rd issue.",
+       "lines": [
+        215,
+        541,
+        612
+       ]
+      },
+      {
+       "id": "E40",
+       "name": "S_AXI_ARREADY",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 90.8,
+       "struct_score": 76.7,
+       "trace": "control_backward",
+       "why": "Read address ready from axi_arready; selects AR vs raddr for read address.",
+       "lines": [
+        219,
+        617,
+        699
+       ]
+      },
+      {
+       "id": "E31",
+       "name": "S_AXI_ARADDR",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 54.5,
+       "struct_score": 49.7,
+       "trace": "interface",
+       "why": "Read burst start address loaded into raddr.",
+       "lines": [
+        185,
+        566
+       ]
+      },
+      {
+       "id": "E73",
+       "name": "axi_rlen",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 51.5,
+       "struct_score": 38.6,
+       "trace": "control_backward",
+       "why": "Remaining read beats, loaded from ARLEN and decremented per o_rd.",
+       "lines": [
+        544,
+        554,
+        556
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E72",
+       "name": "axi_arready",
+       "kind": "reg"
+      },
+      {
+       "id": "E32",
+       "name": "S_AXI_ARLEN",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Read address generator",
+     "kind": "DATAPATH",
+     "description": "Holds read burst parameters and advances read address via axi_addr.",
+     "anchors": [
+      {
+       "id": "E74",
+       "name": "raddr",
+       "role": "INDEX",
+       "importance": "major",
+       "score": 44.6,
+       "struct_score": 10.6,
+       "trace": "data_backward",
+       "why": "Current read beat address, advanced via next_rd_addr each o_rd.",
+       "lines": [
+        563,
+        566,
+        617
+       ]
+      },
+      {
+       "id": "E66",
+       "name": "next_rd_addr",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 15.6,
+       "struct_score": 6.5,
+       "trace": "data_backward",
+       "why": "Next burst read address computed by axi_addr instance.",
+       "lines": [
+        563,
+        603
+       ]
+      },
+      {
+       "id": "E67",
+       "name": "rlen",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 16.6,
+       "struct_score": 10.6,
+       "trace": "data_backward",
+       "why": "Latched read burst length with rsize, rburst, rid for address generation.",
+       "lines": [
+        578,
+        602
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I3",
+       "instance": "get_next_rd_addr",
+       "module": "axi_addr"
+      }
+     ],
+     "members": [
+      {
+       "id": "E68",
+       "name": "rsize",
+       "kind": "reg"
+      },
+      {
+       "id": "E69",
+       "name": "rburst",
+       "kind": "reg"
+      },
+      {
+       "id": "E70",
+       "name": "rid",
+       "kind": "reg"
+      },
+      {
+       "id": "E71",
+       "name": "rlock",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Read return skid buffer",
+     "kind": "BUFFER",
+     "description": "Registers read data with ID, last and lock into R channel skid buffer.",
+     "anchors": [
+      {
+       "id": "E75",
+       "name": "rskd_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 23.5,
+       "struct_score": 38.7,
+       "trace": "control_backward",
+       "why": "Read beat pending into output skid buffer, set by o_rd.",
+       "lines": [
+        628,
+        630,
+        689
+       ]
+      },
+      {
+       "id": "E78",
+       "name": "rskd_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 17.4,
+       "struct_score": 13.8,
+       "trace": "control_backward",
+       "why": "Read skid buffer ready; stalls o_rd when full.",
+       "lines": [
+        615,
+        629,
+        689
+       ]
+      },
+      {
+       "id": "E76",
+       "name": "rskd_last",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 15.7,
+       "struct_score": 6.8,
+       "trace": "data_backward",
+       "why": "Last-beat flag for pending read beat, becomes RLAST.",
+       "lines": [
+        653,
+        655,
+        690
+       ]
+      },
+      {
+       "id": "E45",
+       "name": "S_AXI_RVALID",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 87.6,
+       "struct_score": 68.2,
+       "trace": "interface",
+       "why": "Read data valid from output skid buffer.",
+       "lines": [
+        237,
+        691
+       ]
+      },
+      {
+       "id": "E42",
+       "name": "S_AXI_RDATA",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 88.6,
+       "struct_score": 71.1,
+       "trace": "interface",
+       "why": "AXI read data from output skid buffer.",
+       "lines": [
+        227,
+        693
+       ]
+      },
+      {
+       "id": "E46",
+       "name": "S_AXI_RREADY",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 23.8,
+       "struct_score": 39.7,
+       "trace": "interface",
+       "why": "Master read ready; stalls output skid buffer and o_rd.",
+       "lines": [
+        240,
+        613,
+        691
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I4",
+       "instance": "rskid",
+       "module": "skidbuffer"
+      }
+     ],
+     "members": [
+      {
+       "id": "E77",
+       "name": "rskd_lock",
+       "kind": "reg"
+      },
+      {
+       "id": "E79",
+       "name": "rskd_id",
+       "kind": "reg"
+      },
+      {
+       "id": "E41",
+       "name": "S_AXI_RID",
+       "kind": "port_out"
+      },
+      {
+       "id": "E43",
+       "name": "S_AXI_RRESP",
+       "kind": "port_out"
+      },
+      {
+       "id": "E44",
+       "name": "S_AXI_RLAST",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E21",
+     "name": "S_AXI_WDATA",
+     "role": "INTERFACE_DATA",
+     "importance": "critical",
+     "score": 87.8,
+     "struct_score": 68.8,
+     "trace": "interface",
+     "why": "AXI write data forwarded to o_wdata.",
+     "lines": [
+      146,
+      432
+     ]
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E8",
+      "E9"
+     ],
+     "members": [
+      {
+       "id": "E8",
+       "name": "S_AXI_ACLK",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "S_AXI_ARESETN",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "axi_aw",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E10",
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20"
+     ],
+     "members": [
+      {
+       "id": "E10",
+       "name": "S_AXI_AWID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "S_AXI_AWADDR",
+       "kind": "port_in"
+      },
+      {
+       "id": "E12",
+       "name": "S_AXI_AWLEN",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "S_AXI_AWSIZE",
+       "kind": "port_in"
+      },
+      {
+       "id": "E14",
+       "name": "S_AXI_AWBURST",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "S_AXI_AWLOCK",
+       "kind": "port_in"
+      },
+      {
+       "id": "E16",
+       "name": "S_AXI_AWCACHE",
+       "kind": "port_in"
+      },
+      {
+       "id": "E17",
+       "name": "S_AXI_AWPROT",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "S_AXI_AWQOS",
+       "kind": "port_in"
+      },
+      {
+       "id": "E19",
+       "name": "S_AXI_AWVALID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E20",
+       "name": "S_AXI_AWREADY",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "axi_w",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E21",
+      "E22",
+      "E23",
+      "E24",
+      "E25"
+     ],
+     "members": [
+      {
+       "id": "E21",
+       "name": "S_AXI_WDATA",
+       "kind": "port_in"
+      },
+      {
+       "id": "E22",
+       "name": "S_AXI_WSTRB",
+       "kind": "port_in"
+      },
+      {
+       "id": "E23",
+       "name": "S_AXI_WLAST",
+       "kind": "port_in"
+      },
+      {
+       "id": "E24",
+       "name": "S_AXI_WVALID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E25",
+       "name": "S_AXI_WREADY",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "axi_b",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E26",
+      "E27",
+      "E28",
+      "E29"
+     ],
+     "members": [
+      {
+       "id": "E26",
+       "name": "S_AXI_BID",
+       "kind": "port_out"
+      },
+      {
+       "id": "E27",
+       "name": "S_AXI_BRESP",
+       "kind": "port_out"
+      },
+      {
+       "id": "E28",
+       "name": "S_AXI_BVALID",
+       "kind": "port_out"
+      },
+      {
+       "id": "E29",
+       "name": "S_AXI_BREADY",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "axi_ar",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E30",
+      "E31",
+      "E32",
+      "E33",
+      "E34",
+      "E35",
+      "E36",
+      "E37",
+      "E38",
+      "E39",
+      "E40"
+     ],
+     "members": [
+      {
+       "id": "E30",
+       "name": "S_AXI_ARID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E31",
+       "name": "S_AXI_ARADDR",
+       "kind": "port_in"
+      },
+      {
+       "id": "E32",
+       "name": "S_AXI_ARLEN",
+       "kind": "port_in"
+      },
+      {
+       "id": "E33",
+       "name": "S_AXI_ARSIZE",
+       "kind": "port_in"
+      },
+      {
+       "id": "E34",
+       "name": "S_AXI_ARBURST",
+       "kind": "port_in"
+      },
+      {
+       "id": "E35",
+       "name": "S_AXI_ARLOCK",
+       "kind": "port_in"
+      },
+      {
+       "id": "E36",
+       "name": "S_AXI_ARCACHE",
+       "kind": "port_in"
+      },
+      {
+       "id": "E37",
+       "name": "S_AXI_ARPROT",
+       "kind": "port_in"
+      },
+      {
+       "id": "E38",
+       "name": "S_AXI_ARQOS",
+       "kind": "port_in"
+      },
+      {
+       "id": "E39",
+       "name": "S_AXI_ARVALID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E40",
+       "name": "S_AXI_ARREADY",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "axi_r",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E41",
+      "E42",
+      "E43",
+      "E44",
+      "E45",
+      "E46"
+     ],
+     "members": [
+      {
+       "id": "E41",
+       "name": "S_AXI_RID",
+       "kind": "port_out"
+      },
+      {
+       "id": "E42",
+       "name": "S_AXI_RDATA",
+       "kind": "port_out"
+      },
+      {
+       "id": "E43",
+       "name": "S_AXI_RRESP",
+       "kind": "port_out"
+      },
+      {
+       "id": "E44",
+       "name": "S_AXI_RLAST",
+       "kind": "port_out"
+      },
+      {
+       "id": "E45",
+       "name": "S_AXI_RVALID",
+       "kind": "port_out"
+      },
+      {
+       "id": "E46",
+       "name": "S_AXI_RREADY",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "periph_write",
+     "protocol": "MEMORY_BUS",
+     "direction": "OUT",
+     "member_ids": [
+      "E1",
+      "E2",
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "o_we",
+       "kind": "port_out"
+      },
+      {
+       "id": "E2",
+       "name": "o_waddr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E3",
+       "name": "o_wdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E4",
+       "name": "o_wstrb",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "periph_read",
+     "protocol": "MEMORY_BUS",
+     "direction": "IN",
+     "member_ids": [
+      "E5",
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "o_rd",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "o_raddr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "i_rdata",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

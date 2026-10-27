@@ -1,0 +1,127 @@
+{
+  "module_summary": "Serial-to-parallel converter: collects 8 serial bits using shift register and counter, outputs 8-bit result with valid strobe.",
+  "anchors": [
+    {
+      "id": "E3",
+      "name": "din_serial",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "data_backward",
+      "why": "Input serial bit stream fed to shift register sub-instance for accumulation.",
+      "lines": [38, 62]
+    },
+    {
+      "id": "E4",
+      "name": "din_valid",
+      "role": "HANDSHAKE_VALID",
+      "importance": "critical",
+      "trace": "control_backward",
+      "why": "Input valid signal: gates counter enable and shift register when new bit arrives.",
+      "lines": [39, 53, 61]
+    },
+    {
+      "id": "E5",
+      "name": "dout_parallel",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "forward",
+      "why": "Output parallel data (8-bit): latched from shift register accumulator on completion.",
+      "lines": [40, 77]
+    },
+    {
+      "id": "E6",
+      "name": "dout_valid",
+      "role": "STATUS",
+      "importance": "critical",
+      "trace": "forward",
+      "why": "Output valid status: indicates dout_parallel is valid on completion of 8-bit transfer.",
+      "lines": [41, 65]
+    },
+    {
+      "id": "E8",
+      "name": "full_k",
+      "role": "CONTROL_FLAG",
+      "importance": "critical",
+      "trace": "control_backward",
+      "why": "Wrap signal from counter: high when 8 bits received; gates output latch and drives dout_valid.",
+      "lines": [44, 55, 70]
+    },
+    {
+      "id": "E9",
+      "name": "acc_bus",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "data_backward",
+      "why": "Accumulated output from shift register: 8-bit result to be latched on full_k.",
+      "lines": [45, 59, 72]
+    },
+    {
+      "id": "E7",
+      "name": "beat",
+      "role": "INDEX",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Counter position from ctr0: tracks which of 8 bit positions is active.",
+      "lines": [43, 48, 50]
+    },
+    {
+      "id": "E10",
+      "name": "low_half",
+      "role": "CONTROL_FLAG",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Control signal derived from beat: gates shift enable to only shift during valid periods.",
+      "lines": [46, 48, 61]
+    }
+  ],
+  "groups": [
+    {
+      "name": "Input path",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E3", "E4"],
+      "member_ids": ["I2"],
+      "description": "Serial input interface gating data into shift register sub-instance."
+    },
+    {
+      "name": "Counter sequencer",
+      "kind": "COUNTER_TIMER",
+      "anchor_ids": ["E7", "E8", "E10"],
+      "member_ids": ["I1"],
+      "description": "Counter sub-instance tracking bit position and detecting completion."
+    },
+    {
+      "name": "Accumulator path",
+      "kind": "DATAPATH",
+      "anchor_ids": ["E9"],
+      "member_ids": [],
+      "description": "Accumulated parallel data from shift register, latched on completion."
+    },
+    {
+      "name": "Output latch",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E5", "E6"],
+      "member_ids": [],
+      "description": "Output registers latching 8-bit result and valid strobe on counter wrap."
+    }
+  ],
+  "interfaces": [
+    {
+      "name": "Serial input",
+      "protocol": "SIMPLE",
+      "direction": "IN",
+      "member_ids": ["E3", "E4"]
+    },
+    {
+      "name": "Parallel output",
+      "protocol": "SIMPLE",
+      "direction": "OUT",
+      "member_ids": ["E5", "E6"]
+    },
+    {
+      "name": "Clock and reset",
+      "protocol": "CLOCK_RESET",
+      "direction": "IN",
+      "member_ids": ["E1", "E2"]
+    }
+  ]
+}

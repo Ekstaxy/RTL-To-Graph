@@ -1,0 +1,24 @@
+stateDiagram-v2
+    [*] --> STATE_IDLE
+    ANY_STATE --> STATE_IDLE
+    STATE_IDLE --> STATE_WRITE_HEADER : s_ip_hdr_ready && s_ip_hdr_valid
+    STATE_IDLE --> STATE_IDLE : !(s_ip_hdr_ready && s_ip_hdr_valid)
+    STATE_WRITE_HEADER --> STATE_WRITE_HEADER : m_eth_payload_axis_tready_int_reg
+    STATE_WRITE_HEADER --> STATE_WRITE_HEADER_LAST : m_eth_payload_axis_tready_int_reg && hdr_ptr_reg == 6'h08
+    STATE_WRITE_HEADER --> STATE_WRITE_HEADER : !m_eth_payload_axis_tready_int_reg
+    STATE_WRITE_HEADER_LAST --> STATE_IDLE : s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && keep2count(m_eth_payload_axis_tkeep_int) >= word_count_reg && shift_ip_payload_axis_tlast
+    STATE_WRITE_HEADER_LAST --> STATE_WRITE_PAYLOAD_LAST : s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && keep2count(m_eth_payload_axis_tkeep_int) >= word_count_reg && !shift_ip_payload_axis_tlast
+    STATE_WRITE_HEADER_LAST --> STATE_WAIT_LAST : s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && !(keep2count(m_eth_payload_axis_tkeep_int) >= word_count_reg) && shift_ip_payload_axis_tlast
+    STATE_WRITE_HEADER_LAST --> STATE_WRITE_PAYLOAD : s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && !(keep2count(m_eth_payload_axis_tkeep_int) >= word_count_reg) && !shift_ip_payload_axis_tlast
+    STATE_WRITE_HEADER_LAST --> STATE_WRITE_HEADER_LAST : !(s_ip_payload_axis_tready && s_ip_payload_axis_tvalid)
+    STATE_WRITE_PAYLOAD --> STATE_IDLE : m_eth_payload_axis_tready_int_reg && shift_ip_payload_axis_tvalid && word_count_reg <= 8 && shift_ip_payload_axis_tlast
+    STATE_WRITE_PAYLOAD --> STATE_WRITE_PAYLOAD_LAST : m_eth_payload_axis_tready_int_reg && shift_ip_payload_axis_tvalid && word_count_reg <= 8 && !shift_ip_payload_axis_tlast
+    STATE_WRITE_PAYLOAD --> STATE_IDLE : m_eth_payload_axis_tready_int_reg && shift_ip_payload_axis_tvalid && !(word_count_reg <= 8) && shift_ip_payload_axis_tlast
+    STATE_WRITE_PAYLOAD --> STATE_WRITE_PAYLOAD : m_eth_payload_axis_tready_int_reg && shift_ip_payload_axis_tvalid && !(word_count_reg <= 8) && !shift_ip_payload_axis_tlast
+    STATE_WRITE_PAYLOAD --> STATE_WRITE_PAYLOAD : !(m_eth_payload_axis_tready_int_reg && shift_ip_payload_axis_tvalid)
+    STATE_WRITE_PAYLOAD_LAST --> STATE_IDLE : m_eth_payload_axis_tready_int_reg && shift_ip_payload_axis_tvalid && shift_ip_payload_axis_tlast
+    STATE_WRITE_PAYLOAD_LAST --> STATE_WRITE_PAYLOAD_LAST : m_eth_payload_axis_tready_int_reg && shift_ip_payload_axis_tvalid && !shift_ip_payload_axis_tlast
+    STATE_WRITE_PAYLOAD_LAST --> STATE_WRITE_PAYLOAD_LAST : !(m_eth_payload_axis_tready_int_reg && shift_ip_payload_axis_tvalid)
+    STATE_WAIT_LAST --> STATE_IDLE : shift_ip_payload_axis_tvalid && shift_ip_payload_axis_tlast
+    STATE_WAIT_LAST --> STATE_WAIT_LAST : shift_ip_payload_axis_tvalid && !shift_ip_payload_axis_tlast
+    STATE_WAIT_LAST --> STATE_WAIT_LAST : !shift_ip_payload_axis_tvalid

@@ -1,0 +1,830 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-ethernet_eth_demux",
+ "tops": [
+  "eth_demux"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "eth_demux": {
+   "source": "teacher",
+   "canonical_instance": "eth_demux",
+   "file": "data/rtl/verilog-ethernet/rtl/eth_demux.v",
+   "lines": [
+    34,
+    307
+   ],
+   "summary": "Ethernet frame 1-to-N demultiplexer: at header accept a frame flag latches select and drop, steering one-hot header/payload valids to the chosen output through a broadcast-data skid-buffered AXI-Stream register.",
+   "blocks": [
+    {
+     "name": "Frame routing control",
+     "kind": "CONTROLLER",
+     "description": "Accepts header, latches select/drop, steers one-hot header valid and header fields.",
+     "anchors": [
+      {
+       "id": "E38",
+       "name": "frame_reg",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 96.2,
+       "struct_score": 90.4,
+       "trace": "control_backward",
+       "why": "Frame-in-progress state: set at header accept, cleared on last beat; gates header ready.",
+       "lines": [
+        155,
+        197
+       ]
+      },
+      {
+       "id": "E32",
+       "name": "select_reg",
+       "role": "MUX_SELECT",
+       "importance": "critical",
+       "score": 77.4,
+       "struct_score": 30.0,
+       "trace": "control_backward",
+       "why": "Output port index latched per frame; steers one-hot header and payload valids.",
+       "lines": [
+        131,
+        195
+       ]
+      },
+      {
+       "id": "E35",
+       "name": "drop_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 46.1,
+       "struct_score": 16.8,
+       "trace": "control_backward",
+       "why": "Per-frame drop flag suppressing output valids while still consuming input.",
+       "lines": [
+        133,
+        196
+       ]
+      },
+      {
+       "id": "E31",
+       "name": "select",
+       "role": "COMMAND",
+       "importance": "major",
+       "score": 46.2,
+       "struct_score": 17.3,
+       "trace": "interface",
+       "why": "External destination select sampled at frame start.",
+       "lines": [
+        157
+       ]
+      },
+      {
+       "id": "E30",
+       "name": "drop",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 17.7,
+       "struct_score": 15.0,
+       "trace": "interface",
+       "why": "External drop request sampled at frame start.",
+       "lines": [
+        158
+       ]
+      },
+      {
+       "id": "E29",
+       "name": "enable",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 19.1,
+       "struct_score": 20.7,
+       "trace": "interface",
+       "why": "External enable gating input header and payload ready.",
+       "lines": [
+        119,
+        121
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "s_eth_hdr_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 90.2,
+       "struct_score": 75.3,
+       "trace": "interface",
+       "why": "Input header valid; with ready starts a frame.",
+       "lines": [
+        155
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "s_eth_hdr_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 34.8,
+       "struct_score": 76.7,
+       "trace": "interface",
+       "why": "Input header ready when no frame active and no pending output header.",
+       "lines": [
+        119,
+        155
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "m_eth_hdr_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 87.5,
+       "struct_score": 67.8,
+       "trace": "interface",
+       "why": "One-hot output header valid steered to selected port.",
+       "lines": [
+        123
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "m_eth_hdr_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 25.0,
+       "struct_score": 44.4,
+       "trace": "interface",
+       "why": "Per-output header ready clearing header valid bits.",
+       "lines": [
+        142
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "m_eth_dest_mac",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 66.0,
+       "struct_score": 84.9,
+       "trace": "data_backward",
+       "why": "Header fields (dest/src MAC, type) latched and broadcast to all outputs.",
+       "lines": [
+        124
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E33",
+       "name": "select_ctl",
+       "kind": "comb"
+      },
+      {
+       "id": "E34",
+       "name": "select_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E36",
+       "name": "drop_ctl",
+       "kind": "comb"
+      },
+      {
+       "id": "E37",
+       "name": "drop_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E39",
+       "name": "frame_ctl",
+       "kind": "comb"
+      },
+      {
+       "id": "E40",
+       "name": "frame_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E41",
+       "name": "s_eth_hdr_ready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E42",
+       "name": "s_eth_hdr_ready_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E45",
+       "name": "m_eth_hdr_valid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E46",
+       "name": "m_eth_hdr_valid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E47",
+       "name": "m_eth_dest_mac_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E48",
+       "name": "m_eth_dest_mac_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E49",
+       "name": "m_eth_src_mac_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E50",
+       "name": "m_eth_src_mac_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E51",
+       "name": "m_eth_type_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E52",
+       "name": "m_eth_type_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E19",
+       "name": "m_eth_src_mac",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "m_eth_type",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "s_eth_dest_mac",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_eth_src_mac",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "s_eth_type",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Payload steering",
+     "kind": "DATAPATH",
+     "description": "Passes input payload, generates one-hot internal valid per selected output.",
+     "anchors": [
+      {
+       "id": "E8",
+       "name": "s_eth_payload_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 83.6,
+       "struct_score": 53.8,
+       "trace": "interface",
+       "why": "Input payload data passed into output datapath.",
+       "lines": [
+        177
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "s_eth_payload_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 29.3,
+       "struct_score": 59.8,
+       "trace": "interface",
+       "why": "Input payload valid; drives steered internal valid and frame end detection.",
+       "lines": [
+        147,
+        179
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "s_eth_payload_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 58.1,
+       "struct_score": 62.8,
+       "trace": "control_backward",
+       "why": "Registered input payload ready during frame when output can accept or dropping.",
+       "lines": [
+        121,
+        147
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E43",
+       "name": "s_eth_payload_axis_tready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E44",
+       "name": "s_eth_payload_axis_tready_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E53",
+       "name": "m_eth_payload_axis_tdata_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E54",
+       "name": "m_eth_payload_axis_tkeep_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E55",
+       "name": "m_eth_payload_axis_tvalid_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E57",
+       "name": "m_eth_payload_axis_tlast_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E58",
+       "name": "m_eth_payload_axis_tid_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E59",
+       "name": "m_eth_payload_axis_tdest_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E60",
+       "name": "m_eth_payload_axis_tuser_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E12",
+       "name": "s_eth_payload_axis_tlast",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Output skid buffer",
+     "kind": "BUFFER",
+     "description": "Output plus temp registers implementing registered AXI-Stream skid buffer.",
+     "anchors": [
+      {
+       "id": "E21",
+       "name": "m_eth_payload_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 89.1,
+       "struct_score": 72.4,
+       "trace": "data_backward",
+       "why": "Output payload data broadcast to all outputs from output register.",
+       "lines": [
+        230
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "m_eth_payload_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 95.4,
+       "struct_score": 88.5,
+       "trace": "interface",
+       "why": "One-hot output payload valid selecting destination port.",
+       "lines": [
+        232
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "m_eth_payload_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 59.0,
+       "struct_score": 65.9,
+       "trace": "interface",
+       "why": "Per-output payload ready deciding output/temp register transfers.",
+       "lines": [
+        239,
+        252
+       ]
+      },
+      {
+       "id": "E56",
+       "name": "m_eth_payload_axis_tready_int_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 19.1,
+       "struct_score": 20.9,
+       "trace": "control_backward",
+       "why": "Registered internal ready gating acceptance into skid buffer.",
+       "lines": [
+        250,
+        271
+       ]
+      },
+      {
+       "id": "E70",
+       "name": "temp_m_eth_payload_axis_tdata_reg",
+       "role": "STORAGE",
+       "importance": "minor",
+       "score": 22.9,
+       "struct_score": 36.2,
+       "trace": "data_backward",
+       "why": "Skid buffer data register holding a beat when output stalls.",
+       "lines": [
+        283,
+        292
+       ]
+      },
+      {
+       "id": "E78",
+       "name": "store_axis_int_to_output",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 16.4,
+       "struct_score": 9.7,
+       "trace": "control_backward",
+       "why": "Load enable copying internal payload into output registers.",
+       "lines": [
+        255,
+        275
+       ]
+      },
+      {
+       "id": "E79",
+       "name": "store_axis_int_to_temp",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 16.4,
+       "struct_score": 9.7,
+       "trace": "control_backward",
+       "why": "Load enable capturing internal payload into temp registers.",
+       "lines": [
+        259,
+        291
+       ]
+      },
+      {
+       "id": "E80",
+       "name": "store_eth_payload_axis_temp_to_output",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 16.4,
+       "struct_score": 9.7,
+       "trace": "control_backward",
+       "why": "Load enable moving temp contents to output registers.",
+       "lines": [
+        265,
+        282
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E61",
+       "name": "m_eth_payload_axis_tready_int_early",
+       "kind": "wire"
+      },
+      {
+       "id": "E62",
+       "name": "m_eth_payload_axis_tdata_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E63",
+       "name": "m_eth_payload_axis_tkeep_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E64",
+       "name": "m_eth_payload_axis_tvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E65",
+       "name": "m_eth_payload_axis_tvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E66",
+       "name": "m_eth_payload_axis_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E67",
+       "name": "m_eth_payload_axis_tid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E68",
+       "name": "m_eth_payload_axis_tdest_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E69",
+       "name": "m_eth_payload_axis_tuser_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E71",
+       "name": "temp_m_eth_payload_axis_tkeep_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E72",
+       "name": "temp_m_eth_payload_axis_tvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E73",
+       "name": "temp_m_eth_payload_axis_tvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E74",
+       "name": "temp_m_eth_payload_axis_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E75",
+       "name": "temp_m_eth_payload_axis_tid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E76",
+       "name": "temp_m_eth_payload_axis_tdest_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E77",
+       "name": "temp_m_eth_payload_axis_tuser_reg",
+       "kind": "reg"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock/reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_eth_hdr",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_eth_hdr_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_eth_hdr_ready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "s_eth_dest_mac",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_eth_src_mac",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "s_eth_type",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_eth_payload_axis",
+     "protocol": "STREAM",
+     "direction": "IN",
+     "member_ids": [
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15"
+     ],
+     "members": [
+      {
+       "id": "E8",
+       "name": "s_eth_payload_axis_tdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_eth_payload_axis_tkeep",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "s_eth_payload_axis_tvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "s_eth_payload_axis_tready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "s_eth_payload_axis_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "s_eth_payload_axis_tid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E14",
+       "name": "s_eth_payload_axis_tdest",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "s_eth_payload_axis_tuser",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_eth_hdr",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20"
+     ],
+     "members": [
+      {
+       "id": "E16",
+       "name": "m_eth_hdr_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "m_eth_hdr_ready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "m_eth_dest_mac",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "m_eth_src_mac",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "m_eth_type",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "m_eth_payload_axis",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E21",
+      "E22",
+      "E23",
+      "E24",
+      "E25",
+      "E26",
+      "E27",
+      "E28"
+     ],
+     "members": [
+      {
+       "id": "E21",
+       "name": "m_eth_payload_axis_tdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E22",
+       "name": "m_eth_payload_axis_tkeep",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "m_eth_payload_axis_tvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E24",
+       "name": "m_eth_payload_axis_tready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E25",
+       "name": "m_eth_payload_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E26",
+       "name": "m_eth_payload_axis_tid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E27",
+       "name": "m_eth_payload_axis_tdest",
+       "kind": "port_out"
+      },
+      {
+       "id": "E28",
+       "name": "m_eth_payload_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "control",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E29",
+      "E30",
+      "E31"
+     ],
+     "members": [
+      {
+       "id": "E29",
+       "name": "enable",
+       "kind": "port_in"
+      },
+      {
+       "id": "E30",
+       "name": "drop",
+       "kind": "port_in"
+      },
+      {
+       "id": "E31",
+       "name": "select",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

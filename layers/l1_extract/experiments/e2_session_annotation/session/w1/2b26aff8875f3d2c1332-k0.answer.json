@@ -1,0 +1,25 @@
+{
+ "module_summary": "Serial-triggered timer: an FSM detects 1101, shifts in a 4-bit delay, counts (delay+1)*1000 cycles via a 1000-cycle prescaler and down-counter, then waits for ack.",
+ "anchors": [
+  {"id": "E8", "name": "state", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Main FSM: pattern search, four shift states, Count and Wait; drives shift_ena, counting, done."},
+  {"id": "E12", "name": "scount", "role": "COUNTER", "importance": "critical", "trace": "data_backward", "why": "Shifts in delay[3:0], then decrements every 1000 cycles; remaining-time value."},
+  {"id": "E11", "name": "fcount", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "0..999 prescaler running while counting; wrap decrements scount."},
+  {"id": "E13", "name": "done_counting", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Timer expiry (scount==0, fcount==999); moves FSM from Count to Wait."},
+  {"id": "E5", "name": "counting", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Count-state flag; enables fcount, scount decrement and count output."},
+  {"id": "E10", "name": "shift_ena", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Asserted in B0..B3; shifts data into scount."},
+  {"id": "E6", "name": "done", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Timeout notification held in Wait state until ack."},
+  {"id": "E7", "name": "ack", "role": "HANDSHAKE_READY", "importance": "major", "trace": "forward", "why": "User acknowledge; returns FSM from Wait to pattern search."},
+  {"id": "E3", "name": "data", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Serial input for 1101 detection and delay bits."},
+  {"id": "E4", "name": "count", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Remaining-time output, scount gated by counting."}
+ ],
+ "groups": [
+  {"name": "timer_fsm", "kind": "CONTROLLER", "anchor_ids": ["E8", "E5", "E10", "E6"], "member_ids": ["E9"], "description": "Pattern detect, delay shift, count and wait-for-ack sequencing with decoded control outputs."},
+  {"name": "delay_counters", "kind": "COUNTER_TIMER", "anchor_ids": ["E12", "E11", "E13"], "member_ids": [], "description": "Delay shift/down-counter scount and 1000-cycle prescaler fcount with expiry detect."}
+ ],
+ "interfaces": [
+  {"name": "clk_rst", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "serial_in", "protocol": "SERIAL", "direction": "IN", "member_ids": ["E3"]},
+  {"name": "timer_status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E4", "E5"]},
+  {"name": "done_ack", "protocol": "REQ_ACK", "direction": "OUT", "member_ids": ["E6", "E7"]}
+ ]
+}

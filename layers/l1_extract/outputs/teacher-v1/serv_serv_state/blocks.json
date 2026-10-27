@@ -1,0 +1,936 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "serv_serv_state",
+ "tops": [
+  "serv_state"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "serv_state": {
+   "source": "teacher",
+   "canonical_instance": "serv_state",
+   "file": "data/rtl/serv/rtl/serv_state.v",
+   "lines": [
+    7,
+    239
+   ],
+   "summary": "SERV bit-serial core state controller: a 5-bit cycle counter (3-bit binary o_cnt plus 4-bit one-hot cnt_lsb ring) and an init/run phase flag sequence instruction fetch, register-file requests, bus cycles, branches and traps.",
+   "blocks": [
+    {
+     "name": "phase_controller",
+     "kind": "CONTROLLER",
+     "description": "Init/run phase flag, branch and trap decisions sequencing the two-stage instruction flow.",
+     "anchors": [
+      {
+       "id": "E47",
+       "name": "init_done",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 97.6,
+       "struct_score": 94.0,
+       "trace": "control_backward",
+       "why": "Two-phase state: first (init) stage done; selects init vs second stage for o_init, bus, rf writes.",
+       "lines": [
+        68,
+        143,
+        161
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "o_init",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 56.1,
+       "struct_score": 55.5,
+       "trace": "control_backward",
+       "why": "Init-stage indication decoded from init_done and two-stage op.",
+       "lines": [
+        20,
+        143
+       ]
+      },
+      {
+       "id": "E54",
+       "name": "trap_pending",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 19.0,
+       "struct_score": 20.2,
+       "trace": "control_backward",
+       "why": "Misalignment trap pending; blocks branch rf write and forces rf read.",
+       "lines": [
+        105,
+        116,
+        123
+       ]
+      },
+      {
+       "id": "E52",
+       "name": "take_branch",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.9,
+       "struct_score": 15.9,
+       "trace": "control_backward",
+       "why": "Branch-taken condition from ALU compare; latched into o_ctrl_jump.",
+       "lines": [
+        96,
+        162
+       ]
+      },
+      {
+       "id": "E53",
+       "name": "last_init",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.8,
+       "struct_score": 15.4,
+       "trace": "control_backward",
+       "why": "Last cycle of init stage gating rf write and read requests.",
+       "lines": [
+        98,
+        114
+       ]
+      },
+      {
+       "id": "E56",
+       "name": "gen_csr.misalign_trap_sync_r",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 19.5,
+       "struct_score": 22.5,
+       "trace": "control_backward",
+       "why": "Registered misalignment trap flag held until next fetch; drives o_ctrl_trap.",
+       "lines": [
+        228,
+        232,
+        234
+       ]
+      },
+      {
+       "id": "E19",
+       "name": "o_ctrl_jump",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 25.2,
+       "struct_score": 44.8,
+       "trace": "control_backward",
+       "why": "Branch decision latched at end of init, held through PC update stage.",
+       "lines": [
+        34,
+        162
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "o_ctrl_trap",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 21.4,
+       "struct_score": 30.2,
+       "trace": "control_backward",
+       "why": "Trap mode indication to control unit from ecall, irq or misalignment.",
+       "lines": [
+        35,
+        224
+       ]
+      },
+      {
+       "id": "E28",
+       "name": "i_two_stage_op",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 20.7,
+       "struct_score": 27.2,
+       "trace": "interface",
+       "why": "Instruction class needing two stages; enables init stage.",
+       "lines": [
+        44,
+        143
+       ]
+      },
+      {
+       "id": "E29",
+       "name": "i_branch_op",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 21.6,
+       "struct_score": 30.7,
+       "trace": "interface",
+       "why": "Branch/jump instruction class steering take_branch and rf write.",
+       "lines": [
+        45,
+        96,
+        116
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E48",
+       "name": "misalign_trap_sync",
+       "kind": "wire"
+      },
+      {
+       "id": "E3",
+       "name": "i_new_irq",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "i_alu_cmp",
+       "kind": "port_in"
+      },
+      {
+       "id": "E21",
+       "name": "i_ctrl_misalign",
+       "kind": "port_in"
+      },
+      {
+       "id": "E24",
+       "name": "i_mem_misalign",
+       "kind": "port_in"
+      },
+      {
+       "id": "E25",
+       "name": "i_bne_or_bge",
+       "kind": "port_in"
+      },
+      {
+       "id": "E26",
+       "name": "i_cond_branch",
+       "kind": "port_in"
+      },
+      {
+       "id": "E27",
+       "name": "i_dbus_en",
+       "kind": "port_in"
+      },
+      {
+       "id": "E30",
+       "name": "i_shift_op",
+       "kind": "port_in"
+      },
+      {
+       "id": "E31",
+       "name": "i_sh_right",
+       "kind": "port_in"
+      },
+      {
+       "id": "E32",
+       "name": "i_alu_rd_sel1",
+       "kind": "port_in"
+      },
+      {
+       "id": "E33",
+       "name": "i_rd_alu_en",
+       "kind": "port_in"
+      },
+      {
+       "id": "E34",
+       "name": "i_e_op",
+       "kind": "port_in"
+      },
+      {
+       "id": "E35",
+       "name": "i_rd_op",
+       "kind": "port_in"
+      },
+      {
+       "id": "E36",
+       "name": "i_mdu_op",
+       "kind": "port_in"
+      },
+      {
+       "id": "E22",
+       "name": "i_sh_done",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "bit_counter",
+     "kind": "COUNTER_TIMER",
+     "description": "0-31 bit-serial cycle counter with decoded position outputs.",
+     "anchors": [
+      {
+       "id": "E49",
+       "name": "o_cnt",
+       "role": "COUNTER",
+       "importance": "critical",
+       "score": 86.1,
+       "struct_score": 62.8,
+       "trace": "control_backward",
+       "why": "Upper 3 bits of the 0-31 bit-serial cycle counter; decoded into cnt outputs and done.",
+       "lines": [
+        71,
+        145,
+        199
+       ]
+      },
+      {
+       "id": "E55",
+       "name": "gen_cnt_w_eq_1.cnt_lsb",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 25.6,
+       "struct_score": 46.4,
+       "trace": "control_backward",
+       "why": "4-bit one-hot ring forming counter LSBs, started by i_rf_ready; nonzero gives o_cnt_en.",
+       "lines": [
+        197,
+        200,
+        207
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "o_cnt_en",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 56.3,
+       "struct_score": 56.2,
+       "trace": "control_backward",
+       "why": "Counter-running enable; gates PC update, bufreg and bus cycle starts.",
+       "lines": [
+        21,
+        76,
+        207
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "o_cnt_done",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 52.8,
+       "struct_score": 43.6,
+       "trace": "control_backward",
+       "why": "End-of-32-cycle indication; updates init_done, ibus_cyc and jump register.",
+       "lines": [
+        31,
+        145,
+        160
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "o_cnt0to3",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 18.0,
+       "struct_score": 16.2,
+       "trace": "control_backward",
+       "why": "Representative decoded counter-position output (cnt0..cnt12 family).",
+       "lines": [
+        22,
+        80
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "o_mem_bytecnt",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 18.6,
+       "struct_score": 18.8,
+       "trace": "control_backward",
+       "why": "Byte count output taken from o_cnt upper bits for memory lanes.",
+       "lines": [
+        38,
+        78
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E50",
+       "name": "cnt_r",
+       "kind": "wire"
+      },
+      {
+       "id": "E8",
+       "name": "o_cnt12to31",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "o_cnt0",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "o_cnt1",
+       "kind": "port_out"
+      },
+      {
+       "id": "E11",
+       "name": "o_cnt2",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "o_cnt3",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "o_cnt7",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "o_cnt11",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "o_cnt12",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "bus_rf_requests",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Instruction/data bus cycles, register-file and MDU request handshakes.",
+     "anchors": [
+      {
+       "id": "E41",
+       "name": "o_ibus_cyc",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 87.5,
+       "struct_score": 67.9,
+       "trace": "interface",
+       "why": "Instruction fetch request driven from ibus_cyc register.",
+       "lines": [
+        60,
+        141
+       ]
+      },
+      {
+       "id": "E42",
+       "name": "i_ibus_ack",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 82.0,
+       "struct_score": 47.9,
+       "trace": "interface",
+       "why": "Instruction bus ack ending fetch and issuing rf read request.",
+       "lines": [
+        61,
+        123,
+        157
+       ]
+      },
+      {
+       "id": "E39",
+       "name": "o_dbus_cyc",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 60.9,
+       "struct_score": 71.9,
+       "trace": "interface",
+       "why": "Data bus cycle request after init for aligned memory ops.",
+       "lines": [
+        58,
+        119
+       ]
+      },
+      {
+       "id": "E40",
+       "name": "i_dbus_ack",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 52.3,
+       "struct_score": 41.5,
+       "trace": "interface",
+       "why": "Data bus ack triggering register-file write request.",
+       "lines": [
+        59,
+        115
+       ]
+      },
+      {
+       "id": "E43",
+       "name": "o_rf_rreq",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 63.5,
+       "struct_score": 78.6,
+       "trace": "interface",
+       "why": "Register-file read request on fetch ack or trap.",
+       "lines": [
+        63,
+        123
+       ]
+      },
+      {
+       "id": "E44",
+       "name": "o_rf_wreq",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 66.1,
+       "struct_score": 85.0,
+       "trace": "interface",
+       "why": "Register-file write request when stage two can begin.",
+       "lines": [
+        64,
+        114
+       ]
+      },
+      {
+       "id": "E45",
+       "name": "i_rf_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 52.2,
+       "struct_score": 41.3,
+       "trace": "interface",
+       "why": "Register-file ready; shifted into cnt_lsb to start counting.",
+       "lines": [
+        65,
+        200
+       ]
+      },
+      {
+       "id": "E37",
+       "name": "o_mdu_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 32.4,
+       "struct_score": 70.6,
+       "trace": "interface",
+       "why": "MDU operation valid; disabled when MDU parameter is zero.",
+       "lines": [
+        54,
+        101
+       ]
+      },
+      {
+       "id": "E38",
+       "name": "i_mdu_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 24.3,
+       "struct_score": 41.5,
+       "trace": "interface",
+       "why": "MDU result ready triggering rf write request (MDU builds).",
+       "lines": [
+        56,
+        115
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E51",
+       "name": "ibus_cyc",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "unit_enables",
+     "kind": "CONTROLLER",
+     "description": "Enables for bufreg, PC update and rf read derived from counter and phase.",
+     "anchors": [
+      {
+       "id": "E17",
+       "name": "o_bufreg_en",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 23.4,
+       "struct_score": 38.1,
+       "trace": "control_backward",
+       "why": "Shift enable for buffer register during mem/branch/shift ops.",
+       "lines": [
+        32,
+        139
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "o_ctrl_pc_en",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 24.3,
+       "struct_score": 41.8,
+       "trace": "control_backward",
+       "why": "PC update enable during counting outside init.",
+       "lines": [
+        33,
+        76
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E46",
+       "name": "o_rf_rd_en",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clk_rst",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "i_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "i_rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "state_outputs",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20",
+      "E23"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "o_init",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "o_cnt_en",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "o_cnt0to3",
+       "kind": "port_out"
+      },
+      {
+       "id": "E8",
+       "name": "o_cnt12to31",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "o_cnt0",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "o_cnt1",
+       "kind": "port_out"
+      },
+      {
+       "id": "E11",
+       "name": "o_cnt2",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "o_cnt3",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "o_cnt7",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "o_cnt11",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "o_cnt12",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "o_cnt_done",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "o_bufreg_en",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "o_ctrl_pc_en",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "o_ctrl_jump",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "o_ctrl_trap",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "o_mem_bytecnt",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "state_inputs",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E21",
+      "E22",
+      "E24"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "i_new_irq",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "i_alu_cmp",
+       "kind": "port_in"
+      },
+      {
+       "id": "E21",
+       "name": "i_ctrl_misalign",
+       "kind": "port_in"
+      },
+      {
+       "id": "E22",
+       "name": "i_sh_done",
+       "kind": "port_in"
+      },
+      {
+       "id": "E24",
+       "name": "i_mem_misalign",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "decode_control",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E25",
+      "E26",
+      "E27",
+      "E28",
+      "E29",
+      "E30",
+      "E31",
+      "E32",
+      "E33",
+      "E34",
+      "E35"
+     ],
+     "members": [
+      {
+       "id": "E25",
+       "name": "i_bne_or_bge",
+       "kind": "port_in"
+      },
+      {
+       "id": "E26",
+       "name": "i_cond_branch",
+       "kind": "port_in"
+      },
+      {
+       "id": "E27",
+       "name": "i_dbus_en",
+       "kind": "port_in"
+      },
+      {
+       "id": "E28",
+       "name": "i_two_stage_op",
+       "kind": "port_in"
+      },
+      {
+       "id": "E29",
+       "name": "i_branch_op",
+       "kind": "port_in"
+      },
+      {
+       "id": "E30",
+       "name": "i_shift_op",
+       "kind": "port_in"
+      },
+      {
+       "id": "E31",
+       "name": "i_sh_right",
+       "kind": "port_in"
+      },
+      {
+       "id": "E32",
+       "name": "i_alu_rd_sel1",
+       "kind": "port_in"
+      },
+      {
+       "id": "E33",
+       "name": "i_rd_alu_en",
+       "kind": "port_in"
+      },
+      {
+       "id": "E34",
+       "name": "i_e_op",
+       "kind": "port_in"
+      },
+      {
+       "id": "E35",
+       "name": "i_rd_op",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "mdu",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E36",
+      "E37",
+      "E38"
+     ],
+     "members": [
+      {
+       "id": "E36",
+       "name": "i_mdu_op",
+       "kind": "port_in"
+      },
+      {
+       "id": "E37",
+       "name": "o_mdu_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E38",
+       "name": "i_mdu_ready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "dbus",
+     "protocol": "REQ_ACK",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E39",
+      "E40"
+     ],
+     "members": [
+      {
+       "id": "E39",
+       "name": "o_dbus_cyc",
+       "kind": "port_out"
+      },
+      {
+       "id": "E40",
+       "name": "i_dbus_ack",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "ibus",
+     "protocol": "REQ_ACK",
+     "direction": "IN",
+     "member_ids": [
+      "E41",
+      "E42"
+     ],
+     "members": [
+      {
+       "id": "E41",
+       "name": "o_ibus_cyc",
+       "kind": "port_out"
+      },
+      {
+       "id": "E42",
+       "name": "i_ibus_ack",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "rf_requests",
+     "protocol": "REQ_ACK",
+     "direction": "OUT",
+     "member_ids": [
+      "E43",
+      "E44",
+      "E45",
+      "E46"
+     ],
+     "members": [
+      {
+       "id": "E43",
+       "name": "o_rf_rreq",
+       "kind": "port_out"
+      },
+      {
+       "id": "E44",
+       "name": "o_rf_wreq",
+       "kind": "port_out"
+      },
+      {
+       "id": "E45",
+       "name": "i_rf_ready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E46",
+       "name": "o_rf_rd_en",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

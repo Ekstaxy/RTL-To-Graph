@@ -1,0 +1,595 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-ethernet_axis_cobs_decode",
+ "tops": [
+  "axis_cobs_decode"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "axis_cobs_decode": {
+   "source": "teacher",
+   "canonical_instance": "axis_cobs_decode",
+   "file": "data/rtl/verilog-ethernet/lib/axis/rtl/axis_cobs_decode.v",
+   "lines": [
+    34,
+    331
+   ],
+   "summary": "AXI-stream COBS decoder: a 3-state FSM with segment byte counter and zero-suppress flag strips code bytes, reinserts zeros via a one-byte delay register, and feeds a skid-buffered output.",
+   "blocks": [
+    {
+     "name": "COBS decoder FSM",
+     "kind": "CONTROLLER",
+     "description": "FSM with segment counter and zero-suppress flag sequencing decode.",
+     "anchors": [
+      {
+       "id": "E13",
+       "name": "state_reg",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.6,
+       "struct_score": 99.0,
+       "trace": "control_backward",
+       "why": "Decoder FSM: idle, in-segment, expecting next code byte.",
+       "lines": [
+        64,
+        100,
+        233
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "count_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 58.4,
+       "struct_score": 63.9,
+       "trace": "control_backward",
+       "why": "Remaining bytes in current COBS segment; triggers next-segment transition.",
+       "lines": [
+        66,
+        146,
+        169
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "suppress_zero_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 47.9,
+       "struct_score": 24.0,
+       "trace": "control_backward",
+       "why": "Set for 255 code bytes; suppresses the implicit zero insertion.",
+       "lines": [
+        67,
+        117,
+        188
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E14",
+       "name": "state_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E16",
+       "name": "count_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E18",
+       "name": "suppress_zero_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E29",
+       "name": "s_axis_tready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E30",
+       "name": "s_axis_tready_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Delay byte",
+     "kind": "PIPELINE_STAGE",
+     "description": "One-byte delay producing decoded bytes and frame end.",
+     "anchors": [
+      {
+       "id": "E19",
+       "name": "temp_tdata_reg",
+       "role": "PIPELINE_REG",
+       "importance": "major",
+       "score": 50.9,
+       "struct_score": 36.4,
+       "trace": "data_backward",
+       "why": "One-byte delay register so the final segment byte can be emitted at frame end.",
+       "lines": [
+        69,
+        140,
+        143
+       ]
+      },
+      {
+       "id": "E21",
+       "name": "temp_tvalid_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 22.9,
+       "struct_score": 36.2,
+       "trace": "control_backward",
+       "why": "Valid flag of delay byte; gates output valid and idle input ready.",
+       "lines": [
+        70,
+        103,
+        107
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "m_axis_tdata_int",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 19.5,
+       "struct_score": 22.2,
+       "trace": "data_backward",
+       "why": "Decoded byte handed to the output skid stage.",
+       "lines": [
+        73,
+        143,
+        309
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "m_axis_tvalid_int",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 27.3,
+       "struct_score": 52.4,
+       "trace": "control_backward",
+       "why": "Internal valid from decoder FSM into output stage.",
+       "lines": [
+        74,
+        287,
+        291
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E20",
+       "name": "temp_tdata_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E22",
+       "name": "temp_tvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E26",
+       "name": "m_axis_tlast_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E27",
+       "name": "m_axis_tuser_int",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Output skid buffer",
+     "kind": "BUFFER",
+     "description": "Output and temp registers giving registered ready to the decoder.",
+     "anchors": [
+      {
+       "id": "E25",
+       "name": "m_axis_tready_int_reg",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 26.1,
+       "struct_score": 48.2,
+       "trace": "control_backward",
+       "why": "Registered internal ready from output stage gating store decisions.",
+       "lines": [
+        75,
+        283,
+        304
+       ]
+      },
+      {
+       "id": "E36",
+       "name": "temp_m_axis_tdata_reg",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 55.9,
+       "struct_score": 54.6,
+       "trace": "data_backward",
+       "why": "Output skid register holding a beat when downstream stalls.",
+       "lines": [
+        256,
+        313,
+        319
+       ]
+      },
+      {
+       "id": "E37",
+       "name": "temp_m_axis_tvalid_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 22.5,
+       "struct_score": 34.7,
+       "trace": "control_backward",
+       "why": "Skid register occupied flag gating early ready and drain.",
+       "lines": [
+        257,
+        272,
+        296
+       ]
+      },
+      {
+       "id": "E41",
+       "name": "store_axis_int_to_output",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 17.0,
+       "struct_score": 12.1,
+       "trace": "control_backward",
+       "why": "Loads decoded beat directly into output registers.",
+       "lines": [
+        262,
+        288,
+        308
+       ]
+      },
+      {
+       "id": "E42",
+       "name": "store_axis_int_to_temp",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 17.0,
+       "struct_score": 12.1,
+       "trace": "control_backward",
+       "why": "Loads decoded beat into skid registers.",
+       "lines": [
+        263,
+        292,
+        318
+       ]
+      },
+      {
+       "id": "E43",
+       "name": "store_axis_temp_to_output",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 16.8,
+       "struct_score": 11.2,
+       "trace": "control_backward",
+       "why": "Moves skid registers into output registers.",
+       "lines": [
+        264,
+        298,
+        312
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E28",
+       "name": "m_axis_tready_int_early",
+       "kind": "wire"
+      },
+      {
+       "id": "E31",
+       "name": "m_axis_tdata_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E32",
+       "name": "m_axis_tvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E33",
+       "name": "m_axis_tvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E34",
+       "name": "m_axis_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E35",
+       "name": "m_axis_tuser_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E38",
+       "name": "temp_m_axis_tvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E39",
+       "name": "temp_m_axis_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E40",
+       "name": "temp_m_axis_tuser_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "AXI ports",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "AXI-stream input and output with tlast/tuser framing.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "s_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 94.8,
+       "struct_score": 86.9,
+       "trace": "interface",
+       "why": "Encoded input byte: code values load count, data bytes stored.",
+       "lines": [
+        42,
+        116,
+        140
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 95.2,
+       "struct_score": 87.8,
+       "trace": "interface",
+       "why": "Input byte valid qualifying every FSM transition.",
+       "lines": [
+        43,
+        111,
+        137
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 95.1,
+       "struct_score": 87.7,
+       "trace": "control_backward",
+       "why": "Input ready from FSM-driven s_axis_tready_reg.",
+       "lines": [
+        44,
+        82,
+        111
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_tlast",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 34.5,
+       "struct_score": 75.9,
+       "trace": "interface",
+       "why": "Input frame end checked against segment count for errors.",
+       "lines": [
+        45,
+        155,
+        199
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_tuser",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 32.9,
+       "struct_score": 72.0,
+       "trace": "interface",
+       "why": "Input error flag forcing bad-frame termination.",
+       "lines": [
+        46,
+        157,
+        195
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "m_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 88.8,
+       "struct_score": 71.6,
+       "trace": "data_backward",
+       "why": "Decoded output byte from output data register.",
+       "lines": [
+        51,
+        266
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "m_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 88.4,
+       "struct_score": 70.8,
+       "trace": "control_backward",
+       "why": "Output valid from m_axis_tvalid_reg.",
+       "lines": [
+        52,
+        267
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "m_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 88.0,
+       "struct_score": 69.5,
+       "trace": "interface",
+       "why": "Downstream ready driving skid store decisions.",
+       "lines": [
+        53,
+        272,
+        285
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "m_axis_tlast",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 27.8,
+       "struct_score": 54.2,
+       "trace": "data_backward",
+       "why": "Output frame end marker from tlast register.",
+       "lines": [
+        54,
+        268
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "m_axis_tuser",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 55.8,
+       "struct_score": 54.2,
+       "trace": "data_backward",
+       "why": "Output bad-frame flag set on framing errors.",
+       "lines": [
+        55,
+        269
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clk_rst",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axis",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axis_tdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_tvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_tready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_tuser",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axis",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12"
+     ],
+     "members": [
+      {
+       "id": "E8",
+       "name": "m_axis_tdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "m_axis_tvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "m_axis_tready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "m_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "m_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

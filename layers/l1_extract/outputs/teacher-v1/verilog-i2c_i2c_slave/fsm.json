@@ -1,0 +1,820 @@
+[
+ {
+  "module": "i2c_slave",
+  "instance": "i2c_slave",
+  "state": "state_reg",
+  "next": "state_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "STATE_IDLE",
+    "value": "5'b0"
+   },
+   {
+    "name": "STATE_ADDRESS",
+    "value": "5'b1"
+   },
+   {
+    "name": "STATE_ACK",
+    "value": "5'b10"
+   },
+   {
+    "name": "STATE_READ_1",
+    "value": "5'b101"
+   },
+   {
+    "name": "STATE_WRITE_1",
+    "value": "5'b11"
+   },
+   {
+    "name": "STATE_WRITE_2",
+    "value": "5'b100"
+   },
+   {
+    "name": "STATE_READ_2",
+    "value": "5'b110"
+   },
+   {
+    "name": "STATE_READ_3",
+    "value": "5'b111"
+   }
+  ],
+  "reset_state": "STATE_IDLE",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "*",
+    "dst": "STATE_ADDRESS",
+    "cond": "start_bit"
+   },
+   {
+    "src": "*",
+    "dst": "STATE_IDLE",
+    "cond": "!start_bit && (release_bus || stop_bit)"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_IDLE",
+    "cond": "!start_bit && !(release_bus || stop_bit)"
+   },
+   {
+    "src": "STATE_ADDRESS",
+    "dst": "STATE_ADDRESS",
+    "cond": "!start_bit && !(release_bus || stop_bit) && scl_posedge && bit_count_reg > 0"
+   },
+   {
+    "src": "STATE_ADDRESS",
+    "dst": "STATE_ACK",
+    "cond": "!start_bit && !(release_bus || stop_bit) && scl_posedge && !(bit_count_reg > 0) && enable && (device_address & device_address_mask) == (data_reg[6:0] & device_address_mask)"
+   },
+   {
+    "src": "STATE_ADDRESS",
+    "dst": "STATE_IDLE",
+    "cond": "!start_bit && !(release_bus || stop_bit) && scl_posedge && !(bit_count_reg > 0) && !(enable && (device_address & device_address_mask) == (data_reg[6:0] & device_address_mask))"
+   },
+   {
+    "src": "STATE_ADDRESS",
+    "dst": "STATE_ADDRESS",
+    "cond": "!start_bit && !(release_bus || stop_bit) && !scl_posedge"
+   },
+   {
+    "src": "STATE_ACK",
+    "dst": "STATE_READ_1",
+    "cond": "!start_bit && !(release_bus || stop_bit) && scl_negedge && mode_read_reg"
+   },
+   {
+    "src": "STATE_ACK",
+    "dst": "STATE_WRITE_1",
+    "cond": "!start_bit && !(release_bus || stop_bit) && scl_negedge && !mode_read_reg"
+   },
+   {
+    "src": "STATE_ACK",
+    "dst": "STATE_ACK",
+    "cond": "!start_bit && !(release_bus || stop_bit) && !scl_negedge"
+   },
+   {
+    "src": "STATE_WRITE_1",
+    "dst": "STATE_WRITE_1",
+    "cond": "!start_bit && !(release_bus || stop_bit) && (scl_negedge || !scl_o_reg) && m_axis_data_tvalid && !m_axis_data_tready"
+   },
+   {
+    "src": "STATE_WRITE_1",
+    "dst": "STATE_WRITE_2",
+    "cond": "!start_bit && !(release_bus || stop_bit) && (scl_negedge || !scl_o_reg) && !(m_axis_data_tvalid && !m_axis_data_tready)"
+   },
+   {
+    "src": "STATE_WRITE_1",
+    "dst": "STATE_WRITE_1",
+    "cond": "!start_bit && !(release_bus || stop_bit) && !(scl_negedge || !scl_o_reg)"
+   },
+   {
+    "src": "STATE_WRITE_2",
+    "dst": "STATE_WRITE_2",
+    "cond": "!start_bit && !(release_bus || stop_bit) && scl_posedge && bit_count_reg > 0"
+   },
+   {
+    "src": "STATE_WRITE_2",
+    "dst": "STATE_ACK",
+    "cond": "!start_bit && !(release_bus || stop_bit) && scl_posedge && !(bit_count_reg > 0)"
+   },
+   {
+    "src": "STATE_WRITE_2",
+    "dst": "STATE_WRITE_2",
+    "cond": "!start_bit && !(release_bus || stop_bit) && !scl_posedge"
+   },
+   {
+    "src": "STATE_READ_1",
+    "dst": "STATE_READ_1",
+    "cond": "!start_bit && !(release_bus || stop_bit) && (scl_negedge || !scl_o_reg) && !data_valid_reg"
+   },
+   {
+    "src": "STATE_READ_1",
+    "dst": "STATE_READ_1",
+    "cond": "!start_bit && !(release_bus || stop_bit) && (scl_negedge || !scl_o_reg) && data_valid_reg && bit_count_reg > 0"
+   },
+   {
+    "src": "STATE_READ_1",
+    "dst": "STATE_READ_2",
+    "cond": "!start_bit && !(release_bus || stop_bit) && (scl_negedge || !scl_o_reg) && data_valid_reg && !(bit_count_reg > 0)"
+   },
+   {
+    "src": "STATE_READ_1",
+    "dst": "STATE_READ_1",
+    "cond": "!start_bit && !(release_bus || stop_bit) && !(scl_negedge || !scl_o_reg)"
+   },
+   {
+    "src": "STATE_READ_2",
+    "dst": "STATE_READ_3",
+    "cond": "!start_bit && !(release_bus || stop_bit) && scl_negedge"
+   },
+   {
+    "src": "STATE_READ_2",
+    "dst": "STATE_READ_2",
+    "cond": "!start_bit && !(release_bus || stop_bit) && !scl_negedge"
+   },
+   {
+    "src": "STATE_READ_3",
+    "dst": "STATE_IDLE",
+    "cond": "!start_bit && !(release_bus || stop_bit) && scl_posedge && sda_i_reg"
+   },
+   {
+    "src": "STATE_READ_3",
+    "dst": "STATE_READ_1",
+    "cond": "!start_bit && !(release_bus || stop_bit) && scl_posedge && !sda_i_reg"
+   },
+   {
+    "src": "STATE_READ_3",
+    "dst": "STATE_READ_3",
+    "cond": "!start_bit && !(release_bus || stop_bit) && !scl_posedge"
+   }
+  ],
+  "outputs": [],
+  "warnings": [],
+  "semantic_check": "consistent"
+ },
+ {
+  "module": "i2c_slave",
+  "instance": "i2c_slave",
+  "state": "bit_count_reg",
+  "next": null,
+  "style": "semantic",
+  "states": [
+   {
+    "name": "STATE_IDLE",
+    "value": "0"
+   },
+   {
+    "name": "STATE_ADDRESS",
+    "value": "1"
+   },
+   {
+    "name": "STATE_ACK",
+    "value": "2"
+   },
+   {
+    "name": "STATE_WRITE_1",
+    "value": "3"
+   },
+   {
+    "name": "S_4",
+    "value": "4"
+   },
+   {
+    "name": "STATE_READ_1",
+    "value": "5"
+   },
+   {
+    "name": "STATE_READ_2",
+    "value": "6"
+   },
+   {
+    "name": "STATE_READ_3",
+    "value": "7"
+   }
+  ],
+  "reset_state": "STATE_IDLE",
+  "transitions": [
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_IDLE",
+    "cond": "(release_bus && !last_sda_i_reg) || (sda_i_reg && !last_scl_i_reg) || (sda_i_reg && scl_i_reg) || (!scl_i_reg && !last_scl_i_reg) || (release_bus && !scl_i_reg) || (data_valid_reg && !last_sda_i_reg) || (!data_valid_reg && !scl_i_reg && last_sda_i_reg) || (scl_i_reg && last_scl_i_reg && !last_sda_i_reg) || (scl_o_reg && !sda_i_reg && !scl_i_reg) || (!scl_o_reg && !last_scl_i_reg && !last_sda_i_reg) || (data_valid_reg && !scl_o_reg && sda_i_reg)"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_READ_3",
+    "cond": "!sda_i_reg && scl_i_reg && last_sda_i_reg || <datapath condition>"
+   },
+   {
+    "src": "STATE_ADDRESS",
+    "dst": "STATE_ADDRESS",
+    "cond": "(release_bus && !last_sda_i_reg) || (scl_o_reg && sda_i_reg) || (release_bus && !scl_i_reg) || (scl_i_reg && last_scl_i_reg && !last_sda_i_reg) || (!data_valid_reg && !scl_i_reg && !last_scl_i_reg) || (!data_valid_reg && sda_i_reg && scl_i_reg) || (scl_o_reg && !last_scl_i_reg && !last_sda_i_reg) || (release_bus && sda_i_reg) || (sda_i_reg && last_scl_i_reg && !last_sda_i_reg) || (data_valid_reg && scl_o_reg && !scl_i_reg && last_sda_i_reg) || (sda_i_reg && scl_i_reg && last_scl_i_reg) || (sda_i_reg && scl_i_reg && !last_sda_i_reg) || (!data_valid_reg && !scl_o_reg && !scl_i_reg && !last_sda_i_reg) || (!sda_i_reg && !scl_i_reg && !last_scl_i_reg && !last_sda_i_reg) || (sda_i_reg && !scl_i_reg && !last_scl_i_reg && last_sda_i_reg) || (data_valid_reg && !sda_i_reg && !scl_i_reg && last_scl_i_reg && last_sda_i_reg)"
+   },
+   {
+    "src": "STATE_ADDRESS",
+    "dst": "STATE_READ_3",
+    "cond": "!sda_i_reg && scl_i_reg && last_sda_i_reg || <datapath condition>"
+   },
+   {
+    "src": "STATE_ADDRESS",
+    "dst": "STATE_IDLE",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "STATE_ACK",
+    "dst": "STATE_ACK",
+    "cond": "(release_bus && !last_sda_i_reg) || (release_bus && sda_i_reg) || (!data_valid_reg && !scl_o_reg && !scl_i_reg) || (scl_o_reg && !scl_i_reg && !last_scl_i_reg) || (sda_i_reg && scl_i_reg && last_scl_i_reg) || (sda_i_reg && !last_scl_i_reg && !last_sda_i_reg) || (release_bus && !scl_i_reg) || (!data_valid_reg && last_scl_i_reg && !last_sda_i_reg) || (scl_o_reg && sda_i_reg && !last_scl_i_reg) || (!scl_o_reg && !sda_i_reg && !scl_i_reg && last_scl_i_reg) || (!data_valid_reg && sda_i_reg && last_scl_i_reg) || (sda_i_reg && !scl_i_reg && !last_scl_i_reg) || (!scl_i_reg && !last_scl_i_reg && !last_sda_i_reg) || (scl_o_reg && scl_i_reg && last_scl_i_reg && !last_sda_i_reg)"
+   },
+   {
+    "src": "STATE_ACK",
+    "dst": "STATE_ADDRESS",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "STATE_ACK",
+    "dst": "STATE_READ_3",
+    "cond": "!sda_i_reg && scl_i_reg && last_sda_i_reg || <datapath condition>"
+   },
+   {
+    "src": "STATE_WRITE_1",
+    "dst": "STATE_WRITE_1",
+    "cond": "(release_bus && !last_sda_i_reg) || (release_bus && sda_i_reg) || (scl_o_reg && !scl_i_reg && !last_scl_i_reg) || (!scl_o_reg && sda_i_reg && !scl_i_reg) || (sda_i_reg && scl_i_reg && !last_sda_i_reg) || (release_bus && !scl_i_reg) || (!data_valid_reg && !scl_i_reg && !last_scl_i_reg) || (data_valid_reg && sda_i_reg && !last_scl_i_reg) || (scl_o_reg && scl_i_reg && last_scl_i_reg && !last_sda_i_reg) || (!scl_o_reg && !scl_i_reg && last_scl_i_reg && !last_sda_i_reg) || (!data_valid_reg && sda_i_reg && scl_i_reg && last_scl_i_reg) || (data_valid_reg && sda_i_reg && !last_sda_i_reg) || (!data_valid_reg && scl_o_reg && scl_i_reg && !last_sda_i_reg) || (!data_valid_reg && !scl_o_reg && last_scl_i_reg && !last_sda_i_reg) || (data_valid_reg && scl_o_reg && sda_i_reg && scl_i_reg)"
+   },
+   {
+    "src": "STATE_WRITE_1",
+    "dst": "STATE_READ_3",
+    "cond": "!sda_i_reg && scl_i_reg && last_sda_i_reg || <datapath condition>"
+   },
+   {
+    "src": "STATE_WRITE_1",
+    "dst": "STATE_ACK",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "S_4",
+    "dst": "S_4",
+    "cond": "(release_bus && !last_sda_i_reg) || (release_bus && sda_i_reg) || (!sda_i_reg && !scl_i_reg && !last_scl_i_reg) || (sda_i_reg && !last_scl_i_reg && !last_sda_i_reg) || (sda_i_reg && scl_i_reg && last_scl_i_reg) || (release_bus && !scl_i_reg) || (!data_valid_reg && sda_i_reg && !scl_i_reg && last_sda_i_reg) || (data_valid_reg && scl_o_reg && !sda_i_reg && !last_sda_i_reg) || (scl_o_reg && !sda_i_reg && !scl_i_reg && last_sda_i_reg) || (!data_valid_reg && scl_i_reg && last_scl_i_reg && !last_sda_i_reg) || (data_valid_reg && scl_o_reg && sda_i_reg && !last_scl_i_reg) || (!data_valid_reg && !scl_o_reg && sda_i_reg && !scl_i_reg)"
+   },
+   {
+    "src": "S_4",
+    "dst": "STATE_READ_3",
+    "cond": "!sda_i_reg && scl_i_reg && last_sda_i_reg || <datapath condition>"
+   },
+   {
+    "src": "S_4",
+    "dst": "STATE_WRITE_1",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "STATE_READ_1",
+    "dst": "STATE_READ_1",
+    "cond": "(release_bus && !last_sda_i_reg) || (!scl_i_reg && !last_scl_i_reg) || (release_bus && sda_i_reg) || (sda_i_reg && !last_sda_i_reg) || (!data_valid_reg && !sda_i_reg && !scl_i_reg) || (sda_i_reg && scl_i_reg && last_scl_i_reg) || (release_bus && !scl_i_reg) || (!data_valid_reg && last_scl_i_reg && !last_sda_i_reg) || (scl_o_reg && sda_i_reg && !last_scl_i_reg) || (!scl_o_reg && !scl_i_reg && !last_sda_i_reg) || (scl_o_reg && scl_i_reg && last_scl_i_reg && !last_sda_i_reg) || (data_valid_reg && !scl_o_reg && sda_i_reg && last_scl_i_reg)"
+   },
+   {
+    "src": "STATE_READ_1",
+    "dst": "S_4",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "STATE_READ_1",
+    "dst": "STATE_READ_3",
+    "cond": "!sda_i_reg && scl_i_reg && last_sda_i_reg || <datapath condition>"
+   },
+   {
+    "src": "STATE_READ_2",
+    "dst": "STATE_READ_2",
+    "cond": "(!data_valid_reg && !scl_i_reg) || (release_bus && !last_sda_i_reg) || (release_bus && sda_i_reg) || (!scl_i_reg && !last_scl_i_reg) || (scl_i_reg && last_scl_i_reg && !last_sda_i_reg) || (sda_i_reg && last_scl_i_reg && last_sda_i_reg) || (scl_o_reg && sda_i_reg && !last_scl_i_reg) || (!scl_o_reg && !sda_i_reg && !scl_i_reg) || (sda_i_reg && !last_scl_i_reg && !last_sda_i_reg) || (release_bus && !scl_i_reg) || (data_valid_reg && scl_o_reg && !last_scl_i_reg && !last_sda_i_reg)"
+   },
+   {
+    "src": "STATE_READ_2",
+    "dst": "STATE_READ_1",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "STATE_READ_2",
+    "dst": "STATE_READ_3",
+    "cond": "!sda_i_reg && scl_i_reg && last_sda_i_reg || <datapath condition>"
+   },
+   {
+    "src": "STATE_READ_3",
+    "dst": "STATE_READ_3",
+    "cond": "(release_bus) || (scl_o_reg && !scl_i_reg) || (!sda_i_reg && scl_i_reg) || (sda_i_reg && !last_sda_i_reg) || (!data_valid_reg && !scl_o_reg) || (scl_o_reg && last_scl_i_reg) || (!scl_i_reg && last_scl_i_reg && last_sda_i_reg) || (!last_scl_i_reg && !last_sda_i_reg)"
+   },
+   {
+    "src": "STATE_READ_3",
+    "dst": "STATE_READ_2",
+    "cond": "<datapath condition>"
+   }
+  ],
+  "outputs": [],
+  "warnings": [
+   "extracted by execution (coding style not recognized syntactically)"
+  ],
+  "semantic_check": "semantic-only"
+ },
+ {
+  "module": "i2c_slave",
+  "instance": "i2c_slave",
+  "state": "scl_i_filter",
+  "next": null,
+  "style": "semantic",
+  "states": [
+   {
+    "name": "STATE_IDLE",
+    "value": "0"
+   },
+   {
+    "name": "STATE_ADDRESS",
+    "value": "1"
+   },
+   {
+    "name": "STATE_ACK",
+    "value": "2"
+   },
+   {
+    "name": "STATE_WRITE_1",
+    "value": "3"
+   },
+   {
+    "name": "S_4",
+    "value": "4"
+   },
+   {
+    "name": "STATE_READ_1",
+    "value": "5"
+   },
+   {
+    "name": "STATE_READ_2",
+    "value": "6"
+   },
+   {
+    "name": "STATE_READ_3",
+    "value": "7"
+   },
+   {
+    "name": "S_8",
+    "value": "8"
+   },
+   {
+    "name": "S_9",
+    "value": "9"
+   },
+   {
+    "name": "S_10",
+    "value": "10"
+   },
+   {
+    "name": "S_11",
+    "value": "11"
+   },
+   {
+    "name": "S_12",
+    "value": "12"
+   },
+   {
+    "name": "S_13",
+    "value": "13"
+   },
+   {
+    "name": "S_14",
+    "value": "14"
+   },
+   {
+    "name": "S_15",
+    "value": "15"
+   }
+  ],
+  "reset_state": "STATE_IDLE",
+  "transitions": [
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_IDLE",
+    "cond": "!scl_i"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_ADDRESS",
+    "cond": "scl_i"
+   },
+   {
+    "src": "STATE_ADDRESS",
+    "dst": "STATE_ACK",
+    "cond": "!scl_i"
+   },
+   {
+    "src": "STATE_ADDRESS",
+    "dst": "STATE_WRITE_1",
+    "cond": "scl_i"
+   },
+   {
+    "src": "STATE_ACK",
+    "dst": "S_4",
+    "cond": "!scl_i"
+   },
+   {
+    "src": "STATE_ACK",
+    "dst": "STATE_READ_1",
+    "cond": "scl_i"
+   },
+   {
+    "src": "STATE_WRITE_1",
+    "dst": "STATE_READ_2",
+    "cond": "!scl_i"
+   },
+   {
+    "src": "STATE_WRITE_1",
+    "dst": "STATE_READ_3",
+    "cond": "scl_i"
+   },
+   {
+    "src": "S_4",
+    "dst": "S_8",
+    "cond": "!scl_i"
+   },
+   {
+    "src": "S_4",
+    "dst": "S_9",
+    "cond": "scl_i"
+   },
+   {
+    "src": "STATE_READ_1",
+    "dst": "S_10",
+    "cond": "!scl_i"
+   },
+   {
+    "src": "STATE_READ_1",
+    "dst": "S_11",
+    "cond": "scl_i"
+   },
+   {
+    "src": "STATE_READ_2",
+    "dst": "S_12",
+    "cond": "!scl_i"
+   },
+   {
+    "src": "STATE_READ_2",
+    "dst": "S_13",
+    "cond": "scl_i"
+   },
+   {
+    "src": "STATE_READ_3",
+    "dst": "S_14",
+    "cond": "!scl_i"
+   },
+   {
+    "src": "STATE_READ_3",
+    "dst": "S_15",
+    "cond": "scl_i"
+   },
+   {
+    "src": "S_8",
+    "dst": "STATE_IDLE",
+    "cond": "!scl_i"
+   },
+   {
+    "src": "S_8",
+    "dst": "STATE_ADDRESS",
+    "cond": "scl_i"
+   },
+   {
+    "src": "S_9",
+    "dst": "STATE_ACK",
+    "cond": "!scl_i"
+   },
+   {
+    "src": "S_9",
+    "dst": "STATE_WRITE_1",
+    "cond": "scl_i"
+   },
+   {
+    "src": "S_10",
+    "dst": "S_4",
+    "cond": "!scl_i"
+   },
+   {
+    "src": "S_10",
+    "dst": "STATE_READ_1",
+    "cond": "scl_i"
+   },
+   {
+    "src": "S_11",
+    "dst": "STATE_READ_2",
+    "cond": "!scl_i"
+   },
+   {
+    "src": "S_11",
+    "dst": "STATE_READ_3",
+    "cond": "scl_i"
+   },
+   {
+    "src": "S_12",
+    "dst": "S_8",
+    "cond": "!scl_i"
+   },
+   {
+    "src": "S_12",
+    "dst": "S_9",
+    "cond": "scl_i"
+   },
+   {
+    "src": "S_13",
+    "dst": "S_10",
+    "cond": "!scl_i"
+   },
+   {
+    "src": "S_13",
+    "dst": "S_11",
+    "cond": "scl_i"
+   },
+   {
+    "src": "S_14",
+    "dst": "S_12",
+    "cond": "!scl_i"
+   },
+   {
+    "src": "S_14",
+    "dst": "S_13",
+    "cond": "scl_i"
+   },
+   {
+    "src": "S_15",
+    "dst": "S_14",
+    "cond": "!scl_i"
+   },
+   {
+    "src": "S_15",
+    "dst": "S_15",
+    "cond": "scl_i"
+   }
+  ],
+  "outputs": [],
+  "warnings": [
+   "extracted by execution (coding style not recognized syntactically)"
+  ],
+  "semantic_check": "semantic-only"
+ },
+ {
+  "module": "i2c_slave",
+  "instance": "i2c_slave",
+  "state": "sda_i_filter",
+  "next": null,
+  "style": "semantic",
+  "states": [
+   {
+    "name": "STATE_IDLE",
+    "value": "0"
+   },
+   {
+    "name": "STATE_ADDRESS",
+    "value": "1"
+   },
+   {
+    "name": "STATE_ACK",
+    "value": "2"
+   },
+   {
+    "name": "STATE_WRITE_1",
+    "value": "3"
+   },
+   {
+    "name": "S_4",
+    "value": "4"
+   },
+   {
+    "name": "STATE_READ_1",
+    "value": "5"
+   },
+   {
+    "name": "STATE_READ_2",
+    "value": "6"
+   },
+   {
+    "name": "STATE_READ_3",
+    "value": "7"
+   },
+   {
+    "name": "S_8",
+    "value": "8"
+   },
+   {
+    "name": "S_9",
+    "value": "9"
+   },
+   {
+    "name": "S_10",
+    "value": "10"
+   },
+   {
+    "name": "S_11",
+    "value": "11"
+   },
+   {
+    "name": "S_12",
+    "value": "12"
+   },
+   {
+    "name": "S_13",
+    "value": "13"
+   },
+   {
+    "name": "S_14",
+    "value": "14"
+   },
+   {
+    "name": "S_15",
+    "value": "15"
+   }
+  ],
+  "reset_state": "STATE_IDLE",
+  "transitions": [
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_IDLE",
+    "cond": "!sda_i"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_ADDRESS",
+    "cond": "sda_i"
+   },
+   {
+    "src": "STATE_ADDRESS",
+    "dst": "STATE_ACK",
+    "cond": "!sda_i"
+   },
+   {
+    "src": "STATE_ADDRESS",
+    "dst": "STATE_WRITE_1",
+    "cond": "sda_i"
+   },
+   {
+    "src": "STATE_ACK",
+    "dst": "S_4",
+    "cond": "!sda_i"
+   },
+   {
+    "src": "STATE_ACK",
+    "dst": "STATE_READ_1",
+    "cond": "sda_i"
+   },
+   {
+    "src": "STATE_WRITE_1",
+    "dst": "STATE_READ_2",
+    "cond": "!sda_i"
+   },
+   {
+    "src": "STATE_WRITE_1",
+    "dst": "STATE_READ_3",
+    "cond": "sda_i"
+   },
+   {
+    "src": "S_4",
+    "dst": "S_8",
+    "cond": "!sda_i"
+   },
+   {
+    "src": "S_4",
+    "dst": "S_9",
+    "cond": "sda_i"
+   },
+   {
+    "src": "STATE_READ_1",
+    "dst": "S_10",
+    "cond": "!sda_i"
+   },
+   {
+    "src": "STATE_READ_1",
+    "dst": "S_11",
+    "cond": "sda_i"
+   },
+   {
+    "src": "STATE_READ_2",
+    "dst": "S_12",
+    "cond": "!sda_i"
+   },
+   {
+    "src": "STATE_READ_2",
+    "dst": "S_13",
+    "cond": "sda_i"
+   },
+   {
+    "src": "STATE_READ_3",
+    "dst": "S_14",
+    "cond": "!sda_i"
+   },
+   {
+    "src": "STATE_READ_3",
+    "dst": "S_15",
+    "cond": "sda_i"
+   },
+   {
+    "src": "S_8",
+    "dst": "STATE_IDLE",
+    "cond": "!sda_i"
+   },
+   {
+    "src": "S_8",
+    "dst": "STATE_ADDRESS",
+    "cond": "sda_i"
+   },
+   {
+    "src": "S_9",
+    "dst": "STATE_ACK",
+    "cond": "!sda_i"
+   },
+   {
+    "src": "S_9",
+    "dst": "STATE_WRITE_1",
+    "cond": "sda_i"
+   },
+   {
+    "src": "S_10",
+    "dst": "S_4",
+    "cond": "!sda_i"
+   },
+   {
+    "src": "S_10",
+    "dst": "STATE_READ_1",
+    "cond": "sda_i"
+   },
+   {
+    "src": "S_11",
+    "dst": "STATE_READ_2",
+    "cond": "!sda_i"
+   },
+   {
+    "src": "S_11",
+    "dst": "STATE_READ_3",
+    "cond": "sda_i"
+   },
+   {
+    "src": "S_12",
+    "dst": "S_8",
+    "cond": "!sda_i"
+   },
+   {
+    "src": "S_12",
+    "dst": "S_9",
+    "cond": "sda_i"
+   },
+   {
+    "src": "S_13",
+    "dst": "S_10",
+    "cond": "!sda_i"
+   },
+   {
+    "src": "S_13",
+    "dst": "S_11",
+    "cond": "sda_i"
+   },
+   {
+    "src": "S_14",
+    "dst": "S_12",
+    "cond": "!sda_i"
+   },
+   {
+    "src": "S_14",
+    "dst": "S_13",
+    "cond": "sda_i"
+   },
+   {
+    "src": "S_15",
+    "dst": "S_14",
+    "cond": "!sda_i"
+   },
+   {
+    "src": "S_15",
+    "dst": "S_15",
+    "cond": "sda_i"
+   }
+  ],
+  "outputs": [],
+  "warnings": [
+   "extracted by execution (coding style not recognized syntactically)"
+  ],
+  "semantic_check": "semantic-only"
+ }
+]

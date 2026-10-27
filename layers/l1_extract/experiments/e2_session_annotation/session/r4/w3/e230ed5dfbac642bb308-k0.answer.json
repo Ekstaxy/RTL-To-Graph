@@ -1,0 +1,21 @@
+{
+  "module_summary": "Stream width downsizer: a trip counter steps a slice index on each output handshake, muxing narrow slices of the wide input and asserting input ready on the last slice.",
+  "anchors": [
+    {"id": "E3", "name": "inp_data_i", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Wide input word sliced into narrow beats by the slice counter.", "lines": [20, 36]},
+    {"id": "E4", "name": "inp_valid_i", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Wide input valid, forwarded as output valid and enabling the slice counter.", "lines": [21, 37, 46]},
+    {"id": "E5", "name": "inp_ready_o", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Input ready driven by the counter trip, consuming the wide word on its last slice.", "lines": [22, 51]},
+    {"id": "E6", "name": "oup_data_o", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Narrow output slice selected from the wide input by slice_q.", "lines": [24, 36]},
+    {"id": "E9", "name": "slice_q", "role": "COUNTER", "importance": "critical", "trace": "control_backward", "why": "Slice counter output indexing which narrow slice of the input is output.", "lines": [34, 36, 49]},
+    {"id": "E7", "name": "oup_valid_o", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Narrow output valid, a direct copy of input valid.", "lines": [25, 37]},
+    {"id": "E8", "name": "oup_ready_i", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Narrow output ready, enabling the slice counter together with input valid.", "lines": [26, 46]}
+  ],
+  "groups": [
+    {"name": "slice_counter", "kind": "COUNTER_TIMER", "anchor_ids": ["E9", "E5"], "member_ids": ["I1"], "description": "Trip counter counting accepted narrow beats up to Ratio-1 and tripping input ready."},
+    {"name": "slice_mux", "kind": "DATAPATH", "anchor_ids": ["E3", "E6", "E4", "E7", "E8"], "member_ids": [], "description": "Part-select mux steering one narrow slice of the wide input to the output stream."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "wide_in", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5"]},
+    {"name": "narrow_out", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E6", "E7", "E8"]}
+  ]
+}

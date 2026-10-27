@@ -1,0 +1,40 @@
+{
+ "module_summary": "N-to-1 UDP frame multiplexer: on frame start it latches the select input and selected header into registers, then routes the chosen payload AXI stream through a skid buffer until tlast.",
+ "anchors": [
+  {"id": "E67", "name": "frame_reg", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Two-state frame-in-progress flag; set at header accept, cleared on tlast, gates payload transfer", "lines": [129, 241, 293]},
+  {"id": "E65", "name": "select_reg", "role": "MUX_SELECT", "importance": "critical", "trace": "control_backward", "why": "Latched port select steering payload data, valid, ready and last muxes", "lines": [128, 195, 292]},
+  {"id": "E64", "name": "select", "role": "MUX_SELECT", "importance": "major", "trace": "interface", "why": "Input select choosing which source port's header and frame to forward", "lines": [123, 244, 249]},
+  {"id": "E63", "name": "enable", "role": "COMMAND", "importance": "major", "trace": "interface", "why": "Enables starting a new frame transfer from the selected input", "lines": [122, 241]},
+  {"id": "E3", "name": "s_udp_hdr_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Per-port UDP header valid; selected bit starts a frame", "lines": [54, 241]},
+  {"id": "E4", "name": "s_udp_hdr_ready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "One-hot header ready pulse to the selected input port", "lines": [55, 168]},
+  {"id": "E25", "name": "s_udp_payload_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Concatenated input payload data of all ports, muxed by select_reg", "lines": [76, 195]},
+  {"id": "E27", "name": "s_udp_payload_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Per-port input payload valid, muxed to current valid", "lines": [78, 197]},
+  {"id": "E28", "name": "s_udp_payload_axis_tready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "Per-port payload ready asserted only on the selected port during a frame", "lines": [79, 170, 198]},
+  {"id": "E33", "name": "m_udp_hdr_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Output header valid set when a frame header is latched", "lines": [88, 172, 241]},
+  {"id": "E34", "name": "m_udp_hdr_ready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Downstream header accept clearing header valid", "lines": [89, 212]},
+  {"id": "E103", "name": "m_ip_source_ip_reg", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Representative latched header field register driving output header ports", "lines": [150, 227, 313]},
+  {"id": "E124", "name": "current_s_tdata", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Payload data mux output selected by select_reg", "lines": [195, 275]},
+  {"id": "E126", "name": "current_s_tvalid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "Selected port valid used for end-of-frame detection and output valid", "lines": [197, 234, 277]},
+  {"id": "E55", "name": "m_udp_payload_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Output payload data from skid buffer output register", "lines": [110, 343]},
+  {"id": "E57", "name": "m_udp_payload_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Output payload valid from skid buffer", "lines": [112, 345]},
+  {"id": "E58", "name": "m_udp_payload_axis_tready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Downstream payload ready controlling skid buffer and input backpressure", "lines": [113, 352, 365]},
+  {"id": "E140", "name": "temp_m_udp_payload_axis_tdata_reg", "role": "STORAGE", "importance": "major", "trace": "data_backward", "why": "Skid buffer temp register holding payload while output stalls", "lines": [330, 405, 396]},
+  {"id": "E123", "name": "m_udp_payload_axis_tready_int_early", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Early ready from skid buffer gating selected input ready", "lines": [166, 272, 352]},
+  {"id": "E148", "name": "store_axis_int_to_output", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Skid buffer enable loading muxed payload into output register", "lines": [339, 368, 388]},
+  {"id": "E149", "name": "store_axis_int_to_temp", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Skid buffer enable storing payload into temp register on stall", "lines": [340, 372, 404]}
+ ],
+ "groups": [
+  {"name": "frame_control", "kind": "CONTROLLER", "anchor_ids": ["E67", "E65", "E64", "E63", "E4", "E28", "E33"], "member_ids": ["E66", "E68", "E69", "E70", "E71", "E72", "E73", "E74"], "description": "Frame-start detection, select latching and per-port ready generation"},
+  {"name": "header_registers", "kind": "REGISTER_BANK", "anchor_ids": ["E103"], "member_ids": ["E75", "E76", "E77", "E78", "E79", "E80", "E81", "E82", "E83", "E84", "E85", "E86", "E87", "E88", "E89", "E90", "E91", "E92", "E93", "E94", "E95", "E96", "E97", "E98", "E99", "E100", "E101", "E102", "E104", "E105", "E106", "E107", "E108", "E109", "E110", "E111", "E112", "E113", "E114"], "description": "Header fields of selected port latched at frame start"},
+  {"name": "payload_mux", "kind": "DATAPATH", "anchor_ids": ["E124", "E126"], "member_ids": ["E125", "E127", "E128", "E129", "E130", "E131", "E115", "E116", "E117", "E119", "E120", "E121", "E122"], "description": "Indexed mux selecting the active input payload stream"},
+  {"name": "output_skid_buffer", "kind": "BUFFER", "anchor_ids": ["E140", "E123", "E148", "E149", "E55", "E57"], "member_ids": ["E118", "E132", "E133", "E134", "E135", "E136", "E137", "E138", "E139", "E141", "E142", "E143", "E144", "E145", "E146", "E147", "E150"], "description": "Two-register skid buffer driving output payload AXI stream"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "udp_header_in", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12", "E13", "E14", "E15", "E16", "E17", "E18", "E19", "E20", "E21", "E22", "E23", "E24"]},
+  {"name": "udp_payload_in", "protocol": "STREAM", "direction": "IN", "member_ids": ["E25", "E26", "E27", "E28", "E29", "E30", "E31", "E32"]},
+  {"name": "udp_header_out", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E33", "E34", "E35", "E36", "E37", "E38", "E39", "E40", "E41", "E42", "E43", "E44", "E45", "E46", "E47", "E48", "E49", "E50", "E51", "E52", "E53", "E54"]},
+  {"name": "udp_payload_out", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E55", "E56", "E57", "E58", "E59", "E60", "E61", "E62"]},
+  {"name": "control", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E63", "E64"]}
+ ]
+}

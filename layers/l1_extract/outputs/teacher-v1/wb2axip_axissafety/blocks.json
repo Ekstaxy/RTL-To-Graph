@@ -1,0 +1,513 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "wb2axip_axissafety",
+ "tops": [
+  "axissafety"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "axissafety": {
+   "source": "teacher",
+   "canonical_instance": "axissafety",
+   "file": "data/rtl/wb2axip/rtl/axissafety.v",
+   "lines": [
+    74,
+    676
+   ],
+   "summary": "AXI-stream protocol firewall: an input skid buffer feeds a registered output stage, while fault detectors (stalled-data change, optional packet length and stall timeout) latch o_fault, which drops input and cleanly terminates output packets.",
+   "blocks": [
+    {
+     "name": "Input skid buffer",
+     "kind": "BUFFER",
+     "description": "Two-entry skid buffer decoupling input ready from output stall.",
+     "anchors": [
+      {
+       "id": "E18",
+       "name": "skdr_data",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 53.2,
+       "struct_score": 44.8,
+       "trace": "data_backward",
+       "why": "Skid buffer register holding input beat when downstream stalls.",
+       "lines": [
+        115,
+        152,
+        158
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "skdr_valid",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 54.0,
+       "struct_score": 47.6,
+       "trace": "control_backward",
+       "why": "Skid register occupied flag; deasserts S_AXIS_TREADY.",
+       "lines": [
+        113,
+        145,
+        163
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "skd_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 24.5,
+       "struct_score": 42.5,
+       "trace": "control_backward",
+       "why": "Internal skid output valid from input or skid register.",
+       "lines": [
+        113,
+        161,
+        367
+       ]
+      },
+      {
+       "id": "E19",
+       "name": "skd_data",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 22.7,
+       "struct_score": 35.6,
+       "trace": "data_backward",
+       "why": "Skid buffer output data muxed from input or register.",
+       "lines": [
+        116,
+        156,
+        394
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "S_AXIS_TVALID",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 92.5,
+       "struct_score": 81.0,
+       "trace": "interface",
+       "why": "Incoming stream valid into skid buffer and stall detection.",
+       "lines": [
+        92,
+        144,
+        179
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "S_AXIS_TREADY",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 94.5,
+       "struct_score": 86.2,
+       "trace": "control_backward",
+       "why": "Incoming ready, low while skid register holds data.",
+       "lines": [
+        93,
+        163
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "S_AXIS_TDATA",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 90.8,
+       "struct_score": 76.9,
+       "trace": "interface",
+       "why": "Incoming stream data packed into idata.",
+       "lines": [
+        94,
+        138
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E17",
+       "name": "idata",
+       "kind": "comb"
+      },
+      {
+       "id": "E20",
+       "name": "skd_user",
+       "kind": "comb"
+      },
+      {
+       "id": "E21",
+       "name": "skd_last",
+       "kind": "comb"
+      },
+      {
+       "id": "E7",
+       "name": "S_AXIS_TLAST",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "S_AXIS_TUSER",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Fault detector",
+     "kind": "CONTROLLER",
+     "description": "Detects protocol violations and latches sticky o_fault.",
+     "anchors": [
+      {
+       "id": "E1",
+       "name": "o_fault",
+       "role": "CONTROL_FLAG",
+       "importance": "critical",
+       "score": 96.9,
+       "struct_score": 92.2,
+       "trace": "control_backward",
+       "why": "Sticky fault flag; once set, drains input and forces output packet termination.",
+       "lines": [
+        87,
+        275,
+        366
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "change_fault",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 52.2,
+       "struct_score": 41.3,
+       "trace": "control_backward",
+       "why": "Detects input data change while stalled; triggers o_fault.",
+       "lines": [
+        121,
+        189,
+        275
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "r_stalled",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 20.5,
+       "struct_score": 26.3,
+       "trace": "control_backward",
+       "why": "Registers previous-cycle stall for change detection.",
+       "lines": [
+        120,
+        179,
+        189
+       ]
+      },
+      {
+       "id": "E26",
+       "name": "past_data",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 21.5,
+       "struct_score": 30.6,
+       "trace": "data_backward",
+       "why": "Previous input beat compared for stability check.",
+       "lines": [
+        122,
+        185,
+        189
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "packet_fault",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 21.9,
+       "struct_score": 32.2,
+       "trace": "control_backward",
+       "why": "Packet length violation; disabled when OPT_PACKET_LENGTH is zero.",
+       "lines": [
+        121,
+        217,
+        227
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "stall_fault",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.7,
+       "struct_score": 19.0,
+       "trace": "control_backward",
+       "why": "Stall timeout fault; disabled when OPT_MAX_STALL is zero.",
+       "lines": [
+        121,
+        255,
+        260
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E27",
+       "name": "stall_count",
+       "kind": "comb"
+      },
+      {
+       "id": "E28",
+       "name": "s_packet_counter",
+       "kind": "comb"
+      },
+      {
+       "id": "E32",
+       "name": "genblk1.unused_pkt_counter",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Output stage",
+     "kind": "PIPELINE_STAGE",
+     "description": "Registered master stream, terminating packets cleanly on fault.",
+     "anchors": [
+      {
+       "id": "E9",
+       "name": "M_AXIS_TVALID",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 99.3,
+       "struct_score": 98.2,
+       "trace": "control_backward",
+       "why": "Outgoing valid from skid output, suppressed or completed on fault.",
+       "lines": [
+        100,
+        367,
+        375
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "M_AXIS_TREADY",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 62.3,
+       "struct_score": 75.4,
+       "trace": "interface",
+       "why": "Outgoing ready enabling output register updates.",
+       "lines": [
+        101,
+        295,
+        363
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "M_AXIS_TDATA",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 96.9,
+       "struct_score": 92.2,
+       "trace": "data_backward",
+       "why": "Outgoing data from skid buffer, zeroed on fault.",
+       "lines": [
+        102,
+        389,
+        394
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "M_AXIS_TLAST",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 69.4,
+       "struct_score": 93.4,
+       "trace": "data_backward",
+       "why": "Output last, forced high to terminate a packet after fault.",
+       "lines": [
+        103,
+        397,
+        399
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "skd_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 53.0,
+       "struct_score": 44.3,
+       "trace": "control_backward",
+       "why": "Internal ready from output stage, forced by fault conditions.",
+       "lines": [
+        113,
+        295,
+        299
+       ]
+      },
+      {
+       "id": "E31",
+       "name": "m_idle",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 20.6,
+       "struct_score": 26.8,
+       "trace": "control_backward",
+       "why": "Output between packets; controls fault packet termination and self-reset.",
+       "lines": [
+        128,
+        278,
+        370
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E13",
+       "name": "M_AXIS_TUSER",
+       "kind": "port_out"
+      },
+      {
+       "id": "E29",
+       "name": "m_packet_count",
+       "kind": "comb"
+      },
+      {
+       "id": "E30",
+       "name": "m_end_of_packet",
+       "kind": "comb"
+      },
+      {
+       "id": "E33",
+       "name": "genblk3.unused_mpkt_counter",
+       "kind": "wire"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E2",
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E2",
+       "name": "S_AXI_ACLK",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "S_AXI_ARESETN",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axis",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "S_AXIS_TVALID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "S_AXIS_TREADY",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "S_AXIS_TDATA",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "S_AXIS_TLAST",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "S_AXIS_TUSER",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axis",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E9",
+      "E10",
+      "E11",
+      "E12",
+      "E13"
+     ],
+     "members": [
+      {
+       "id": "E9",
+       "name": "M_AXIS_TVALID",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "M_AXIS_TREADY",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "M_AXIS_TDATA",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "M_AXIS_TLAST",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "M_AXIS_TUSER",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "fault",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E1"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "o_fault",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

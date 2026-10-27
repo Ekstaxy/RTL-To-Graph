@@ -1,0 +1,42 @@
+{
+ "module_summary": "Structural wrapper: an axis_frame_length_adjust core pads/truncates frames into a data FIFO while its per-frame status (pad, truncate, lengths) is queued in a header FIFO for a separate header stream.",
+ "anchors": [
+  {"id": "E3", "name": "s_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Input frame data into the length-adjust core", "lines": [132]},
+  {"id": "E5", "name": "s_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Input stream valid into length-adjust core", "lines": [134]},
+  {"id": "E6", "name": "s_axis_tready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Input ready from length-adjust core", "lines": [135]},
+  {"id": "E7", "name": "s_axis_tlast", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Input end of frame", "lines": [136]},
+  {"id": "E27", "name": "fifo_axis_tdata", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Adjusted frame data from core into frame FIFO", "lines": [141, 179]},
+  {"id": "E29", "name": "fifo_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "Adjusted stream valid into frame FIFO", "lines": [143, 181]},
+  {"id": "E30", "name": "fifo_axis_tready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Frame FIFO ready back-pressuring the core", "lines": [144, 182]},
+  {"id": "E35", "name": "status_valid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Per-frame status valid pushing header FIFO", "lines": [150, 218]},
+  {"id": "E36", "name": "status_ready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Header FIFO space for frame status", "lines": [151, 219]},
+  {"id": "E39", "name": "status_frame_length", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Adjusted frame length stored into header FIFO", "lines": [154, 216]},
+  {"id": "E40", "name": "status_frame_original_length", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Original frame length stored into header FIFO", "lines": [155, 216]},
+  {"id": "E37", "name": "status_frame_pad", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "Frame padded flag into header FIFO", "lines": [152, 216]},
+  {"id": "E38", "name": "status_frame_truncate", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "Frame truncated flag into header FIFO", "lines": [153, 216]},
+  {"id": "E25", "name": "length_min", "role": "CONFIG_REG", "importance": "major", "trace": "interface", "why": "Minimum frame length; shorter frames padded", "lines": [157]},
+  {"id": "E26", "name": "length_max", "role": "CONFIG_REG", "importance": "major", "trace": "interface", "why": "Maximum frame length; longer frames truncated", "lines": [158]},
+  {"id": "E17", "name": "m_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Output frame data from frame FIFO", "lines": [188]},
+  {"id": "E19", "name": "m_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "data_backward", "why": "Output frame data valid from frame FIFO", "lines": [190]},
+  {"id": "E20", "name": "m_axis_tready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Downstream ready draining frame FIFO", "lines": [191]},
+  {"id": "E21", "name": "m_axis_tlast", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "data_backward", "why": "Output end of frame", "lines": [192]},
+  {"id": "E11", "name": "m_axis_hdr_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "data_backward", "why": "Header stream valid from header FIFO", "lines": [227]},
+  {"id": "E12", "name": "m_axis_hdr_ready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Header consumer ready popping header FIFO", "lines": [228]},
+  {"id": "E15", "name": "m_axis_hdr_length", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Output adjusted length from header FIFO", "lines": [225]},
+  {"id": "E16", "name": "m_axis_hdr_original_length", "role": "INTERFACE_DATA", "importance": "minor", "trace": "data_backward", "why": "Output original length from header FIFO", "lines": [225]},
+  {"id": "E13", "name": "m_axis_hdr_pad", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "Output padded flag", "lines": [225]},
+  {"id": "E14", "name": "m_axis_hdr_truncate", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "Output truncated flag", "lines": [225]}
+ ],
+ "groups": [
+  {"name": "Frame length adjuster", "kind": "DATAPATH", "anchor_ids": ["E3", "E5", "E6", "E7", "E25", "E26"], "member_ids": ["I1", "E4", "E8", "E9", "E10"], "description": "Child core padding short and truncating long frames per min/max"},
+  {"name": "Frame data FIFO", "kind": "BUFFER", "anchor_ids": ["E27", "E29", "E30", "E17", "E19", "E20", "E21"], "member_ids": ["I2", "E28", "E31", "E32", "E33", "E34", "E18", "E22", "E23", "E24"], "description": "Buffers adjusted frame beats toward the output data stream"},
+  {"name": "Header FIFO", "kind": "BUFFER", "anchor_ids": ["E35", "E36", "E39", "E40", "E37", "E38", "E11", "E12", "E15", "E16", "E13", "E14"], "member_ids": ["I3"], "description": "Queues per-frame pad/truncate flags and lengths as header stream"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "s_axis", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10"]},
+  {"name": "m_axis_hdr", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E11", "E12", "E13", "E14", "E15", "E16"]},
+  {"name": "m_axis", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E17", "E18", "E19", "E20", "E21", "E22", "E23", "E24"]},
+  {"name": "config", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E25", "E26"]}
+ ]
+}

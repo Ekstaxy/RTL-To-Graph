@@ -1,0 +1,29 @@
+{
+ "module_summary": "Flushable two-stage spill register: a slice register A and spill register B with full flags decouple valid/ready combinationally, and flush drains both.",
+ "anchors": [
+  {"id": "E11", "name": "gen_spill_reg.a_data_q", "role": "PIPELINE_REG", "importance": "critical", "trace": "data_backward", "why": "Slice register A capturing input data on fill", "lines": [43, 47, 78]},
+  {"id": "E15", "name": "gen_spill_reg.b_data_q", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "Spill register B holding A's data when downstream stalls", "lines": [51, 55, 78]},
+  {"id": "E12", "name": "gen_spill_reg.a_full_q", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "A occupied flag driving ready, valid and drain", "lines": [44, 61, 72]},
+  {"id": "E16", "name": "gen_spill_reg.b_full_q", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "B occupied flag selecting output data and gating ready", "lines": [52, 72, 78]},
+  {"id": "E13", "name": "gen_spill_reg.a_fill", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Load enable of A on accepted input", "lines": [45, 47, 60]},
+  {"id": "E14", "name": "gen_spill_reg.a_drain", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Empties A when moving to B, output, or flush", "lines": [45, 61, 66]},
+  {"id": "E17", "name": "gen_spill_reg.b_fill", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Load enable of B when A drains into stalled output", "lines": [53, 55, 66]},
+  {"id": "E18", "name": "gen_spill_reg.b_drain", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Empties B on downstream handshake or flush", "lines": [53, 56, 67]},
+  {"id": "E6", "name": "ready_o", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Upstream ready while either register is empty", "lines": [30, 72]},
+  {"id": "E7", "name": "data_i", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Input data captured into register A", "lines": [31, 47]},
+  {"id": "E8", "name": "valid_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Downstream valid when either register is full", "lines": [32, 75]},
+  {"id": "E9", "name": "ready_i", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Downstream ready controlling B fill and drain", "lines": [33, 66, 67]},
+  {"id": "E10", "name": "data_o", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Output data from B if full, else A", "lines": [34, 78]}
+ ],
+ "groups": [
+  {"name": "Slice register A", "kind": "PIPELINE_STAGE", "anchor_ids": ["E11", "E12", "E13", "E14"], "member_ids": [], "description": "First register stage with occupancy flag"},
+  {"name": "Spill register B", "kind": "BUFFER", "anchor_ids": ["E15", "E16", "E17", "E18"], "member_ids": [], "description": "Spill stage absorbing data during downstream stall"},
+  {"name": "Upstream port", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E6", "E7"], "member_ids": ["E4", "E5"], "description": "Input handshake and flush request"},
+  {"name": "Downstream port", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E8", "E9", "E10"], "member_ids": [], "description": "Output handshake and data mux"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2", "E3"]},
+  {"name": "stream_in", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E4", "E5", "E6", "E7"]},
+  {"name": "stream_out", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E8", "E9", "E10"]}
+ ]
+}

@@ -1,0 +1,191 @@
+{
+  "module_summary": "UART transmitter: serializes bytes with phase machine (REST/LEAD/PAY/TAIL) clocked by timer wrap pulse.",
+  "anchors": [
+    {
+      "id": "E10",
+      "name": "ph",
+      "role": "FSM_STATE",
+      "importance": "critical",
+      "trace": "control_backward",
+      "why": "4-phase state machine controlling serial transmission: REST→LEAD→PAY→TAIL.",
+      "lines": [39, 42, 46]
+    },
+    {
+      "id": "E13",
+      "name": "tmr",
+      "role": "COUNTER",
+      "importance": "critical",
+      "trace": "control_backward",
+      "why": "Timing counter dividing clock by CLK_DIV to bit rate.",
+      "lines": [33, 50]
+    },
+    {
+      "id": "E8",
+      "name": "sr",
+      "role": "HOLDING_REG",
+      "importance": "major",
+      "trace": "data_backward",
+      "why": "Shift register holding transmitted data byte.",
+      "lines": [57, 60]
+    },
+    {
+      "id": "E12",
+      "name": "nb",
+      "role": "COUNTER",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Counts bits transmitted, triggers payload completion.",
+      "lines": [46, 58, 61]
+    },
+    {
+      "id": "E11",
+      "name": "wrap",
+      "role": "CONTROL_FLAG",
+      "importance": "major",
+      "trace": "forward",
+      "why": "Timer wrap signal gates phase transitions and bit shifting.",
+      "lines": [44, 46, 50]
+    },
+    {
+      "id": "E15",
+      "name": "grab",
+      "role": "CONTROL_FLAG",
+      "importance": "major",
+      "trace": "forward",
+      "why": "Load enable when ready and valid; latches tx_data into sr.",
+      "lines": [56, 57]
+    },
+    {
+      "id": "E14",
+      "name": "quiet",
+      "role": "CONTROL_FLAG",
+      "importance": "major",
+      "trace": "forward",
+      "why": "Idle indicator; gates data capture and timer updates.",
+      "lines": [41, 48, 65]
+    },
+    {
+      "id": "E16",
+      "name": "roll",
+      "role": "CONTROL_FLAG",
+      "importance": "major",
+      "trace": "forward",
+      "why": "Shift enable during payload phase.",
+      "lines": [45, 59]
+    },
+    {
+      "id": "E6",
+      "name": "tx_o",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Serial output: high in REST/LEAD, payload bit in PAY, high in TAIL.",
+      "lines": [67]
+    },
+    {
+      "id": "E5",
+      "name": "tx_data",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Input byte to be serialized.",
+      "lines": [57]
+    },
+    {
+      "id": "E3",
+      "name": "tx_valid",
+      "role": "HANDSHAKE_VALID",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Input handshake: enables data capture when module is ready.",
+      "lines": [42, 48]
+    },
+    {
+      "id": "E4",
+      "name": "tx_ready",
+      "role": "HANDSHAKE_READY",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Output handshake: asserted during idle phase (quiet).",
+      "lines": [65]
+    },
+    {
+      "id": "E7",
+      "name": "busy_o",
+      "role": "STATUS",
+      "importance": "major",
+      "trace": "forward",
+      "why": "Inverted busy: asserted when not in REST phase.",
+      "lines": [66]
+    }
+  ],
+  "groups": [
+    {
+      "name": "Phase Machine",
+      "kind": "CONTROLLER",
+      "anchor_ids": ["E10"],
+      "member_ids": [],
+      "description": "4-state phase controller managing transmission stages."
+    },
+    {
+      "name": "Timing",
+      "kind": "COUNTER_TIMER",
+      "anchor_ids": ["E13", "E11"],
+      "member_ids": [],
+      "description": "Timer and wrap signal generating bit-rate clock."
+    },
+    {
+      "name": "Data Path",
+      "kind": "DATAPATH",
+      "anchor_ids": ["E8", "E12"],
+      "member_ids": ["E9"],
+      "description": "Shift register and bit counter for serial transmission."
+    },
+    {
+      "name": "Control Logic",
+      "kind": "OTHER",
+      "anchor_ids": ["E15", "E14", "E16"],
+      "member_ids": [],
+      "description": "Decode ready/valid handshake and phase-dependent enables."
+    },
+    {
+      "name": "Ports",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E5", "E3", "E4", "E6", "E7"],
+      "member_ids": [],
+      "description": "Data, handshake, and status signals to external interface."
+    }
+  ],
+  "interfaces": [
+    {
+      "name": "Input Data",
+      "protocol": "SIMPLE",
+      "direction": "IN",
+      "member_ids": ["E5"]
+    },
+    {
+      "name": "Handshake",
+      "protocol": "VALID_READY",
+      "direction": "IN",
+      "member_ids": ["E3", "E4"]
+    },
+    {
+      "name": "Serial Output",
+      "protocol": "SIMPLE",
+      "direction": "OUT",
+      "member_ids": ["E6"]
+    },
+    {
+      "name": "Status",
+      "protocol": "SIMPLE",
+      "direction": "OUT",
+      "member_ids": ["E7"]
+    },
+    {
+      "name": "Clock/Reset",
+      "protocol": "CLOCK_RESET",
+      "direction": "IN",
+      "member_ids": ["E1", "E2"]
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "module_summary": "Serial UART-style byte receiver: a 12-state FSM tracks start/data/stop bits while a 10-bit shift register captures the byte.",
+  "anchors": [
+    {"id": "E6", "name": "state", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Sequences START, B0-B7, STOP, DONE and ERR recovery; drives done."},
+    {"id": "E8", "name": "byte_r", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "Shift register sampling in every cycle; bits 8:1 hold the received byte."},
+    {"id": "E5", "name": "done", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "One-cycle pulse in DONE state qualifying out_byte."},
+    {"id": "E4", "name": "out_byte", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Received data byte from byte_r, valid when done."},
+    {"id": "E2", "name": "in", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Serial bit stream; feeds both shift register and framing FSM."}
+  ],
+  "groups": [
+    {"name": "framing_fsm", "kind": "CONTROLLER", "anchor_ids": ["E6", "E5"], "member_ids": ["E7"], "description": "Detects start bit, counts 8 data bits, verifies stop bit, waits on error."},
+    {"name": "rx_shifter", "kind": "SERIALIZER", "anchor_ids": ["E8", "E4", "E2"], "member_ids": [], "description": "LSB-first deserializer; out_byte gated by done."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E3"]},
+    {"name": "serial_in", "protocol": "SERIAL", "direction": "IN", "member_ids": ["E2"]},
+    {"name": "byte_out", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E4", "E5"]}
+  ]
+}

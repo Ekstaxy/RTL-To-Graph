@@ -1,0 +1,25 @@
+{
+ "module_summary": "Two-phase clock-domain-crossing stream: a source-domain sender toggles an async request with held data and a destination-domain receiver synchronizes it and toggles an async acknowledge.",
+ "anchors": [
+  {"id": "E4", "name": "src_valid_i", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Source-domain valid launching a transfer into the sender.", "lines": [78]},
+  {"id": "E5", "name": "src_ready_o", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Source ready when previous transfer acknowledged.", "lines": [79]},
+  {"id": "E3", "name": "src_data_i", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Source payload latched by sender for crossing.", "lines": [77]},
+  {"id": "E9", "name": "dst_valid_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Destination-domain valid after synchronized request toggle.", "lines": [93]},
+  {"id": "E10", "name": "dst_ready_i", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Destination ready completing handshake and toggling ack.", "lines": [94]},
+  {"id": "E8", "name": "dst_data_o", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Payload delivered in destination domain.", "lines": [92]},
+  {"id": "E11", "name": "async_req", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "forward", "why": "Toggling request crossing from source to destination domain.", "lines": [80, 95]},
+  {"id": "E12", "name": "async_ack", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Toggling acknowledge crossing back to the source domain.", "lines": [81, 96]},
+  {"id": "E13", "name": "async_data", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Data held stable by sender across the asynchronous boundary.", "lines": [82, 97]}
+ ],
+ "groups": [
+  {"name": "Source-domain sender", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E4", "E5", "E3"], "member_ids": ["I1"], "description": "Accepts source valid/ready transfer, toggles request and holds data."},
+  {"name": "Destination-domain receiver", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E9", "E10", "E8"], "member_ids": ["I2"], "description": "Synchronizes request, presents data valid, toggles ack on accept."},
+  {"name": "Async two-phase link", "kind": "OTHER", "anchor_ids": ["E11", "E12", "E13"], "member_ids": ["I1", "I2"], "description": "Request/ack toggles and stable data crossing clock domains."}
+ ],
+ "interfaces": [
+  {"name": "src_clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "dst_clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E6", "E7"]},
+  {"name": "src_stream", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5"]},
+  {"name": "dst_stream", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E8", "E9", "E10"]}
+ ]
+}

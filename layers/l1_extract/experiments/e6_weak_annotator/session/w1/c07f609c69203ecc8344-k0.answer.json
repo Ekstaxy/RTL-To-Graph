@@ -1,0 +1,151 @@
+{
+  "module_summary": "UART transmitter with state machine controlling timing via baud counter and serializing data.",
+  "anchors": [
+    {
+      "id": "E8",
+      "name": "state_q",
+      "role": "FSM_STATE",
+      "importance": "critical",
+      "trace": "control_backward",
+      "why": "Main state controller: IDLE, START, DATA, STOP states driving tx_o and bit operations.",
+      "lines": [31, 45, 56]
+    },
+    {
+      "id": "E3",
+      "name": "tx_valid",
+      "role": "HANDSHAKE_VALID",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Request to transmit input handshake signal.",
+      "lines": [32, 46]
+    },
+    {
+      "id": "E4",
+      "name": "tx_ready",
+      "role": "HANDSHAKE_READY",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Ready output handshake: asserted when in IDLE state.",
+      "lines": [56]
+    },
+    {
+      "id": "E5",
+      "name": "tx_data",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "8-bit input data payload to be transmitted.",
+      "lines": [47]
+    },
+    {
+      "id": "E6",
+      "name": "tx_o",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Serial output bit driven by FSM state and shift register LSB.",
+      "lines": [61, 62, 63]
+    },
+    {
+      "id": "E10",
+      "name": "baud_cnt_q",
+      "role": "COUNTER",
+      "importance": "major",
+      "trace": "data_backward",
+      "why": "4-bit baud rate counter incrementing each cycle until CLK_DIV.",
+      "lines": [24, 25, 26]
+    },
+    {
+      "id": "E11",
+      "name": "baud_tick",
+      "role": "CONTROL_FLAG",
+      "importance": "major",
+      "trace": "forward",
+      "why": "Signals when baud counter reaches CLK_DIV-1; gates FSM transitions and counter reset.",
+      "lines": [21, 25, 33]
+    },
+    {
+      "id": "E12",
+      "name": "bit_idx_q",
+      "role": "COUNTER",
+      "importance": "major",
+      "trace": "data_backward",
+      "why": "3-bit counter tracking bit position (0-7) during DATA state.",
+      "lines": [34, 51]
+    },
+    {
+      "id": "E13",
+      "name": "shift_q",
+      "role": "STORAGE",
+      "importance": "major",
+      "trace": "data_backward",
+      "why": "8-bit shift register holding transmit data; right-shifted each baud tick in DATA.",
+      "lines": [47, 50, 62]
+    },
+    {
+      "id": "E7",
+      "name": "busy_o",
+      "role": "STATUS",
+      "importance": "major",
+      "trace": "interface",
+      "why": "Output status: asserted when not in IDLE state.",
+      "lines": [57]
+    }
+  ],
+  "groups": [
+    {
+      "name": "FSM Controller",
+      "kind": "CONTROLLER",
+      "anchor_ids": ["E8"],
+      "member_ids": [],
+      "description": "Main state machine controlling transmit sequence through 4 states."
+    },
+    {
+      "name": "Baud Timing",
+      "kind": "COUNTER_TIMER",
+      "anchor_ids": ["E10", "E11"],
+      "member_ids": [],
+      "description": "Baud rate counter and tick signal for synchronizing state transitions."
+    },
+    {
+      "name": "Serializer",
+      "kind": "SERIALIZER",
+      "anchor_ids": ["E12", "E13"],
+      "member_ids": [],
+      "description": "Bit counter and shift register for serializing 8-bit data output."
+    },
+    {
+      "name": "External Interface",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E3", "E4", "E5", "E6", "E7"],
+      "member_ids": [],
+      "description": "Handshake ports (tx_valid/tx_ready), data ports (tx_data/tx_o), and busy status."
+    }
+  ],
+  "interfaces": [
+    {
+      "name": "TX Handshake",
+      "protocol": "VALID_READY",
+      "direction": "IN",
+      "member_ids": ["E3", "E4"]
+    },
+    {
+      "name": "TX Data",
+      "protocol": "STREAM",
+      "direction": "OUT",
+      "member_ids": ["E5", "E6"]
+    },
+    {
+      "name": "Status",
+      "protocol": "SIMPLE",
+      "direction": "OUT",
+      "member_ids": ["E7"]
+    },
+    {
+      "name": "Clock/Reset",
+      "protocol": "CLOCK_RESET",
+      "direction": "IN",
+      "member_ids": ["E1", "E2"]
+    }
+  ]
+}

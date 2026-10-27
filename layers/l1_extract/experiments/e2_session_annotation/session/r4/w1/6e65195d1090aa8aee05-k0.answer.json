@@ -1,0 +1,28 @@
+{
+ "module_summary": "IEEE-754 single-precision multiplier sequenced by a free-running 3-bit counter: unpack, special-case/denormal handling, normalize, mantissa multiply, round with guard/round/sticky, then pack into z.",
+ "anchors": [
+  {"id": "E6", "name": "counter", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Phase counter sequencing unpack, special cases, normalize, multiply, round, pack.", "lines": [7, 21, 26]},
+  {"id": "E3", "name": "a", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Operand A unpacked into sign, exponent and mantissa.", "lines": [4, 28, 30]},
+  {"id": "E4", "name": "b", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Operand B unpacked into sign, exponent and mantissa.", "lines": [4, 29, 31]},
+  {"id": "E5", "name": "z", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Packed IEEE-754 product, NaN/Inf/zero or rounded result.", "lines": [5, 151, 152]},
+  {"id": "E7", "name": "a_mantissa", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Operand A mantissa, normalized then multiplied; b_mantissa mirrors.", "lines": [9, 96, 111]},
+  {"id": "E10", "name": "a_exponent", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Unbiased exponent A for special cases and exponent sum.", "lines": [10, 30, 110]},
+  {"id": "E16", "name": "product", "role": "DATAPATH_MAJOR", "importance": "critical", "trace": "data_backward", "why": "Mantissa product split into result mantissa and rounding bits.", "lines": [13, 111, 118]},
+  {"id": "E9", "name": "z_mantissa", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Result mantissa normalized and rounded before packing.", "lines": [9, 118, 151]},
+  {"id": "E12", "name": "z_exponent", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Result exponent adjusted for underflow/normalization, checked for overflow.", "lines": [10, 110, 156]},
+  {"id": "E15", "name": "z_sign", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "XOR of operand signs placed in z[31].", "lines": [11, 109, 153]},
+  {"id": "E17", "name": "guard_bit", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Guard bit deciding round-up with round and sticky.", "lines": [15, 119, 141]},
+  {"id": "E19", "name": "sticky", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "OR of discarded product bits for round-to-nearest-even.", "lines": [15, 121, 141]}
+ ],
+ "groups": [
+  {"name": "Phase sequencer", "kind": "CONTROLLER", "anchor_ids": ["E6"], "member_ids": [], "description": "Counter selecting each processing phase of the multiply."},
+  {"name": "Operand unpack and normalize", "kind": "DATAPATH", "anchor_ids": ["E3", "E4", "E7", "E10"], "member_ids": ["E8", "E11", "E13", "E14"], "description": "Extracts fields, handles denormals and normalizes mantissas."},
+  {"name": "Multiply and round", "kind": "DATAPATH", "anchor_ids": ["E16", "E9", "E12", "E15", "E17", "E19"], "member_ids": ["E18"], "description": "Multiplies mantissas, adds exponents, rounds with GRS bits."},
+  {"name": "Result pack", "kind": "OTHER", "anchor_ids": ["E5"], "member_ids": [], "description": "Packs sign, exponent and mantissa, handles NaN, Inf, overflow."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "operands", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E3", "E4"]},
+  {"name": "result", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E5"]}
+ ]
+}

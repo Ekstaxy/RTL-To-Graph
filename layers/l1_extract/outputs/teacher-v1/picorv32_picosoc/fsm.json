@@ -1,0 +1,760 @@
+[
+ {
+  "module": "picorv32_pcpi_mul",
+  "instance": "picosoc.cpu.genblk1.pcpi_mul",
+  "state": "mul_waiting",
+  "next": null,
+  "style": "one-process",
+  "states": [
+   {
+    "name": "1",
+    "value": "1"
+   }
+  ],
+  "reset_state": "1",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "1",
+    "cond": "!mul_waiting && mul_counter[6]"
+   }
+  ],
+  "outputs": [],
+  "warnings": [
+   "non-constant next state: !mul_start",
+   "semantic_check: mismatch (syntactic 1 states / 0 edges vs executed 2 / 2); semantic transitions attached"
+  ],
+  "semantic_check": "mismatch",
+  "semantic_transitions": [
+   {
+    "src": "0",
+    "dst": "1",
+    "cond": "!pcpi_wait_q && !pcpi_wait || <datapath condition>"
+   },
+   {
+    "src": "0",
+    "dst": "0",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "1",
+    "dst": "1",
+    "cond": "(pcpi_wait_q) || (!pcpi_wait)"
+   },
+   {
+    "src": "1",
+    "dst": "0",
+    "cond": "!pcpi_wait_q && pcpi_wait"
+   }
+  ]
+ },
+ {
+  "module": "picorv32_pcpi_div",
+  "instance": "picosoc.cpu.genblk2.pcpi_div",
+  "state": "running",
+  "next": null,
+  "style": "one-process",
+  "states": [
+   {
+    "name": "0",
+    "value": "0"
+   },
+   {
+    "name": "1",
+    "value": "1"
+   }
+  ],
+  "reset_state": "0",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "1",
+    "cond": "start"
+   },
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "!start && !quotient_msk && running"
+   }
+  ],
+  "outputs": [
+   {
+    "signal": "pcpi_rd",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "pcpi_ready",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "pcpi_wr",
+    "kind": "moore",
+    "port": true
+   }
+  ],
+  "warnings": [],
+  "semantic_check": "consistent"
+ },
+ {
+  "module": "picorv32",
+  "instance": "picosoc.cpu",
+  "state": "mem_state",
+  "next": null,
+  "style": "one-process",
+  "states": [
+   {
+    "name": "0",
+    "value": "0"
+   },
+   {
+    "name": "1",
+    "value": "1"
+   },
+   {
+    "name": "2",
+    "value": "2"
+   },
+   {
+    "name": "3",
+    "value": "3"
+   }
+  ],
+  "reset_state": "0",
+  "transitions": [
+   {
+    "src": "0",
+    "dst": "1",
+    "cond": "!(!resetn || trap) && ((mem_do_prefetch || mem_do_rinst) || mem_do_rdata)"
+   },
+   {
+    "src": "0",
+    "dst": "2",
+    "cond": "!(!resetn || trap) && mem_do_wdata"
+   },
+   {
+    "src": "1",
+    "dst": "0",
+    "cond": "!(!resetn || trap) && mem_xfer && !mem_la_read && (mem_do_rinst || mem_do_rdata)"
+   },
+   {
+    "src": "1",
+    "dst": "3",
+    "cond": "!(!resetn || trap) && mem_xfer && !mem_la_read && !(mem_do_rinst || mem_do_rdata)"
+   },
+   {
+    "src": "2",
+    "dst": "0",
+    "cond": "!(!resetn || trap) && mem_xfer"
+   },
+   {
+    "src": "3",
+    "dst": "0",
+    "cond": "!(!resetn || trap) && mem_do_rinst"
+   }
+  ],
+  "outputs": [
+   {
+    "signal": "mem_instr",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "mem_la_read",
+    "kind": "mealy",
+    "port": true
+   },
+   {
+    "signal": "mem_la_write",
+    "kind": "mealy",
+    "port": true
+   },
+   {
+    "signal": "mem_valid",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "mem_wstrb",
+    "kind": "moore",
+    "port": true
+   }
+  ],
+  "warnings": [],
+  "semantic_check": "consistent"
+ },
+ {
+  "module": "picorv32",
+  "instance": "picosoc.cpu",
+  "state": "cpu_state",
+  "next": null,
+  "style": "one-process",
+  "states": [
+   {
+    "name": "cpu_state_trap",
+    "value": "8'd128"
+   },
+   {
+    "name": "cpu_state_fetch",
+    "value": "8'd64"
+   },
+   {
+    "name": "cpu_state_ld_rs1",
+    "value": "8'd32"
+   },
+   {
+    "name": "cpu_state_ld_rs2",
+    "value": "8'd16"
+   },
+   {
+    "name": "cpu_state_exec",
+    "value": "8'd8"
+   },
+   {
+    "name": "cpu_state_shift",
+    "value": "8'd4"
+   },
+   {
+    "name": "cpu_state_stmem",
+    "value": "8'd2"
+   },
+   {
+    "name": "cpu_state_ldmem",
+    "value": "8'd1"
+   }
+  ],
+  "reset_state": "cpu_state_fetch",
+  "transitions": [
+   {
+    "src": "cpu_state_fetch",
+    "dst": "cpu_state_ld_rs1",
+    "cond": "!(decoder_trigger && !irq_active && !irq_delay && |(irq_pending & ~irq_mask) || irq_state) && !((decoder_trigger || do_waitirq) && instr_waitirq) && decoder_trigger && !instr_jal"
+   },
+   {
+    "src": "cpu_state_ld_rs1",
+    "dst": "cpu_state_fetch",
+    "cond": "instr_trap && pcpi_int_ready"
+   },
+   {
+    "src": "cpu_state_ld_rs1",
+    "dst": "cpu_state_fetch",
+    "cond": "instr_trap && !pcpi_int_ready && (pcpi_timeout || instr_ecall_ebreak) && !irq_mask[irq_ebreak] && !irq_active"
+   },
+   {
+    "src": "cpu_state_ld_rs1",
+    "dst": "cpu_state_trap",
+    "cond": "instr_trap && !pcpi_int_ready && (pcpi_timeout || instr_ecall_ebreak) && !(!irq_mask[irq_ebreak] && !irq_active)"
+   },
+   {
+    "src": "cpu_state_ld_rs1",
+    "dst": "cpu_state_fetch",
+    "cond": "is_rdcycle_rdcycleh_rdinstr_rdinstrh"
+   },
+   {
+    "src": "cpu_state_ld_rs1",
+    "dst": "cpu_state_exec",
+    "cond": "is_lui_auipc_jal"
+   },
+   {
+    "src": "cpu_state_ld_rs1",
+    "dst": "cpu_state_fetch",
+    "cond": "instr_retirq"
+   },
+   {
+    "src": "cpu_state_ld_rs1",
+    "dst": "cpu_state_fetch",
+    "cond": "instr_maskirq"
+   },
+   {
+    "src": "cpu_state_ld_rs1",
+    "dst": "cpu_state_fetch",
+    "cond": "instr_timer"
+   },
+   {
+    "src": "cpu_state_ld_rs1",
+    "dst": "cpu_state_ldmem",
+    "cond": "is_lb_lh_lw_lbu_lhu && !instr_trap"
+   },
+   {
+    "src": "cpu_state_ld_rs1",
+    "dst": "cpu_state_exec",
+    "cond": "(is_jalr_addi_slti_sltiu_xori_ori_andi || is_slli_srli_srai)"
+   },
+   {
+    "src": "cpu_state_ld_rs1",
+    "dst": "cpu_state_stmem",
+    "cond": "else && is_sb_sh_sw"
+   },
+   {
+    "src": "cpu_state_ld_rs1",
+    "dst": "cpu_state_exec",
+    "cond": "else"
+   },
+   {
+    "src": "cpu_state_ld_rs2",
+    "dst": "cpu_state_fetch",
+    "cond": "instr_trap && pcpi_int_ready"
+   },
+   {
+    "src": "cpu_state_ld_rs2",
+    "dst": "cpu_state_fetch",
+    "cond": "instr_trap && !pcpi_int_ready && (pcpi_timeout || instr_ecall_ebreak) && !irq_mask[irq_ebreak] && !irq_active"
+   },
+   {
+    "src": "cpu_state_ld_rs2",
+    "dst": "cpu_state_trap",
+    "cond": "instr_trap && !pcpi_int_ready && (pcpi_timeout || instr_ecall_ebreak) && !(!irq_mask[irq_ebreak] && !irq_active)"
+   },
+   {
+    "src": "cpu_state_ld_rs2",
+    "dst": "cpu_state_stmem",
+    "cond": "is_sb_sh_sw"
+   },
+   {
+    "src": "cpu_state_ld_rs2",
+    "dst": "cpu_state_exec",
+    "cond": "else"
+   },
+   {
+    "src": "cpu_state_exec",
+    "dst": "cpu_state_fetch",
+    "cond": "is_beq_bne_blt_bge_bltu_bgeu && mem_done"
+   },
+   {
+    "src": "cpu_state_exec",
+    "dst": "cpu_state_fetch",
+    "cond": "!is_beq_bne_blt_bge_bltu_bgeu"
+   },
+   {
+    "src": "cpu_state_shift",
+    "dst": "cpu_state_fetch",
+    "cond": "reg_sh == 0"
+   },
+   {
+    "src": "cpu_state_stmem",
+    "dst": "cpu_state_fetch",
+    "cond": "(!mem_do_prefetch || mem_done) && !mem_do_prefetch && mem_done"
+   },
+   {
+    "src": "cpu_state_ldmem",
+    "dst": "cpu_state_fetch",
+    "cond": "(!mem_do_prefetch || mem_done) && !mem_do_prefetch && mem_done"
+   },
+   {
+    "src": "*",
+    "dst": "cpu_state_trap",
+    "cond": "resetn && (mem_do_rdata || mem_do_wdata) && mem_wordsize == 0 && reg_op1[1:0] != 0 && !(!irq_mask[irq_buserror] && !irq_active)"
+   },
+   {
+    "src": "*",
+    "dst": "cpu_state_trap",
+    "cond": "resetn && (mem_do_rdata || mem_do_wdata) && mem_wordsize == 1 && reg_op1[0] != 0 && !(!irq_mask[irq_buserror] && !irq_active)"
+   },
+   {
+    "src": "*",
+    "dst": "cpu_state_trap",
+    "cond": "resetn && mem_do_rinst && (COMPRESSED_ISA ? reg_pc[0] : |reg_pc[1:0]) && !(!irq_mask[irq_buserror] && !irq_active)"
+   }
+  ],
+  "outputs": [
+   {
+    "signal": "eoi",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "pcpi_valid",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "trace_data",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "trace_valid",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "trap",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "dbg_ascii_state",
+    "kind": "moore",
+    "port": false
+   }
+  ],
+  "warnings": [],
+  "semantic_check": "consistent-subset"
+ },
+ {
+  "module": "picorv32",
+  "instance": "picosoc.cpu",
+  "state": "irq_state",
+  "next": null,
+  "style": "one-process",
+  "states": [
+   {
+    "name": "0",
+    "value": "0"
+   },
+   {
+    "name": "1",
+    "value": "1"
+   },
+   {
+    "name": "2",
+    "value": "2"
+   }
+  ],
+  "reset_state": "0",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "1",
+    "cond": "cpu_state == cpu_state_fetch && (decoder_trigger && !irq_active && !irq_delay && |(irq_pending & ~irq_mask) || irq_state) && irq_state == 2'b00"
+   },
+   {
+    "src": "*",
+    "dst": "2",
+    "cond": "cpu_state == cpu_state_fetch && (decoder_trigger && !irq_active && !irq_delay && |(irq_pending & ~irq_mask) || irq_state) && !(irq_state == 2'b00) && irq_state == 2'b01"
+   },
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "cpu_state == cpu_state_fetch && (decoder_trigger && !irq_active && !irq_delay && |(irq_pending & ~irq_mask) || irq_state) && !(irq_state == 2'b00) && !(irq_state == 2'b01)"
+   }
+  ],
+  "outputs": [
+   {
+    "signal": "eoi",
+    "kind": "moore",
+    "port": true
+   }
+  ],
+  "warnings": [
+   "one-hot `case (1'b1)` style not extracted"
+  ],
+  "semantic_check": "consistent-subset"
+ },
+ {
+  "module": "spimemio",
+  "instance": "picosoc.spimemio",
+  "state": "state",
+  "next": null,
+  "style": "one-process",
+  "states": [
+   {
+    "name": "0",
+    "value": "0"
+   },
+   {
+    "name": "1",
+    "value": "1"
+   },
+   {
+    "name": "2",
+    "value": "2"
+   },
+   {
+    "name": "3",
+    "value": "3"
+   },
+   {
+    "name": "4",
+    "value": "4"
+   },
+   {
+    "name": "5",
+    "value": "5"
+   },
+   {
+    "name": "6",
+    "value": "6"
+   },
+   {
+    "name": "7",
+    "value": "7"
+   },
+   {
+    "name": "8",
+    "value": "8"
+   },
+   {
+    "name": "9",
+    "value": "9"
+   },
+   {
+    "name": "10",
+    "value": "10"
+   },
+   {
+    "name": "11",
+    "value": "11"
+   },
+   {
+    "name": "12",
+    "value": "12"
+   }
+  ],
+  "reset_state": null,
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "(!resetn || softreset)"
+   },
+   {
+    "src": "0",
+    "dst": "1",
+    "cond": "!(!resetn || softreset) && din_ready"
+   },
+   {
+    "src": "1",
+    "dst": "2",
+    "cond": "!(!resetn || softreset) && dout_valid"
+   },
+   {
+    "src": "2",
+    "dst": "3",
+    "cond": "!(!resetn || softreset) && din_ready"
+   },
+   {
+    "src": "3",
+    "dst": "4",
+    "cond": "!(!resetn || softreset) && dout_valid"
+   },
+   {
+    "src": "4",
+    "dst": "5",
+    "cond": "!(!resetn || softreset) && din_ready"
+   },
+   {
+    "src": "5",
+    "dst": "6",
+    "cond": "!(!resetn || softreset) && valid && !ready && din_ready"
+   },
+   {
+    "src": "6",
+    "dst": "7",
+    "cond": "!(!resetn || softreset) && din_ready"
+   },
+   {
+    "src": "7",
+    "dst": "8",
+    "cond": "!(!resetn || softreset) && din_ready && (config_qspi || config_ddr)"
+   },
+   {
+    "src": "7",
+    "dst": "9",
+    "cond": "!(!resetn || softreset) && din_ready && !(config_qspi || config_ddr)"
+   },
+   {
+    "src": "8",
+    "dst": "9",
+    "cond": "!(!resetn || softreset) && din_ready"
+   },
+   {
+    "src": "9",
+    "dst": "10",
+    "cond": "!(!resetn || softreset) && din_ready"
+   },
+   {
+    "src": "10",
+    "dst": "11",
+    "cond": "!(!resetn || softreset) && din_ready"
+   },
+   {
+    "src": "11",
+    "dst": "12",
+    "cond": "!(!resetn || softreset) && din_ready"
+   },
+   {
+    "src": "12",
+    "dst": "9",
+    "cond": "!(!resetn || softreset) && (!rd_wait || valid) && din_ready"
+   },
+   {
+    "src": "*",
+    "dst": "5",
+    "cond": "!(!resetn || softreset) && jump && config_cont"
+   },
+   {
+    "src": "*",
+    "dst": "4",
+    "cond": "!(!resetn || softreset) && jump && !config_cont"
+   }
+  ],
+  "outputs": [],
+  "warnings": [
+   "semantic_check: unsupported (unsupported: constant \"\\r\\n\\t\\t\\t\\t3'b 01?\")"
+  ],
+  "semantic_check": "unsupported"
+ },
+ {
+  "module": "simpleuart",
+  "instance": "picosoc.simpleuart",
+  "state": "recv_state",
+  "next": null,
+  "style": "one-process",
+  "states": [
+   {
+    "name": "0",
+    "value": "0"
+   },
+   {
+    "name": "1",
+    "value": "1"
+   },
+   {
+    "name": "2",
+    "value": "2"
+   },
+   {
+    "name": "10",
+    "value": "10"
+   }
+  ],
+  "reset_state": "0",
+  "transitions": [
+   {
+    "src": "0",
+    "dst": "1",
+    "cond": "!ser_rx"
+   },
+   {
+    "src": "1",
+    "dst": "2",
+    "cond": "2*recv_divcnt > cfg_divider"
+   },
+   {
+    "src": "10",
+    "dst": "0",
+    "cond": "recv_divcnt > cfg_divider"
+   }
+  ],
+  "outputs": [],
+  "warnings": [
+   "non-constant next state: recv_state + 1",
+   "semantic_check: mismatch (syntactic 4 states / 3 edges vs executed 11 / 11); semantic transitions attached"
+  ],
+  "semantic_check": "mismatch",
+  "semantic_transitions": [
+   {
+    "src": "0",
+    "dst": "1",
+    "cond": "!ser_rx"
+   },
+   {
+    "src": "0",
+    "dst": "0",
+    "cond": "ser_rx"
+   },
+   {
+    "src": "1",
+    "dst": "1",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "1",
+    "dst": "2",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "2",
+    "dst": "2",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "2",
+    "dst": "3",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "3",
+    "dst": "3",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "3",
+    "dst": "4",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "4",
+    "dst": "4",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "4",
+    "dst": "5",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "5",
+    "dst": "5",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "5",
+    "dst": "6",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "6",
+    "dst": "6",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "6",
+    "dst": "7",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "7",
+    "dst": "8",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "7",
+    "dst": "7",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "8",
+    "dst": "8",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "8",
+    "dst": "9",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "9",
+    "dst": "9",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "9",
+    "dst": "10",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "10",
+    "dst": "0",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "10",
+    "dst": "10",
+    "cond": "<datapath condition>"
+   }
+  ]
+ }
+]

@@ -1,0 +1,22 @@
+{
+ "module_summary": "Source half of a gray-code CDC FIFO: a pointer child handles handshake and gray write pointer, a data child stores words written on valid&ready.",
+ "anchors": [
+  {"id": "E4", "name": "src_valid_i", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Source valid; with ready forms the write strobe and advances the write pointer.", "lines": [182, 193, 213]},
+  {"id": "E5", "name": "src_ready_o", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Source ready from pointer child's full comparison; gates writes.", "lines": [183, 193, 214]},
+  {"id": "E3", "name": "src_data_i", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Source data written into the FIFO storage child.", "lines": [181, 201]},
+  {"id": "E6", "name": "async_data_o", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "FIFO storage array exported to the destination domain.", "lines": [185, 204]},
+  {"id": "E7", "name": "async_wptr_o", "role": "FIFO_PTR", "importance": "major", "trace": "data_backward", "why": "Gray-coded write pointer sent to the destination domain.", "lines": [186, 216]},
+  {"id": "E8", "name": "async_rptr_i", "role": "FIFO_PTR", "importance": "major", "trace": "interface", "why": "Gray read pointer from destination, synchronized for full detection.", "lines": [187, 217]},
+  {"id": "E10", "name": "src_write", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Write enable into storage child when valid and ready.", "lines": [193, 203]},
+  {"id": "E9", "name": "src_widx", "role": "INDEX", "importance": "minor", "trace": "data_backward", "why": "Binary write index from pointer child addressing the storage array.", "lines": [202, 215]}
+ ],
+ "groups": [
+  {"name": "src_pointer", "kind": "CONTROLLER", "anchor_ids": ["E4", "E5", "E7", "E8", "E9"], "member_ids": ["I2"], "description": "Gray write pointer, read-pointer synchronizer and full-based ready generation."},
+  {"name": "src_storage", "kind": "MEMORY", "anchor_ids": ["E3", "E6", "E10"], "member_ids": ["I1"], "description": "Register array written at src_widx on src_write, exported to destination."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "src_stream", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5"]},
+  {"name": "async_link", "protocol": "OTHER", "direction": "OUT", "member_ids": ["E6", "E7", "E8"]}
+ ]
+}

@@ -1,0 +1,36 @@
+{
+ "module_summary": "Stream crossbar: per-input demuxes route valid/ready by sel_i onto a cross matrix, per-output round-robin arbiter trees pick one input and pass data plus source index through optional spill registers.",
+ "anchors": [
+  {"id": "E8", "name": "valid_i", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Per-input valid, demuxed toward selected output", "lines": [109]},
+  {"id": "E9", "name": "ready_o", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Per-input ready from demux, granted by output arbiter", "lines": [110]},
+  {"id": "E6", "name": "data_i", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Input payload broadcast to all output arbiters", "lines": [119]},
+  {"id": "E7", "name": "sel_i", "role": "MUX_SELECT", "importance": "critical", "trace": "interface", "why": "Selects destination output port for each input", "lines": [111]},
+  {"id": "E12", "name": "valid_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "data_backward", "why": "Per-output valid from spill register", "lines": [163]},
+  {"id": "E13", "name": "ready_i", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Per-output downstream ready into spill register", "lines": [164]},
+  {"id": "E10", "name": "data_o", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Output payload deaggregated from spill register", "lines": [169]},
+  {"id": "E11", "name": "idx_o", "role": "INTERFACE_ADDR", "importance": "major", "trace": "data_backward", "why": "Index of input that won arbitration for this output", "lines": [170]},
+  {"id": "E5", "name": "rr_i", "role": "ARBITRATION", "importance": "minor", "trace": "interface", "why": "External round-robin priority per output arbiter", "lines": [141]},
+  {"id": "E4", "name": "clr_arb_i", "role": "COMMAND", "importance": "minor", "trace": "forward", "why": "Clears arbiter tree state", "lines": [140]},
+  {"id": "E3", "name": "clr_i", "role": "COMMAND", "importance": "minor", "trace": "forward", "why": "Synchronous clear of arbiters and spill registers", "lines": [140, 159]},
+  {"id": "E14", "name": "inp_valid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "Demuxed per-input per-output valid matrix", "lines": [112, 121]},
+  {"id": "E17", "name": "out_valid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Transposed request vector into each output arbiter", "lines": [121, 142]},
+  {"id": "E18", "name": "out_ready", "role": "ARBITRATION", "importance": "major", "trace": "control_backward", "why": "Arbiter grant vector routed back to input demux readies", "lines": [122, 143]},
+  {"id": "E16", "name": "out_data", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Input data replicated across all outputs for arbiter mux", "lines": [119, 144]},
+  {"id": "E19", "name": "gen_outs[*].arb", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Arbiter-selected data and index bundle into spill register", "lines": [147, 148, 162]},
+  {"id": "E20", "name": "gen_outs[*].arb_valid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "Arbiter output request into spill register", "lines": [145, 160]},
+  {"id": "E21", "name": "gen_outs[*].arb_ready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Spill register ready back to arbiter grant", "lines": [146, 161]},
+  {"id": "E22", "name": "gen_outs[*].spill", "role": "PIPELINE_REG", "importance": "minor", "trace": "data_backward", "why": "Spill register output bundle driving data_o and idx_o", "lines": [165, 169, 170]}
+ ],
+ "groups": [
+  {"name": "Input demuxes", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E8", "E9", "E6", "E7", "E14"], "member_ids": ["I1", "E15"], "description": "Per-input demux routing valid/ready to selected output"},
+  {"name": "Crossbar switch matrix", "kind": "DATAPATH", "anchor_ids": ["E17", "E18", "E16"], "member_ids": [], "description": "Transposes input/output handshake and data matrices"},
+  {"name": "Output arbiters", "kind": "ARBITER", "anchor_ids": ["E5", "E4", "E3", "E19", "E20", "E21"], "member_ids": ["I2"], "description": "Per-output round-robin arbiter tree selecting an input"},
+  {"name": "Output spill registers", "kind": "PIPELINE_STAGE", "anchor_ids": ["E22", "E12", "E13", "E10", "E11"], "member_ids": ["I3"], "description": "Optional spill register stage per output, deaggregates data and index"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "control", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E3", "E4", "E5"]},
+  {"name": "inputs", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E6", "E7", "E8", "E9"]},
+  {"name": "outputs", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E10", "E11", "E12", "E13"]}
+ ]
+}

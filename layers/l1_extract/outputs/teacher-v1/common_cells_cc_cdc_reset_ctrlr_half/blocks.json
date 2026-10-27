@@ -1,0 +1,1130 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "common_cells_cc_cdc_reset_ctrlr_half",
+ "tops": [
+  "cc_cdc_reset_ctrlr_half"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "cc_cdc_4phase_src": {
+   "source": "teacher",
+   "canonical_instance": "cc_cdc_reset_ctrlr_half.i_state_transition_cdc_src",
+   "file": "data/rtl/common_cells/src/cc_cdc_4phase.sv",
+   "lines": [
+    105,
+    206
+   ],
+   "summary": "Source side of a 4-phase CDC handshake: an FSM samples valid data into glitch-free registers, raises async request, and waits for the synchronized ack to assert then deassert.",
+   "blocks": [
+    {
+     "name": "Handshake FSM",
+     "kind": "CONTROLLER",
+     "description": "Sequences 4-phase req/ack and local ready",
+     "anchors": [
+      {
+       "id": "E15",
+       "name": "state_q",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.8,
+       "struct_score": 99.5,
+       "trace": "control_backward",
+       "why": "Handshake FSM: IDLE, wait ack assert, wait ack deassert",
+       "lines": [
+        130,
+        169,
+        196
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "ready_o",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 91.3,
+       "struct_score": 78.1,
+       "trace": "control_backward",
+       "why": "Source ready decoded from FSM state and ack",
+       "lines": [
+        116,
+        153,
+        156
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "req_src_q",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 59.1,
+       "struct_score": 66.3,
+       "trace": "control_backward",
+       "why": "Registered glitch-free request driving async_req_o",
+       "lines": [
+        123,
+        199,
+        203
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E14",
+       "name": "state_d",
+       "kind": "comb"
+      },
+      {
+       "id": "E9",
+       "name": "req_src_d",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Data register",
+     "kind": "DATAPATH",
+     "description": "Holds payload stable on async data output",
+     "anchors": [
+      {
+       "id": "E12",
+       "name": "data_src_q",
+       "role": "HOLDING_REG",
+       "importance": "critical",
+       "score": 81.5,
+       "struct_score": 45.9,
+       "trace": "data_backward",
+       "why": "Data latched on accept, held stable across the async transfer",
+       "lines": [
+        125,
+        200,
+        204
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "data_i",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 90.6,
+       "struct_score": 76.3,
+       "trace": "interface",
+       "why": "Payload sampled into data register on valid",
+       "lines": [
+        114,
+        173
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "async_data_o",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 91.9,
+       "struct_score": 79.6,
+       "trace": "data_backward",
+       "why": "Asynchronous data bus to destination domain",
+       "lines": [
+        119,
+        204
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E11",
+       "name": "data_src_d",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Ack synchronizer",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Multi-stage synchronizer bringing ack into source clock",
+     "anchors": [
+      {
+       "id": "E13",
+       "name": "ack_synced",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 80.3,
+       "struct_score": 41.5,
+       "trace": "data_backward",
+       "why": "Synchronized async ack steering FSM transitions and ready",
+       "lines": [
+        127,
+        145,
+        180
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "async_ack_i",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 56.1,
+       "struct_score": 55.4,
+       "trace": "interface",
+       "why": "Asynchronous ack input fed to synchronizer",
+       "lines": [
+        118,
+        144
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Async request",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Local valid converted to async request",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "async_req_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 94.3,
+       "struct_score": 85.6,
+       "trace": "data_backward",
+       "why": "Asynchronous request to destination domain",
+       "lines": [
+        117,
+        203
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "valid_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 95.6,
+       "struct_score": 88.9,
+       "trace": "interface",
+       "why": "Source valid; starts transfer and samples data in IDLE",
+       "lines": [
+        115,
+        172
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "rst_ni",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "clk_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "src_stream",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "data_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "valid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "ready_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "async_link",
+     "protocol": "REQ_ACK",
+     "direction": "OUT",
+     "member_ids": [
+      "E6",
+      "E7",
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "async_req_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "async_ack_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "async_data_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "cc_cdc_4phase_dst": {
+   "source": "teacher",
+   "canonical_instance": "cc_cdc_reset_ctrlr_half.i_state_transition_cdc_dst",
+   "file": "data/rtl/common_cells/src/cc_cdc_4phase.sv",
+   "lines": [
+    211,
+    338
+   ],
+   "summary": "Destination side of a 4-phase CDC handshake: synchronizes async request, a 3-state FSM issues valid downstream and a glitch-free registered ack, with an optional spill register decoupling output data.",
+   "blocks": [
+    {
+     "name": "Handshake FSM",
+     "kind": "CONTROLLER",
+     "description": "Synchronized request handling and ack generation.",
+     "anchors": [
+      {
+       "id": "E15",
+       "name": "state_q",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.8,
+       "struct_score": 99.4,
+       "trace": "control_backward",
+       "why": "Handshake FSM IDLE/WAIT_DOWNSTREAM_ACK/WAIT_REQ_DEASSERT controlling data_valid and ack.",
+       "lines": [
+        237,
+        256,
+        274
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "req_synced",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 56.9,
+       "struct_score": 58.3,
+       "trace": "control_backward",
+       "why": "Synchronized request driving FSM transitions and data_valid.",
+       "lines": [
+        229,
+        250,
+        277
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "ack_dst_q",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 27.1,
+       "struct_score": 51.9,
+       "trace": "control_backward",
+       "why": "Glitch-filtered ack register driving async_ack_o.",
+       "lines": [
+        227,
+        310,
+        336
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "data_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 27.7,
+       "struct_score": 54.0,
+       "trace": "control_backward",
+       "why": "FSM-decoded valid into spill register or valid_o.",
+       "lines": [
+        231,
+        258,
+        322
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E14",
+       "name": "state_d",
+       "kind": "comb"
+      },
+      {
+       "id": "E9",
+       "name": "ack_dst_d",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Async interface",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "4-phase req/ack and data from source clock domain.",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "async_req_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 89.5,
+       "struct_score": 73.4,
+       "trace": "interface",
+       "why": "Asynchronous request from source domain, synchronized into req_synced.",
+       "lines": [
+        221,
+        249
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "async_ack_o",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 90.1,
+       "struct_score": 74.9,
+       "trace": "control_backward",
+       "why": "Asynchronous acknowledge to source domain from registered ack_dst_q.",
+       "lines": [
+        222,
+        336
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "async_data_i",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 90.9,
+       "struct_score": 77.1,
+       "trace": "interface",
+       "why": "Data bus from source domain, captured into spill register or passed through.",
+       "lines": [
+        223,
+        324,
+        332
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Output decoupling",
+     "kind": "BUFFER",
+     "description": "Spill register or pass-through to destination valid/ready.",
+     "anchors": [
+      {
+       "id": "E13",
+       "name": "output_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 24.0,
+       "struct_score": 40.5,
+       "trace": "control_backward",
+       "why": "Downstream/spill ready steering FSM to WAIT_REQ_DEASSERT.",
+       "lines": [
+        233,
+        278,
+        323
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "valid_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 95.4,
+       "struct_score": 88.3,
+       "trace": "data_backward",
+       "why": "Destination-domain valid output.",
+       "lines": [
+        219,
+        330
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "ready_i",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 89.1,
+       "struct_score": 72.5,
+       "trace": "interface",
+       "why": "Destination-domain ready input.",
+       "lines": [
+        220,
+        331
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "data_o",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 91.9,
+       "struct_score": 79.6,
+       "trace": "data_backward",
+       "why": "Destination-domain data output.",
+       "lines": [
+        218,
+        332
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "rst_ni",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "clk_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "async_in",
+     "protocol": "REQ_ACK",
+     "direction": "IN",
+     "member_ids": [
+      "E6",
+      "E7",
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "async_req_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "async_ack_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E8",
+       "name": "async_data_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "dst_out",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "data_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E4",
+       "name": "valid_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "ready_i",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  },
+  "cc_cdc_reset_ctrlr_half": {
+   "source": "teacher",
+   "canonical_instance": "cc_cdc_reset_ctrlr_half",
+   "file": "data/rtl/common_cells/src/cc_cdc_reset_ctrlr.sv",
+   "lines": [
+    188,
+    522
+   ],
+   "summary": "Half of a CDC clear/reset controller: an initiator FSM steps through isolate/clear phases sent over a 4-phase CDC, while a receiver tracks remote phases; isolate/clear outputs are ORed.",
+   "blocks": [
+    {
+     "name": "Initiator FSM",
+     "kind": "CONTROLLER",
+     "description": "Clear-triggered FSM stepping isolate/clear phases, waiting for local acks and CDC phase delivery.",
+     "anchors": [
+      {
+       "id": "E15",
+       "name": "initiator_state_q",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.5,
+       "struct_score": 98.7,
+       "trace": "control_backward",
+       "why": "Initiator FSM sequencing ISOLATE, CLEAR, POST_CLEAR phases and driving phase transfer requests.",
+       "lines": [
+        256,
+        278,
+        378
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "initiator_phase_transition_req",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 21.5,
+       "struct_score": 30.3,
+       "trace": "control_backward",
+       "why": "FSM-driven valid into source CDC requesting phase transfer.",
+       "lines": [
+        286,
+        398
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "initiator_phase_transition_ack",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 17.8,
+       "struct_score": 15.6,
+       "trace": "forward",
+       "why": "Source CDC ready advancing initiator FSM after phase delivery.",
+       "lines": [
+        290,
+        399
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "initiator_clear_seq_phase",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 19.1,
+       "struct_score": 20.8,
+       "trace": "control_backward",
+       "why": "Current initiator phase value fed as data into source CDC.",
+       "lines": [
+        287,
+        397
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E14",
+       "name": "initiator_state_d",
+       "kind": "comb"
+      },
+      {
+       "id": "E19",
+       "name": "initiator_isolate_out",
+       "kind": "comb"
+      },
+      {
+       "id": "E20",
+       "name": "initiator_clear_out",
+       "kind": "comb"
+      },
+      {
+       "id": "E3",
+       "name": "clear_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Receiver phase tracker",
+     "kind": "CONTROLLER",
+     "description": "Captures remote phases, decodes isolate/clear, acknowledges after local isolate/clear acks.",
+     "anchors": [
+      {
+       "id": "E22",
+       "name": "receiver_phase_q",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 98.1,
+       "struct_score": 95.2,
+       "trace": "control_backward",
+       "why": "Receiver phase register captured from remote side; decodes receiver isolate/clear outputs.",
+       "lines": [
+        410,
+        468,
+        472
+       ]
+      },
+      {
+       "id": "E28",
+       "name": "receiver_phase_pending_q",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 52.2,
+       "struct_score": 41.1,
+       "trace": "control_backward",
+       "why": "Marks a captured phase awaiting local acknowledge; blocks recapture and enables ack.",
+       "lines": [
+        445,
+        469,
+        483
+       ]
+      },
+      {
+       "id": "E30",
+       "name": "receiver_phase_done_q",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 22.8,
+       "struct_score": 35.6,
+       "trace": "control_backward",
+       "why": "Prevents recapturing a phase until the CDC request deasserts.",
+       "lines": [
+        446,
+        470
+       ]
+      },
+      {
+       "id": "E31",
+       "name": "receiver_capture_phase",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 18.9,
+       "struct_score": 20.0,
+       "trace": "control_backward",
+       "why": "Enables loading receiver_phase_q from CDC output and sets pending.",
+       "lines": [
+        443,
+        457,
+        508
+       ]
+      },
+      {
+       "id": "E26",
+       "name": "receiver_phase_ack",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 22.6,
+       "struct_score": 35.0,
+       "trace": "control_backward",
+       "why": "Ready to destination CDC once local isolate/clear acknowledged.",
+       "lines": [
+        435,
+        462,
+        488
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "receiver_phase_req",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 24.7,
+       "struct_score": 43.0,
+       "trace": "forward",
+       "why": "Valid from destination CDC signalling a new remote phase.",
+       "lines": [
+        434,
+        444,
+        453
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E21",
+       "name": "receiver_phase_d",
+       "kind": "comb"
+      },
+      {
+       "id": "E23",
+       "name": "receiver_effective_phase",
+       "kind": "wire"
+      },
+      {
+       "id": "E24",
+       "name": "receiver_next_phase",
+       "kind": "wire"
+      },
+      {
+       "id": "E27",
+       "name": "receiver_phase_pending_d",
+       "kind": "comb"
+      },
+      {
+       "id": "E29",
+       "name": "receiver_phase_done_d",
+       "kind": "comb"
+      },
+      {
+       "id": "E32",
+       "name": "receiver_isolate_out",
+       "kind": "comb"
+      },
+      {
+       "id": "E33",
+       "name": "receiver_clear_out",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Phase CDC link",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "4-phase CDC source and destination transferring clear-sequence phases between domains.",
+     "anchors": [
+      {
+       "id": "E9",
+       "name": "async_req_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 62.0,
+       "struct_score": 74.9,
+       "trace": "interface",
+       "why": "Async 4-phase request carrying initiator phase to the other domain.",
+       "lines": [
+        209,
+        400
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "async_next_phase_o",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 58.9,
+       "struct_score": 65.6,
+       "trace": "interface",
+       "why": "Async phase payload sent to the other domain by the source CDC.",
+       "lines": [
+        208,
+        402
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "async_ack_i",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 27.5,
+       "struct_score": 53.3,
+       "trace": "interface",
+       "why": "Async acknowledge from the other domain for initiator phase transfer.",
+       "lines": [
+        210,
+        401
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "async_next_phase_i",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 57.6,
+       "struct_score": 60.9,
+       "trace": "interface",
+       "why": "Async phase payload received from the other domain's initiator.",
+       "lines": [
+        211,
+        438
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "async_req_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 33.0,
+       "struct_score": 72.2,
+       "trace": "interface",
+       "why": "Async request from the other domain into the destination CDC.",
+       "lines": [
+        212,
+        436
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "async_ack_o",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 28.9,
+       "struct_score": 58.2,
+       "trace": "interface",
+       "why": "Async acknowledge returned by destination CDC to the other domain.",
+       "lines": [
+        213,
+        437
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "i_state_transition_cdc_src",
+       "module": "cc_cdc_4phase_src"
+      },
+      {
+       "id": "I2",
+       "instance": "i_state_transition_cdc_dst",
+       "module": "cc_cdc_4phase_dst"
+      }
+     ],
+     "members": []
+    },
+    {
+     "name": "Isolate/clear outputs",
+     "kind": "OTHER",
+     "description": "ORs initiator and receiver isolate/clear requests toward attached CDCs; collects acks.",
+     "anchors": [
+      {
+       "id": "E4",
+       "name": "isolate_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 93.4,
+       "struct_score": 83.4,
+       "trace": "interface",
+       "why": "Isolate request to attached CDCs, OR of initiator and receiver isolate.",
+       "lines": [
+        203,
+        520
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "clear_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 92.2,
+       "struct_score": 80.3,
+       "trace": "interface",
+       "why": "Clear request to attached CDCs, OR of initiator and receiver clear.",
+       "lines": [
+        205,
+        519
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "isolate_ack_i",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 57.4,
+       "struct_score": 60.1,
+       "trace": "interface",
+       "why": "Isolation acknowledge gating initiator ISOLATE exit and receiver phase ack.",
+       "lines": [
+        204,
+        290,
+        488
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E7",
+       "name": "clear_ack_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E19",
+       "name": "initiator_isolate_out",
+       "kind": "comb"
+      },
+      {
+       "id": "E20",
+       "name": "initiator_clear_out",
+       "kind": "comb"
+      },
+      {
+       "id": "E32",
+       "name": "receiver_isolate_out",
+       "kind": "comb"
+      },
+      {
+       "id": "E33",
+       "name": "receiver_clear_out",
+       "kind": "comb"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_ni",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "clear_request",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "clear_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "isolate_clear_ctrl",
+     "protocol": "REQ_ACK",
+     "direction": "OUT",
+     "member_ids": [
+      "E4",
+      "E5",
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "isolate_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "isolate_ack_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "clear_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "clear_ack_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "async_phase_tx",
+     "protocol": "REQ_ACK",
+     "direction": "OUT",
+     "member_ids": [
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E8",
+       "name": "async_next_phase_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "async_req_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "async_ack_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "async_phase_rx",
+     "protocol": "REQ_ACK",
+     "direction": "IN",
+     "member_ids": [
+      "E11",
+      "E12",
+      "E13"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "async_next_phase_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E12",
+       "name": "async_req_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "async_ack_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

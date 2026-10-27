@@ -1,0 +1,22 @@
+{
+ "module_summary": "Traffic light controller: a red/green/yellow FSM sets pre-lamp registers, a down-counter reloaded on lamp edges times each phase, and pass_request shortens green.",
+ "anchors": [
+  {"id": "E9", "name": "state", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Idle/red/green/yellow sequencer; sets pre-lamp registers and advances when cnt reaches 3.", "lines": [32, 45, 46]},
+  {"id": "E8", "name": "cnt", "role": "COUNTER", "importance": "critical", "trace": "control_backward", "why": "Phase down-counter reloaded on lamp transitions, drives state changes and clock output.", "lines": [76, 84, 85]},
+  {"id": "E5", "name": "red", "role": "STATUS", "importance": "critical", "trace": "control_backward", "why": "Registered red lamp output from p_red.", "lines": [82, 97]},
+  {"id": "E6", "name": "yellow", "role": "STATUS", "importance": "critical", "trace": "control_backward", "why": "Registered yellow lamp output from p_yellow.", "lines": [80, 96]},
+  {"id": "E7", "name": "green", "role": "STATUS", "importance": "critical", "trace": "control_backward", "why": "Registered green lamp output; also gates pass_request counter shortening.", "lines": [76, 98]},
+  {"id": "E3", "name": "pass_request", "role": "COMMAND", "importance": "major", "trace": "interface", "why": "Pedestrian request reloading cnt to 10 during long green.", "lines": [76]},
+  {"id": "E12", "name": "p_green", "role": "PIPELINE_REG", "importance": "minor", "trace": "control_backward", "why": "Representative pre-lamp register set by FSM; feeds lamp and counter-reload edge detect.", "lines": [63, 78, 98]}
+ ],
+ "groups": [
+  {"name": "light_fsm", "kind": "CONTROLLER", "anchor_ids": ["E9", "E12"], "member_ids": ["E10", "E11"], "description": "Phase FSM producing pre-lamp red/yellow/green registers."},
+  {"name": "phase_timer", "kind": "COUNTER_TIMER", "anchor_ids": ["E8", "E3"], "member_ids": ["E4"], "description": "Down-counter reloaded per phase, shortened by pass_request, exported as clock."},
+  {"name": "lamp_outputs", "kind": "REGISTER_BANK", "anchor_ids": ["E5", "E6", "E7"], "member_ids": [], "description": "Output lamp registers delayed one cycle from pre-lamp registers."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "request_in", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E3"]},
+  {"name": "lamps_and_timer", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E4", "E5", "E6", "E7"]}
+ ]
+}

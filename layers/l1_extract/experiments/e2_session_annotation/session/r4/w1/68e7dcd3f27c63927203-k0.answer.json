@@ -1,0 +1,30 @@
+{
+ "module_summary": "Synchronous circular-buffer FIFO (here a single-entry instance): register-array memory with wrapping read/write pointers and an occupancy counter deriving full/empty, with optional fall-through and flush/clear.",
+ "anchors": [
+  {"id": "E20", "name": "mem_q", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "FIFO storage entry written at write pointer, read at read pointer.", "lines": [53, 72, 126]},
+  {"id": "E8", "name": "data_i", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Push data written into mem at write pointer.", "lines": [35, 79]},
+  {"id": "E9", "name": "push_i", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Push request; writes data and advances write pointer when not full.", "lines": [36, 77]},
+  {"id": "E10", "name": "data_o", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Head-of-queue data read from mem at read pointer.", "lines": [38, 72]},
+  {"id": "E11", "name": "pop_i", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Pop request; advances read pointer when not empty.", "lines": [39, 92]},
+  {"id": "E14", "name": "read_pointer_q", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "Read pointer selecting head entry; wraps at depth.", "lines": [48, 72, 99]},
+  {"id": "E16", "name": "write_pointer_q", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "Write pointer selecting entry for push; wraps at depth.", "lines": [48, 79, 87]},
+  {"id": "E18", "name": "status_cnt_q", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "Occupancy count driving full, empty and usage outputs.", "lines": [51, 61, 89]},
+  {"id": "E5", "name": "full_o", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Full flag from occupancy count; blocks pushes.", "lines": [31, 61, 77]},
+  {"id": "E6", "name": "empty_o", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Empty flag from occupancy count; blocks pops.", "lines": [32, 62, 92]},
+  {"id": "E7", "name": "usage_o", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Fill level output copied from status counter.", "lines": [33, 55]},
+  {"id": "E4", "name": "flush_i", "role": "COMMAND", "importance": "minor", "trace": "forward", "why": "Flush command clearing pointers and count.", "lines": [28, 121]},
+  {"id": "E21", "name": "clr_or_flush", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Combined clear/flush resetting pointers and counter.", "lines": [120, 122, 124]},
+  {"id": "E12", "name": "gate_clock", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Active-low memory write enable, ungated on push.", "lines": [46, 81, 126]}
+ ],
+ "groups": [
+  {"name": "FIFO memory", "kind": "MEMORY", "anchor_ids": ["E20", "E12"], "member_ids": ["E19"], "description": "Register array holding queued entries, written on push."},
+  {"name": "Pointer and count control", "kind": "CONTROLLER", "anchor_ids": ["E14", "E16", "E18", "E5", "E6", "E7", "E4", "E21"], "member_ids": ["E13", "E15", "E17", "E3"], "description": "Wrapping read/write pointers and occupancy counter producing full/empty."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2", "E3"]},
+  {"name": "control", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E4"]},
+  {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E5", "E6", "E7"]},
+  {"name": "push", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E8", "E9"]},
+  {"name": "pop", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E10", "E11"]}
+ ]
+}

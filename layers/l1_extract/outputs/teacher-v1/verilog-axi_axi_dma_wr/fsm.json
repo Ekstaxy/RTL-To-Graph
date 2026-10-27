@@ -1,0 +1,133 @@
+[
+ {
+  "module": "axi_dma_wr",
+  "instance": "axi_dma_wr",
+  "state": "state_reg",
+  "next": "state_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "STATE_IDLE",
+    "value": "3'b0"
+   },
+   {
+    "name": "STATE_START",
+    "value": "3'b1"
+   },
+   {
+    "name": "STATE_WRITE",
+    "value": "3'b10"
+   },
+   {
+    "name": "STATE_FINISH_BURST",
+    "value": "3'b11"
+   },
+   {
+    "name": "STATE_DROP_DATA",
+    "value": "3'b100"
+   }
+  ],
+  "reset_state": "STATE_IDLE",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_START",
+    "cond": "s_axis_write_desc_ready && s_axis_write_desc_valid"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_IDLE",
+    "cond": "!(s_axis_write_desc_ready && s_axis_write_desc_valid)"
+   },
+   {
+    "src": "STATE_START",
+    "dst": "STATE_WRITE",
+    "cond": "!m_axi_awvalid_reg && active_count_av_reg && m_axi_awvalid_next"
+   },
+   {
+    "src": "STATE_START",
+    "dst": "STATE_START",
+    "cond": "!m_axi_awvalid_reg && active_count_av_reg && !m_axi_awvalid_next"
+   },
+   {
+    "src": "STATE_START",
+    "dst": "STATE_START",
+    "cond": "!(!m_axi_awvalid_reg && active_count_av_reg)"
+   },
+   {
+    "src": "STATE_WRITE",
+    "dst": "STATE_IDLE",
+    "cond": "((s_axis_write_data_tready && shift_axis_tvalid || !input_active_reg && !last_transfer_reg) || !shift_axis_input_tready) && shift_axis_tlast && output_last_cycle_reg"
+   },
+   {
+    "src": "STATE_WRITE",
+    "dst": "STATE_FINISH_BURST",
+    "cond": "((s_axis_write_data_tready && shift_axis_tvalid || !input_active_reg && !last_transfer_reg) || !shift_axis_input_tready) && shift_axis_tlast && !output_last_cycle_reg"
+   },
+   {
+    "src": "STATE_WRITE",
+    "dst": "STATE_START",
+    "cond": "((s_axis_write_data_tready && shift_axis_tvalid || !input_active_reg && !last_transfer_reg) || !shift_axis_input_tready) && !shift_axis_tlast && output_last_cycle_reg && op_word_count_reg > 0"
+   },
+   {
+    "src": "STATE_WRITE",
+    "dst": "STATE_DROP_DATA",
+    "cond": "((s_axis_write_data_tready && shift_axis_tvalid || !input_active_reg && !last_transfer_reg) || !shift_axis_input_tready) && !shift_axis_tlast && output_last_cycle_reg && !(op_word_count_reg > 0)"
+   },
+   {
+    "src": "STATE_WRITE",
+    "dst": "STATE_WRITE",
+    "cond": "((s_axis_write_data_tready && shift_axis_tvalid || !input_active_reg && !last_transfer_reg) || !shift_axis_input_tready) && !shift_axis_tlast && !output_last_cycle_reg"
+   },
+   {
+    "src": "STATE_WRITE",
+    "dst": "STATE_WRITE",
+    "cond": "!((s_axis_write_data_tready && shift_axis_tvalid || !input_active_reg && !last_transfer_reg) || !shift_axis_input_tready)"
+   },
+   {
+    "src": "STATE_FINISH_BURST",
+    "dst": "STATE_IDLE",
+    "cond": "m_axi_wready_int && output_last_cycle_reg"
+   },
+   {
+    "src": "STATE_FINISH_BURST",
+    "dst": "STATE_FINISH_BURST",
+    "cond": "m_axi_wready_int && !output_last_cycle_reg"
+   },
+   {
+    "src": "STATE_FINISH_BURST",
+    "dst": "STATE_FINISH_BURST",
+    "cond": "!m_axi_wready_int"
+   },
+   {
+    "src": "STATE_DROP_DATA",
+    "dst": "STATE_IDLE",
+    "cond": "shift_axis_tvalid && shift_axis_tlast"
+   },
+   {
+    "src": "STATE_DROP_DATA",
+    "dst": "STATE_DROP_DATA",
+    "cond": "shift_axis_tvalid && !shift_axis_tlast"
+   },
+   {
+    "src": "STATE_DROP_DATA",
+    "dst": "STATE_DROP_DATA",
+    "cond": "!shift_axis_tvalid"
+   }
+  ],
+  "outputs": [
+   {
+    "signal": "flush_save",
+    "kind": "moore",
+    "port": false
+   }
+  ],
+  "warnings": [],
+  "semantic_check": "consistent-subset"
+ }
+]

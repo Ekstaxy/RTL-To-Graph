@@ -1,0 +1,22 @@
+{
+ "module_summary": "32-bit global branch history shift register: shifts in predictions on predict_valid and reloads train_history plus outcome on misprediction.",
+ "anchors": [
+  {"id": "E5", "name": "predict_history", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "Global history shift register; shifts in predict_taken or reloads from train history on mispredict.", "lines": [19, 21]},
+  {"id": "E6", "name": "train_mispredicted", "role": "COMMAND", "importance": "critical", "trace": "forward", "why": "Misprediction rollback command; takes precedence and loads history from train_history.", "lines": [18]},
+  {"id": "E3", "name": "predict_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "forward", "why": "Prediction valid; enables shifting predict_taken into the history register.", "lines": [20]},
+  {"id": "E4", "name": "predict_taken", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Predicted branch direction bit shifted into history LSB.", "lines": [21]},
+  {"id": "E8", "name": "train_history", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Pre-mispredict history restored into the register on rollback.", "lines": [19]},
+  {"id": "E7", "name": "train_taken", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Actual branch outcome appended to train_history on rollback.", "lines": [19]}
+ ],
+ "groups": [
+  {"name": "History shift register", "kind": "REGISTER_BANK", "anchor_ids": ["E5"], "member_ids": [], "description": "32-bit branch history register with shift and parallel-load paths."},
+  {"name": "Predict port", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E3", "E4"], "member_ids": [], "description": "Prediction-side update: valid plus taken bit shifted in."},
+  {"name": "Train rollback port", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E6", "E8", "E7"], "member_ids": [], "description": "Misprediction rollback loading train_history concatenated with train_taken."}
+ ],
+ "interfaces": [
+  {"name": "Clock/reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "Predict", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E3", "E4"]},
+  {"name": "Train", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E6", "E7", "E8"]},
+  {"name": "History output", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E5"]}
+ ]
+}

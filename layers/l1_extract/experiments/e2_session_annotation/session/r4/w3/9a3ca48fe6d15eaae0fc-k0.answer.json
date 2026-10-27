@@ -1,0 +1,41 @@
+{
+  "module_summary": "Wishbone-to-I2C master bridge: a decoded 8-register host bank pushes commands and write data into AXI-stream FIFOs feeding an i2c_master core, and pops read data from a read FIFO.",
+  "anchors": [
+    {"id": "E3", "name": "wbs_adr_i", "role": "INTERFACE_ADDR", "importance": "critical", "trace": "interface", "why": "Wishbone register address decoded by case statements for read and write cycles", "lines": [50, 463, 520]},
+    {"id": "E4", "name": "wbs_dat_i", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Wishbone write data loaded into command, data, prescale and clear bits", "lines": [51, 481, 496]},
+    {"id": "E5", "name": "wbs_dat_o", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Wishbone read data muxed from status, FIFO status, command, data and prescale registers", "lines": [52, 268]},
+    {"id": "E7", "name": "wbs_stb_i", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Wishbone strobe qualifying every register access together with cyc", "lines": [54, 459]},
+    {"id": "E9", "name": "wbs_cyc_i", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Wishbone bus cycle qualifier ANDed with strobe", "lines": [56, 459]},
+    {"id": "E6", "name": "wbs_we_i", "role": "COMMAND", "importance": "major", "trace": "interface", "why": "Selects write cycle versus read cycle register handling", "lines": [53, 461]},
+    {"id": "E8", "name": "wbs_ack_o", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Wishbone acknowledge, registered one-cycle response to each access", "lines": [55, 269]},
+    {"id": "E20", "name": "cmd_address_reg", "role": "CONFIG_REG", "importance": "major", "trace": "data_backward", "why": "Host-programmed I2C target address packed into command FIFO word", "lines": [245, 323, 545]},
+    {"id": "E24", "name": "cmd_read_reg", "role": "COMMAND", "importance": "major", "trace": "data_backward", "why": "Representative command bit (start/read/write/stop) pushed into command FIFO", "lines": [247, 323, 550]},
+    {"id": "E32", "name": "cmd_valid_reg", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Push strobe into command FIFO when command register written", "lines": [251, 325, 591]},
+    {"id": "E34", "name": "cmd_ready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "forward", "why": "Command FIFO input ready; clears cmd_valid and flags overflow/full", "lines": [252, 326, 444]},
+    {"id": "E57", "name": "cmd_valid_int", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "forward", "why": "Command FIFO output valid feeding i2c_master command port", "lines": [277, 334, 630]},
+    {"id": "E35", "name": "data_in_reg", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Holds host write byte pushed into write data FIFO", "lines": [254, 367, 593]},
+    {"id": "E37", "name": "data_in_valid_reg", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "Push strobe into write data FIFO on data register write", "lines": [255, 369, 594]},
+    {"id": "E42", "name": "data_out", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Read FIFO output byte returned on data register read", "lines": [259, 416, 560]},
+    {"id": "E44", "name": "data_out_ready_reg", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Pops read data FIFO when host reads data register", "lines": [261, 419, 597]},
+    {"id": "E47", "name": "prescale_reg", "role": "CONFIG_REG", "importance": "major", "trace": "data_backward", "why": "Software-programmable 16-bit SCL prescale passed to i2c_master", "lines": [264, 599, 658]},
+    {"id": "E49", "name": "missed_ack_reg", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Sticky missed-ACK status bit, write-1-to-clear, read in status register", "lines": [266, 526, 601]},
+    {"id": "E67", "name": "busy_int", "role": "STATUS", "importance": "minor", "trace": "forward", "why": "I2C core busy indication reported in status register bit 0", "lines": [290, 523, 652]},
+    {"id": "E77", "name": "cmd_fifo_overflow_reg", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Sticky command FIFO overflow flag in FIFO status register", "lines": [302, 536, 603]},
+    {"id": "E79", "name": "write_fifo_overflow_reg", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Sticky write data FIFO overflow flag in FIFO status register", "lines": [303, 539, 604]},
+    {"id": "E14", "name": "i2c_sda_o", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "I2C serial data output driven by the i2c_master core", "lines": [65, 648]},
+    {"id": "E11", "name": "i2c_scl_o", "role": "CLOCK_GEN", "importance": "major", "trace": "interface", "why": "I2C serial clock output generated by i2c_master from prescale", "lines": [62, 645]}
+  ],
+  "groups": [
+    {"name": "wishbone_register_interface", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E3", "E4", "E5", "E7", "E9", "E6", "E8"], "member_ids": ["E16", "E17", "E18", "E19"], "description": "Decodes Wishbone accesses to the 8-register map, registers read data and ack"},
+    {"name": "command_fifo", "kind": "BUFFER", "anchor_ids": ["E20", "E24", "E32", "E34", "E57"], "member_ids": ["E21", "E22", "E23", "E25", "E26", "E27", "E28", "E29", "E30", "E31", "E33", "E51", "E52", "E53", "E54", "E55", "E56", "E58", "E71", "E72", "I1"], "description": "Command address and start/read/write/stop bits queued in axis_fifo to the I2C core"},
+    {"name": "write_data_fifo", "kind": "BUFFER", "anchor_ids": ["E35", "E37"], "member_ids": ["E36", "E38", "E39", "E40", "E41", "E59", "E60", "E61", "E62", "E73", "E74", "I2"], "description": "Host write bytes queued in axis_fifo toward i2c_master data input"},
+    {"name": "read_data_fifo", "kind": "BUFFER", "anchor_ids": ["E42", "E44"], "member_ids": ["E43", "E45", "E46", "E63", "E64", "E65", "E66", "E75", "E76", "I3"], "description": "Bytes read from I2C queued in axis_fifo, popped by host data reads"},
+    {"name": "config_status_registers", "kind": "REGISTER_BANK", "anchor_ids": ["E47", "E49", "E67", "E77", "E79"], "member_ids": ["E48", "E50", "E78", "E80", "E68", "E69", "E70"], "description": "Prescale config plus sticky missed-ack/overflow flags and core status bits"},
+    {"name": "i2c_master_core", "kind": "CONTROLLER", "anchor_ids": ["E14", "E11"], "member_ids": ["I4", "E10", "E12", "E13", "E15"], "description": "i2c_master instance executing queued commands and driving SCL/SDA"}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "wishbone_slave", "protocol": "MEMORY_BUS", "direction": "BIDIR", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9"]},
+    {"name": "i2c", "protocol": "SERIAL", "direction": "BIDIR", "member_ids": ["E10", "E11", "E12", "E13", "E14", "E15"]}
+  ]
+}

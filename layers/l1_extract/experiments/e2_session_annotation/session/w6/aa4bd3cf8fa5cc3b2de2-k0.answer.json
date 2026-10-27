@@ -1,0 +1,25 @@
+{
+ "module_summary": "Sequential 16x16 shift-add multiplier: load latches operands, each go step adds the shifted multiplicand gated by multiplier LSB into an accumulator; a step counter flags completion.",
+ "anchors": [
+  {"id": "E8", "name": "sum", "role": "DATAPATH_MAJOR", "importance": "critical", "trace": "data_backward", "why": "Product accumulator, cleared on load, adds partial product each step; module result.", "lines": [17, 20]},
+  {"id": "E9", "name": "mcand", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Multiplicand latched from ia, shifted left each step.", "lines": [18, 21]},
+  {"id": "E10", "name": "mplier", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Multiplier latched from ib, shifted right; LSB gates the addend.", "lines": [28, 29, 10]},
+  {"id": "E11", "name": "lap", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Step counter cleared on load, incremented per go; reaching 16 raises last.", "lines": [30, 31, 11]},
+  {"id": "E12", "name": "addend", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Partial product: multiplicand gated by multiplier LSB.", "lines": [10, 20]},
+  {"id": "E3", "name": "ld", "role": "COMMAND", "importance": "critical", "trace": "interface", "why": "Load command: latches operands, clears accumulator and counter.", "lines": [16, 28, 30]},
+  {"id": "E4", "name": "go", "role": "ENABLE", "importance": "major", "trace": "interface", "why": "Step enable: performs one shift-add iteration and counts it.", "lines": [19, 29, 31]},
+  {"id": "E5", "name": "ia", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Multiplicand operand input.", "lines": [3, 18]},
+  {"id": "E6", "name": "ib", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Multiplier operand input.", "lines": [3, 28]},
+  {"id": "E7", "name": "last", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Completion indication when step counter reaches 16.", "lines": [5, 11]}
+ ],
+ "groups": [
+  {"name": "shift_add_datapath", "kind": "DATAPATH", "anchor_ids": ["E8", "E9", "E10", "E12", "E5", "E6"], "member_ids": [], "description": "Operand shift registers, gated partial product and accumulator."},
+  {"name": "step_counter", "kind": "COUNTER_TIMER", "anchor_ids": ["E11", "E7", "E3", "E4"], "member_ids": [], "description": "Counts go steps after load and signals completion at 16."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "control", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E3", "E4", "E7"]},
+  {"name": "operands", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E5", "E6"]},
+  {"name": "product", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E8"]}
+ ]
+}

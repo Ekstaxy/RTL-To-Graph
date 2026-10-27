@@ -1,0 +1,511 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-axis_axis_register",
+ "tops": [
+  "axis_register"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "axis_register": {
+   "source": "teacher",
+   "canonical_instance": "axis_register",
+   "file": "data/rtl/verilog-axis/rtl/axis_register.v",
+   "lines": [
+    34,
+    278
+   ],
+   "summary": "AXI-stream register slice; with REG_TYPE=2 a skid buffer of output registers plus a temp register keeps full throughput while registering tready.",
+   "blocks": [
+    {
+     "name": "Input interface",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "AXI-stream slave with registered tready.",
+     "anchors": [
+      {
+       "id": "E5",
+       "name": "s_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 92.0,
+       "struct_score": 79.9,
+       "trace": "interface",
+       "why": "Input beat valid, loaded into output or temp valid registers.",
+       "lines": [
+        69,
+        144,
+        148
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 83.7,
+       "struct_score": 54.1,
+       "trace": "control_backward",
+       "why": "Registered input ready from s_axis_tready_reg.",
+       "lines": [
+        70,
+        118
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "s_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 90.7,
+       "struct_score": 76.6,
+       "trace": "interface",
+       "why": "Input payload stored to output or temp data register.",
+       "lines": [
+        67,
+        166,
+        182
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_tlast",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 29.8,
+       "struct_score": 61.7,
+       "trace": "interface",
+       "why": "Representative input sideband (tlast) registered alongside data.",
+       "lines": [
+        71,
+        168
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E19",
+       "name": "genblk1.s_axis_tready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E39",
+       "name": "genblk1.s_axis_tready_early",
+       "kind": "wire"
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_tkeep",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_axis_tid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_axis_tdest",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "s_axis_tuser",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Skid control",
+     "kind": "CONTROLLER",
+     "description": "Decides where each beat is stored and when temp drains to output.",
+     "anchors": [
+      {
+       "id": "E30",
+       "name": "genblk1.temp_m_axis_tvalid_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 49.7,
+       "struct_score": 31.3,
+       "trace": "control_backward",
+       "why": "Skid register occupied flag; gates early ready and temp-to-output move.",
+       "lines": [
+        107,
+        129,
+        153
+       ]
+      },
+      {
+       "id": "E36",
+       "name": "genblk1.store_axis_input_to_output",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 46.7,
+       "struct_score": 19.1,
+       "trace": "control_backward",
+       "why": "Loads input beat directly into output registers.",
+       "lines": [
+        114,
+        145,
+        165
+       ]
+      },
+      {
+       "id": "E37",
+       "name": "genblk1.store_axis_input_to_temp",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 46.7,
+       "struct_score": 19.1,
+       "trace": "control_backward",
+       "why": "Loads input beat into temp skid registers.",
+       "lines": [
+        115,
+        149,
+        181
+       ]
+      },
+      {
+       "id": "E38",
+       "name": "genblk1.store_axis_temp_to_output",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 46.4,
+       "struct_score": 17.9,
+       "trace": "control_backward",
+       "why": "Moves temp skid registers into output registers.",
+       "lines": [
+        116,
+        155,
+        172
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E31",
+       "name": "genblk1.temp_m_axis_tvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E23",
+       "name": "genblk1.m_axis_tvalid_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Temp skid buffer",
+     "kind": "BUFFER",
+     "description": "Temp data and sideband registers absorbing one stalled beat.",
+     "anchors": [
+      {
+       "id": "E28",
+       "name": "genblk1.temp_m_axis_tdata_reg",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 55.4,
+       "struct_score": 52.8,
+       "trace": "data_backward",
+       "why": "Skid register holding input beat when output is stalled.",
+       "lines": [
+        105,
+        173,
+        182
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E29",
+       "name": "genblk1.temp_m_axis_tkeep_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E32",
+       "name": "genblk1.temp_m_axis_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E33",
+       "name": "genblk1.temp_m_axis_tid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E34",
+       "name": "genblk1.temp_m_axis_tdest_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E35",
+       "name": "genblk1.temp_m_axis_tuser_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Output register",
+     "kind": "PIPELINE_STAGE",
+     "description": "Output data/sideband registers and valid driving master interface.",
+     "anchors": [
+      {
+       "id": "E13",
+       "name": "m_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 89.0,
+       "struct_score": 72.3,
+       "trace": "control_backward",
+       "why": "Output valid driven by m_axis_tvalid_reg.",
+       "lines": [
+        81,
+        122
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "m_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 89.8,
+       "struct_score": 74.3,
+       "trace": "interface",
+       "why": "Downstream ready steering store decisions and early input ready.",
+       "lines": [
+        82,
+        129,
+        142
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "m_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 89.4,
+       "struct_score": 73.1,
+       "trace": "data_backward",
+       "why": "Output payload from output data register.",
+       "lines": [
+        79,
+        120
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "m_axis_tlast",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 28.4,
+       "struct_score": 56.6,
+       "trace": "data_backward",
+       "why": "Representative output sideband from tlast register.",
+       "lines": [
+        83,
+        123
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E20",
+       "name": "genblk1.m_axis_tdata_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E21",
+       "name": "genblk1.m_axis_tkeep_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E22",
+       "name": "genblk1.m_axis_tvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E24",
+       "name": "genblk1.m_axis_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E25",
+       "name": "genblk1.m_axis_tid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E26",
+       "name": "genblk1.m_axis_tdest_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E27",
+       "name": "genblk1.m_axis_tuser_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E12",
+       "name": "m_axis_tkeep",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "m_axis_tid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "m_axis_tdest",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "m_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clk_rst",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axis",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axis_tdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_tkeep",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_tvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_tready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_axis_tid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_axis_tdest",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "s_axis_tuser",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axis",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "m_axis_tdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "m_axis_tkeep",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "m_axis_tvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "m_axis_tready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "m_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "m_axis_tid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "m_axis_tdest",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "m_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,25 @@
+stateDiagram-v2
+    [*] --> STATE_IDLE
+    ANY_STATE --> STATE_IDLE
+    STATE_IDLE --> STATE_DECODE : grant_valid
+    STATE_IDLE --> STATE_IDLE : !grant_valid
+    STATE_DECODE --> STATE_READ : match && read
+    STATE_DECODE --> STATE_WRITE : match && !read
+    STATE_DECODE --> STATE_READ_DROP : !match && read
+    STATE_DECODE --> STATE_WRITE_DROP : !match && !read
+    STATE_WRITE --> STATE_WRITE_RESP : current_s_axi_wready && current_s_axi_wvalid && current_s_axi_wlast
+    STATE_WRITE --> STATE_WRITE : current_s_axi_wready && current_s_axi_wvalid && !current_s_axi_wlast
+    STATE_WRITE --> STATE_WRITE : !(current_s_axi_wready && current_s_axi_wvalid)
+    STATE_WRITE_RESP --> STATE_WAIT_IDLE : current_m_axi_bready && current_m_axi_bvalid
+    STATE_WRITE_RESP --> STATE_WRITE_RESP : !(current_m_axi_bready && current_m_axi_bvalid)
+    STATE_WRITE_DROP --> STATE_WAIT_IDLE : current_s_axi_wready && current_s_axi_wvalid && current_s_axi_wlast
+    STATE_WRITE_DROP --> STATE_WRITE_DROP : !(current_s_axi_wready && current_s_axi_wvalid && current_s_axi_wlast)
+    STATE_READ --> STATE_WAIT_IDLE : current_m_axi_rready && current_m_axi_rvalid && current_m_axi_rlast
+    STATE_READ --> STATE_READ : current_m_axi_rready && current_m_axi_rvalid && !current_m_axi_rlast
+    STATE_READ --> STATE_READ : !(current_m_axi_rready && current_m_axi_rvalid)
+    STATE_READ_DROP --> STATE_WAIT_IDLE : s_axi_rready_int_reg && axi_len_reg == 0
+    STATE_READ_DROP --> STATE_READ_DROP : s_axi_rready_int_reg && !(axi_len_reg == 0)
+    STATE_READ_DROP --> STATE_READ_DROP : !s_axi_rready_int_reg
+    STATE_WAIT_IDLE --> STATE_IDLE : (!grant_valid || acknowledge)
+    STATE_WAIT_IDLE --> STATE_WAIT_IDLE : !(!grant_valid || acknowledge)
+    %% output i (moore)

@@ -1,0 +1,37 @@
+{"module_summary": "AXI read-channel FIFO: AR channel passes through (FIFO_DELAY=0), while R-channel beats are packed into a pointer-based circular memory FIFO and output through a registered read stage.",
+"anchors": [
+{"id": "E49", "name": "mem", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "FIFO memory holding packed R beats: data, last, id, resp.", "lines": [124, 341, 378]},
+{"id": "E43", "name": "wr_ptr_reg", "role": "FIFO_PTR", "importance": "critical", "trace": "control_backward", "why": "FIFO write pointer advanced on each accepted master R beat.", "lines": [118, 331, 337]},
+{"id": "E46", "name": "rd_ptr_reg", "role": "FIFO_PTR", "importance": "critical", "trace": "control_backward", "why": "FIFO read pointer advanced when output stage consumes an entry.", "lines": [120, 363, 372]},
+{"id": "E57", "name": "full", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "FIFO full flag blocking writes and deasserting m_axi_rready.", "lines": [134, 144, 328]},
+{"id": "E58", "name": "empty", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "FIFO empty flag gating reads and invalidating read data.", "lines": [137, 359]},
+{"id": "E37", "name": "m_axi_rdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Master read data packed into FIFO entries.", "lines": [102, 147]},
+{"id": "E41", "name": "m_axi_rvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Master read valid triggering FIFO write when not full.", "lines": [106, 326]},
+{"id": "E42", "name": "m_axi_rready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "Master read ready, asserted while FIFO not full.", "lines": [107, 144]},
+{"id": "E17", "name": "s_axi_rdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Slave read data unpacked from output register.", "lines": [78, 314]},
+{"id": "E21", "name": "s_axi_rvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Slave read valid from output register stage.", "lines": [82, 312, 393]},
+{"id": "E22", "name": "s_axi_rready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Slave read ready allowing output register reload.", "lines": [83, 393]},
+{"id": "E4", "name": "s_axi_araddr", "role": "INTERFACE_ADDR", "importance": "major", "trace": "interface", "why": "Read address passed through to master AR channel.", "lines": [65, 296]},
+{"id": "E14", "name": "s_axi_arvalid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Slave AR valid bypassed to m_axi_arvalid.", "lines": [75, 306]},
+{"id": "E35", "name": "m_axi_arready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Master AR ready bypassed to s_axi_arready.", "lines": [100, 307]},
+{"id": "E53", "name": "m_axi_r", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Packed R-channel word written into FIFO memory.", "lines": [128, 147, 341]},
+{"id": "E59", "name": "write", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "FIFO memory write enable.", "lines": [140, 330, 340]},
+{"id": "E60", "name": "read", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "FIFO memory read enable loading mem_read_data_reg.", "lines": [141, 361, 377]},
+{"id": "E50", "name": "mem_read_data_reg", "role": "PIPELINE_REG", "importance": "minor", "trace": "data_backward", "why": "Registered memory read data before output register.", "lines": [125, 378, 403]},
+{"id": "E51", "name": "mem_read_data_valid_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Valid flag for memory read stage data.", "lines": [126, 357, 395]},
+{"id": "E61", "name": "store_output", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Loads output register and permits next FIFO read.", "lines": [142, 394, 402]},
+{"id": "E54", "name": "s_axi_r_reg", "role": "PIPELINE_REG", "importance": "minor", "trace": "data_backward", "why": "Output register holding packed R word for slave port.", "lines": [130, 314, 403]}
+],
+"groups": [
+{"name": "R FIFO memory", "kind": "BUFFER", "anchor_ids": ["E49", "E43", "E46", "E57", "E58", "E59", "E60", "E53"], "member_ids": ["E44", "E45", "E47", "E48"], "description": "Circular buffer with full/empty from extended write/read pointers."},
+{"name": "Read output stage", "kind": "PIPELINE_STAGE", "anchor_ids": ["E50", "E51", "E61", "E54", "E17", "E21", "E22"], "member_ids": ["E52", "E55", "E56", "E16", "E18", "E19", "E20"], "description": "Two-register read path presenting FIFO entries to slave R channel."},
+{"name": "Master R input", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E37", "E41", "E42"], "member_ids": ["E36", "E38", "E39", "E40"], "description": "Accepts master R beats when FIFO has space."},
+{"name": "AR passthrough", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E4", "E14", "E35"], "member_ids": ["E3", "E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12", "E13", "E15", "E23", "E24", "E25", "E26", "E27", "E28", "E29", "E30", "E31", "E32", "E33", "E34"], "description": "AR channel wired directly from slave to master."}
+],
+"interfaces": [
+{"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+{"name": "s_axi_ar", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12", "E13", "E14", "E15"]},
+{"name": "s_axi_r", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E16", "E17", "E18", "E19", "E20", "E21", "E22"]},
+{"name": "m_axi_ar", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E23", "E24", "E25", "E26", "E27", "E28", "E29", "E30", "E31", "E32", "E33", "E34", "E35"]},
+{"name": "m_axi_r", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E36", "E37", "E38", "E39", "E40", "E41", "E42"]}
+]}

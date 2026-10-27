@@ -1,0 +1,38 @@
+{
+ "module_summary": "Clearable gray-code CDC FIFO: source and destination halves exchange storage and gray pointers across clock domains, plus a bidirectional req/ack clear-phase handshake that lets either side sequence a synchronized FIFO clear.",
+ "anchors": [
+  {"id": "E5", "name": "src_data_i", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Source-domain payload written into the FIFO storage.", "lines": [129, 181]},
+  {"id": "E6", "name": "src_valid_i", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Source-side valid requesting a FIFO write.", "lines": [130, 182]},
+  {"id": "E7", "name": "src_ready_o", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Source-side ready, low when full or clearing.", "lines": [131, 183]},
+  {"id": "E12", "name": "dst_data_o", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Destination-domain payload read from the FIFO.", "lines": [137, 206]},
+  {"id": "E13", "name": "dst_valid_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Destination-side valid when FIFO non-empty and not clearing.", "lines": [138, 207]},
+  {"id": "E14", "name": "dst_ready_i", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Destination-side ready popping the FIFO.", "lines": [139, 208]},
+  {"id": "E15", "name": "async_data", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "FIFO storage array written by source, read asynchronously by destination.", "lines": [142, 185, 210]},
+  {"id": "E16", "name": "async_wptr", "role": "FIFO_PTR", "importance": "major", "trace": "forward", "why": "Gray-coded write pointer crossing to destination domain.", "lines": [143, 186, 211]},
+  {"id": "E17", "name": "async_rptr", "role": "FIFO_PTR", "importance": "major", "trace": "forward", "why": "Gray-coded read pointer crossing back to source domain.", "lines": [144, 187, 212]},
+  {"id": "E3", "name": "src_clear_i", "role": "COMMAND", "importance": "major", "trace": "interface", "why": "Source-side request to clear the whole FIFO.", "lines": [127, 179]},
+  {"id": "E10", "name": "dst_clear_i", "role": "COMMAND", "importance": "major", "trace": "interface", "why": "Destination-side request to clear the whole FIFO.", "lines": [135, 204]},
+  {"id": "E4", "name": "src_clear_pending_o", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "Indicates a clear sequence is in progress on source side.", "lines": [128, 180]},
+  {"id": "E11", "name": "dst_clear_pending_o", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "Indicates a clear sequence is in progress on destination side.", "lines": [136, 205]},
+  {"id": "E19", "name": "async_reset_src2dst_req", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "forward", "why": "Source-to-destination clear phase request.", "lines": [146, 189, 217]},
+  {"id": "E20", "name": "async_reset_dst2src_ack", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Destination acknowledgment of source clear phase request.", "lines": [147, 190, 218]},
+  {"id": "E18", "name": "async_reset_src2dst_next_phase", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "forward", "why": "Clear-sequence phase (isolate/clear/post-clear) sent source to destination.", "lines": [145, 188, 216]},
+  {"id": "E22", "name": "async_reset_dst2src_req", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "forward", "why": "Destination-to-source clear phase request.", "lines": [149, 192, 214]},
+  {"id": "E23", "name": "async_reset_src2dst_ack", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Source acknowledgment of destination clear phase request.", "lines": [150, 193, 215]},
+  {"id": "E21", "name": "async_reset_dst2src_next_phase", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "forward", "why": "Clear-sequence phase sent destination to source.", "lines": [148, 191, 213]}
+ ],
+ "groups": [
+  {"name": "src_half", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E5", "E6", "E7", "E16", "E3", "E4"], "member_ids": ["I1"], "description": "Source write side with storage, gray write pointer and clear controller."},
+  {"name": "dst_half", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E12", "E13", "E14", "E17", "E10", "E11"], "member_ids": ["I2"], "description": "Destination read side with pointer sync, output stream and clear controller."},
+  {"name": "async_fifo_storage", "kind": "BUFFER", "anchor_ids": ["E15"], "member_ids": [], "description": "Shared storage array crossing the clock domain boundary."},
+  {"name": "clear_handshake", "kind": "CONTROLLER", "anchor_ids": ["E19", "E20", "E18", "E22", "E23", "E21"], "member_ids": [], "description": "Bidirectional req/ack phase handshake sequencing synchronized FIFO clear."}
+ ],
+ "interfaces": [
+  {"name": "src_clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "src_clear", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E3", "E4"]},
+  {"name": "src_stream", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E5", "E6", "E7"]},
+  {"name": "dst_clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E8", "E9"]},
+  {"name": "dst_clear", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E10", "E11"]},
+  {"name": "dst_stream", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E12", "E13", "E14"]}
+ ]
+}

@@ -1,0 +1,39 @@
+{
+  "module_summary": "Ethernet RX pause controller: decodes received MAC control frames by opcode, loads LFC and 8 PFC quanta timers, and asserts pause requests until timers expire.",
+  "anchors": [
+    {"id": "E3", "name": "mcf_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Received MAC control frame strobe triggering opcode decode and quanta reload.", "lines": [46, 167]},
+    {"id": "E7", "name": "mcf_opcode", "role": "COMMAND", "importance": "critical", "trace": "interface", "why": "Frame opcode compared against LFC/PFC configured opcodes to select pause type.", "lines": [168, 173]},
+    {"id": "E8", "name": "mcf_params", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Frame parameters carrying pause quanta and PFC class-enable vector.", "lines": [172, 176, 179]},
+    {"id": "E33", "name": "lfc_quanta_reg", "role": "COUNTER", "importance": "critical", "trace": "control_backward", "why": "LFC pause timer loaded from frame, decremented by quanta step on ack.", "lines": [143, 151, 172]},
+    {"id": "E35", "name": "pfc_quanta_reg", "role": "COUNTER", "importance": "critical", "trace": "control_backward", "why": "Per-priority PFC pause timers, eight entries, drive pfc request bits.", "lines": [156, 164, 192]},
+    {"id": "E10", "name": "rx_lfc_req", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Link pause request asserted while LFC quanta timer nonzero and enabled.", "lines": [113]},
+    {"id": "E11", "name": "rx_lfc_ack", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Pause acknowledged; enables LFC quanta timer decrement.", "lines": [141]},
+    {"id": "E13", "name": "rx_pfc_req", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Per-priority pause request vector from nonzero PFC timers.", "lines": [114]},
+    {"id": "E14", "name": "rx_pfc_ack", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Per-priority acknowledge enabling PFC timer decrement.", "lines": [154]},
+    {"id": "E15", "name": "cfg_rx_lfc_opcode", "role": "CONFIG_REG", "importance": "major", "trace": "interface", "why": "Configured LFC opcode matched against incoming frame opcode.", "lines": [168]},
+    {"id": "E16", "name": "cfg_rx_lfc_en", "role": "CONFIG_REG", "importance": "major", "trace": "interface", "why": "Enables LFC frame decode and LFC request generation.", "lines": [151, 168]},
+    {"id": "E17", "name": "cfg_rx_pfc_opcode", "role": "CONFIG_REG", "importance": "minor", "trace": "interface", "why": "Configured PFC opcode matched against incoming frame opcode.", "lines": [173]},
+    {"id": "E18", "name": "cfg_rx_pfc_en", "role": "CONFIG_REG", "importance": "minor", "trace": "interface", "why": "Enables PFC frame decode and PFC request bits.", "lines": [164, 173]},
+    {"id": "E19", "name": "cfg_quanta_step", "role": "CONFIG_REG", "importance": "minor", "trace": "interface", "why": "Amount subtracted from quanta timers each quanta clock tick.", "lines": [142, 143]},
+    {"id": "E20", "name": "cfg_quanta_clk_en", "role": "ENABLE", "importance": "major", "trace": "interface", "why": "Quanta time-base tick enabling timer decrement.", "lines": [141, 154]},
+    {"id": "E37", "name": "stat_rx_lfc_pkt_reg", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Registered pulse flagging a received LFC pause frame.", "lines": [169, 195]},
+    {"id": "E39", "name": "stat_rx_lfc_xon_reg", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Registered pulse for LFC frame with zero quanta (XON).", "lines": [170, 196]},
+    {"id": "E43", "name": "stat_rx_pfc_pkt_reg", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Registered pulse flagging a received PFC frame.", "lines": [174, 198]},
+    {"id": "E45", "name": "stat_rx_pfc_xon_reg", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Per-priority XON pulse vector from PFC frame parameters.", "lines": [177, 199]}
+  ],
+  "groups": [
+    {"name": "Control frame decoder", "kind": "DECODER", "anchor_ids": ["E3", "E7", "E8", "E15", "E16", "E17", "E18"], "member_ids": ["E4", "E5", "E6"], "description": "Matches frame opcode to LFC/PFC config and extracts pause quanta."},
+    {"name": "LFC pause timer", "kind": "COUNTER_TIMER", "anchor_ids": ["E33", "E10", "E11"], "member_ids": ["E34", "E29", "E30", "E9", "E24"], "description": "Link pause quanta countdown driving rx_lfc_req until expiry."},
+    {"name": "PFC pause timers", "kind": "COUNTER_TIMER", "anchor_ids": ["E35", "E13", "E14"], "member_ids": ["E36", "E31", "E32", "E12", "E28"], "description": "Eight per-priority quanta countdowns driving rx_pfc_req bits."},
+    {"name": "Quanta time base", "kind": "OTHER", "anchor_ids": ["E19", "E20"], "member_ids": [], "description": "Tick enable and step size for decrementing all pause timers."},
+    {"name": "Status pulses", "kind": "REGISTER_BANK", "anchor_ids": ["E37", "E39", "E43", "E45"], "member_ids": ["E38", "E40", "E41", "E42", "E44", "E46", "E47", "E48", "E21", "E22", "E23", "E25", "E26", "E27"], "description": "Registered per-frame packet, XON and XOFF statistics strobes."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "mac_control_frame", "protocol": "STREAM", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8"]},
+    {"name": "lfc_pause", "protocol": "REQ_ACK", "direction": "OUT", "member_ids": ["E9", "E10", "E11"]},
+    {"name": "pfc_pause", "protocol": "REQ_ACK", "direction": "OUT", "member_ids": ["E12", "E13", "E14"]},
+    {"name": "configuration", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E15", "E16", "E17", "E18", "E19", "E20"]},
+    {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E21", "E22", "E23", "E24", "E25", "E26", "E27", "E28"]}
+  ]
+}

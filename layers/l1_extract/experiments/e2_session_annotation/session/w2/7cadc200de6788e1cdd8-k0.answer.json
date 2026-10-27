@@ -1,0 +1,31 @@
+{
+  "module_summary": "Multi-cycle radix-2 restoring divider: valid/ready handshake starts 8 counted iterations that trial-subtract a negated divisor from a remainder/quotient shift register, then sign-correct the result.",
+  "anchors": [
+    {"id": "E6", "name": "opn_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "forward", "why": "Operation request; when idle loads operands, SR, NEG_DIVISOR and starts the counter."},
+    {"id": "E7", "name": "res_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Result-valid register set at cnt[3], cleared on res_ready acceptance; blocks new operations."},
+    {"id": "E9", "name": "result", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Sign-corrected {remainder, quotient} output derived from SR."},
+    {"id": "E12", "name": "SR", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "Remainder/quotient shift register updated each iteration with mux_result and CO bit."},
+    {"id": "E24", "name": "start_cnt", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Idle/busy state bit gating the division iterations and operand capture."},
+    {"id": "E23", "name": "cnt", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Iteration counter; cnt[3] ends division and raises res_valid."},
+    {"id": "E13", "name": "NEG_DIVISOR", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Latched negated divisor added to remainder for trial subtraction."},
+    {"id": "E20", "name": "CO", "role": "MUX_SELECT", "importance": "major", "trace": "control_backward", "why": "Trial-subtract carry: selects restored or subtracted remainder and becomes the quotient bit."},
+    {"id": "E8", "name": "res_ready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Consumer accept; with res_valid clears the result-valid flag."},
+    {"id": "E5", "name": "sign", "role": "COMMAND", "importance": "major", "trace": "forward", "why": "Selects signed vs unsigned division: abs conversion and result sign correction."},
+    {"id": "E3", "name": "dividend", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Dividend operand, abs value loaded into SR and saved for sign fixup."},
+    {"id": "E4", "name": "divisor", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Divisor operand, negated into NEG_DIVISOR and saved for sign fixup."},
+    {"id": "E21", "name": "sub_result", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Trial subtraction of divisor from current remainder."},
+    {"id": "E22", "name": "mux_result", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Restoring mux output: new partial remainder written back to SR."},
+    {"id": "E10", "name": "dividend_save", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Saved dividend; its sign bit drives remainder and quotient sign correction."},
+    {"id": "E11", "name": "divisor_save", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Saved divisor; its sign bit drives quotient sign correction."}
+  ],
+  "groups": [
+    {"name": "div_control", "kind": "CONTROLLER", "anchor_ids": ["E24", "E23", "E6", "E7", "E8"], "member_ids": ["E25"], "description": "Busy flag, iteration counter and valid/ready result handshake."},
+    {"name": "restoring_datapath", "kind": "DATAPATH", "anchor_ids": ["E12", "E13", "E20", "E21", "E22", "E3", "E4"], "member_ids": ["E14", "E15", "E16"], "description": "Trial subtract, restore mux and remainder/quotient shift register."},
+    {"name": "sign_correction", "kind": "DATAPATH", "anchor_ids": ["E9", "E5", "E10", "E11"], "member_ids": ["E18", "E19"], "description": "Saved operand signs negate remainder and quotient for signed result."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "operation_request", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E6", "E3", "E4", "E5"]},
+    {"name": "result_response", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E7", "E8", "E9"]}
+  ]
+}

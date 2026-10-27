@@ -1,0 +1,32 @@
+{
+  "module_summary": "Bridges the native PicoRV32 valid/ready memory bus to AXI4-lite by combinationally driving AW/W/AR channels from mem_valid/mem_wstrb, with per-channel ack flags and a transfer-done flag.",
+  "anchors": [
+    {"id": "E20", "name": "mem_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Native bus request; gates all AXI valid/ready outputs and clears ack flags when low."},
+    {"id": "E22", "name": "mem_ready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "data_backward", "why": "Native bus completion, formed from AXI bvalid or rvalid."},
+    {"id": "E3", "name": "mem_axi_awvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "AXI write-address valid, asserted for write requests until acknowledged."},
+    {"id": "E13", "name": "mem_axi_arvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "AXI read-address valid, asserted for read requests until acknowledged."},
+    {"id": "E7", "name": "mem_axi_wvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "AXI write-data valid, asserted for writes until the W beat is accepted."},
+    {"id": "E25", "name": "mem_wstrb", "role": "COMMAND", "importance": "major", "trace": "interface", "why": "Byte strobes; nonzero selects write channels, zero selects read channels."},
+    {"id": "E27", "name": "ack_awvalid", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Per-channel accepted flag; suppresses AW valid after handshake (representative of ack flags)."},
+    {"id": "E30", "name": "xfer_done", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Registered completion of a native transfer; clears all channel ack flags."},
+    {"id": "E23", "name": "mem_addr", "role": "INTERFACE_ADDR", "importance": "major", "trace": "interface", "why": "Native address forwarded to both awaddr and araddr."},
+    {"id": "E24", "name": "mem_wdata", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Native write data forwarded to AXI wdata."},
+    {"id": "E26", "name": "mem_rdata", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Read data returned to the core, copied from AXI rdata."},
+    {"id": "E17", "name": "mem_axi_rvalid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "forward", "why": "AXI read response valid; produces mem_ready for reads."},
+    {"id": "E11", "name": "mem_axi_bvalid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "forward", "why": "AXI write response valid; produces mem_ready for writes."},
+    {"id": "E21", "name": "mem_instr", "role": "COMMAND", "importance": "minor", "trace": "forward", "why": "Instruction-fetch flag; sets arprot to instruction access."}
+  ],
+  "groups": [
+    {"name": "AXI channel handshake control", "kind": "CONTROLLER", "anchor_ids": ["E3", "E13", "E7", "E27", "E30", "E25"], "member_ids": ["E28", "E29", "E12", "E18"], "description": "Ack flags and done flag sequence AW, W, AR valids per native request."},
+    {"name": "Native-to-AXI bridge", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E20", "E22", "E23", "E24", "E26", "E17", "E11", "E21"], "member_ids": ["E5", "E9", "E10", "E15", "E16", "E6", "E19"], "description": "Forwards address, write data, strobes, protection, read data and responses between buses."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "axi_aw", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E3", "E4", "E5", "E6"]},
+    {"name": "axi_w", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E7", "E8", "E9", "E10"]},
+    {"name": "axi_b", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E11", "E12"]},
+    {"name": "axi_ar", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E13", "E14", "E15", "E16"]},
+    {"name": "axi_r", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E17", "E18", "E19"]},
+    {"name": "native_mem", "protocol": "MEMORY_BUS", "direction": "IN", "member_ids": ["E20", "E21", "E22", "E23", "E24", "E25", "E26"]}
+  ]
+}

@@ -1,0 +1,29 @@
+{
+ "module_summary": "Sequential 16x16 shift-add multiplier: a 3-state FSM loads operands on start, iterates conditional add/shift over multiplier bits, then pulses done.",
+ "anchors": [
+  {"id":"E8","name":"m","role":"FSM_STATE","importance":"critical","trace":"control_backward","why":"Idle/run/finish controller; loads operands, sequences iterations, drives busy and done."},
+  {"id":"E10","name":"acc","role":"DATAPATH_MAJOR","importance":"critical","trace":"data_backward","why":"Partial-product accumulator updated each iteration; drives product output p."},
+  {"id":"E9","name":"x","role":"STORAGE","importance":"major","trace":"data_backward","why":"Multiplicand shift register, shifted left each iteration and added into acc."},
+  {"id":"E11","name":"y","role":"STORAGE","importance":"major","trace":"data_backward","why":"Multiplier shift register; LSB selects whether to add multiplicand."},
+  {"id":"E12","name":"k","role":"COUNTER","importance":"major","trace":"control_backward","why":"Iteration counter; reaching 16 ends the run state."},
+  {"id":"E14","name":"z","role":"CONTROL_FLAG","importance":"minor","trace":"forward","why":"Iteration-complete flag moving FSM from run to finish."},
+  {"id":"E15","name":"t","role":"DATAPATH_MAJOR","importance":"minor","trace":"data_backward","why":"Conditional add result acc+x selected by multiplier LSB."},
+  {"id":"E3","name":"s","role":"HANDSHAKE_VALID","importance":"critical","trace":"interface","why":"Start request in idle; loads operands and begins multiply."},
+  {"id":"E4","name":"a","role":"INTERFACE_DATA","importance":"critical","trace":"interface","why":"Multiplicand operand loaded into x."},
+  {"id":"E5","name":"b","role":"INTERFACE_DATA","importance":"critical","trace":"interface","why":"Multiplier operand loaded into y."},
+  {"id":"E7","name":"p","role":"INTERFACE_DATA","importance":"critical","trace":"interface","why":"Product output taken directly from acc."},
+  {"id":"E13","name":"d","role":"HANDSHAKE_VALID","importance":"critical","trace":"control_backward","why":"One-cycle done pulse registered in finish state."},
+  {"id":"E6","name":"bz","role":"CONTROL_FLAG","importance":"minor","trace":"control_backward","why":"Busy status while FSM in run state."}
+ ],
+ "groups": [
+  {"name":"mul_ctrl","kind":"CONTROLLER","anchor_ids":["E8","E13","E6"],"member_ids":[],"description":"Start/run/finish sequencing with busy and done outputs."},
+  {"name":"iter_counter","kind":"COUNTER_TIMER","anchor_ids":["E12","E14"],"member_ids":[],"description":"Counts shift-add iterations and flags completion."},
+  {"name":"shift_add_datapath","kind":"DATAPATH","anchor_ids":["E10","E9","E11","E15"],"member_ids":[],"description":"Shifted multiplicand conditionally added into accumulator per multiplier bit."}
+ ],
+ "interfaces": [
+  {"name":"clk_rst","protocol":"CLOCK_RESET","direction":"IN","member_ids":["E1","E2"]},
+  {"name":"operands","protocol":"REQ_ACK","direction":"IN","member_ids":["E3","E4","E5"]},
+  {"name":"result","protocol":"REQ_ACK","direction":"OUT","member_ids":["E13","E7"]},
+  {"name":"status","protocol":"SIMPLE","direction":"OUT","member_ids":["E6"]}
+ ]
+}

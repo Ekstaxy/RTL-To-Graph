@@ -1,0 +1,46 @@
+{
+ "module_summary": "1G Ethernet MAC top that wires an AXI-Stream-to-GMII transmitter and a GMII-to-AXI-Stream receiver in separate clock domains; MAC control/pause logic is parameter-disabled, so AXIS ports pass straight through.",
+ "anchors": [
+  {"id": "E5", "name": "tx_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Transmit AXI-Stream payload byte forwarded to the GMII transmitter.", "lines": [59, 604]},
+  {"id": "E6", "name": "tx_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Transmit AXI-Stream valid feeding the transmitter input handshake.", "lines": [60, 605]},
+  {"id": "E7", "name": "tx_axis_tready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Transmit AXI-Stream ready, copied from the GMII transmitter's s_axis_tready.", "lines": [61, 606]},
+  {"id": "E8", "name": "tx_axis_tlast", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "End-of-frame marker of the transmit stream.", "lines": [62, 607]},
+  {"id": "E10", "name": "rx_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Received AXI-Stream payload byte from the GMII receiver.", "lines": [68, 610]},
+  {"id": "E11", "name": "rx_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Received stream valid; no ready, receiver pushes data each cycle.", "lines": [69, 611]},
+  {"id": "E13", "name": "rx_axis_tuser", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Receive sideband user bits (bad-frame flag, optional timestamp).", "lines": [71, 613]},
+  {"id": "E14", "name": "gmii_rxd", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "GMII receive data byte entering the receiver instance.", "lines": [76, 214]},
+  {"id": "E15", "name": "gmii_rx_dv", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "GMII receive data valid framing incoming bytes.", "lines": [77, 215]},
+  {"id": "E17", "name": "gmii_txd", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "GMII transmit data byte produced by the transmitter instance.", "lines": [79, 249]},
+  {"id": "E18", "name": "gmii_tx_en", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "GMII transmit enable marking valid transmitted bytes.", "lines": [80, 250]},
+  {"id": "E65", "name": "cfg_ifg", "role": "CONFIG_REG", "importance": "major", "trace": "interface", "why": "Configured inter-frame gap length used by the transmitter.", "lines": [155, 258]},
+  {"id": "E66", "name": "cfg_tx_enable", "role": "CONFIG_REG", "importance": "major", "trace": "interface", "why": "Enables the transmit path in the GMII transmitter.", "lines": [156, 259]},
+  {"id": "E67", "name": "cfg_rx_enable", "role": "CONFIG_REG", "importance": "major", "trace": "interface", "why": "Enables the receive path in the GMII receiver.", "lines": [157, 224]},
+  {"id": "E41", "name": "tx_mii_select", "role": "COMMAND", "importance": "minor", "trace": "interface", "why": "Selects MII nibble mode versus GMII byte mode for transmit.", "lines": [123, 257]},
+  {"id": "E40", "name": "rx_mii_select", "role": "COMMAND", "importance": "minor", "trace": "interface", "why": "Selects MII nibble mode versus GMII byte mode for receive.", "lines": [122, 223]},
+  {"id": "E39", "name": "tx_clk_enable", "role": "ENABLE", "importance": "minor", "trace": "interface", "why": "Clock enable qualifying transmitter cycles (for MII/lower rates).", "lines": [121, 256]},
+  {"id": "E38", "name": "rx_clk_enable", "role": "ENABLE", "importance": "minor", "trace": "interface", "why": "Clock enable qualifying receiver cycles.", "lines": [120, 222]},
+  {"id": "E46", "name": "rx_error_bad_fcs", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "Receiver reports frame with failing CRC32 FCS.", "lines": [132, 227]},
+  {"id": "E45", "name": "rx_error_bad_frame", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "Receiver reports malformed or errored frame.", "lines": [131, 226]},
+  {"id": "E43", "name": "tx_error_underflow", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "Transmitter reports AXIS underflow during a frame.", "lines": [129, 261]},
+  {"id": "E42", "name": "tx_start_packet", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "Pulse indicating transmitter started a new packet.", "lines": [128, 260]},
+  {"id": "E44", "name": "rx_start_packet", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "Pulse indicating receiver started a new packet.", "lines": [130, 225]}
+ ],
+ "groups": [
+  {"name": "Transmit path", "kind": "SERIALIZER", "anchor_ids": ["E5", "E6", "E7", "E8", "E17", "E18", "E65", "E66", "E41", "E39", "E43", "E42"], "member_ids": ["I2", "E99", "E100", "E101", "E102", "E103", "E9", "E19", "E20", "E22", "E23", "E24"], "description": "axis_gmii_tx converts transmit AXI-Stream into GMII bytes with preamble, FCS and IFG."},
+  {"name": "Receive path", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E14", "E15", "E10", "E11", "E13", "E67", "E40", "E38", "E46", "E45", "E44"], "member_ids": ["I1", "E104", "E105", "E106", "E107", "E12", "E16", "E21"], "description": "axis_gmii_rx strips preamble, checks FCS and emits receive AXI-Stream."},
+  {"name": "Disabled MAC control", "kind": "OTHER", "anchor_ids": [], "member_ids": ["E25", "E26", "E27", "E28", "E29", "E30", "E31", "E32", "E33", "E34", "E35", "E36", "E37", "E47", "E48", "E57", "E61"], "description": "LFC/PFC pause logic disabled by MAC_CTRL_ENABLE=0; outputs tied to zero."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2", "E3", "E4"]},
+  {"name": "tx_axis", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E5", "E6", "E7", "E8", "E9"]},
+  {"name": "rx_axis", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E10", "E11", "E12", "E13"]},
+  {"name": "gmii_rx", "protocol": "STREAM", "direction": "IN", "member_ids": ["E14", "E15", "E16"]},
+  {"name": "gmii_tx", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E17", "E18", "E19"]},
+  {"name": "ptp", "protocol": "OTHER", "direction": "BIDIR", "member_ids": ["E20", "E21", "E22", "E23", "E24"]},
+  {"name": "flow_control", "protocol": "REQ_ACK", "direction": "BIDIR", "member_ids": ["E25", "E26", "E27", "E28", "E29", "E30", "E31", "E32", "E33", "E34"]},
+  {"name": "pause", "protocol": "REQ_ACK", "direction": "IN", "member_ids": ["E35", "E36", "E37"]},
+  {"name": "control", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E38", "E39", "E40", "E41"]},
+  {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E42", "E43", "E44", "E45", "E46", "E47", "E48", "E49", "E50", "E51", "E52", "E53", "E54", "E55", "E56", "E57", "E58", "E59", "E60", "E61", "E62", "E63", "E64"]},
+  {"name": "config", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E65", "E66", "E67", "E68", "E69", "E70", "E71", "E72", "E73", "E74", "E75", "E76", "E77", "E78", "E79", "E80", "E81", "E82", "E83", "E84", "E85", "E86", "E87", "E88", "E89", "E90", "E91", "E92", "E93", "E94", "E95", "E96", "E97", "E98"]}
+ ]
+}

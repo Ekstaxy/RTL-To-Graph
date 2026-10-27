@@ -1,0 +1,31 @@
+stateDiagram-v2
+    [*] --> STATE_IDLE
+    ANY_STATE --> STATE_IDLE
+    STATE_IDLE --> STATE_IDLE : input_axis_tready & input_axis_tvalid && !IMPLICIT_FRAMING & input_axis_tlast
+    STATE_IDLE --> STATE_HEADER : input_axis_tready & input_axis_tvalid && !(!IMPLICIT_FRAMING & input_axis_tlast) && input_axis_tdata == READ_REQ
+    STATE_IDLE --> STATE_HEADER : input_axis_tready & input_axis_tvalid && !(!IMPLICIT_FRAMING & input_axis_tlast) && !(input_axis_tdata == READ_REQ) && input_axis_tdata == WRITE_REQ
+    STATE_IDLE --> STATE_WAIT_LAST : input_axis_tready & input_axis_tvalid && !(!IMPLICIT_FRAMING & input_axis_tlast) && !(input_axis_tdata == READ_REQ) && !(input_axis_tdata == WRITE_REQ)
+    STATE_IDLE --> STATE_IDLE : !(input_axis_tready & input_axis_tvalid)
+    STATE_HEADER --> STATE_IDLE : input_axis_tready & input_axis_tvalid && count_reg == 0 && wb_we_o_reg && input_axis_tlast
+    STATE_HEADER --> STATE_WRITE_1 : input_axis_tready & input_axis_tvalid && count_reg == 0 && wb_we_o_reg && !input_axis_tlast
+    STATE_HEADER --> STATE_READ_1 : input_axis_tready & input_axis_tvalid && count_reg == 0 && !wb_we_o_reg
+    STATE_HEADER --> STATE_IDLE : input_axis_tready & input_axis_tvalid && !(count_reg == 0) && input_axis_tlast
+    STATE_HEADER --> STATE_HEADER : input_axis_tready & input_axis_tvalid && !(count_reg == 0) && !input_axis_tlast
+    STATE_HEADER --> STATE_HEADER : !(input_axis_tready & input_axis_tvalid)
+    STATE_READ_1 --> STATE_READ_2 : (wb_ack_i || wb_err_i)
+    STATE_READ_1 --> STATE_READ_1 : !(wb_ack_i || wb_err_i)
+    STATE_READ_2 --> STATE_WAIT_LAST : output_axis_tready_int_reg && ptr_reg == 1 && !(last_cycle_reg || (input_axis_tvalid & input_axis_tlast))
+    STATE_READ_2 --> STATE_IDLE : output_axis_tready_int_reg && ptr_reg == 1 && !(!(last_cycle_reg || (input_axis_tvalid & input_axis_tlast)))
+    STATE_READ_2 --> STATE_READ_1 : output_axis_tready_int_reg && !(ptr_reg == 1) && count_reg == (WB_SELECT_WIDTH*WB_WORD_SIZE/AXIS_DATA_WORD_SIZE)-1
+    STATE_READ_2 --> STATE_READ_2 : output_axis_tready_int_reg && !(ptr_reg == 1) && !(count_reg == (WB_SELECT_WIDTH*WB_WORD_SIZE/AXIS_DATA_WORD_SIZE)-1)
+    STATE_READ_2 --> STATE_READ_2 : !output_axis_tready_int_reg
+    STATE_WRITE_1 --> STATE_WRITE_2 : input_axis_tready & input_axis_tvalid && (count_reg == (WB_SELECT_WIDTH*WB_WORD_SIZE/AXIS_DATA_WORD_SIZE)-1 || ptr_reg == 1)
+    STATE_WRITE_1 --> STATE_WRITE_1 : input_axis_tready & input_axis_tvalid && !(count_reg == (WB_SELECT_WIDTH*WB_WORD_SIZE/AXIS_DATA_WORD_SIZE)-1 || ptr_reg == 1)
+    STATE_WRITE_1 --> STATE_WRITE_1 : !(input_axis_tready & input_axis_tvalid)
+    STATE_WRITE_2 --> STATE_WAIT_LAST : (wb_ack_i || wb_err_i) && ptr_reg == 0 && !last_cycle_reg
+    STATE_WRITE_2 --> STATE_IDLE : (wb_ack_i || wb_err_i) && ptr_reg == 0 && last_cycle_reg
+    STATE_WRITE_2 --> STATE_WRITE_1 : (wb_ack_i || wb_err_i) && !(ptr_reg == 0)
+    STATE_WRITE_2 --> STATE_WRITE_2 : !(wb_ack_i || wb_err_i)
+    STATE_WAIT_LAST --> STATE_IDLE : input_axis_tready & input_axis_tvalid && input_axis_tlast
+    STATE_WAIT_LAST --> STATE_WAIT_LAST : input_axis_tready & input_axis_tvalid && !input_axis_tlast
+    STATE_WAIT_LAST --> STATE_WAIT_LAST : !(input_axis_tready & input_axis_tvalid)

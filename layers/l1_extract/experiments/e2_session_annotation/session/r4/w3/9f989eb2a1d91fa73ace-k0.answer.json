@@ -1,0 +1,33 @@
+{
+ "module_summary": "UDP stack wrapper: a receive deparser turns IP frames into UDP frames, while an optional checksum generator feeds a transmit framer that wraps UDP frames into IP frames.",
+ "anchors": [
+  {"id": "E3", "name": "s_ip_hdr_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "IP header input valid into the RX deparser.", "lines": [47, 199]},
+  {"id": "E21", "name": "s_ip_payload_axis_tdata", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "IP payload byte stream entering the RX deparser.", "lines": [65, 217]},
+  {"id": "E74", "name": "m_udp_hdr_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Received UDP header valid output from the RX deparser.", "lines": [130, 223]},
+  {"id": "E96", "name": "m_udp_payload_axis_tdata", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Received UDP payload byte stream output.", "lines": [152, 245]},
+  {"id": "E49", "name": "s_udp_hdr_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "UDP header input valid into checksum generator / TX path.", "lines": [101, 268, 325]},
+  {"id": "E69", "name": "s_udp_payload_axis_tdata", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "UDP payload byte stream entering the TX path.", "lines": [121, 286, 345]},
+  {"id": "E26", "name": "m_ip_hdr_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Transmitted IP header valid output from the TX framer.", "lines": [74, 387]},
+  {"id": "E44", "name": "m_ip_payload_axis_tdata", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Transmitted IP payload byte stream including serialized UDP header.", "lines": [92, 405]},
+  {"id": "E106", "name": "tx_udp_hdr_valid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Internal header handshake from checksum generator (or bypass) into the TX framer.", "lines": [292, 325, 360]},
+  {"id": "E125", "name": "tx_udp_checksum", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Computed UDP checksum passed to the TX framer.", "lines": [313, 344, 380]},
+  {"id": "E124", "name": "tx_udp_length", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "UDP length computed by checksum generator for TX framer.", "lines": [312, 343, 379]},
+  {"id": "E126", "name": "tx_udp_payload_axis_tdata", "role": "INTERFACE_DATA", "importance": "minor", "trace": "data_backward", "why": "Internal payload stream from checksum FIFO into the TX framer.", "lines": [314, 345, 381]},
+  {"id": "E101", "name": "rx_busy", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "RX deparser busy indication.", "lines": [161, 251]},
+  {"id": "E102", "name": "tx_busy", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "TX framer busy indication.", "lines": [162, 411]},
+  {"id": "E103", "name": "rx_error_header_early_termination", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "RX error: frame ended before UDP header complete.", "lines": [163, 252]}
+ ],
+ "groups": [
+  {"name": "UDP receive path", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E3", "E21", "E74", "E96", "E101", "E103"], "member_ids": ["I1", "E4", "E23", "E75", "E98", "E104"], "description": "udp_ip_rx extracts UDP header from IP payload and forwards UDP payload."},
+  {"name": "Checksum generator", "kind": "DATAPATH", "anchor_ids": ["E49", "E69", "E125", "E124"], "member_ids": ["I2", "E50", "E71"], "description": "Optional checksum generation buffering payload, producing UDP length and checksum."},
+  {"name": "UDP transmit path", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E106", "E126", "E26", "E44", "E102"], "member_ids": ["I3", "E107", "E127", "E128", "E129", "E27", "E46", "E105"], "description": "udp_ip_tx serializes UDP header onto IP payload stream and emits IP frame."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "ip_in", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12", "E13", "E14", "E15", "E16", "E17", "E18", "E19", "E20", "E21", "E22", "E23", "E24", "E25"]},
+  {"name": "ip_out", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E26", "E27", "E28", "E29", "E30", "E31", "E32", "E33", "E34", "E35", "E36", "E37", "E38", "E39", "E40", "E41", "E42", "E43", "E44", "E45", "E46", "E47", "E48"]},
+  {"name": "udp_in", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E49", "E50", "E51", "E52", "E53", "E54", "E55", "E56", "E57", "E58", "E59", "E60", "E61", "E62", "E63", "E64", "E65", "E66", "E67", "E68", "E69", "E70", "E71", "E72", "E73"]},
+  {"name": "udp_out", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E74", "E75", "E76", "E77", "E78", "E79", "E80", "E81", "E82", "E83", "E84", "E85", "E86", "E87", "E88", "E89", "E90", "E91", "E92", "E93", "E94", "E95", "E96", "E97", "E98", "E99", "E100"]},
+  {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E101", "E102", "E103", "E104", "E105"]}
+ ]
+}

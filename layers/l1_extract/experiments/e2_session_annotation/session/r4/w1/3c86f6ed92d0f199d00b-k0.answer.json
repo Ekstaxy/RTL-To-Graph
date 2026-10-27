@@ -1,0 +1,27 @@
+{
+ "module_summary": "Converts an always-accepted valid input into a valid/ready stream via a depth-2 FIFO with fall-through that overwrites the newest entry when full and stalled.",
+ "anchors": [
+  {"id": "E17", "name": "mem_q", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "Two-entry data buffer written at write pointer, overwritten when full", "lines": [76, 93, 102]},
+  {"id": "E15", "name": "pending_tx_counter_q", "role": "FIFO_PTR", "importance": "critical", "trace": "control_backward", "why": "Occupancy count steering fall-through, overwrite, valid and busy", "lines": [75, 90, 118]},
+  {"id": "E13", "name": "write_ptr_q", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "Write slot pointer, held on overwrite", "lines": [74, 93, 94]},
+  {"id": "E11", "name": "read_ptr_q", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "Read slot pointer selecting buffered output, advanced on handshake", "lines": [73, 102, 107]},
+  {"id": "E4", "name": "valid_i", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Input valid; writes or falls through, no backpressure", "lines": [60, 83, 104]},
+  {"id": "E5", "name": "data_i", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Input data stored or bypassed to output", "lines": [61, 93, 105]},
+  {"id": "E6", "name": "valid_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Output valid when FIFO non-empty or input valid", "lines": [63, 78, 106]},
+  {"id": "E7", "name": "ready_i", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Downstream ready; pops FIFO and decides overwrite", "lines": [64, 86, 106]},
+  {"id": "E8", "name": "data_o", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Output data from buffer or fall-through input", "lines": [65, 102, 105]},
+  {"id": "E9", "name": "busy_o", "role": "STATUS", "importance": "major", "trace": "data_backward", "why": "Indicates pending buffered transactions", "lines": [67, 131]}
+ ],
+ "groups": [
+  {"name": "Lossy FIFO buffer", "kind": "BUFFER", "anchor_ids": ["E17", "E13", "E11"], "member_ids": ["E16", "E12", "E10"], "description": "Depth-2 buffer with overwrite of last element"},
+  {"name": "Transaction counter", "kind": "COUNTER_TIMER", "anchor_ids": ["E15", "E9"], "member_ids": ["E14"], "description": "Tracks pending items for valid, fall-through and busy"},
+  {"name": "Input port", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E4", "E5"], "member_ids": [], "description": "Valid-only input without backpressure"},
+  {"name": "Output stream", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E6", "E7", "E8"], "member_ids": [], "description": "Valid/ready output stream"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2", "E3"]},
+  {"name": "valid_in", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E4", "E5"]},
+  {"name": "stream_out", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E6", "E7", "E8"]},
+  {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E9"]}
+ ]
+}

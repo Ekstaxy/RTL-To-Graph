@@ -1,0 +1,18 @@
+stateDiagram-v2
+    [*] --> STATE_IDLE
+    ANY_STATE --> STATE_IDLE
+    STATE_IDLE --> STATE_PREAMBLE : clk_enable && !(mii_select && mii_odd_reg) && s_axis_tvalid && cfg_tx_enable
+    STATE_IDLE --> STATE_IDLE : clk_enable && !(mii_select && mii_odd_reg) && !(s_axis_tvalid && cfg_tx_enable)
+    STATE_PREAMBLE --> STATE_PREAMBLE : clk_enable && !(mii_select && mii_odd_reg) && frame_ptr_reg == 6
+    STATE_PREAMBLE --> STATE_PAYLOAD : clk_enable && !(mii_select && mii_odd_reg) && !(frame_ptr_reg == 6) && frame_ptr_reg == 7
+    STATE_PREAMBLE --> STATE_PREAMBLE : clk_enable && !(mii_select && mii_odd_reg) && !(frame_ptr_reg == 6) && !(frame_ptr_reg == 7)
+    STATE_PAYLOAD --> STATE_LAST : clk_enable && !(mii_select && mii_odd_reg) && (!s_axis_tvalid || s_axis_tlast)
+    STATE_PAYLOAD --> STATE_PAYLOAD : clk_enable && !(mii_select && mii_odd_reg) && !(!s_axis_tvalid || s_axis_tlast)
+    STATE_LAST --> STATE_PAD : clk_enable && !(mii_select && mii_odd_reg) && frame_min_count_reg
+    STATE_LAST --> STATE_FCS : clk_enable && !(mii_select && mii_odd_reg) && !frame_min_count_reg
+    STATE_PAD --> STATE_PAD : clk_enable && !(mii_select && mii_odd_reg) && frame_min_count_reg
+    STATE_PAD --> STATE_FCS : clk_enable && !(mii_select && mii_odd_reg) && !frame_min_count_reg
+    STATE_FCS --> STATE_FCS : clk_enable && !(mii_select && mii_odd_reg) && frame_ptr_reg < 3
+    STATE_FCS --> STATE_IFG : clk_enable && !(mii_select && mii_odd_reg) && !(frame_ptr_reg < 3)
+    STATE_IFG --> STATE_IFG : clk_enable && !(mii_select && mii_odd_reg) && (frame_ptr_reg < cfg_ifg-1 || frame_reg)
+    STATE_IFG --> STATE_IDLE : clk_enable && !(mii_select && mii_odd_reg) && !(frame_ptr_reg < cfg_ifg-1 || frame_reg)

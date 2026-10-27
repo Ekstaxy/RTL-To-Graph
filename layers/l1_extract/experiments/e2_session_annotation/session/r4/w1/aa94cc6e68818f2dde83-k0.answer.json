@@ -1,0 +1,26 @@
+{
+ "module_summary": "Pipelined 8-bit unsigned multiplier: registered operands feed shifted partial products, summed in two registered adder-tree stages, with a 3-bit enable shift chain gating the output.",
+ "anchors": [
+  {"id": "E3", "name": "mul_en_in", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Input enable; gates operand registers and enters the enable delay chain.", "lines": [16, 31, 44]},
+  {"id": "E4", "name": "mul_a", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Multiplicand input latched into mul_a_reg.", "lines": [17, 44]},
+  {"id": "E5", "name": "mul_b", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Multiplier input latched into mul_b_reg.", "lines": [18, 45]},
+  {"id": "E6", "name": "mul_en_out", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Output valid flag from the end of the enable delay chain.", "lines": [20, 32]},
+  {"id": "E7", "name": "mul_out", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "16-bit product output, loaded from mul_out_reg when enabled.", "lines": [21, 87]},
+  {"id": "E8", "name": "mul_en_out_reg", "role": "PIPELINE_REG", "importance": "major", "trace": "control_backward", "why": "3-stage enable shift chain tracking valid through the pipeline.", "lines": [24, 31, 86]},
+  {"id": "E9", "name": "mul_a_reg", "role": "PIPELINE_REG", "importance": "major", "trace": "data_backward", "why": "Stage-1 multiplicand register feeding partial products.", "lines": [36, 44, 50]},
+  {"id": "E10", "name": "mul_b_reg", "role": "PIPELINE_REG", "importance": "major", "trace": "data_backward", "why": "Stage-1 multiplier register; its bits select partial products.", "lines": [37, 45, 50]},
+  {"id": "E11", "name": "temp", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Shifted partial products of mul_a_reg gated by mul_b_reg bits.", "lines": [49, 50, 69]},
+  {"id": "E12", "name": "sum", "role": "PIPELINE_REG", "importance": "major", "trace": "data_backward", "why": "Stage-2 registered pairwise partial-product sums.", "lines": [60, 69, 80]},
+  {"id": "E13", "name": "mul_out_reg", "role": "PIPELINE_REG", "importance": "major", "trace": "data_backward", "why": "Stage-3 register holding the full product sum.", "lines": [75, 80, 87]}
+ ],
+ "groups": [
+  {"name": "Enable pipeline", "kind": "CONTROLLER", "anchor_ids": ["E3", "E8", "E6"], "member_ids": [], "description": "Shift chain delaying mul_en_in to mul_en_out and gating output."},
+  {"name": "Input register stage", "kind": "PIPELINE_STAGE", "anchor_ids": ["E4", "E5", "E9", "E10"], "member_ids": [], "description": "Operand registers loaded when enabled."},
+  {"name": "Partial product and adder tree", "kind": "DATAPATH", "anchor_ids": ["E11", "E12", "E13", "E7"], "member_ids": [], "description": "Partial products, registered pair sums, final sum and gated output."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "operand_in", "protocol": "STREAM", "direction": "IN", "member_ids": ["E3", "E4", "E5"]},
+  {"name": "product_out", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E6", "E7"]}
+ ]
+}

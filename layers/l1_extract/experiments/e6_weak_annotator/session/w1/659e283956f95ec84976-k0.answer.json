@@ -1,0 +1,191 @@
+{
+  "module_summary": "Sequential multiplier: shifts operands through state machine (Idle/Run/Finish) accumulating partial products.",
+  "anchors": [
+    {
+      "id": "E8",
+      "name": "m",
+      "role": "FSM_STATE",
+      "importance": "critical",
+      "trace": "control_backward",
+      "why": "Controls three-state multiplication sequence: Idle, Running, Finish.",
+      "lines": [25, 28, 30]
+    },
+    {
+      "id": "E10",
+      "name": "acc",
+      "role": "STORAGE",
+      "importance": "critical",
+      "trace": "data_backward",
+      "why": "Accumulates product result across iterations.",
+      "lines": [17, 19, 27]
+    },
+    {
+      "id": "E3",
+      "name": "s",
+      "role": "COMMAND",
+      "importance": "critical",
+      "trace": "forward",
+      "why": "Start signal triggers state transition from Idle to Running.",
+      "lines": [25]
+    },
+    {
+      "id": "E9",
+      "name": "x",
+      "role": "HOLDING_REG",
+      "importance": "major",
+      "trace": "data_backward",
+      "why": "Holds and shifts multiplier a during computation.",
+      "lines": [25, 27]
+    },
+    {
+      "id": "E11",
+      "name": "y",
+      "role": "HOLDING_REG",
+      "importance": "major",
+      "trace": "data_backward",
+      "why": "Holds and shifts multiplicand b during computation.",
+      "lines": [17, 25, 27]
+    },
+    {
+      "id": "E12",
+      "name": "k",
+      "role": "COUNTER",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Counts bits processed from 0 to 16 to complete multiplication.",
+      "lines": [16, 27, 28]
+    },
+    {
+      "id": "E14",
+      "name": "z",
+      "role": "CONTROL_FLAG",
+      "importance": "major",
+      "trace": "forward",
+      "why": "Completion detector: triggers Finish when k reaches 16.",
+      "lines": [16, 28]
+    },
+    {
+      "id": "E15",
+      "name": "t",
+      "role": "DATAPATH_MAJOR",
+      "importance": "major",
+      "trace": "data_backward",
+      "why": "Conditional accumulation result based on y[0].",
+      "lines": [17, 27]
+    },
+    {
+      "id": "E13",
+      "name": "d",
+      "role": "STATUS",
+      "importance": "major",
+      "trace": "forward",
+      "why": "Done signal output set in Finish state.",
+      "lines": [23, 30]
+    },
+    {
+      "id": "E6",
+      "name": "bz",
+      "role": "STATUS",
+      "importance": "major",
+      "trace": "forward",
+      "why": "Busy flag output set when in Running state.",
+      "lines": [18]
+    },
+    {
+      "id": "E4",
+      "name": "a",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Input operand A multiplied with B.",
+      "lines": [25]
+    },
+    {
+      "id": "E5",
+      "name": "b",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Input operand B multiplied with A.",
+      "lines": [25]
+    },
+    {
+      "id": "E7",
+      "name": "p",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Output product result from accumulator.",
+      "lines": [19]
+    }
+  ],
+  "groups": [
+    {
+      "name": "State Machine",
+      "kind": "CONTROLLER",
+      "anchor_ids": ["E8"],
+      "member_ids": [],
+      "description": "FSM managing multiplication phases: Idle receives operands, Running processes bits, Finish outputs result."
+    },
+    {
+      "name": "Datapath",
+      "kind": "DATAPATH",
+      "anchor_ids": ["E10", "E9", "E11", "E15"],
+      "member_ids": [],
+      "description": "Accumulates product with partial sums and shifts operands right/left."
+    },
+    {
+      "name": "Timing & Control",
+      "kind": "COUNTER_TIMER",
+      "anchor_ids": ["E12", "E14"],
+      "member_ids": [],
+      "description": "Counts 16 bits and triggers completion flag to advance state machine."
+    },
+    {
+      "name": "Status & Handshake",
+      "kind": "OTHER",
+      "anchor_ids": ["E13", "E6"],
+      "member_ids": [],
+      "description": "Done and busy status outputs for external synchronization."
+    },
+    {
+      "name": "Ports",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E4", "E5", "E7"],
+      "member_ids": ["E3"],
+      "description": "Data input/output and start command."
+    }
+  ],
+  "interfaces": [
+    {
+      "name": "Operands",
+      "protocol": "SIMPLE",
+      "direction": "IN",
+      "member_ids": ["E4", "E5"]
+    },
+    {
+      "name": "Control",
+      "protocol": "SIMPLE",
+      "direction": "IN",
+      "member_ids": ["E3"]
+    },
+    {
+      "name": "Result",
+      "protocol": "SIMPLE",
+      "direction": "OUT",
+      "member_ids": ["E7"]
+    },
+    {
+      "name": "Status",
+      "protocol": "SIMPLE",
+      "direction": "OUT",
+      "member_ids": ["E13", "E6"]
+    },
+    {
+      "name": "Clock/Reset",
+      "protocol": "CLOCK_RESET",
+      "direction": "IN",
+      "member_ids": ["E1", "E2"]
+    }
+  ]
+}

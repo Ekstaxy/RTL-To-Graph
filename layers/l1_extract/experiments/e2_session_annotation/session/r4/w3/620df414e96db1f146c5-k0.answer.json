@@ -1,0 +1,35 @@
+{
+ "module_summary": "Wishbone DDR3 SDRAM controller wrapper: a Wishbone-to-AXI bridge feeds a Xilinx MIG AXI memory controller driving DDR3 pins, and system reset is held until calibration and MMCM lock.",
+ "anchors": [
+  {"id": "E7", "name": "i_wb_stb", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Wishbone request strobe into the WB-to-AXI bridge.", "lines": [82, 266]},
+  {"id": "E12", "name": "o_wb_ack", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Wishbone acknowledge returned by the bridge per completed access.", "lines": [86, 273]},
+  {"id": "E10", "name": "i_wb_data", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Wishbone write data converted to AXI write beats.", "lines": [84, 269]},
+  {"id": "E14", "name": "o_wb_data", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Wishbone read data word-selected from AXI read data.", "lines": [87, 274]},
+  {"id": "E9", "name": "i_wb_addr", "role": "INTERFACE_ADDR", "importance": "major", "trace": "interface", "why": "Wishbone word address mapped to SDRAM AXI address.", "lines": [83, 268]},
+  {"id": "E8", "name": "i_wb_we", "role": "COMMAND", "importance": "major", "trace": "interface", "why": "Selects AXI write versus read transaction.", "lines": [82, 267]},
+  {"id": "E13", "name": "o_wb_stall", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Bridge backpressure to Wishbone master.", "lines": [86, 272]},
+  {"id": "E30", "name": "io_ddr_data", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Bidirectional DDR3 DQ bus driven by MIG controller.", "lines": [100, 167]},
+  {"id": "E5", "name": "o_sys_reset", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "System reset held until MIG reset release, calibration and MMCM lock.", "lines": [280, 282]},
+  {"id": "E69", "name": "init_calib_complete", "role": "STATUS", "importance": "major", "trace": "forward", "why": "MIG calibration done; gates release of o_sys_reset.", "lines": [208, 283]},
+  {"id": "E43", "name": "s_axi_wdata", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "128-bit AXI write data from bridge to MIG.", "lines": [122, 237]},
+  {"id": "E64", "name": "s_axi_rdata", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "128-bit AXI read data from MIG to bridge.", "lines": [145, 261]},
+  {"id": "E41", "name": "s_axi_awvalid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "AXI write address valid from bridge to MIG.", "lines": [186, 223]},
+  {"id": "E61", "name": "s_axi_arvalid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "AXI read address valid from bridge to MIG.", "lines": [202, 246]},
+  {"id": "E67", "name": "s_axi_rvalid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "data_backward", "why": "AXI read data valid from MIG to bridge.", "lines": [207, 258]},
+  {"id": "E70", "name": "mmcm_locked", "role": "STATUS", "importance": "minor", "trace": "forward", "why": "MIG clock lock gating system reset release.", "lines": [173, 284]},
+  {"id": "E77", "name": "w_sys_reset", "role": "STATUS", "importance": "minor", "trace": "forward", "why": "MIG UI-clock synchronous reset feeding o_sys_reset.", "lines": [172, 282]},
+  {"id": "E25", "name": "o_ddr_addr", "role": "INTERFACE_ADDR", "importance": "minor", "trace": "interface", "why": "DDR3 row/column address pins from MIG.", "lines": [164]},
+  {"id": "E15", "name": "o_wb_err", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "Wishbone bus error from AXI error responses.", "lines": [275]},
+  {"id": "E6", "name": "i_wb_cyc", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Wishbone bus cycle framing.", "lines": [265]}
+ ],
+ "groups": [
+  {"name": "Wishbone-to-AXI bridge", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E7", "E12", "E10", "E14", "E9", "E8", "E13", "E15", "E6", "E41", "E61", "E67", "E43", "E64"], "member_ids": ["I1", "E11", "E32", "E33", "E34", "E35", "E36", "E37", "E38", "E39", "E40", "E42", "E44", "E45", "E46", "E47", "E48", "E49", "E50", "E51", "E52", "E53", "E54", "E55", "E56", "E57", "E58", "E59", "E60", "E62", "E63", "E65", "E66", "E68"], "description": "Converts pipelined Wishbone requests into single-beat AXI4 reads and writes."},
+  {"name": "MIG DDR3 controller", "kind": "MEMORY", "anchor_ids": ["E30", "E25", "E69", "E70"], "member_ids": ["E16", "E17", "E18", "E19", "E20", "E21", "E22", "E23", "E24", "E26", "E27", "E28", "E29", "E31", "E71", "E72", "E73", "E74", "E75", "E76", "E78"], "description": "Black-box MIG AXI slave driving the DDR3 pins and calibration."},
+  {"name": "Reset sequencing", "kind": "CONTROLLER", "anchor_ids": ["E5", "E77"], "member_ids": [], "description": "Holds system reset until MIG reset release, calibration and lock."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2", "E3", "E4", "E5"]},
+  {"name": "wishbone_slave", "protocol": "REQ_ACK", "direction": "IN", "member_ids": ["E6", "E7", "E8", "E9", "E10", "E11", "E12", "E13", "E14", "E15"]},
+  {"name": "ddr3", "protocol": "MEMORY_BUS", "direction": "BIDIR", "member_ids": ["E16", "E17", "E18", "E19", "E20", "E21", "E22", "E23", "E24", "E25", "E26", "E27", "E28", "E29", "E30"]}
+ ]
+}

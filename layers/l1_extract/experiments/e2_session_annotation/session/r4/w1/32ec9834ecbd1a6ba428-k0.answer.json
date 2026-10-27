@@ -1,0 +1,42 @@
+{
+ "module_summary": "AXI-Lite read to pipelined Wishbone bridge: issues WB reads per AR request with a shadow skid register, returns acks into a FIFO tracked by first/mid/last pointers, and drains it as AXI R responses with error tracking.",
+ "anchors": [
+  {"id": "E3", "name": "i_axi_arvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "AXI read-address valid starting a Wishbone read", "lines": [53, 119, 244]},
+  {"id": "E4", "name": "o_axi_arready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "AR ready dropped on stall, FIFO full or error", "lines": [54, 217, 229]},
+  {"id": "E5", "name": "i_axi_araddr", "role": "INTERFACE_ADDR", "importance": "critical", "trace": "interface", "why": "AXI read address converted to word address for Wishbone", "lines": [55, 134, 151]},
+  {"id": "E7", "name": "o_axi_rvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Read data valid set on WB ack/err, cleared as FIFO drains", "lines": [60, 333, 339]},
+  {"id": "E8", "name": "i_axi_rready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "AXI read data accept advancing FIFO read pointer", "lines": [61, 266]},
+  {"id": "E9", "name": "o_axi_rdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Read data from FIFO at r_last", "lines": [62, 285]},
+  {"id": "E10", "name": "o_axi_rresp", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "AXI read response, SLVERR/DECERR after Wishbone error", "lines": [63, 306, 308]},
+  {"id": "E11", "name": "o_wb_cyc", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "Wishbone cycle held while strobe or pending acks", "lines": [68, 125]},
+  {"id": "E12", "name": "o_wb_stb", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Wishbone request strobe raised on AR handshake or shadow request", "lines": [69, 120, 122]},
+  {"id": "E13", "name": "o_wb_addr", "role": "INTERFACE_ADDR", "importance": "major", "trace": "data_backward", "why": "Wishbone word address from AXI address or shadow r_addr", "lines": [70, 132, 134]},
+  {"id": "E15", "name": "i_wb_stall", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Wishbone stall holding strobe and arming shadow request", "lines": [72, 121, 148]},
+  {"id": "E16", "name": "i_wb_ack", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Wishbone ack writing returned data into FIFO", "lines": [73, 273, 332]},
+  {"id": "E17", "name": "i_wb_data", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Wishbone read data stored into dfifo", "lines": [74, 274]},
+  {"id": "E18", "name": "i_wb_err", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Wishbone bus error aborting cycle and entering error state", "lines": [75, 117, 323]},
+  {"id": "E22", "name": "dfifo", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "Read-data FIFO buffering Wishbone results for AXI R channel", "lines": [100, 274, 284]},
+  {"id": "E25", "name": "r_first", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "Pointer of accepted AXI requests (FIFO allocation)", "lines": [103, 245, 320]},
+  {"id": "E26", "name": "r_mid", "role": "FIFO_PTR", "importance": "minor", "trace": "control_backward", "why": "Write pointer for returned Wishbone data", "lines": [103, 255, 274]},
+  {"id": "E27", "name": "r_last", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "Read pointer for AXI responses", "lines": [103, 267, 284]},
+  {"id": "E23", "name": "fifo_full", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "FIFO full flag throttling arready", "lines": [101, 197, 226]},
+  {"id": "E33", "name": "err_state", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Error flush mode after WB error; blocks requests and sets error responses", "lines": [108, 323, 215]},
+  {"id": "E34", "name": "err_loc", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "FIFO slot where the Wishbone error occurred", "lines": [109, 281, 305]},
+  {"id": "E20", "name": "r_stb", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Shadow request pending while Wishbone stalls", "lines": [95, 150, 119]},
+  {"id": "E21", "name": "r_addr", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Shadow address held during stall", "lines": [96, 151, 132]},
+  {"id": "E31", "name": "wb_outstanding", "role": "COUNTER", "importance": "minor", "trace": "control_backward", "why": "Count of outstanding Wishbone requests awaiting ack", "lines": [106, 171, 175]},
+  {"id": "E30", "name": "wb_pending", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Outstanding-ack flag keeping o_wb_cyc asserted", "lines": [105, 125, 176]}
+ ],
+ "groups": [
+  {"name": "AXI read address front-end", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E3", "E4", "E5", "E20", "E21"], "member_ids": ["E6"], "description": "Accepts AR requests with skid shadow register when Wishbone stalls"},
+  {"name": "Wishbone master", "kind": "CONTROLLER", "anchor_ids": ["E12", "E11", "E13", "E15", "E16", "E18", "E31", "E30", "E17"], "member_ids": ["E14"], "description": "Issues pipelined Wishbone reads and counts outstanding acks"},
+  {"name": "Read data FIFO", "kind": "BUFFER", "anchor_ids": ["E22", "E25", "E26", "E27", "E23"], "member_ids": ["E24", "E28", "E29", "E32"], "description": "Return buffer with request/return/drain pointers"},
+  {"name": "AXI read response and error", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E7", "E8", "E9", "E10", "E33", "E34"], "member_ids": [], "description": "Drives R channel and propagates Wishbone errors as AXI responses"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "axil_ar", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6"]},
+  {"name": "axil_r", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E7", "E8", "E9", "E10"]},
+  {"name": "wishbone_master", "protocol": "MEMORY_BUS", "direction": "OUT", "member_ids": ["E11", "E12", "E13", "E14", "E15", "E16", "E17", "E18"]}
+ ]
+}

@@ -1,0 +1,52 @@
+{
+ "module_summary": "RISC-V CSR execution unit: decodes CSR/system opcodes, reads a CSR register file child, computes set/clear write data and exceptions into E1 pipeline registers, and registers trap branches, interrupts and MMU flushes.",
+ "anchors": [
+  {"id": "E4", "name": "opcode_valid_i", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Issue valid qualifying all opcode decodes and E1 register updates.", "lines": [42, 166, 211]},
+  {"id": "E5", "name": "opcode_opcode_i", "role": "COMMAND", "importance": "critical", "trace": "interface", "why": "Instruction word decoded into CSR ops and CSR read address.", "lines": [43, 88, 167]},
+  {"id": "E68", "name": "rd_result_e1_q", "role": "PIPELINE_REG", "importance": "critical", "trace": "data_backward", "why": "E1 CSR read result or faulting opcode driven to csr_result_e1_value_o.", "lines": [196, 218, 256]},
+  {"id": "E70", "name": "exception_e1_q", "role": "PIPELINE_REG", "importance": "critical", "trace": "control_backward", "why": "E1 exception code: ecall, eret, breakpoint, illegal, fence flush.", "lines": [198, 224, 259]},
+  {"id": "E75", "name": "branch_q", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Registered CSR branch request for reset vector or trap entry/return.", "lines": [301, 320, 324]},
+  {"id": "E69", "name": "csr_wdata_e1_q", "role": "PIPELINE_REG", "importance": "major", "trace": "data_backward", "why": "E1 CSR write value from set/clear of read data and operand.", "lines": [197, 244, 258]},
+  {"id": "E67", "name": "rd_valid_e1_q", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "E1 CSR write enable when CSR op has no access fault.", "lines": [195, 213, 257]},
+  {"id": "E61", "name": "csr_rdata_w", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "CSR file read data feeding E1 result and set/clear computation.", "lines": [143, 168, 220]},
+  {"id": "E54", "name": "set_r", "role": "DECODE", "importance": "major", "trace": "control_backward", "why": "Decoded CSR set-type op steering write data and E1 valid.", "lines": [110, 118, 243]},
+  {"id": "E56", "name": "csr_fault_r", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "CSR access fault for read-only write or privilege violation; forces illegal exception.", "lines": [112, 131, 217]},
+  {"id": "E76", "name": "branch_target_q", "role": "PIPELINE_REG", "importance": "major", "trace": "data_backward", "why": "Registered branch target: reset vector or CSR trap target.", "lines": [302, 314, 325]},
+  {"id": "E72", "name": "take_interrupt_q", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Registered interrupt launch request from masked pending interrupts.", "lines": [264, 270, 272]},
+  {"id": "E65", "name": "status_reg_w", "role": "CONFIG_REG", "importance": "major", "trace": "data_backward", "why": "Status CSR from file driving MMU privilege, SUM and MXR outputs.", "lines": [149, 185, 331]},
+  {"id": "E13", "name": "csr_writeback_write_i", "role": "ENABLE", "importance": "major", "trace": "interface", "why": "Writeback CSR write enable gating CSR file write address.", "lines": [51, 176]},
+  {"id": "E55", "name": "clr_r", "role": "DECODE", "importance": "minor", "trace": "control_backward", "why": "Decoded CSR clear-type op steering write data.", "lines": [111, 119, 245]},
+  {"id": "E57", "name": "data_r", "role": "MUX_SELECT", "importance": "minor", "trace": "data_backward", "why": "Operand mux selecting immediate index or register operand for CSR write.", "lines": [114, 125, 242]},
+  {"id": "E40", "name": "csrrw_w", "role": "DECODE", "importance": "minor", "trace": "control_backward", "why": "Decoded CSRRW instruction feeding set/clear and write decode.", "lines": [92, 118, 123]},
+  {"id": "E43", "name": "csrrwi_w", "role": "DECODE", "importance": "minor", "trace": "control_backward", "why": "Decoded CSRRWI immediate form selecting immediate operand.", "lines": [95, 125]},
+  {"id": "E38", "name": "eret_w", "role": "DECODE", "importance": "minor", "trace": "control_backward", "why": "Decoded xRET instruction checked for privilege fault.", "lines": [90, 201]},
+  {"id": "E71", "name": "eret_fault_w", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "xRET above current privilege; forces illegal-instruction exception.", "lines": [201, 217, 226]},
+  {"id": "E58", "name": "satp_update_w", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "SATP write detect triggering fence exception and TLB flush.", "lines": [134, 235, 283]},
+  {"id": "E48", "name": "sfence_w", "role": "DECODE", "importance": "minor", "trace": "control_backward", "why": "Decoded SFENCE causing TLB flush and fence exception.", "lines": [100, 235, 283]},
+  {"id": "E49", "name": "ifence_w", "role": "DECODE", "importance": "minor", "trace": "control_backward", "why": "Decoded FENCE.I driving ifence pulse and fence exception.", "lines": [101, 235, 294]},
+  {"id": "E73", "name": "tlb_flush_q", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Registered MMU TLB flush request driving mmu_flush_o.", "lines": [277, 283, 333]},
+  {"id": "E74", "name": "ifence_q", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Registered instruction fence request driving ifence_o.", "lines": [288, 294, 296]},
+  {"id": "E50", "name": "current_priv_w", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "Current privilege level from CSR file used in fault checks and MMU.", "lines": [106, 184, 201]},
+  {"id": "E66", "name": "satp_reg_w", "role": "CONFIG_REG", "importance": "minor", "trace": "data_backward", "why": "SATP CSR value driving mmu_satp_o and branch privilege.", "lines": [150, 186, 332]},
+  {"id": "E64", "name": "interrupt_w", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Masked pending interrupts from CSR file feeding take_interrupt_q.", "lines": [148, 189, 270]},
+  {"id": "E15", "name": "csr_writeback_wdata_i", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Writeback CSR write data to the CSR file.", "lines": [53, 177]},
+  {"id": "E16", "name": "csr_writeback_exception_i", "role": "COMMAND", "importance": "minor", "trace": "interface", "why": "Writeback exception code driving CSR trap updates.", "lines": [54, 171]}
+ ],
+ "groups": [
+  {"name": "csr_opcode_decoder", "kind": "DECODER", "anchor_ids": ["E4", "E5", "E54", "E55", "E56", "E57", "E40", "E43", "E38", "E71", "E58", "E48", "E49"], "member_ids": ["E36", "E37", "E39", "E41", "E42", "E44", "E45", "E46", "E47", "E51", "E52", "E53", "E7", "E9", "E11"], "description": "Decodes CSR/system opcodes, operand select and access-fault detection."},
+  {"name": "csr_register_file", "kind": "REGISTER_BANK", "anchor_ids": ["E61", "E65", "E66", "E50", "E64", "E13", "E15", "E16"], "member_ids": ["I1", "E59", "E60", "E62", "E63", "E14", "E17", "E18", "E19", "E3"], "description": "Child CSR file: read mux, writeback updates, trap branch and interrupt masking."},
+  {"name": "e1_result_stage", "kind": "PIPELINE_STAGE", "anchor_ids": ["E68", "E70", "E69", "E67"], "member_ids": ["E22", "E23", "E24", "E25"], "description": "E1 registers holding CSR read result, write data, write valid and exception."},
+  {"name": "branch_control", "kind": "CONTROLLER", "anchor_ids": ["E75", "E76"], "member_ids": ["E26", "E27", "E28", "E20"], "description": "Registers reset-vector or CSR trap branch request and target."},
+  {"name": "interrupt_mmu_control", "kind": "OTHER", "anchor_ids": ["E72", "E73", "E74"], "member_ids": ["E21", "E29", "E30", "E31", "E32", "E33", "E34", "E35"], "description": "Registered interrupt take, TLB flush, ifence and MMU control outputs."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "opcode_issue", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12"]},
+  {"name": "csr_writeback", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E13", "E14", "E15", "E16", "E17", "E18"]},
+  {"name": "cpu_config_inputs", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E3", "E19", "E20", "E21"]},
+  {"name": "csr_result_e1", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E22", "E23", "E24", "E25"]},
+  {"name": "branch_csr", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E26", "E27", "E28"]},
+  {"name": "pipeline_control", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E29", "E30"]},
+  {"name": "mmu_control", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E31", "E32", "E33", "E34", "E35"]}
+ ]
+}

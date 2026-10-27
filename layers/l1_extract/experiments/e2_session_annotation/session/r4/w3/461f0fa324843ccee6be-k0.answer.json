@@ -1,0 +1,41 @@
+{
+ "module_summary": "AXI4 slave to Wishbone master bridge: separate write and read converter children each drive a Wishbone master port, merged onto one pipelined Wishbone bus by a two-master arbiter.",
+ "anchors": [
+  {"id": "E41", "name": "o_wb_cyc", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Shared Wishbone bus cycle output driven by the read/write arbiter.", "lines": [118, 306]},
+  {"id": "E44", "name": "o_wb_addr", "role": "INTERFACE_ADDR", "importance": "critical", "trace": "interface", "why": "Wishbone address muxed from read or write converter.", "lines": [121, 306]},
+  {"id": "E42", "name": "o_wb_stb", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Wishbone strobe for each pipelined request beat.", "lines": [119, 306]},
+  {"id": "E45", "name": "o_wb_data", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Wishbone write data from the write converter via arbiter.", "lines": [122, 306]},
+  {"id": "E43", "name": "o_wb_we", "role": "ENABLE", "importance": "minor", "trace": "interface", "why": "Wishbone write enable, set by owning master.", "lines": [120, 306]},
+  {"id": "E49", "name": "i_wb_data", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Wishbone read data fed directly to the read converter.", "lines": [126, 250]},
+  {"id": "E48", "name": "i_wb_ack", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Wishbone acknowledge routed back to owning converter.", "lines": [125, 307]},
+  {"id": "E47", "name": "i_wb_stall", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Wishbone stall routed back to owning converter.", "lines": [124, 307]},
+  {"id": "E16", "name": "S_AXI_WDATA", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "AXI write data into write converter.", "lines": [81, 175]},
+  {"id": "E37", "name": "S_AXI_RDATA", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "AXI read data returned by read converter.", "lines": [111, 240]},
+  {"id": "E3", "name": "S_AXI_AWVALID", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "AXI write address request into write converter.", "lines": [65, 161]},
+  {"id": "E23", "name": "S_AXI_ARVALID", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "AXI read address request into read converter.", "lines": [94, 225]},
+  {"id": "E34", "name": "S_AXI_RVALID", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "AXI read beat valid from read converter.", "lines": [108, 237]},
+  {"id": "E19", "name": "S_AXI_BVALID", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "AXI write response valid from write converter.", "lines": [87, 179]},
+  {"id": "E62", "name": "w_wb_cyc", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "forward", "why": "Write converter Wishbone cycle request into arbiter master B.", "lines": [140, 184, 304]},
+  {"id": "E57", "name": "r_wb_cyc", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "forward", "why": "Read converter Wishbone cycle request into arbiter master A.", "lines": [139, 244, 302]},
+  {"id": "E51", "name": "w_wb_addr", "role": "INDEX", "importance": "minor", "trace": "data_backward", "why": "Write converter Wishbone address into arbiter.", "lines": [136, 186, 304]},
+  {"id": "E52", "name": "r_wb_addr", "role": "INDEX", "importance": "minor", "trace": "data_backward", "why": "Read converter Wishbone address into arbiter.", "lines": [136, 246, 302]},
+  {"id": "E53", "name": "w_wb_data", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Write converter Wishbone data into arbiter.", "lines": [137, 187, 304]},
+  {"id": "E65", "name": "w_wb_ack", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Arbiter-routed ack to write converter.", "lines": [140, 189, 305]},
+  {"id": "E60", "name": "r_wb_ack", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Arbiter-routed ack to read converter.", "lines": [139, 248, 303]}
+ ],
+ "groups": [
+  {"name": "AXI write converter", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E3", "E16", "E19", "E62", "E51", "E53", "E65"], "member_ids": ["I1", "E54", "E61", "E63", "E64", "E67"], "description": "aximwr2wbsp turns AXI write bursts into Wishbone writes and B responses."},
+  {"name": "AXI read converter", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E23", "E37", "E34", "E57", "E52", "E60"], "member_ids": ["I2", "E55", "E56", "E58", "E59", "E66"], "description": "aximrd2wbsp turns AXI read bursts into Wishbone reads and R beats."},
+  {"name": "Wishbone read/write arbiter", "kind": "ARBITER", "anchor_ids": ["E41", "E44", "E42", "E45", "E43", "E49", "E48", "E47"], "member_ids": ["I3", "E40"], "description": "wbarbiter grants shared Wishbone bus to read or write converter."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "wb_reset_out", "protocol": "CLOCK_RESET", "direction": "OUT", "member_ids": ["E40"]},
+  {"name": "s_axi_aw", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12", "E13"]},
+  {"name": "s_axi_w", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E14", "E15", "E16", "E17", "E18"]},
+  {"name": "s_axi_b", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E19", "E20", "E21", "E22"]},
+  {"name": "s_axi_ar", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E23", "E24", "E25", "E26", "E27", "E28", "E29", "E30", "E31", "E32", "E33"]},
+  {"name": "s_axi_r", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E34", "E35", "E36", "E37", "E38", "E39"]},
+  {"name": "wishbone_master", "protocol": "MEMORY_BUS", "direction": "OUT", "member_ids": ["E41", "E42", "E43", "E44", "E45", "E46", "E47", "E48", "E49", "E50"]}
+ ]
+}

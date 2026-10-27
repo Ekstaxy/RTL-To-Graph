@@ -1,0 +1,48 @@
+{
+ "module_summary": "UDP receive parser: an FSM accepts an IP header plus byte payload stream, extracts the 8-byte UDP header via a byte pointer into header registers, then forwards length-checked payload through a skid-buffered AXI stream.",
+ "anchors": [
+  {"id": "E56", "name": "state_reg", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Parser FSM: idle, read UDP header, read payload, last-word, wait-last", "lines": [149, 265, 402]},
+  {"id": "E3", "name": "s_ip_hdr_valid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Input IP header valid starts frame reception", "lines": [42, 271]},
+  {"id": "E4", "name": "s_ip_hdr_ready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "Header ready asserted in idle when output header slot free", "lines": [43, 205, 271]},
+  {"id": "E21", "name": "s_ip_payload_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "IP payload byte stream; source of UDP header bytes and payload", "lines": [60, 322, 443]},
+  {"id": "E22", "name": "s_ip_payload_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Input payload byte valid advancing header pointer and payload transfer", "lines": [61, 285, 326]},
+  {"id": "E23", "name": "s_ip_payload_axis_tready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "Input payload ready from FSM and output skid buffer readiness", "lines": [62, 206, 285]},
+  {"id": "E24", "name": "s_ip_payload_axis_tlast", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Frame end marker; triggers early-termination errors and return to idle", "lines": [63, 306, 330]},
+  {"id": "E26", "name": "m_udp_hdr_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Output UDP header valid after all 8 header bytes stored", "lines": [69, 208]},
+  {"id": "E27", "name": "m_udp_hdr_ready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Downstream header ready clears header valid", "lines": [70, 255]},
+  {"id": "E48", "name": "m_udp_payload_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Output UDP payload byte stream from skid buffer", "lines": [91, 469]},
+  {"id": "E49", "name": "m_udp_payload_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Output payload valid from skid buffer", "lines": [92, 470]},
+  {"id": "E50", "name": "m_udp_payload_axis_tready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Downstream payload ready controlling skid buffer and early ready", "lines": [93, 475, 488]},
+  {"id": "E91", "name": "m_udp_source_port_reg", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "UDP header field registers loaded byte-wise from payload stream", "lines": [185, 443, 444]},
+  {"id": "E93", "name": "m_udp_length_reg", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "UDP length field; initializes payload word counter", "lines": [187, 283, 447]},
+  {"id": "E75", "name": "m_eth_dest_mac_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Latched Ethernet/IP header fields passed through to output", "lines": [169, 421]},
+  {"id": "E58", "name": "store_ip_hdr", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Load enable for all IP/Ethernet header holding registers", "lines": [274, 420]},
+  {"id": "E59", "name": "store_udp_source_port_0", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Per-byte UDP header field load enable decoded from hdr_ptr", "lines": [292, 443]},
+  {"id": "E68", "name": "hdr_ptr_reg", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "UDP header byte index selecting which field byte to store", "lines": [287, 290, 416]},
+  {"id": "E70", "name": "word_count_reg", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Remaining payload byte count; detects length mismatch and last word", "lines": [328, 331, 340]},
+  {"id": "E72", "name": "last_word_data_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Holds last payload byte while discarding padding until tlast", "lines": [356, 440]},
+  {"id": "E67", "name": "store_last_word", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Load enable for last_word_data_reg", "lines": [341, 439]},
+  {"id": "E110", "name": "m_udp_payload_axis_tdata_reg", "role": "PIPELINE_REG", "importance": "minor", "trace": "data_backward", "why": "Skid buffer output data register", "lines": [454, 469, 512]},
+  {"id": "E115", "name": "temp_m_udp_payload_axis_tdata_reg", "role": "PIPELINE_REG", "importance": "minor", "trace": "data_backward", "why": "Skid buffer temp register when output stalls", "lines": [459, 516, 522]},
+  {"id": "E106", "name": "m_udp_payload_axis_tready_int_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Registered internal ready steering skid buffer transfers", "lines": [486, 507]},
+  {"id": "E120", "name": "store_udp_payload_int_to_output", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Skid buffer load-to-output enable", "lines": [491, 511]},
+  {"id": "E53", "name": "busy", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "Busy when FSM not idle", "lines": [100, 230]},
+  {"id": "E54", "name": "error_header_early_termination", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "Error: frame ended inside UDP header", "lines": [101, 231]},
+  {"id": "E55", "name": "error_payload_early_termination", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "Error: payload shorter than UDP length", "lines": [102, 232]}
+ ],
+ "groups": [
+  {"name": "Parser FSM", "kind": "CONTROLLER", "anchor_ids": ["E56", "E68", "E70", "E58", "E59", "E67", "E4", "E23", "E26"], "member_ids": ["E57", "E69", "E71", "E60", "E61", "E62", "E63", "E64", "E65", "E66", "E95", "E96", "E97", "E98", "E73", "E74", "E99", "E100", "E101", "E102", "E103"], "description": "Sequences header acceptance, byte-wise UDP header extraction, payload transfer and frame termination"},
+  {"name": "Header registers", "kind": "REGISTER_BANK", "anchor_ids": ["E91", "E93", "E75"], "member_ids": ["E76", "E77", "E78", "E79", "E80", "E81", "E82", "E83", "E84", "E85", "E86", "E87", "E88", "E89", "E90", "E92", "E94", "E28", "E29", "E30", "E31", "E32", "E33", "E34", "E35", "E36", "E37", "E38", "E39", "E40", "E41", "E42", "E43", "E44", "E45", "E46", "E47"], "description": "Hold IP/Ethernet header fields and extracted UDP ports, length, checksum"},
+  {"name": "Payload datapath", "kind": "DATAPATH", "anchor_ids": ["E21", "E22", "E24", "E72"], "member_ids": ["E104", "E105", "E107", "E108"], "description": "Passes payload bytes to internal stream, holding last byte when trimming padding"},
+  {"name": "Output skid buffer", "kind": "BUFFER", "anchor_ids": ["E110", "E115", "E106", "E120", "E48", "E49", "E50"], "member_ids": ["E109", "E111", "E112", "E113", "E114", "E116", "E117", "E118", "E119", "E121", "E122", "E51", "E52"], "description": "Two-register skid buffer driving the output UDP payload AXI stream"},
+  {"name": "Status outputs", "kind": "OTHER", "anchor_ids": ["E53", "E54", "E55"], "member_ids": ["E99", "E100", "E102"], "description": "Busy and early-termination error indications"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "ip_header_in", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12", "E13", "E14", "E15", "E16", "E17", "E18", "E19", "E20"]},
+  {"name": "ip_payload_in", "protocol": "STREAM", "direction": "IN", "member_ids": ["E21", "E22", "E23", "E24", "E25"]},
+  {"name": "udp_header_out", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E26", "E27", "E28", "E29", "E30", "E31", "E32", "E33", "E34", "E35", "E36", "E37", "E38", "E39", "E40", "E41", "E42", "E43", "E44", "E45", "E46", "E47"]},
+  {"name": "udp_payload_out", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E48", "E49", "E50", "E51", "E52"]},
+  {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E53", "E54", "E55"]}
+ ]
+}

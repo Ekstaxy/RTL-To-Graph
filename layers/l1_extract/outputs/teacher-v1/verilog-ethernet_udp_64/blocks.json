@@ -1,0 +1,5697 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-ethernet_udp_64",
+ "tops": [
+  "udp_64"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "udp_ip_rx_64": {
+   "source": "teacher",
+   "canonical_instance": "udp_64.udp_ip_rx_64_inst",
+   "file": "data/rtl/verilog-ethernet/rtl/udp_ip_rx_64.v",
+   "lines": [
+    34,
+    562
+   ],
+   "summary": "64-bit UDP receiver: a 5-state FSM latches parallel IP header fields, extracts the UDP header from the first payload word, then forwards length-trimmed payload through a skid-buffered AXI stream.",
+   "blocks": [
+    {
+     "name": "rx_fsm",
+     "kind": "CONTROLLER",
+     "description": "FSM sequencing header accept, UDP header parse, payload forwarding and discard",
+     "anchors": [
+      {
+       "id": "E58",
+       "name": "state_reg",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.0,
+       "struct_score": 97.4,
+       "trace": "control_backward",
+       "why": "Main FSM: idle, read header, read payload, payload last, wait last; drives readies and stores",
+       "lines": [
+        151,
+        284,
+        423
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "s_ip_hdr_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 56.7,
+       "struct_score": 57.7,
+       "trace": "control_backward",
+       "why": "IP header ready asserted in idle when no UDP header pending",
+       "lines": [
+        43,
+        201,
+        289
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "s_ip_payload_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 87.7,
+       "struct_score": 68.6,
+       "trace": "control_backward",
+       "why": "Input payload ready from FSM and skid-buffer availability",
+       "lines": [
+        63,
+        202,
+        304
+       ]
+      },
+      {
+       "id": "E27",
+       "name": "m_udp_hdr_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 82.0,
+       "struct_score": 47.8,
+       "trace": "control_backward",
+       "why": "UDP header valid raised after first payload word is parsed",
+       "lines": [
+        70,
+        204
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E59",
+       "name": "state_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E67",
+       "name": "m_udp_hdr_valid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E68",
+       "name": "m_udp_hdr_valid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E89",
+       "name": "s_ip_hdr_ready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E90",
+       "name": "s_ip_hdr_ready_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E91",
+       "name": "s_ip_payload_axis_tready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E92",
+       "name": "s_ip_payload_axis_tready_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E93",
+       "name": "busy_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "header_registers",
+     "kind": "REGISTER_BANK",
+     "description": "Latched IP header fields and UDP fields from first payload word",
+     "anchors": [
+      {
+       "id": "E60",
+       "name": "store_ip_hdr",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 16.8,
+       "struct_score": 11.2,
+       "trace": "control_backward",
+       "why": "Latches all parallel IP header fields when header is accepted",
+       "lines": [
+        154,
+        292,
+        439
+       ]
+      },
+      {
+       "id": "E61",
+       "name": "store_hdr_word_0",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.3,
+       "struct_score": 5.3,
+       "trace": "control_backward",
+       "why": "Loads UDP ports, length and checksum from first payload word",
+       "lines": [
+        155,
+        308,
+        463
+       ]
+      },
+      {
+       "id": "E83",
+       "name": "m_ip_source_ip_reg",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 45.5,
+       "struct_score": 14.2,
+       "trace": "data_backward",
+       "why": "Representative latched IP header field register driving output header",
+       "lines": [
+        178,
+        219,
+        454
+       ]
+      },
+      {
+       "id": "E87",
+       "name": "m_udp_length_reg",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 44.7,
+       "struct_score": 10.9,
+       "trace": "data_backward",
+       "why": "Representative UDP header field register extracted from first payload word",
+       "lines": [
+        182,
+        223,
+        468
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E69",
+       "name": "m_eth_dest_mac_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E70",
+       "name": "m_eth_src_mac_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E71",
+       "name": "m_eth_type_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E72",
+       "name": "m_ip_version_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E73",
+       "name": "m_ip_ihl_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E74",
+       "name": "m_ip_dscp_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E75",
+       "name": "m_ip_ecn_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E76",
+       "name": "m_ip_length_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E77",
+       "name": "m_ip_identification_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E78",
+       "name": "m_ip_flags_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E79",
+       "name": "m_ip_fragment_offset_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E80",
+       "name": "m_ip_ttl_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E81",
+       "name": "m_ip_protocol_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E82",
+       "name": "m_ip_header_checksum_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E84",
+       "name": "m_ip_dest_ip_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E85",
+       "name": "m_udp_source_port_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E86",
+       "name": "m_udp_dest_port_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E88",
+       "name": "m_udp_checksum_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "payload_length",
+     "kind": "COUNTER_TIMER",
+     "description": "Remaining byte counter with tkeep trimming and last-word hold",
+     "anchors": [
+      {
+       "id": "E63",
+       "name": "word_count_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 53.2,
+       "struct_score": 45.1,
+       "trace": "control_backward",
+       "why": "Remaining payload bytes from UDP length; trims tkeep and detects early termination",
+       "lines": [
+        158,
+        338,
+        340
+       ]
+      },
+      {
+       "id": "E65",
+       "name": "last_word_data_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 18.9,
+       "struct_score": 20.0,
+       "trace": "data_backward",
+       "why": "Holds final payload word while trailing padding is discarded",
+       "lines": [
+        160,
+        376,
+        459
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E64",
+       "name": "word_count_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E62",
+       "name": "store_last_word",
+       "kind": "comb"
+      },
+      {
+       "id": "E66",
+       "name": "last_word_keep_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "output_skid_buffer",
+     "kind": "BUFFER",
+     "description": "Two-register skid buffer driving output UDP payload AXI stream",
+     "anchors": [
+      {
+       "id": "E111",
+       "name": "temp_m_udp_payload_axis_tdata_reg",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 54.3,
+       "struct_score": 48.9,
+       "trace": "data_backward",
+       "why": "Skid buffer temp register holding payload while output stalls",
+       "lines": [
+        482,
+        542,
+        549
+       ]
+      },
+      {
+       "id": "E104",
+       "name": "m_udp_payload_axis_tready_int_early",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 15.9,
+       "struct_score": 7.6,
+       "trace": "control_backward",
+       "why": "Early ready from skid buffer gating input payload ready",
+       "lines": [
+        199,
+        327,
+        500
+       ]
+      },
+      {
+       "id": "E117",
+       "name": "store_udp_payload_int_to_output",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.3,
+       "struct_score": 5.2,
+       "trace": "control_backward",
+       "why": "Skid buffer enable loading payload into output register",
+       "lines": [
+        489,
+        516,
+        536
+       ]
+      },
+      {
+       "id": "E118",
+       "name": "store_udp_payload_int_to_temp",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.3,
+       "struct_score": 5.2,
+       "trace": "control_backward",
+       "why": "Skid buffer enable storing payload into temp register on stall",
+       "lines": [
+        490,
+        520,
+        548
+       ]
+      },
+      {
+       "id": "E49",
+       "name": "m_udp_payload_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 88.8,
+       "struct_score": 71.8,
+       "trace": "data_backward",
+       "why": "Output UDP payload data from skid buffer output register",
+       "lines": [
+        92,
+        493
+       ]
+      },
+      {
+       "id": "E51",
+       "name": "m_udp_payload_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 82.0,
+       "struct_score": 47.8,
+       "trace": "control_backward",
+       "why": "Output payload valid from skid buffer",
+       "lines": [
+        94,
+        495
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E98",
+       "name": "m_udp_payload_axis_tdata_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E99",
+       "name": "m_udp_payload_axis_tkeep_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E100",
+       "name": "m_udp_payload_axis_tvalid_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E101",
+       "name": "m_udp_payload_axis_tready_int_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E102",
+       "name": "m_udp_payload_axis_tlast_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E103",
+       "name": "m_udp_payload_axis_tuser_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E105",
+       "name": "m_udp_payload_axis_tdata_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E106",
+       "name": "m_udp_payload_axis_tkeep_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E107",
+       "name": "m_udp_payload_axis_tvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E108",
+       "name": "m_udp_payload_axis_tvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E109",
+       "name": "m_udp_payload_axis_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E110",
+       "name": "m_udp_payload_axis_tuser_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E112",
+       "name": "temp_m_udp_payload_axis_tkeep_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E113",
+       "name": "temp_m_udp_payload_axis_tvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E114",
+       "name": "temp_m_udp_payload_axis_tvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E115",
+       "name": "temp_m_udp_payload_axis_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E116",
+       "name": "temp_m_udp_payload_axis_tuser_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E119",
+       "name": "store_udp_payload_axis_temp_to_output",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "error_status",
+     "kind": "OTHER",
+     "description": "Registered busy and early-termination error outputs",
+     "anchors": [
+      {
+       "id": "E55",
+       "name": "busy",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 16.1,
+       "struct_score": 8.7,
+       "trace": "control_backward",
+       "why": "Busy level while FSM is not idle",
+       "lines": [
+        102,
+        226
+       ]
+      },
+      {
+       "id": "E56",
+       "name": "error_header_early_termination",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 16.1,
+       "struct_score": 8.7,
+       "trace": "control_backward",
+       "why": "Error pulse when tlast arrives in UDP header word",
+       "lines": [
+        103,
+        227
+       ]
+      },
+      {
+       "id": "E57",
+       "name": "error_payload_early_termination",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 44.1,
+       "struct_score": 8.7,
+       "trace": "control_backward",
+       "why": "Error pulse when frame ends before UDP length",
+       "lines": [
+        104,
+        228
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E94",
+       "name": "error_header_early_termination_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E95",
+       "name": "error_header_early_termination_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E96",
+       "name": "error_payload_early_termination_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E97",
+       "name": "error_payload_early_termination_next",
+       "kind": "comb"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E3",
+     "name": "s_ip_hdr_valid",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 84.6,
+     "struct_score": 57.2,
+     "trace": "interface",
+     "why": "IP header valid; accepted in idle to latch IP header fields",
+     "lines": [
+      42,
+      289
+     ]
+    },
+    {
+     "id": "E21",
+     "name": "s_ip_payload_axis_tdata",
+     "role": "INTERFACE_DATA",
+     "importance": "critical",
+     "score": 94.6,
+     "struct_score": 86.4,
+     "trace": "interface",
+     "why": "64-bit IP payload stream carrying UDP header word and payload",
+     "lines": [
+      60,
+      329,
+      464
+     ]
+    },
+    {
+     "id": "E22",
+     "name": "s_ip_payload_axis_tkeep",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 26.9,
+     "struct_score": 51.3,
+     "trace": "interface",
+     "why": "Input byte keep, trimmed by remaining count and checked for early end",
+     "lines": [
+      61,
+      342,
+      344
+     ]
+    },
+    {
+     "id": "E23",
+     "name": "s_ip_payload_axis_tvalid",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 87.7,
+     "struct_score": 68.7,
+     "trace": "interface",
+     "why": "Input payload stream valid qualifying header and payload transfers",
+     "lines": [
+      62,
+      304,
+      336
+     ]
+    },
+    {
+     "id": "E28",
+     "name": "m_udp_hdr_ready",
+     "role": "HANDSHAKE_READY",
+     "importance": "minor",
+     "score": 20.6,
+     "struct_score": 27.0,
+     "trace": "interface",
+     "why": "Downstream accepts UDP header, clearing header valid",
+     "lines": [
+      71,
+      273
+     ]
+    },
+    {
+     "id": "E52",
+     "name": "m_udp_payload_axis_tready",
+     "role": "HANDSHAKE_READY",
+     "importance": "critical",
+     "score": 80.1,
+     "struct_score": 40.8,
+     "trace": "interface",
+     "why": "Downstream ready controlling skid buffer and input backpressure",
+     "lines": [
+      95,
+      500,
+      513
+     ]
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "ip_header_in",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_ip_hdr_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_ip_hdr_ready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "s_eth_dest_mac",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_eth_src_mac",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "s_eth_type",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_ip_version",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_ip_ihl",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "s_ip_dscp",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "s_ip_ecn",
+       "kind": "port_in"
+      },
+      {
+       "id": "E12",
+       "name": "s_ip_length",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "s_ip_identification",
+       "kind": "port_in"
+      },
+      {
+       "id": "E14",
+       "name": "s_ip_flags",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "s_ip_fragment_offset",
+       "kind": "port_in"
+      },
+      {
+       "id": "E16",
+       "name": "s_ip_ttl",
+       "kind": "port_in"
+      },
+      {
+       "id": "E17",
+       "name": "s_ip_protocol",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "s_ip_header_checksum",
+       "kind": "port_in"
+      },
+      {
+       "id": "E19",
+       "name": "s_ip_source_ip",
+       "kind": "port_in"
+      },
+      {
+       "id": "E20",
+       "name": "s_ip_dest_ip",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "ip_payload_in",
+     "protocol": "STREAM",
+     "direction": "IN",
+     "member_ids": [
+      "E21",
+      "E22",
+      "E23",
+      "E24",
+      "E25",
+      "E26"
+     ],
+     "members": [
+      {
+       "id": "E21",
+       "name": "s_ip_payload_axis_tdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E22",
+       "name": "s_ip_payload_axis_tkeep",
+       "kind": "port_in"
+      },
+      {
+       "id": "E23",
+       "name": "s_ip_payload_axis_tvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E24",
+       "name": "s_ip_payload_axis_tready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E25",
+       "name": "s_ip_payload_axis_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E26",
+       "name": "s_ip_payload_axis_tuser",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "udp_header_out",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E27",
+      "E28",
+      "E29",
+      "E30",
+      "E31",
+      "E32",
+      "E33",
+      "E34",
+      "E35",
+      "E36",
+      "E37",
+      "E38",
+      "E39",
+      "E40",
+      "E41",
+      "E42",
+      "E43",
+      "E44",
+      "E45",
+      "E46",
+      "E47",
+      "E48"
+     ],
+     "members": [
+      {
+       "id": "E27",
+       "name": "m_udp_hdr_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E28",
+       "name": "m_udp_hdr_ready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E29",
+       "name": "m_eth_dest_mac",
+       "kind": "port_out"
+      },
+      {
+       "id": "E30",
+       "name": "m_eth_src_mac",
+       "kind": "port_out"
+      },
+      {
+       "id": "E31",
+       "name": "m_eth_type",
+       "kind": "port_out"
+      },
+      {
+       "id": "E32",
+       "name": "m_ip_version",
+       "kind": "port_out"
+      },
+      {
+       "id": "E33",
+       "name": "m_ip_ihl",
+       "kind": "port_out"
+      },
+      {
+       "id": "E34",
+       "name": "m_ip_dscp",
+       "kind": "port_out"
+      },
+      {
+       "id": "E35",
+       "name": "m_ip_ecn",
+       "kind": "port_out"
+      },
+      {
+       "id": "E36",
+       "name": "m_ip_length",
+       "kind": "port_out"
+      },
+      {
+       "id": "E37",
+       "name": "m_ip_identification",
+       "kind": "port_out"
+      },
+      {
+       "id": "E38",
+       "name": "m_ip_flags",
+       "kind": "port_out"
+      },
+      {
+       "id": "E39",
+       "name": "m_ip_fragment_offset",
+       "kind": "port_out"
+      },
+      {
+       "id": "E40",
+       "name": "m_ip_ttl",
+       "kind": "port_out"
+      },
+      {
+       "id": "E41",
+       "name": "m_ip_protocol",
+       "kind": "port_out"
+      },
+      {
+       "id": "E42",
+       "name": "m_ip_header_checksum",
+       "kind": "port_out"
+      },
+      {
+       "id": "E43",
+       "name": "m_ip_source_ip",
+       "kind": "port_out"
+      },
+      {
+       "id": "E44",
+       "name": "m_ip_dest_ip",
+       "kind": "port_out"
+      },
+      {
+       "id": "E45",
+       "name": "m_udp_source_port",
+       "kind": "port_out"
+      },
+      {
+       "id": "E46",
+       "name": "m_udp_dest_port",
+       "kind": "port_out"
+      },
+      {
+       "id": "E47",
+       "name": "m_udp_length",
+       "kind": "port_out"
+      },
+      {
+       "id": "E48",
+       "name": "m_udp_checksum",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "udp_payload_out",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E49",
+      "E50",
+      "E51",
+      "E52",
+      "E53",
+      "E54"
+     ],
+     "members": [
+      {
+       "id": "E49",
+       "name": "m_udp_payload_axis_tdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E50",
+       "name": "m_udp_payload_axis_tkeep",
+       "kind": "port_out"
+      },
+      {
+       "id": "E51",
+       "name": "m_udp_payload_axis_tvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E52",
+       "name": "m_udp_payload_axis_tready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E53",
+       "name": "m_udp_payload_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E54",
+       "name": "m_udp_payload_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E55",
+      "E56",
+      "E57"
+     ],
+     "members": [
+      {
+       "id": "E55",
+       "name": "busy",
+       "kind": "port_out"
+      },
+      {
+       "id": "E56",
+       "name": "error_header_early_termination",
+       "kind": "port_out"
+      },
+      {
+       "id": "E57",
+       "name": "error_payload_early_termination",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "axis_fifo": {
+   "source": "teacher",
+   "canonical_instance": "udp_64.genblk1.udp_checksum_gen_64_inst.payload_fifo",
+   "file": "data/rtl/verilog-ethernet/lib/axis/rtl/axis_fifo.v",
+   "lines": [
+    34,
+    563
+   ],
+   "summary": "AXI-Stream FIFO (64-bit, tkeep enabled): write logic packs beats into RAM via write/commit pointers; a read pipeline fetches via rd pointer to the output, with full/empty and depth status.",
+   "blocks": [
+    {
+     "name": "Write controller",
+     "kind": "CONTROLLER",
+     "description": "Accepts input beats, writes mem, manages commit pointer and frame drop/mark logic.",
+     "anchors": [
+      {
+       "id": "E26",
+       "name": "wr_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "critical",
+       "score": 86.1,
+       "struct_score": 62.6,
+       "trace": "control_backward",
+       "why": "Write pointer addressing mem, incremented on accepted input beats.",
+       "lines": [
+        186,
+        286,
+        287
+       ]
+      },
+      {
+       "id": "E27",
+       "name": "wr_ptr_commit_reg",
+       "role": "FIFO_PTR",
+       "importance": "minor",
+       "score": 27.6,
+       "struct_score": 53.8,
+       "trace": "control_backward",
+       "why": "Committed write pointer; frames become visible to reader once committed, used for empty.",
+       "lines": [
+        187,
+        201,
+        297
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 92.4,
+       "struct_score": 80.8,
+       "trace": "control_backward",
+       "why": "Input ready derived from full and drop/mark mode parameters.",
+       "lines": [
+        103,
+        216
+       ]
+      },
+      {
+       "id": "E33",
+       "name": "full",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 47.4,
+       "struct_score": 22.1,
+       "trace": "control_backward",
+       "why": "Pointer MSB compare; deasserts s_axis_tready and triggers drop/mark.",
+       "lines": [
+        199,
+        216
+       ]
+      },
+      {
+       "id": "E35",
+       "name": "full_wr",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 19.1,
+       "struct_score": 20.8,
+       "trace": "control_backward",
+       "why": "Frame overflow flag (frame mode only) forcing drop or send of oversize frame.",
+       "lines": [
+        203,
+        274
+       ]
+      },
+      {
+       "id": "E37",
+       "name": "drop_frame_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 21.7,
+       "struct_score": 31.3,
+       "trace": "control_backward",
+       "why": "Set while discarding the current frame; parameter-disabled in this config.",
+       "lines": [
+        207,
+        274,
+        277
+       ]
+      },
+      {
+       "id": "E38",
+       "name": "mark_frame_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 20.7,
+       "struct_score": 27.4,
+       "trace": "control_backward",
+       "why": "Marks truncated frame bad via tlast/tuser override when full.",
+       "lines": [
+        223,
+        226,
+        330
+       ]
+      },
+      {
+       "id": "E39",
+       "name": "send_frame_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 19.7,
+       "struct_score": 23.3,
+       "trace": "control_backward",
+       "why": "Forces commit of oversize frame beats in frame mode.",
+       "lines": [
+        209,
+        290
+       ]
+      },
+      {
+       "id": "E36",
+       "name": "s_frame_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.5,
+       "struct_score": 14.1,
+       "trace": "control_backward",
+       "why": "Tracks being inside an input frame for mark-when-full.",
+       "lines": [
+        205,
+        267,
+        330
+       ]
+      },
+      {
+       "id": "E45",
+       "name": "s_axis",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 20.5,
+       "struct_score": 26.6,
+       "trace": "data_backward",
+       "why": "Packed input word (data, tlast, tuser) written into mem.",
+       "lines": [
+        218,
+        337
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axis_tdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_tvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "s_axis_tuser",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_tkeep",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "FIFO RAM",
+     "kind": "MEMORY",
+     "description": "Dual-pointer RAM storing packed stream beats.",
+     "anchors": [
+      {
+       "id": "E29",
+       "name": "mem",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 96.3,
+       "struct_score": 90.8,
+       "trace": "data_backward",
+       "why": "Main FIFO RAM holding packed tdata/tlast/tuser beats.",
+       "lines": [
+        191,
+        286,
+        392
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E30",
+       "name": "mem_read_data_valid_reg",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Read pipeline",
+     "kind": "PIPELINE_STAGE",
+     "description": "Reads mem through RAM pipeline registers and drives the output stream handshake.",
+     "anchors": [
+      {
+       "id": "E28",
+       "name": "rd_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "critical",
+       "score": 84.9,
+       "struct_score": 58.2,
+       "trace": "control_backward",
+       "why": "Read pointer addressing mem, incremented when a beat enters the output pipeline.",
+       "lines": [
+        188,
+        392,
+        396
+       ]
+      },
+      {
+       "id": "E34",
+       "name": "empty",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 44.4,
+       "struct_score": 9.7,
+       "trace": "control_backward",
+       "why": "Commit pointer equals read pointer; blocks read pointer increment.",
+       "lines": [
+        201,
+        393
+       ]
+      },
+      {
+       "id": "E31",
+       "name": "m_axis_pipe_reg",
+       "role": "PIPELINE_REG",
+       "importance": "major",
+       "score": 62.6,
+       "struct_score": 76.3,
+       "trace": "data_backward",
+       "why": "RAM read pipeline stages carrying beats from mem to the output.",
+       "lines": [
+        195,
+        384,
+        392
+       ]
+      },
+      {
+       "id": "E32",
+       "name": "m_axis_tvalid_pipe_reg",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 18.2,
+       "struct_score": 17.2,
+       "trace": "control_backward",
+       "why": "Valid chain for the read pipeline stages; bubbles allow advance.",
+       "lines": [
+        196,
+        383,
+        395
+       ]
+      },
+      {
+       "id": "E47",
+       "name": "m_axis_tready_pipe",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.8,
+       "struct_score": 7.4,
+       "trace": "control_backward",
+       "why": "Ready into the read pipeline enabling stage transfers and reads.",
+       "lines": [
+        375,
+        389,
+        412
+       ]
+      },
+      {
+       "id": "E46",
+       "name": "m_axis",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 25.7,
+       "struct_score": 46.8,
+       "trace": "data_backward",
+       "why": "Packed output word from last pipeline stage unpacked into fields.",
+       "lines": [
+        229,
+        234
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "m_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 92.9,
+       "struct_score": 82.1,
+       "trace": "data_backward",
+       "why": "Output stream payload from last RAM pipeline stage.",
+       "lines": [
+        112,
+        550
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "m_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 86.4,
+       "struct_score": 63.8,
+       "trace": "control_backward",
+       "why": "Output valid driven from valid pipeline, optionally gated by pause.",
+       "lines": [
+        114,
+        548
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "m_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 79.9,
+       "struct_score": 40.3,
+       "trace": "interface",
+       "why": "Downstream ready advancing the output pipeline and read pointer.",
+       "lines": [
+        115,
+        547
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "m_axis_tlast",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 25.8,
+       "struct_score": 47.3,
+       "trace": "data_backward",
+       "why": "Output end-of-frame unpacked from stored beat.",
+       "lines": [
+        116,
+        552
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E48",
+       "name": "m_axis_tvalid_pipe",
+       "kind": "wire"
+      },
+      {
+       "id": "E49",
+       "name": "m_axis_tdata_pipe",
+       "kind": "wire"
+      },
+      {
+       "id": "E50",
+       "name": "m_axis_tkeep_pipe",
+       "kind": "wire"
+      },
+      {
+       "id": "E51",
+       "name": "m_axis_tlast_pipe",
+       "kind": "wire"
+      },
+      {
+       "id": "E52",
+       "name": "m_axis_tid_pipe",
+       "kind": "wire"
+      },
+      {
+       "id": "E53",
+       "name": "m_axis_tdest_pipe",
+       "kind": "wire"
+      },
+      {
+       "id": "E54",
+       "name": "m_axis_tuser_pipe",
+       "kind": "wire"
+      },
+      {
+       "id": "E55",
+       "name": "m_axis_tready_out",
+       "kind": "wire"
+      },
+      {
+       "id": "E56",
+       "name": "m_axis_tvalid_out",
+       "kind": "wire"
+      },
+      {
+       "id": "E57",
+       "name": "m_axis_tdata_out",
+       "kind": "wire"
+      },
+      {
+       "id": "E58",
+       "name": "m_axis_tkeep_out",
+       "kind": "wire"
+      },
+      {
+       "id": "E59",
+       "name": "m_axis_tlast_out",
+       "kind": "wire"
+      },
+      {
+       "id": "E60",
+       "name": "m_axis_tid_out",
+       "kind": "wire"
+      },
+      {
+       "id": "E61",
+       "name": "m_axis_tdest_out",
+       "kind": "wire"
+      },
+      {
+       "id": "E62",
+       "name": "m_axis_tuser_out",
+       "kind": "wire"
+      },
+      {
+       "id": "E63",
+       "name": "pipe_ready",
+       "kind": "wire"
+      },
+      {
+       "id": "E12",
+       "name": "m_axis_tkeep",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "m_axis_tid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "m_axis_tdest",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "m_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "Status",
+     "kind": "REGISTER_BANK",
+     "description": "Registered depth and frame-event status outputs.",
+     "anchors": [
+      {
+       "id": "E21",
+       "name": "status_depth",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 49.0,
+       "struct_score": 28.3,
+       "trace": "data_backward",
+       "why": "FIFO occupancy output from registered write-read pointer difference.",
+       "lines": [
+        130,
+        253
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "status_depth_commit",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 21.0,
+       "struct_score": 28.3,
+       "trace": "data_backward",
+       "why": "Committed occupancy output from commit pointer minus read pointer.",
+       "lines": [
+        131,
+        254
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "status_overflow",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 17.6,
+       "struct_score": 14.8,
+       "trace": "data_backward",
+       "why": "Pulse reporting a dropped frame due to overflow.",
+       "lines": [
+        132,
+        255
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "status_bad_frame",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 17.6,
+       "struct_score": 14.8,
+       "trace": "data_backward",
+       "why": "Pulse reporting a dropped bad frame.",
+       "lines": [
+        133,
+        256
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "status_good_frame",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 17.6,
+       "struct_score": 14.8,
+       "trace": "data_backward",
+       "why": "Pulse reporting a committed good frame.",
+       "lines": [
+        134,
+        257
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E40",
+       "name": "depth_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E41",
+       "name": "depth_commit_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E42",
+       "name": "overflow_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E43",
+       "name": "bad_frame_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E44",
+       "name": "good_frame_reg",
+       "kind": "reg"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E3",
+     "name": "s_axis_tdata",
+     "role": "INTERFACE_DATA",
+     "importance": "critical",
+     "score": 91.5,
+     "struct_score": 78.6,
+     "trace": "interface",
+     "why": "Input stream payload packed into s_axis and written to mem.",
+     "lines": [
+      100,
+      221
+     ]
+    },
+    {
+     "id": "E4",
+     "name": "s_axis_tkeep",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 29.0,
+     "struct_score": 58.8,
+     "trace": "interface",
+     "why": "Input byte-enable sideband packed with each beat into mem.",
+     "lines": [
+      101,
+      222
+     ]
+    },
+    {
+     "id": "E5",
+     "name": "s_axis_tvalid",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 91.4,
+     "struct_score": 78.2,
+     "trace": "interface",
+     "why": "Input valid; with tready triggers writes into mem.",
+     "lines": [
+      102,
+      265,
+      310
+     ]
+    },
+    {
+     "id": "E7",
+     "name": "s_axis_tlast",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 31.7,
+     "struct_score": 68.3,
+     "trace": "interface",
+     "why": "Input end-of-frame stored with beat and steering frame tracking.",
+     "lines": [
+      104,
+      223,
+      267
+     ]
+    },
+    {
+     "id": "E10",
+     "name": "s_axis_tuser",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 27.8,
+     "struct_score": 54.4,
+     "trace": "interface",
+     "why": "Input user sideband stored with beat, overridden on marked frames.",
+     "lines": [
+      107,
+      226
+     ]
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axis",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axis_tdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_tkeep",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_tvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_tready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_axis_tid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_axis_tdest",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "s_axis_tuser",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axis",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "m_axis_tdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "m_axis_tkeep",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "m_axis_tvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "m_axis_tready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "m_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "m_axis_tid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "m_axis_tdest",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "m_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "pause",
+     "protocol": "REQ_ACK",
+     "direction": "IN",
+     "member_ids": [
+      "E19",
+      "E20"
+     ],
+     "members": [
+      {
+       "id": "E19",
+       "name": "pause_req",
+       "kind": "port_in"
+      },
+      {
+       "id": "E20",
+       "name": "pause_ack",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E21",
+      "E22",
+      "E23",
+      "E24",
+      "E25"
+     ],
+     "members": [
+      {
+       "id": "E21",
+       "name": "status_depth",
+       "kind": "port_out"
+      },
+      {
+       "id": "E22",
+       "name": "status_depth_commit",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "status_overflow",
+       "kind": "port_out"
+      },
+      {
+       "id": "E24",
+       "name": "status_bad_frame",
+       "kind": "port_out"
+      },
+      {
+       "id": "E25",
+       "name": "status_good_frame",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "udp_checksum_gen_64": {
+   "source": "teacher",
+   "canonical_instance": "udp_64.genblk1.udp_checksum_gen_64_inst",
+   "file": "data/rtl/verilog-ethernet/rtl/udp_checksum_gen_64.v",
+   "lines": [
+    34,
+    595
+   ],
+   "summary": "UDP checksum/length generator: an FSM sums pseudo-header and 64-bit payload words into a ones-complement checksum while payload is buffered in an AXI-stream FIFO and computed headers queue in a header FIFO.",
+   "blocks": [
+    {
+     "name": "Checksum FSM",
+     "kind": "CONTROLLER",
+     "description": "Sequences header capture, payload summation and checksum finalization.",
+     "anchors": [
+      {
+       "id": "E56",
+       "name": "state_reg",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 98.0,
+       "struct_score": 94.8,
+       "trace": "control_backward",
+       "why": "Sequences idle, header sum, payload sum and two finish-sum states.",
+       "lines": [
+        462,
+        559
+       ]
+      },
+      {
+       "id": "E58",
+       "name": "store_udp_hdr",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 44.1,
+       "struct_score": 8.7,
+       "trace": "control_backward",
+       "why": "Latches all input header fields into holding registers on header accept.",
+       "lines": [
+        468,
+        575
+       ]
+      },
+      {
+       "id": "E59",
+       "name": "shift_payload_in",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 42.9,
+       "struct_score": 3.8,
+       "trace": "control_backward",
+       "why": "Gates payload stream into FIFO and tready during payload sum state.",
+       "lines": [
+        249,
+        491
+       ]
+      },
+      {
+       "id": "E85",
+       "name": "hdr_valid_reg",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 18.5,
+       "struct_score": 18.3,
+       "trace": "control_backward",
+       "why": "Checksum-complete pulse requesting header FIFO write.",
+       "lines": [
+        348,
+        564
+       ]
+      },
+      {
+       "id": "E55",
+       "name": "busy",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 15.7,
+       "struct_score": 7.1,
+       "trace": "none",
+       "why": "Level busy when FSM not idle.",
+       "lines": [
+        442
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E57",
+       "name": "state_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E91",
+       "name": "busy_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E86",
+       "name": "hdr_valid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E87",
+       "name": "s_udp_hdr_ready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E88",
+       "name": "s_udp_hdr_ready_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E89",
+       "name": "s_udp_payload_axis_tready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E90",
+       "name": "s_udp_payload_axis_tready_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Checksum datapath",
+     "kind": "DATAPATH",
+     "description": "Holds header fields and accumulates pseudo-header and payload ones-complement sum and length.",
+     "anchors": [
+      {
+       "id": "E63",
+       "name": "checksum_reg",
+       "role": "DATAPATH_MAJOR",
+       "importance": "critical",
+       "score": 75.4,
+       "struct_score": 21.8,
+       "trace": "data_backward",
+       "why": "Ones-complement checksum accumulator, finalized and written to header FIFO.",
+       "lines": [
+        383,
+        523
+       ]
+      },
+      {
+       "id": "E65",
+       "name": "checksum_temp1_reg",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 18.8,
+       "struct_score": 19.4,
+       "trace": "data_backward",
+       "why": "Partial sum of low payload bytes feeding accumulator next cycle.",
+       "lines": [
+        483,
+        571
+       ]
+      },
+      {
+       "id": "E151",
+       "name": "word_cnt",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 17.4,
+       "struct_score": 13.9,
+       "trace": "data_backward",
+       "why": "Valid byte count from tkeep added to length and checksum.",
+       "lines": [
+        523,
+        525
+       ]
+      },
+      {
+       "id": "E61",
+       "name": "frame_ptr_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 50.4,
+       "struct_score": 34.0,
+       "trace": "data_backward",
+       "why": "Counts UDP length bytes, stored as udp_length in header FIFO.",
+       "lines": [
+        382,
+        525
+       ]
+      },
+      {
+       "id": "E82",
+       "name": "ip_dest_ip_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 18.2,
+       "struct_score": 17.0,
+       "trace": "data_backward",
+       "why": "Representative latched header field, summed into pseudo-header checksum.",
+       "lines": [
+        484,
+        589
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E64",
+       "name": "checksum_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E66",
+       "name": "checksum_temp1_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E67",
+       "name": "checksum_temp2_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E68",
+       "name": "checksum_temp2_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E60",
+       "name": "checksum_part",
+       "kind": "comb"
+      },
+      {
+       "id": "E62",
+       "name": "frame_ptr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E69",
+       "name": "eth_dest_mac_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E70",
+       "name": "eth_src_mac_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E71",
+       "name": "eth_type_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E72",
+       "name": "ip_version_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E73",
+       "name": "ip_ihl_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E74",
+       "name": "ip_dscp_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E75",
+       "name": "ip_ecn_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E76",
+       "name": "ip_identification_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E77",
+       "name": "ip_flags_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E78",
+       "name": "ip_fragment_offset_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E79",
+       "name": "ip_ttl_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E80",
+       "name": "ip_header_checksum_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E81",
+       "name": "ip_source_ip_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E83",
+       "name": "udp_source_port_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E84",
+       "name": "udp_dest_port_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Header FIFO",
+     "kind": "BUFFER",
+     "description": "Queues completed headers with length and checksum, drives output header registers.",
+     "anchors": [
+      {
+       "id": "E125",
+       "name": "udp_checksum_mem",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 85.8,
+       "struct_score": 61.7,
+       "trace": "data_backward",
+       "why": "Header FIFO memory (representative) storing computed checksums per frame.",
+       "lines": [
+        383,
+        436
+       ]
+      },
+      {
+       "id": "E104",
+       "name": "header_fifo_wr_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 62.1,
+       "struct_score": 75.1,
+       "trace": "control_backward",
+       "why": "Header FIFO write pointer addressing header memories.",
+       "lines": [
+        353,
+        366
+       ]
+      },
+      {
+       "id": "E106",
+       "name": "header_fifo_rd_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 62.3,
+       "struct_score": 75.5,
+       "trace": "control_backward",
+       "why": "Header FIFO read pointer addressing header memories.",
+       "lines": [
+        401,
+        419
+       ]
+      },
+      {
+       "id": "E148",
+       "name": "header_fifo_write",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 16.2,
+       "struct_score": 9.0,
+       "trace": "control_backward",
+       "why": "Writes header fields, length and checksum into header FIFO when not full.",
+       "lines": [
+        352,
+        365
+       ]
+      },
+      {
+       "id": "E149",
+       "name": "header_fifo_read",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 16.3,
+       "struct_score": 9.5,
+       "trace": "control_backward",
+       "why": "Pops header FIFO into output registers when output free.",
+       "lines": [
+        399,
+        418
+       ]
+      },
+      {
+       "id": "E146",
+       "name": "header_fifo_full",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 15.6,
+       "struct_score": 6.6,
+       "trace": "control_backward",
+       "why": "Blocks header FIFO write and input header ready.",
+       "lines": [
+        308,
+        350
+       ]
+      },
+      {
+       "id": "E147",
+       "name": "header_fifo_empty",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 15.5,
+       "struct_score": 6.2,
+       "trace": "control_backward",
+       "why": "Blocks header read and clears output header valid.",
+       "lines": [
+        311,
+        397
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E105",
+       "name": "header_fifo_wr_ptr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E107",
+       "name": "header_fifo_rd_ptr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E150",
+       "name": "header_fifo_ready",
+       "kind": "wire"
+      },
+      {
+       "id": "E108",
+       "name": "eth_dest_mac_mem",
+       "kind": "mem"
+      },
+      {
+       "id": "E109",
+       "name": "eth_src_mac_mem",
+       "kind": "mem"
+      },
+      {
+       "id": "E110",
+       "name": "eth_type_mem",
+       "kind": "mem"
+      },
+      {
+       "id": "E111",
+       "name": "ip_version_mem",
+       "kind": "mem"
+      },
+      {
+       "id": "E112",
+       "name": "ip_ihl_mem",
+       "kind": "mem"
+      },
+      {
+       "id": "E113",
+       "name": "ip_dscp_mem",
+       "kind": "mem"
+      },
+      {
+       "id": "E114",
+       "name": "ip_ecn_mem",
+       "kind": "mem"
+      },
+      {
+       "id": "E115",
+       "name": "ip_identification_mem",
+       "kind": "mem"
+      },
+      {
+       "id": "E116",
+       "name": "ip_flags_mem",
+       "kind": "mem"
+      },
+      {
+       "id": "E117",
+       "name": "ip_fragment_offset_mem",
+       "kind": "mem"
+      },
+      {
+       "id": "E118",
+       "name": "ip_ttl_mem",
+       "kind": "mem"
+      },
+      {
+       "id": "E119",
+       "name": "ip_header_checksum_mem",
+       "kind": "mem"
+      },
+      {
+       "id": "E120",
+       "name": "ip_source_ip_mem",
+       "kind": "mem"
+      },
+      {
+       "id": "E121",
+       "name": "ip_dest_ip_mem",
+       "kind": "mem"
+      },
+      {
+       "id": "E122",
+       "name": "udp_source_port_mem",
+       "kind": "mem"
+      },
+      {
+       "id": "E123",
+       "name": "udp_dest_port_mem",
+       "kind": "mem"
+      },
+      {
+       "id": "E124",
+       "name": "udp_length_mem",
+       "kind": "mem"
+      },
+      {
+       "id": "E126",
+       "name": "m_eth_dest_mac_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E127",
+       "name": "m_eth_src_mac_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E128",
+       "name": "m_eth_type_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E129",
+       "name": "m_ip_version_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E130",
+       "name": "m_ip_ihl_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E131",
+       "name": "m_ip_dscp_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E132",
+       "name": "m_ip_ecn_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E133",
+       "name": "m_ip_identification_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E134",
+       "name": "m_ip_flags_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E135",
+       "name": "m_ip_fragment_offset_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E136",
+       "name": "m_ip_ttl_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E137",
+       "name": "m_ip_header_checksum_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E138",
+       "name": "m_ip_source_ip_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E139",
+       "name": "m_ip_dest_ip_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E140",
+       "name": "m_udp_source_port_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E141",
+       "name": "m_udp_dest_port_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E142",
+       "name": "m_udp_length_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E143",
+       "name": "m_udp_checksum_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E144",
+       "name": "m_udp_hdr_valid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E145",
+       "name": "m_udp_hdr_valid_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Payload FIFO",
+     "kind": "BUFFER",
+     "description": "Buffers payload while checksum is computed, then streams it out.",
+     "anchors": [
+      {
+       "id": "E23",
+       "name": "s_udp_payload_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 83.7,
+       "struct_score": 53.9,
+       "trace": "interface",
+       "why": "Payload beat valid summed and pushed into payload FIFO.",
+       "lines": [
+        249,
+        493
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "s_udp_payload_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 55.7,
+       "struct_score": 54.1,
+       "trace": "interface",
+       "why": "Payload ready from FIFO ready gated by shift_payload_in.",
+       "lines": [
+        250,
+        493
+       ]
+      },
+      {
+       "id": "E21",
+       "name": "s_udp_payload_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 90.7,
+       "struct_score": 76.6,
+       "trace": "interface",
+       "why": "Payload bytes summed into checksum and buffered in FIFO.",
+       "lines": [
+        247,
+        505
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "s_udp_payload_axis_tkeep",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 26.1,
+       "struct_score": 48.4,
+       "trace": "interface",
+       "why": "Byte enables selecting summed bytes and word count.",
+       "lines": [
+        496,
+        503
+       ]
+      },
+      {
+       "id": "E49",
+       "name": "m_udp_payload_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 59.4,
+       "struct_score": 67.3,
+       "trace": "data_backward",
+       "why": "Buffered payload output from payload FIFO.",
+       "lines": [
+        254
+       ]
+      },
+      {
+       "id": "E51",
+       "name": "m_udp_payload_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 24.6,
+       "struct_score": 42.6,
+       "trace": "interface",
+       "why": "Payload FIFO output valid.",
+       "lines": [
+        256
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "payload_fifo",
+       "module": "axis_fifo"
+      }
+     ],
+     "members": [
+      {
+       "id": "E92",
+       "name": "s_udp_payload_fifo_tdata",
+       "kind": "wire"
+      },
+      {
+       "id": "E93",
+       "name": "s_udp_payload_fifo_tkeep",
+       "kind": "wire"
+      },
+      {
+       "id": "E94",
+       "name": "s_udp_payload_fifo_tvalid",
+       "kind": "wire"
+      },
+      {
+       "id": "E95",
+       "name": "s_udp_payload_fifo_tready",
+       "kind": "wire"
+      },
+      {
+       "id": "E96",
+       "name": "s_udp_payload_fifo_tlast",
+       "kind": "wire"
+      },
+      {
+       "id": "E97",
+       "name": "s_udp_payload_fifo_tuser",
+       "kind": "wire"
+      },
+      {
+       "id": "E98",
+       "name": "m_udp_payload_fifo_tdata",
+       "kind": "wire"
+      },
+      {
+       "id": "E99",
+       "name": "m_udp_payload_fifo_tkeep",
+       "kind": "wire"
+      },
+      {
+       "id": "E100",
+       "name": "m_udp_payload_fifo_tvalid",
+       "kind": "wire"
+      },
+      {
+       "id": "E101",
+       "name": "m_udp_payload_fifo_tready",
+       "kind": "wire"
+      },
+      {
+       "id": "E102",
+       "name": "m_udp_payload_fifo_tlast",
+       "kind": "wire"
+      },
+      {
+       "id": "E103",
+       "name": "m_udp_payload_fifo_tuser",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Header interfaces",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Parallel UDP header input and output handshakes and computed fields.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "s_udp_hdr_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 84.7,
+       "struct_score": 57.5,
+       "trace": "interface",
+       "why": "Input header valid starting a checksum computation.",
+       "lines": [
+        467
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "s_udp_hdr_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 56.8,
+       "struct_score": 57.9,
+       "trace": "interface",
+       "why": "Input header ready in idle when header FIFO has room.",
+       "lines": [
+        440,
+        467
+       ]
+      },
+      {
+       "id": "E27",
+       "name": "m_udp_hdr_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 87.2,
+       "struct_score": 66.5,
+       "trace": "interface",
+       "why": "Output header valid when header FIFO entry loaded.",
+       "lines": [
+        319,
+        395
+       ]
+      },
+      {
+       "id": "E28",
+       "name": "m_udp_hdr_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 49.3,
+       "struct_score": 29.6,
+       "trace": "interface",
+       "why": "Output header ready enabling next header FIFO read.",
+       "lines": [
+        395
+       ]
+      },
+      {
+       "id": "E48",
+       "name": "m_udp_checksum",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 82.8,
+       "struct_score": 50.7,
+       "trace": "data_backward",
+       "why": "Computed UDP checksum output.",
+       "lines": [
+        340
+       ]
+      },
+      {
+       "id": "E47",
+       "name": "m_udp_length",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 54.8,
+       "struct_score": 50.7,
+       "trace": "data_backward",
+       "why": "Computed UDP length output.",
+       "lines": [
+        339
+       ]
+      },
+      {
+       "id": "E36",
+       "name": "m_ip_length",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 26.8,
+       "struct_score": 50.7,
+       "trace": "data_backward",
+       "why": "IP length derived from UDP length plus 20.",
+       "lines": [
+        328
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_udp_hdr",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_udp_hdr_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_udp_hdr_ready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "s_eth_dest_mac",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_eth_src_mac",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "s_eth_type",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_ip_version",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_ip_ihl",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "s_ip_dscp",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "s_ip_ecn",
+       "kind": "port_in"
+      },
+      {
+       "id": "E12",
+       "name": "s_ip_identification",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "s_ip_flags",
+       "kind": "port_in"
+      },
+      {
+       "id": "E14",
+       "name": "s_ip_fragment_offset",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "s_ip_ttl",
+       "kind": "port_in"
+      },
+      {
+       "id": "E16",
+       "name": "s_ip_header_checksum",
+       "kind": "port_in"
+      },
+      {
+       "id": "E17",
+       "name": "s_ip_source_ip",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "s_ip_dest_ip",
+       "kind": "port_in"
+      },
+      {
+       "id": "E19",
+       "name": "s_udp_source_port",
+       "kind": "port_in"
+      },
+      {
+       "id": "E20",
+       "name": "s_udp_dest_port",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_udp_payload_axis",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E21",
+      "E22",
+      "E23",
+      "E24",
+      "E25",
+      "E26"
+     ],
+     "members": [
+      {
+       "id": "E21",
+       "name": "s_udp_payload_axis_tdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E22",
+       "name": "s_udp_payload_axis_tkeep",
+       "kind": "port_in"
+      },
+      {
+       "id": "E23",
+       "name": "s_udp_payload_axis_tvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E24",
+       "name": "s_udp_payload_axis_tready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E25",
+       "name": "s_udp_payload_axis_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E26",
+       "name": "s_udp_payload_axis_tuser",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_udp_hdr",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E27",
+      "E28",
+      "E29",
+      "E30",
+      "E31",
+      "E32",
+      "E33",
+      "E34",
+      "E35",
+      "E36",
+      "E37",
+      "E38",
+      "E39",
+      "E40",
+      "E41",
+      "E42",
+      "E43",
+      "E44",
+      "E45",
+      "E46",
+      "E47",
+      "E48"
+     ],
+     "members": [
+      {
+       "id": "E27",
+       "name": "m_udp_hdr_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E28",
+       "name": "m_udp_hdr_ready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E29",
+       "name": "m_eth_dest_mac",
+       "kind": "port_out"
+      },
+      {
+       "id": "E30",
+       "name": "m_eth_src_mac",
+       "kind": "port_out"
+      },
+      {
+       "id": "E31",
+       "name": "m_eth_type",
+       "kind": "port_out"
+      },
+      {
+       "id": "E32",
+       "name": "m_ip_version",
+       "kind": "port_out"
+      },
+      {
+       "id": "E33",
+       "name": "m_ip_ihl",
+       "kind": "port_out"
+      },
+      {
+       "id": "E34",
+       "name": "m_ip_dscp",
+       "kind": "port_out"
+      },
+      {
+       "id": "E35",
+       "name": "m_ip_ecn",
+       "kind": "port_out"
+      },
+      {
+       "id": "E36",
+       "name": "m_ip_length",
+       "kind": "port_out"
+      },
+      {
+       "id": "E37",
+       "name": "m_ip_identification",
+       "kind": "port_out"
+      },
+      {
+       "id": "E38",
+       "name": "m_ip_flags",
+       "kind": "port_out"
+      },
+      {
+       "id": "E39",
+       "name": "m_ip_fragment_offset",
+       "kind": "port_out"
+      },
+      {
+       "id": "E40",
+       "name": "m_ip_ttl",
+       "kind": "port_out"
+      },
+      {
+       "id": "E41",
+       "name": "m_ip_protocol",
+       "kind": "port_out"
+      },
+      {
+       "id": "E42",
+       "name": "m_ip_header_checksum",
+       "kind": "port_out"
+      },
+      {
+       "id": "E43",
+       "name": "m_ip_source_ip",
+       "kind": "port_out"
+      },
+      {
+       "id": "E44",
+       "name": "m_ip_dest_ip",
+       "kind": "port_out"
+      },
+      {
+       "id": "E45",
+       "name": "m_udp_source_port",
+       "kind": "port_out"
+      },
+      {
+       "id": "E46",
+       "name": "m_udp_dest_port",
+       "kind": "port_out"
+      },
+      {
+       "id": "E47",
+       "name": "m_udp_length",
+       "kind": "port_out"
+      },
+      {
+       "id": "E48",
+       "name": "m_udp_checksum",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "m_udp_payload_axis",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E49",
+      "E50",
+      "E51",
+      "E52",
+      "E53",
+      "E54"
+     ],
+     "members": [
+      {
+       "id": "E49",
+       "name": "m_udp_payload_axis_tdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E50",
+       "name": "m_udp_payload_axis_tkeep",
+       "kind": "port_out"
+      },
+      {
+       "id": "E51",
+       "name": "m_udp_payload_axis_tvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E52",
+       "name": "m_udp_payload_axis_tready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E53",
+       "name": "m_udp_payload_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E54",
+       "name": "m_udp_payload_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E55"
+     ],
+     "members": [
+      {
+       "id": "E55",
+       "name": "busy",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "udp_ip_tx_64": {
+   "source": "teacher",
+   "canonical_instance": "udp_64.udp_ip_tx_64_inst",
+   "file": "data/rtl/verilog-ethernet/rtl/udp_ip_tx_64.v",
+   "lines": [
+    34,
+    551
+   ],
+   "summary": "UDP transmit framer (64-bit): an FSM latches parallel UDP/IP header fields, emits the 8-byte UDP header word then forwards payload with length tracking and truncation, through a skid-buffered AXI-Stream output, passing IP header fields on.",
+   "blocks": [
+    {
+     "name": "Framing FSM",
+     "kind": "CONTROLLER",
+     "description": "Sequences header capture, UDP header word and payload forwarding.",
+     "anchors": [
+      {
+       "id": "E56",
+       "name": "state_reg",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.0,
+       "struct_score": 97.5,
+       "trace": "control_backward",
+       "why": "Controller: idle, write header, payload, payload-last, wait-last; drives readies and output mux.",
+       "lines": [
+        148,
+        273,
+        419
+       ]
+      },
+      {
+       "id": "E58",
+       "name": "store_udp_hdr",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 45.4,
+       "struct_score": 13.7,
+       "trace": "control_backward",
+       "why": "Latches all header fields into holding registers.",
+       "lines": [
+        151,
+        280,
+        435
+       ]
+      },
+      {
+       "id": "E59",
+       "name": "store_last_word",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 14.8,
+       "struct_score": 3.4,
+       "trace": "control_backward",
+       "why": "Captures current output word into last-word registers.",
+       "lines": [
+        152,
+        331,
+        458
+       ]
+      },
+      {
+       "id": "E60",
+       "name": "word_count_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 53.5,
+       "struct_score": 45.9,
+       "trace": "control_backward",
+       "why": "Remaining payload bytes; sets final tkeep and detects length mismatch.",
+       "lines": [
+        154,
+        335,
+        337
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E57",
+       "name": "state_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E61",
+       "name": "word_count_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E68",
+       "name": "s_udp_hdr_ready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E69",
+       "name": "s_udp_hdr_ready_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E70",
+       "name": "s_udp_payload_axis_tready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E71",
+       "name": "s_udp_payload_axis_tready_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E72",
+       "name": "m_ip_hdr_valid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E73",
+       "name": "m_ip_hdr_valid_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Header registers",
+     "kind": "REGISTER_BANK",
+     "description": "Latched IP pass-through fields and UDP header fields.",
+     "anchors": [
+      {
+       "id": "E64",
+       "name": "udp_source_port_reg",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 45.0,
+       "struct_score": 12.4,
+       "trace": "data_backward",
+       "why": "Representative latched UDP header field emitted in header word.",
+       "lines": [
+        159,
+        307,
+        452
+       ]
+      },
+      {
+       "id": "E39",
+       "name": "m_ip_length",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 56.6,
+       "struct_score": 57.2,
+       "trace": "data_backward",
+       "why": "IP total length computed as UDP length plus 20.",
+       "lines": [
+        82,
+        208
+       ]
+      },
+      {
+       "id": "E32",
+       "name": "m_eth_dest_mac",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 32.2,
+       "struct_score": 70.2,
+       "trace": "data_backward",
+       "why": "Representative passed-through Ethernet/IP header field output.",
+       "lines": [
+        75,
+        201
+       ]
+      },
+      {
+       "id": "E30",
+       "name": "m_ip_hdr_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 54.3,
+       "struct_score": 48.7,
+       "trace": "data_backward",
+       "why": "IP header valid output set when header stored.",
+       "lines": [
+        73,
+        200
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E65",
+       "name": "udp_dest_port_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E66",
+       "name": "udp_length_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E67",
+       "name": "udp_checksum_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E74",
+       "name": "m_eth_dest_mac_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E75",
+       "name": "m_eth_src_mac_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E76",
+       "name": "m_eth_type_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E77",
+       "name": "m_ip_version_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E78",
+       "name": "m_ip_ihl_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E79",
+       "name": "m_ip_dscp_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E80",
+       "name": "m_ip_ecn_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E81",
+       "name": "m_ip_length_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E82",
+       "name": "m_ip_identification_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E83",
+       "name": "m_ip_flags_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E84",
+       "name": "m_ip_fragment_offset_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E85",
+       "name": "m_ip_ttl_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E86",
+       "name": "m_ip_protocol_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E87",
+       "name": "m_ip_header_checksum_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E88",
+       "name": "m_ip_source_ip_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E89",
+       "name": "m_ip_dest_ip_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E33",
+       "name": "m_eth_src_mac",
+       "kind": "port_out"
+      },
+      {
+       "id": "E34",
+       "name": "m_eth_type",
+       "kind": "port_out"
+      },
+      {
+       "id": "E35",
+       "name": "m_ip_version",
+       "kind": "port_out"
+      },
+      {
+       "id": "E36",
+       "name": "m_ip_ihl",
+       "kind": "port_out"
+      },
+      {
+       "id": "E37",
+       "name": "m_ip_dscp",
+       "kind": "port_out"
+      },
+      {
+       "id": "E38",
+       "name": "m_ip_ecn",
+       "kind": "port_out"
+      },
+      {
+       "id": "E40",
+       "name": "m_ip_identification",
+       "kind": "port_out"
+      },
+      {
+       "id": "E41",
+       "name": "m_ip_flags",
+       "kind": "port_out"
+      },
+      {
+       "id": "E42",
+       "name": "m_ip_fragment_offset",
+       "kind": "port_out"
+      },
+      {
+       "id": "E43",
+       "name": "m_ip_ttl",
+       "kind": "port_out"
+      },
+      {
+       "id": "E44",
+       "name": "m_ip_protocol",
+       "kind": "port_out"
+      },
+      {
+       "id": "E45",
+       "name": "m_ip_header_checksum",
+       "kind": "port_out"
+      },
+      {
+       "id": "E46",
+       "name": "m_ip_source_ip",
+       "kind": "port_out"
+      },
+      {
+       "id": "E47",
+       "name": "m_ip_dest_ip",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "Payload datapath",
+     "kind": "DATAPATH",
+     "description": "Selects header word, payload or held last word for output.",
+     "anchors": [
+      {
+       "id": "E93",
+       "name": "m_ip_payload_axis_tdata_int",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 22.1,
+       "struct_score": 32.8,
+       "trace": "data_backward",
+       "why": "Internal output data mux: UDP header bytes, payload or last word.",
+       "lines": [
+        189,
+        326,
+        373
+       ]
+      },
+      {
+       "id": "E62",
+       "name": "last_word_data_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 19.7,
+       "struct_score": 23.0,
+       "trace": "data_backward",
+       "why": "Holds last payload word while discarding excess input.",
+       "lines": [
+        156,
+        373,
+        459
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "s_udp_payload_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 88.4,
+       "struct_score": 70.7,
+       "trace": "interface",
+       "why": "Input UDP payload data forwarded to IP payload output.",
+       "lines": [
+        63,
+        326
+       ]
+      },
+      {
+       "id": "E26",
+       "name": "s_udp_payload_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 86.5,
+       "struct_score": 64.0,
+       "trace": "interface",
+       "why": "Input payload valid; advances word counting.",
+       "lines": [
+        65,
+        333,
+        378
+       ]
+      },
+      {
+       "id": "E27",
+       "name": "s_udp_payload_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 83.7,
+       "struct_score": 54.0,
+       "trace": "interface",
+       "why": "Payload ready from registered FSM ready.",
+       "lines": [
+        66,
+        198,
+        378
+       ]
+      },
+      {
+       "id": "E28",
+       "name": "s_udp_payload_axis_tlast",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 29.9,
+       "struct_score": 62.0,
+       "trace": "interface",
+       "why": "End of input payload; detects early termination, returns to idle.",
+       "lines": [
+        67,
+        340,
+        354
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E63",
+       "name": "last_word_keep_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E94",
+       "name": "m_ip_payload_axis_tkeep_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E95",
+       "name": "m_ip_payload_axis_tvalid_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E97",
+       "name": "m_ip_payload_axis_tlast_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E98",
+       "name": "m_ip_payload_axis_tuser_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E25",
+       "name": "s_udp_payload_axis_tkeep",
+       "kind": "port_in"
+      },
+      {
+       "id": "E29",
+       "name": "s_udp_payload_axis_tuser",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Output skid buffer",
+     "kind": "BUFFER",
+     "description": "Two-register AXI-Stream output buffer.",
+     "anchors": [
+      {
+       "id": "E48",
+       "name": "m_ip_payload_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 89.1,
+       "struct_score": 72.5,
+       "trace": "data_backward",
+       "why": "Output IP payload: UDP header word then payload.",
+       "lines": [
+        91,
+        482
+       ]
+      },
+      {
+       "id": "E50",
+       "name": "m_ip_payload_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 54.3,
+       "struct_score": 48.7,
+       "trace": "data_backward",
+       "why": "Output payload valid from skid buffer register.",
+       "lines": [
+        93,
+        484
+       ]
+      },
+      {
+       "id": "E51",
+       "name": "m_ip_payload_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 52.4,
+       "struct_score": 42.0,
+       "trace": "interface",
+       "why": "Downstream ready controlling skid buffer transfers.",
+       "lines": [
+        94,
+        489,
+        502
+       ]
+      },
+      {
+       "id": "E96",
+       "name": "m_ip_payload_axis_tready_int_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 19.2,
+       "struct_score": 21.0,
+       "trace": "control_backward",
+       "why": "Internal ready from output buffer gating FSM transfers.",
+       "lines": [
+        192,
+        304,
+        333
+       ]
+      },
+      {
+       "id": "E106",
+       "name": "temp_m_ip_payload_axis_tdata_reg",
+       "role": "STORAGE",
+       "importance": "minor",
+       "score": 27.6,
+       "struct_score": 53.7,
+       "trace": "data_backward",
+       "why": "Skid buffer temp slot for output data.",
+       "lines": [
+        471,
+        531,
+        538
+       ]
+      },
+      {
+       "id": "E112",
+       "name": "store_ip_payload_int_to_output",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.3,
+       "struct_score": 5.4,
+       "trace": "control_backward",
+       "why": "Loads internal data into output registers.",
+       "lines": [
+        478,
+        505,
+        525
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E99",
+       "name": "m_ip_payload_axis_tready_int_early",
+       "kind": "wire"
+      },
+      {
+       "id": "E100",
+       "name": "m_ip_payload_axis_tdata_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E101",
+       "name": "m_ip_payload_axis_tkeep_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E102",
+       "name": "m_ip_payload_axis_tvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E103",
+       "name": "m_ip_payload_axis_tvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E104",
+       "name": "m_ip_payload_axis_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E105",
+       "name": "m_ip_payload_axis_tuser_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E107",
+       "name": "temp_m_ip_payload_axis_tkeep_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E108",
+       "name": "temp_m_ip_payload_axis_tvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E109",
+       "name": "temp_m_ip_payload_axis_tvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E110",
+       "name": "temp_m_ip_payload_axis_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E111",
+       "name": "temp_m_ip_payload_axis_tuser_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E113",
+       "name": "store_ip_payload_int_to_temp",
+       "kind": "comb"
+      },
+      {
+       "id": "E114",
+       "name": "store_ip_payload_axis_temp_to_output",
+       "kind": "comb"
+      },
+      {
+       "id": "E49",
+       "name": "m_ip_payload_axis_tkeep",
+       "kind": "port_out"
+      },
+      {
+       "id": "E52",
+       "name": "m_ip_payload_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E53",
+       "name": "m_ip_payload_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "Status",
+     "kind": "OTHER",
+     "description": "Busy and early-termination error flags.",
+     "anchors": [
+      {
+       "id": "E54",
+       "name": "busy",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 16.2,
+       "struct_score": 9.1,
+       "trace": "data_backward",
+       "why": "Busy when FSM not idle.",
+       "lines": [
+        101,
+        218
+       ]
+      },
+      {
+       "id": "E55",
+       "name": "error_payload_early_termination",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 16.2,
+       "struct_score": 9.1,
+       "trace": "data_backward",
+       "why": "Payload ended before UDP length reached.",
+       "lines": [
+        102,
+        219
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E90",
+       "name": "busy_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E91",
+       "name": "error_payload_early_termination_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E92",
+       "name": "error_payload_early_termination_next",
+       "kind": "comb"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E3",
+     "name": "s_udp_hdr_valid",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 88.6,
+     "struct_score": 71.1,
+     "trace": "interface",
+     "why": "UDP header valid; starts frame and header capture.",
+     "lines": [
+      42,
+      279
+     ]
+    },
+    {
+     "id": "E4",
+     "name": "s_udp_hdr_ready",
+     "role": "HANDSHAKE_READY",
+     "importance": "critical",
+     "score": 88.5,
+     "struct_score": 71.0,
+     "trace": "interface",
+     "why": "Header ready from FSM-controlled register.",
+     "lines": [
+      43,
+      197,
+      279
+     ]
+    },
+    {
+     "id": "E31",
+     "name": "m_ip_hdr_ready",
+     "role": "HANDSHAKE_READY",
+     "importance": "minor",
+     "score": 20.8,
+     "struct_score": 27.5,
+     "trace": "interface",
+     "why": "Downstream header ready clears header valid.",
+     "lines": [
+      74,
+      263
+     ]
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_udp_hdr",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20",
+      "E21",
+      "E22",
+      "E23"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_udp_hdr_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_udp_hdr_ready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "s_eth_dest_mac",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_eth_src_mac",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "s_eth_type",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_ip_version",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_ip_ihl",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "s_ip_dscp",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "s_ip_ecn",
+       "kind": "port_in"
+      },
+      {
+       "id": "E12",
+       "name": "s_ip_identification",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "s_ip_flags",
+       "kind": "port_in"
+      },
+      {
+       "id": "E14",
+       "name": "s_ip_fragment_offset",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "s_ip_ttl",
+       "kind": "port_in"
+      },
+      {
+       "id": "E16",
+       "name": "s_ip_protocol",
+       "kind": "port_in"
+      },
+      {
+       "id": "E17",
+       "name": "s_ip_header_checksum",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "s_ip_source_ip",
+       "kind": "port_in"
+      },
+      {
+       "id": "E19",
+       "name": "s_ip_dest_ip",
+       "kind": "port_in"
+      },
+      {
+       "id": "E20",
+       "name": "s_udp_source_port",
+       "kind": "port_in"
+      },
+      {
+       "id": "E21",
+       "name": "s_udp_dest_port",
+       "kind": "port_in"
+      },
+      {
+       "id": "E22",
+       "name": "s_udp_length",
+       "kind": "port_in"
+      },
+      {
+       "id": "E23",
+       "name": "s_udp_checksum",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_udp_payload_axis",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E24",
+      "E25",
+      "E26",
+      "E27",
+      "E28",
+      "E29"
+     ],
+     "members": [
+      {
+       "id": "E24",
+       "name": "s_udp_payload_axis_tdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E25",
+       "name": "s_udp_payload_axis_tkeep",
+       "kind": "port_in"
+      },
+      {
+       "id": "E26",
+       "name": "s_udp_payload_axis_tvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E27",
+       "name": "s_udp_payload_axis_tready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E28",
+       "name": "s_udp_payload_axis_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E29",
+       "name": "s_udp_payload_axis_tuser",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_ip_hdr",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E30",
+      "E31",
+      "E32",
+      "E33",
+      "E34",
+      "E35",
+      "E36",
+      "E37",
+      "E38",
+      "E39",
+      "E40",
+      "E41",
+      "E42",
+      "E43",
+      "E44",
+      "E45",
+      "E46",
+      "E47"
+     ],
+     "members": [
+      {
+       "id": "E30",
+       "name": "m_ip_hdr_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E31",
+       "name": "m_ip_hdr_ready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E32",
+       "name": "m_eth_dest_mac",
+       "kind": "port_out"
+      },
+      {
+       "id": "E33",
+       "name": "m_eth_src_mac",
+       "kind": "port_out"
+      },
+      {
+       "id": "E34",
+       "name": "m_eth_type",
+       "kind": "port_out"
+      },
+      {
+       "id": "E35",
+       "name": "m_ip_version",
+       "kind": "port_out"
+      },
+      {
+       "id": "E36",
+       "name": "m_ip_ihl",
+       "kind": "port_out"
+      },
+      {
+       "id": "E37",
+       "name": "m_ip_dscp",
+       "kind": "port_out"
+      },
+      {
+       "id": "E38",
+       "name": "m_ip_ecn",
+       "kind": "port_out"
+      },
+      {
+       "id": "E39",
+       "name": "m_ip_length",
+       "kind": "port_out"
+      },
+      {
+       "id": "E40",
+       "name": "m_ip_identification",
+       "kind": "port_out"
+      },
+      {
+       "id": "E41",
+       "name": "m_ip_flags",
+       "kind": "port_out"
+      },
+      {
+       "id": "E42",
+       "name": "m_ip_fragment_offset",
+       "kind": "port_out"
+      },
+      {
+       "id": "E43",
+       "name": "m_ip_ttl",
+       "kind": "port_out"
+      },
+      {
+       "id": "E44",
+       "name": "m_ip_protocol",
+       "kind": "port_out"
+      },
+      {
+       "id": "E45",
+       "name": "m_ip_header_checksum",
+       "kind": "port_out"
+      },
+      {
+       "id": "E46",
+       "name": "m_ip_source_ip",
+       "kind": "port_out"
+      },
+      {
+       "id": "E47",
+       "name": "m_ip_dest_ip",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "m_ip_payload_axis",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E48",
+      "E49",
+      "E50",
+      "E51",
+      "E52",
+      "E53"
+     ],
+     "members": [
+      {
+       "id": "E48",
+       "name": "m_ip_payload_axis_tdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E49",
+       "name": "m_ip_payload_axis_tkeep",
+       "kind": "port_out"
+      },
+      {
+       "id": "E50",
+       "name": "m_ip_payload_axis_tvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E51",
+       "name": "m_ip_payload_axis_tready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E52",
+       "name": "m_ip_payload_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E53",
+       "name": "m_ip_payload_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E54",
+      "E55"
+     ],
+     "members": [
+      {
+       "id": "E54",
+       "name": "busy",
+       "kind": "port_out"
+      },
+      {
+       "id": "E55",
+       "name": "error_payload_early_termination",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "udp_64": {
+   "source": "teacher",
+   "canonical_instance": "udp_64",
+   "file": "data/rtl/verilog-ethernet/rtl/udp_64.v",
+   "lines": [
+    34,
+    426
+   ],
+   "summary": "64-bit UDP block: an RX instance strips UDP headers from incoming IP frames, while the TX path chains a checksum generator (payload/header FIFOs) into a UDP-to-IP framer, all with header and payload AXI-Stream handshakes.",
+   "blocks": [
+    {
+     "name": "UDP receive",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "udp_ip_rx_64 parses UDP header from IP payload and outputs UDP header plus payload.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "s_ip_hdr_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 79.7,
+       "struct_score": 39.5,
+       "trace": "interface",
+       "why": "Valid of incoming IP header bundle into the UDP receiver.",
+       "lines": [
+        47,
+        204
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "s_ip_hdr_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 20.6,
+       "struct_score": 26.8,
+       "trace": "interface",
+       "why": "Receiver accepts incoming IP header.",
+       "lines": [
+        48,
+        205
+       ]
+      },
+      {
+       "id": "E21",
+       "name": "s_ip_payload_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 86.7,
+       "struct_score": 64.8,
+       "trace": "interface",
+       "why": "Incoming IP payload stream carrying UDP header and data to receiver.",
+       "lines": [
+        65,
+        222
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "s_ip_payload_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 51.7,
+       "struct_score": 39.5,
+       "trace": "interface",
+       "why": "Valid of incoming IP payload stream.",
+       "lines": [
+        67,
+        224
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "s_ip_payload_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 20.6,
+       "struct_score": 26.8,
+       "trace": "interface",
+       "why": "Receiver backpressure on incoming IP payload.",
+       "lines": [
+        68,
+        225
+       ]
+      },
+      {
+       "id": "E77",
+       "name": "m_udp_hdr_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 81.1,
+       "struct_score": 44.7,
+       "trace": "interface",
+       "why": "Valid of decoded UDP header bundle output by the receiver.",
+       "lines": [
+        133,
+        229
+       ]
+      },
+      {
+       "id": "E78",
+       "name": "m_udp_hdr_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 19.5,
+       "struct_score": 22.2,
+       "trace": "interface",
+       "why": "Downstream accepts received UDP header.",
+       "lines": [
+        134,
+        230
+       ]
+      },
+      {
+       "id": "E99",
+       "name": "m_udp_payload_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 88.0,
+       "struct_score": 69.5,
+       "trace": "interface",
+       "why": "Received UDP payload stream output.",
+       "lines": [
+        155,
+        251
+       ]
+      },
+      {
+       "id": "E101",
+       "name": "m_udp_payload_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 53.1,
+       "struct_score": 44.7,
+       "trace": "interface",
+       "why": "Valid of received UDP payload stream.",
+       "lines": [
+        157,
+        253
+       ]
+      },
+      {
+       "id": "E102",
+       "name": "m_udp_payload_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 19.5,
+       "struct_score": 22.2,
+       "trace": "interface",
+       "why": "Downstream backpressure on received UDP payload.",
+       "lines": [
+        158,
+        254
+       ]
+      },
+      {
+       "id": "E105",
+       "name": "rx_busy",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 15.9,
+       "struct_score": 7.8,
+       "trace": "interface",
+       "why": "Receiver busy level from UDP RX instance.",
+       "lines": [
+        165,
+        258
+       ]
+      },
+      {
+       "id": "E107",
+       "name": "rx_error_header_early_termination",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 15.9,
+       "struct_score": 7.8,
+       "trace": "interface",
+       "why": "Receiver error: frame ended inside UDP header.",
+       "lines": [
+        167,
+        259
+       ]
+      },
+      {
+       "id": "E108",
+       "name": "rx_error_payload_early_termination",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 15.9,
+       "struct_score": 7.8,
+       "trace": "interface",
+       "why": "Receiver error: payload shorter than UDP length.",
+       "lines": [
+        168,
+        260
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "udp_ip_rx_64_inst",
+       "module": "udp_ip_rx_64"
+      }
+     ],
+     "members": []
+    },
+    {
+     "name": "UDP checksum generator",
+     "kind": "DATAPATH",
+     "description": "udp_checksum_gen_64 computes length and checksum, buffering payload and headers in FIFOs.",
+     "anchors": [
+      {
+       "id": "E51",
+       "name": "s_udp_hdr_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 79.7,
+       "struct_score": 39.5,
+       "trace": "interface",
+       "why": "Valid of outgoing UDP header bundle into checksum generator.",
+       "lines": [
+        103,
+        275
+       ]
+      },
+      {
+       "id": "E52",
+       "name": "s_udp_hdr_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 20.6,
+       "struct_score": 26.8,
+       "trace": "interface",
+       "why": "Checksum generator accepts outgoing UDP header.",
+       "lines": [
+        104,
+        276
+       ]
+      },
+      {
+       "id": "E71",
+       "name": "s_udp_payload_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 86.7,
+       "struct_score": 64.8,
+       "trace": "interface",
+       "why": "Outgoing UDP payload stream summed and buffered by checksum generator.",
+       "lines": [
+        123,
+        293
+       ]
+      },
+      {
+       "id": "E73",
+       "name": "s_udp_payload_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 51.7,
+       "struct_score": 39.5,
+       "trace": "interface",
+       "why": "Valid of outgoing UDP payload stream.",
+       "lines": [
+        125,
+        295
+       ]
+      },
+      {
+       "id": "E74",
+       "name": "s_udp_payload_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 20.6,
+       "struct_score": 26.8,
+       "trace": "interface",
+       "why": "Checksum generator backpressure on outgoing UDP payload.",
+       "lines": [
+        126,
+        296
+       ]
+      },
+      {
+       "id": "E129",
+       "name": "tx_udp_checksum",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 43.4,
+       "struct_score": 5.8,
+       "trace": "data_backward",
+       "why": "Computed UDP checksum passed from generator into the TX framer.",
+       "lines": [
+        191,
+        320,
+        389
+       ]
+      },
+      {
+       "id": "E128",
+       "name": "tx_udp_length",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 15.4,
+       "struct_score": 5.8,
+       "trace": "data_backward",
+       "why": "Computed UDP length from generator feeding the TX framer.",
+       "lines": [
+        190,
+        319,
+        388
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I2",
+       "instance": "genblk1.udp_checksum_gen_64_inst",
+       "module": "udp_checksum_gen_64"
+      }
+     ],
+     "members": []
+    },
+    {
+     "name": "UDP transmit framer",
+     "kind": "SERIALIZER",
+     "description": "udp_ip_tx_64 prepends the UDP header word and emits an IP frame with protocol 0x11.",
+     "anchors": [
+      {
+       "id": "E110",
+       "name": "tx_udp_hdr_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 16.4,
+       "struct_score": 9.7,
+       "trace": "forward",
+       "why": "Internal header valid from checksum generator to TX framer.",
+       "lines": [
+        172,
+        300,
+        369
+       ]
+      },
+      {
+       "id": "E130",
+       "name": "tx_udp_payload_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 19.3,
+       "struct_score": 21.5,
+       "trace": "data_backward",
+       "why": "Buffered payload stream from checksum generator to TX framer.",
+       "lines": [
+        192,
+        321,
+        390
+       ]
+      },
+      {
+       "id": "E27",
+       "name": "m_ip_hdr_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 81.1,
+       "struct_score": 44.7,
+       "trace": "interface",
+       "why": "Valid of outgoing IP header bundle from the UDP framer.",
+       "lines": [
+        75,
+        397
+       ]
+      },
+      {
+       "id": "E28",
+       "name": "m_ip_hdr_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 19.5,
+       "struct_score": 22.2,
+       "trace": "interface",
+       "why": "Downstream accepts outgoing IP header.",
+       "lines": [
+        76,
+        398
+       ]
+      },
+      {
+       "id": "E45",
+       "name": "m_ip_payload_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 88.0,
+       "struct_score": 69.5,
+       "trace": "interface",
+       "why": "Outgoing IP payload stream carrying UDP header plus data.",
+       "lines": [
+        93,
+        415
+       ]
+      },
+      {
+       "id": "E47",
+       "name": "m_ip_payload_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 53.1,
+       "struct_score": 44.7,
+       "trace": "interface",
+       "why": "Valid of outgoing IP payload stream.",
+       "lines": [
+        95,
+        417
+       ]
+      },
+      {
+       "id": "E48",
+       "name": "m_ip_payload_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 19.5,
+       "struct_score": 22.2,
+       "trace": "interface",
+       "why": "Downstream backpressure on outgoing IP payload.",
+       "lines": [
+        96,
+        418
+       ]
+      },
+      {
+       "id": "E106",
+       "name": "tx_busy",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 15.9,
+       "struct_score": 7.8,
+       "trace": "interface",
+       "why": "Transmitter busy level from UDP TX framer.",
+       "lines": [
+        166,
+        422
+       ]
+      },
+      {
+       "id": "E109",
+       "name": "tx_error_payload_early_termination",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 15.9,
+       "struct_score": 7.8,
+       "trace": "interface",
+       "why": "Transmitter error: payload shorter than UDP length.",
+       "lines": [
+        169,
+        423
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I3",
+       "instance": "udp_ip_tx_64_inst",
+       "module": "udp_ip_tx_64"
+      }
+     ],
+     "members": [
+      {
+       "id": "E111",
+       "name": "tx_udp_hdr_ready",
+       "kind": "wire"
+      },
+      {
+       "id": "E112",
+       "name": "tx_udp_eth_dest_mac",
+       "kind": "wire"
+      },
+      {
+       "id": "E113",
+       "name": "tx_udp_eth_src_mac",
+       "kind": "wire"
+      },
+      {
+       "id": "E114",
+       "name": "tx_udp_eth_type",
+       "kind": "wire"
+      },
+      {
+       "id": "E115",
+       "name": "tx_udp_ip_version",
+       "kind": "wire"
+      },
+      {
+       "id": "E116",
+       "name": "tx_udp_ip_ihl",
+       "kind": "wire"
+      },
+      {
+       "id": "E117",
+       "name": "tx_udp_ip_dscp",
+       "kind": "wire"
+      },
+      {
+       "id": "E118",
+       "name": "tx_udp_ip_ecn",
+       "kind": "wire"
+      },
+      {
+       "id": "E119",
+       "name": "tx_udp_ip_identification",
+       "kind": "wire"
+      },
+      {
+       "id": "E120",
+       "name": "tx_udp_ip_flags",
+       "kind": "wire"
+      },
+      {
+       "id": "E121",
+       "name": "tx_udp_ip_fragment_offset",
+       "kind": "wire"
+      },
+      {
+       "id": "E122",
+       "name": "tx_udp_ip_ttl",
+       "kind": "wire"
+      },
+      {
+       "id": "E123",
+       "name": "tx_udp_ip_header_checksum",
+       "kind": "wire"
+      },
+      {
+       "id": "E124",
+       "name": "tx_udp_ip_source_ip",
+       "kind": "wire"
+      },
+      {
+       "id": "E125",
+       "name": "tx_udp_ip_dest_ip",
+       "kind": "wire"
+      },
+      {
+       "id": "E126",
+       "name": "tx_udp_source_port",
+       "kind": "wire"
+      },
+      {
+       "id": "E127",
+       "name": "tx_udp_dest_port",
+       "kind": "wire"
+      },
+      {
+       "id": "E131",
+       "name": "tx_udp_payload_axis_tkeep",
+       "kind": "wire"
+      },
+      {
+       "id": "E132",
+       "name": "tx_udp_payload_axis_tvalid",
+       "kind": "wire"
+      },
+      {
+       "id": "E133",
+       "name": "tx_udp_payload_axis_tready",
+       "kind": "wire"
+      },
+      {
+       "id": "E134",
+       "name": "tx_udp_payload_axis_tlast",
+       "kind": "wire"
+      },
+      {
+       "id": "E135",
+       "name": "tx_udp_payload_axis_tuser",
+       "kind": "wire"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_ip_hdr",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_ip_hdr_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_ip_hdr_ready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "s_ip_eth_dest_mac",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_ip_eth_src_mac",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "s_ip_eth_type",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_ip_version",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_ip_ihl",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "s_ip_dscp",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "s_ip_ecn",
+       "kind": "port_in"
+      },
+      {
+       "id": "E12",
+       "name": "s_ip_length",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "s_ip_identification",
+       "kind": "port_in"
+      },
+      {
+       "id": "E14",
+       "name": "s_ip_flags",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "s_ip_fragment_offset",
+       "kind": "port_in"
+      },
+      {
+       "id": "E16",
+       "name": "s_ip_ttl",
+       "kind": "port_in"
+      },
+      {
+       "id": "E17",
+       "name": "s_ip_protocol",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "s_ip_header_checksum",
+       "kind": "port_in"
+      },
+      {
+       "id": "E19",
+       "name": "s_ip_source_ip",
+       "kind": "port_in"
+      },
+      {
+       "id": "E20",
+       "name": "s_ip_dest_ip",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_ip_payload_axis",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E21",
+      "E22",
+      "E23",
+      "E24",
+      "E25",
+      "E26"
+     ],
+     "members": [
+      {
+       "id": "E21",
+       "name": "s_ip_payload_axis_tdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E22",
+       "name": "s_ip_payload_axis_tkeep",
+       "kind": "port_in"
+      },
+      {
+       "id": "E23",
+       "name": "s_ip_payload_axis_tvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E24",
+       "name": "s_ip_payload_axis_tready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E25",
+       "name": "s_ip_payload_axis_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E26",
+       "name": "s_ip_payload_axis_tuser",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_ip_hdr",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E27",
+      "E28",
+      "E29",
+      "E30",
+      "E31",
+      "E32",
+      "E33",
+      "E34",
+      "E35",
+      "E36",
+      "E37",
+      "E38",
+      "E39",
+      "E40",
+      "E41",
+      "E42",
+      "E43",
+      "E44"
+     ],
+     "members": [
+      {
+       "id": "E27",
+       "name": "m_ip_hdr_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E28",
+       "name": "m_ip_hdr_ready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E29",
+       "name": "m_ip_eth_dest_mac",
+       "kind": "port_out"
+      },
+      {
+       "id": "E30",
+       "name": "m_ip_eth_src_mac",
+       "kind": "port_out"
+      },
+      {
+       "id": "E31",
+       "name": "m_ip_eth_type",
+       "kind": "port_out"
+      },
+      {
+       "id": "E32",
+       "name": "m_ip_version",
+       "kind": "port_out"
+      },
+      {
+       "id": "E33",
+       "name": "m_ip_ihl",
+       "kind": "port_out"
+      },
+      {
+       "id": "E34",
+       "name": "m_ip_dscp",
+       "kind": "port_out"
+      },
+      {
+       "id": "E35",
+       "name": "m_ip_ecn",
+       "kind": "port_out"
+      },
+      {
+       "id": "E36",
+       "name": "m_ip_length",
+       "kind": "port_out"
+      },
+      {
+       "id": "E37",
+       "name": "m_ip_identification",
+       "kind": "port_out"
+      },
+      {
+       "id": "E38",
+       "name": "m_ip_flags",
+       "kind": "port_out"
+      },
+      {
+       "id": "E39",
+       "name": "m_ip_fragment_offset",
+       "kind": "port_out"
+      },
+      {
+       "id": "E40",
+       "name": "m_ip_ttl",
+       "kind": "port_out"
+      },
+      {
+       "id": "E41",
+       "name": "m_ip_protocol",
+       "kind": "port_out"
+      },
+      {
+       "id": "E42",
+       "name": "m_ip_header_checksum",
+       "kind": "port_out"
+      },
+      {
+       "id": "E43",
+       "name": "m_ip_source_ip",
+       "kind": "port_out"
+      },
+      {
+       "id": "E44",
+       "name": "m_ip_dest_ip",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "m_ip_payload_axis",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E45",
+      "E46",
+      "E47",
+      "E48",
+      "E49",
+      "E50"
+     ],
+     "members": [
+      {
+       "id": "E45",
+       "name": "m_ip_payload_axis_tdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E46",
+       "name": "m_ip_payload_axis_tkeep",
+       "kind": "port_out"
+      },
+      {
+       "id": "E47",
+       "name": "m_ip_payload_axis_tvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E48",
+       "name": "m_ip_payload_axis_tready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E49",
+       "name": "m_ip_payload_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E50",
+       "name": "m_ip_payload_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "s_udp_hdr",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E51",
+      "E52",
+      "E53",
+      "E54",
+      "E55",
+      "E56",
+      "E57",
+      "E58",
+      "E59",
+      "E60",
+      "E61",
+      "E62",
+      "E63",
+      "E64",
+      "E65",
+      "E66",
+      "E67",
+      "E68",
+      "E69",
+      "E70"
+     ],
+     "members": [
+      {
+       "id": "E51",
+       "name": "s_udp_hdr_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E52",
+       "name": "s_udp_hdr_ready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E53",
+       "name": "s_udp_eth_dest_mac",
+       "kind": "port_in"
+      },
+      {
+       "id": "E54",
+       "name": "s_udp_eth_src_mac",
+       "kind": "port_in"
+      },
+      {
+       "id": "E55",
+       "name": "s_udp_eth_type",
+       "kind": "port_in"
+      },
+      {
+       "id": "E56",
+       "name": "s_udp_ip_version",
+       "kind": "port_in"
+      },
+      {
+       "id": "E57",
+       "name": "s_udp_ip_ihl",
+       "kind": "port_in"
+      },
+      {
+       "id": "E58",
+       "name": "s_udp_ip_dscp",
+       "kind": "port_in"
+      },
+      {
+       "id": "E59",
+       "name": "s_udp_ip_ecn",
+       "kind": "port_in"
+      },
+      {
+       "id": "E60",
+       "name": "s_udp_ip_identification",
+       "kind": "port_in"
+      },
+      {
+       "id": "E61",
+       "name": "s_udp_ip_flags",
+       "kind": "port_in"
+      },
+      {
+       "id": "E62",
+       "name": "s_udp_ip_fragment_offset",
+       "kind": "port_in"
+      },
+      {
+       "id": "E63",
+       "name": "s_udp_ip_ttl",
+       "kind": "port_in"
+      },
+      {
+       "id": "E64",
+       "name": "s_udp_ip_header_checksum",
+       "kind": "port_in"
+      },
+      {
+       "id": "E65",
+       "name": "s_udp_ip_source_ip",
+       "kind": "port_in"
+      },
+      {
+       "id": "E66",
+       "name": "s_udp_ip_dest_ip",
+       "kind": "port_in"
+      },
+      {
+       "id": "E67",
+       "name": "s_udp_source_port",
+       "kind": "port_in"
+      },
+      {
+       "id": "E68",
+       "name": "s_udp_dest_port",
+       "kind": "port_in"
+      },
+      {
+       "id": "E69",
+       "name": "s_udp_length",
+       "kind": "port_in"
+      },
+      {
+       "id": "E70",
+       "name": "s_udp_checksum",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_udp_payload_axis",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E71",
+      "E72",
+      "E73",
+      "E74",
+      "E75",
+      "E76"
+     ],
+     "members": [
+      {
+       "id": "E71",
+       "name": "s_udp_payload_axis_tdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E72",
+       "name": "s_udp_payload_axis_tkeep",
+       "kind": "port_in"
+      },
+      {
+       "id": "E73",
+       "name": "s_udp_payload_axis_tvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E74",
+       "name": "s_udp_payload_axis_tready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E75",
+       "name": "s_udp_payload_axis_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E76",
+       "name": "s_udp_payload_axis_tuser",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_udp_hdr",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E77",
+      "E78",
+      "E79",
+      "E80",
+      "E81",
+      "E82",
+      "E83",
+      "E84",
+      "E85",
+      "E86",
+      "E87",
+      "E88",
+      "E89",
+      "E90",
+      "E91",
+      "E92",
+      "E93",
+      "E94",
+      "E95",
+      "E96",
+      "E97",
+      "E98"
+     ],
+     "members": [
+      {
+       "id": "E77",
+       "name": "m_udp_hdr_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E78",
+       "name": "m_udp_hdr_ready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E79",
+       "name": "m_udp_eth_dest_mac",
+       "kind": "port_out"
+      },
+      {
+       "id": "E80",
+       "name": "m_udp_eth_src_mac",
+       "kind": "port_out"
+      },
+      {
+       "id": "E81",
+       "name": "m_udp_eth_type",
+       "kind": "port_out"
+      },
+      {
+       "id": "E82",
+       "name": "m_udp_ip_version",
+       "kind": "port_out"
+      },
+      {
+       "id": "E83",
+       "name": "m_udp_ip_ihl",
+       "kind": "port_out"
+      },
+      {
+       "id": "E84",
+       "name": "m_udp_ip_dscp",
+       "kind": "port_out"
+      },
+      {
+       "id": "E85",
+       "name": "m_udp_ip_ecn",
+       "kind": "port_out"
+      },
+      {
+       "id": "E86",
+       "name": "m_udp_ip_length",
+       "kind": "port_out"
+      },
+      {
+       "id": "E87",
+       "name": "m_udp_ip_identification",
+       "kind": "port_out"
+      },
+      {
+       "id": "E88",
+       "name": "m_udp_ip_flags",
+       "kind": "port_out"
+      },
+      {
+       "id": "E89",
+       "name": "m_udp_ip_fragment_offset",
+       "kind": "port_out"
+      },
+      {
+       "id": "E90",
+       "name": "m_udp_ip_ttl",
+       "kind": "port_out"
+      },
+      {
+       "id": "E91",
+       "name": "m_udp_ip_protocol",
+       "kind": "port_out"
+      },
+      {
+       "id": "E92",
+       "name": "m_udp_ip_header_checksum",
+       "kind": "port_out"
+      },
+      {
+       "id": "E93",
+       "name": "m_udp_ip_source_ip",
+       "kind": "port_out"
+      },
+      {
+       "id": "E94",
+       "name": "m_udp_ip_dest_ip",
+       "kind": "port_out"
+      },
+      {
+       "id": "E95",
+       "name": "m_udp_source_port",
+       "kind": "port_out"
+      },
+      {
+       "id": "E96",
+       "name": "m_udp_dest_port",
+       "kind": "port_out"
+      },
+      {
+       "id": "E97",
+       "name": "m_udp_length",
+       "kind": "port_out"
+      },
+      {
+       "id": "E98",
+       "name": "m_udp_checksum",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "m_udp_payload_axis",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E99",
+      "E100",
+      "E101",
+      "E102",
+      "E103",
+      "E104"
+     ],
+     "members": [
+      {
+       "id": "E99",
+       "name": "m_udp_payload_axis_tdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E100",
+       "name": "m_udp_payload_axis_tkeep",
+       "kind": "port_out"
+      },
+      {
+       "id": "E101",
+       "name": "m_udp_payload_axis_tvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E102",
+       "name": "m_udp_payload_axis_tready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E103",
+       "name": "m_udp_payload_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E104",
+       "name": "m_udp_payload_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E105",
+      "E106",
+      "E107",
+      "E108",
+      "E109"
+     ],
+     "members": [
+      {
+       "id": "E105",
+       "name": "rx_busy",
+       "kind": "port_out"
+      },
+      {
+       "id": "E106",
+       "name": "tx_busy",
+       "kind": "port_out"
+      },
+      {
+       "id": "E107",
+       "name": "rx_error_header_early_termination",
+       "kind": "port_out"
+      },
+      {
+       "id": "E108",
+       "name": "rx_error_payload_early_termination",
+       "kind": "port_out"
+      },
+      {
+       "id": "E109",
+       "name": "tx_error_payload_early_termination",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

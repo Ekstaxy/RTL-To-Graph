@@ -1,0 +1,26 @@
+{
+ "module_summary": "Computes Ethernet FCS over an AXI-Stream: per-byte LFSR CRC32 instances update a running CRC register each beat, and on tlast the inverted CRC is latched with a valid pulse.",
+ "anchors": [
+  {"id": "E3", "name": "s_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Stream payload fed into LFSR CRC instances.", "lines": [51, 99]},
+  {"id": "E5", "name": "s_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Beat valid; enables CRC state update and FCS capture.", "lines": [53, 114]},
+  {"id": "E7", "name": "s_axis_tlast", "role": "CONTROL_FLAG", "importance": "major", "trace": "forward", "why": "End of frame: latches FCS, reinitializes CRC state.", "lines": [55, 117]},
+  {"id": "E4", "name": "s_axis_tkeep", "role": "MUX_SELECT", "importance": "minor", "trace": "interface", "why": "Byte keep selects which partial CRC becomes final FCS.", "lines": [52, 122]},
+  {"id": "E6", "name": "s_axis_tready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "none", "why": "Tied high; module always accepts data.", "lines": [54, 79]},
+  {"id": "E11", "name": "crc_state", "role": "HOLDING_REG", "importance": "critical", "trace": "data_backward", "why": "Running CRC32 accumulator, reset to all ones per frame.", "lines": [73, 100, 115]},
+  {"id": "E14", "name": "crc_next", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Next CRC values from LFSR instances per byte lane.", "lines": [77, 102, 115]},
+  {"id": "E9", "name": "output_fcs", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Final frame check sequence output from fcs_reg.", "lines": [61, 80]},
+  {"id": "E10", "name": "output_fcs_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "data_backward", "why": "One-cycle pulse marking output_fcs valid.", "lines": [62, 81]},
+  {"id": "E12", "name": "fcs_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Latches inverted CRC at frame end; drives output_fcs.", "lines": [74, 120, 127]},
+  {"id": "E13", "name": "fcs_valid_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "control_backward", "why": "Registered FCS valid pulse set on tlast.", "lines": [75, 112, 129]}
+ ],
+ "groups": [
+  {"name": "CRC engine", "kind": "DATAPATH", "anchor_ids": ["E11", "E14", "E3"], "member_ids": ["I1"], "description": "LFSR CRC32 instances updating running crc_state each valid beat."},
+  {"name": "Frame control", "kind": "CONTROLLER", "anchor_ids": ["E5", "E7", "E4", "E6"], "member_ids": [], "description": "Valid/tlast/tkeep decide CRC update, reset and final lane select."},
+  {"name": "FCS output", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E9", "E10", "E12", "E13"], "member_ids": [], "description": "Registers inverted CRC and valid pulse at frame end."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "s_axis", "protocol": "STREAM", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8"]},
+  {"name": "fcs_out", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E9", "E10"]}
+ ]
+}

@@ -1,0 +1,28 @@
+{
+ "module_summary": "Circular-buffer stream FIFO with wrap-bit read/write pointers, register-array storage and valid/ready handshakes on both sides, allowing same-cycle read/write when full.",
+ "anchors": [
+  {"id": "E16", "name": "data_q", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "Depth-entry data array written at write pointer, read at read pointer", "lines": [56, 61, 116]},
+  {"id": "E14", "name": "write_ptr_q", "role": "FIFO_PTR", "importance": "critical", "trace": "control_backward", "why": "Write pointer with wrap bit; selects write slot and drives full detection", "lines": [98, 100, 114]},
+  {"id": "E12", "name": "read_ptr_q", "role": "FIFO_PTR", "importance": "critical", "trace": "control_backward", "why": "Read pointer with wrap bit; selects output entry and drives empty detection", "lines": [61, 81, 113]},
+  {"id": "E6", "name": "valid_i", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Input push valid; with ready_o triggers write and pointer increment", "lines": [37, 96]},
+  {"id": "E7", "name": "ready_o", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Not-full indication from pointer comparison, accepts input pushes", "lines": [39, 92, 96]},
+  {"id": "E9", "name": "valid_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Not-empty indication from pointer comparison, offers head data", "lines": [43, 78, 80]},
+  {"id": "E10", "name": "ready_i", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Downstream pop request; with valid_o advances read pointer", "lines": [45, 80]},
+  {"id": "E5", "name": "data_i", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Pushed data written into storage at write pointer slot", "lines": [35, 98]},
+  {"id": "E8", "name": "data_o", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Head-of-FIFO data read from storage at read pointer", "lines": [41, 61]},
+  {"id": "E4", "name": "flush_i", "role": "COMMAND", "importance": "major", "trace": "forward", "why": "Flush command clearing both pointers and deasserting handshakes", "lines": [33, 71]},
+  {"id": "E17", "name": "load_data", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Storage load enable asserted on accepted push", "lines": [59, 97, 116]}
+ ],
+ "groups": [
+  {"name": "FIFO storage", "kind": "BUFFER", "anchor_ids": ["E16", "E17"], "member_ids": ["E15"], "description": "Register array holding Depth entries, loaded on accepted pushes"},
+  {"name": "Pointer and flag logic", "kind": "CONTROLLER", "anchor_ids": ["E14", "E12", "E7", "E9", "E4"], "member_ids": ["E11", "E13"], "description": "Wrap-bit pointers compute full/empty, advance on handshakes, cleared by flush"},
+  {"name": "Push interface", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E6", "E5"], "member_ids": [], "description": "Input stream valid and data accepted when ready_o high"},
+  {"name": "Pop interface", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E10", "E8"], "member_ids": [], "description": "Output stream head data popped when ready_i and valid_o"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2", "E3"]},
+  {"name": "control", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E4"]},
+  {"name": "push", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E5", "E6", "E7"]},
+  {"name": "pop", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E8", "E9", "E10"]}
+ ]
+}

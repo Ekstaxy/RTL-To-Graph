@@ -1,0 +1,24 @@
+{
+ "module_summary": "Destination data path of a clearable CDC gray FIFO: muxes the async storage array by read index and registers it through a flushable spill register.",
+ "anchors": [
+  {"id": "E10", "name": "async_data_i", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "FIFO storage contents from source domain, indexed by dst_ridx_i.", "lines": [675, 680]},
+  {"id": "E9", "name": "dst_ridx_i", "role": "INDEX", "importance": "major", "trace": "interface", "why": "Read index selecting the FIFO entry from async_data_i.", "lines": [674, 680]},
+  {"id": "E11", "name": "dst_data", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Selected FIFO entry fed into the spill register.", "lines": [678, 680, 692]},
+  {"id": "E7", "name": "dst_valid_i", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Pointer-side valid entering spill register, masked by clear.", "lines": [672, 690]},
+  {"id": "E8", "name": "dst_ready_o", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "Spill register ready returned to the pointer logic.", "lines": [673, 691]},
+  {"id": "E5", "name": "dst_valid_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Destination output valid from the spill register.", "lines": [670, 693]},
+  {"id": "E6", "name": "dst_ready_i", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Destination consumer ready into the spill register.", "lines": [671, 694]},
+  {"id": "E4", "name": "dst_data_o", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Registered output data from the spill register.", "lines": [669, 695]},
+  {"id": "E3", "name": "dst_clear_i", "role": "COMMAND", "importance": "minor", "trace": "interface", "why": "Clear request flushing the spill register and blocking input valid.", "lines": [668, 689, 690]}
+ ],
+ "groups": [
+  {"name": "read_mux", "kind": "DATAPATH", "anchor_ids": ["E10", "E9", "E11"], "member_ids": [], "description": "Selects FIFO entry from async storage array by read index."},
+  {"name": "spill_register", "kind": "PIPELINE_STAGE", "anchor_ids": ["E7", "E8", "E5", "E6", "E4", "E3"], "member_ids": ["I1"], "description": "Flushable spill register cutting the combinational path to the destination."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2", "E3"]},
+  {"name": "dst_stream", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E4", "E5", "E6"]},
+  {"name": "ptr_handshake", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E7", "E8", "E9"]},
+  {"name": "async_data", "protocol": "OTHER", "direction": "IN", "member_ids": ["E10"]}
+ ]
+}

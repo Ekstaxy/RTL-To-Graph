@@ -1,0 +1,381 @@
+[
+ {
+  "module": "eth_axis_tx",
+  "instance": "eth_axis_tx",
+  "state": "send_eth_header_reg",
+  "next": "send_eth_header_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "1",
+    "value": "1"
+   },
+   {
+    "name": "0",
+    "value": "0"
+   }
+  ],
+  "reset_state": "0",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "1",
+    "cond": "s_eth_hdr_ready && s_eth_hdr_valid"
+   },
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "m_axis_tready_int_reg && send_eth_header_reg && ptr_reg == 13/BYTE_LANES"
+   }
+  ],
+  "outputs": [],
+  "warnings": [],
+  "semantic_check": "consistent"
+ },
+ {
+  "module": "eth_axis_tx",
+  "instance": "eth_axis_tx",
+  "state": "send_eth_payload_reg",
+  "next": "send_eth_payload_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "0",
+    "value": "0"
+   },
+   {
+    "name": "1",
+    "value": "1"
+   }
+  ],
+  "reset_state": "0",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "send_eth_payload_reg && (s_eth_payload_axis_tready && s_eth_payload_axis_tvalid || m_axis_tready_int_reg && shift_eth_payload_axis_extra_cycle_reg) && shift_eth_payload_axis_tlast"
+   },
+   {
+    "src": "*",
+    "dst": "1",
+    "cond": "m_axis_tready_int_reg && send_eth_header_reg && ptr_reg == 13/BYTE_LANES && !send_eth_payload_reg"
+   }
+  ],
+  "outputs": [],
+  "warnings": [
+   "non-constant next state: (OFFSET != 0) && (CYCLE_COUNT == 1)"
+  ],
+  "semantic_check": "consistent"
+ },
+ {
+  "module": "eth_axis_tx",
+  "instance": "eth_axis_tx",
+  "state": "ptr_reg",
+  "next": null,
+  "style": "semantic",
+  "states": [
+   {
+    "name": "S_0",
+    "value": "0"
+   },
+   {
+    "name": "S_1",
+    "value": "1"
+   },
+   {
+    "name": "S_2",
+    "value": "2"
+   },
+   {
+    "name": "S_3",
+    "value": "3"
+   },
+   {
+    "name": "PTR_WIDTH",
+    "value": "4"
+   },
+   {
+    "name": "S_5",
+    "value": "5"
+   },
+   {
+    "name": "S_6",
+    "value": "6"
+   },
+   {
+    "name": "S_7",
+    "value": "7"
+   },
+   {
+    "name": "DATA_WIDTH",
+    "value": "8"
+   },
+   {
+    "name": "S_9",
+    "value": "9"
+   },
+   {
+    "name": "S_10",
+    "value": "10"
+   },
+   {
+    "name": "S_11",
+    "value": "11"
+   },
+   {
+    "name": "S_12",
+    "value": "12"
+   },
+   {
+    "name": "S_13",
+    "value": "13"
+   },
+   {
+    "name": "S_14",
+    "value": "14"
+   },
+   {
+    "name": "S_15",
+    "value": "15"
+   }
+  ],
+  "reset_state": "S_0",
+  "transitions": [
+   {
+    "src": "S_0",
+    "dst": "S_0",
+    "cond": "(!send_eth_header_reg) || (!m_axis_tready_int_reg)"
+   },
+   {
+    "src": "S_0",
+    "dst": "S_1",
+    "cond": "m_axis_tready_int_reg && send_eth_header_reg"
+   },
+   {
+    "src": "S_1",
+    "dst": "S_1",
+    "cond": "(!s_eth_hdr_valid && !send_eth_payload_reg && !send_eth_header_reg) || (!m_axis_tready_int_reg && !s_eth_hdr_ready_reg && !s_eth_payload_axis_tlast) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !s_eth_payload_axis_tvalid) || (!send_eth_header_reg && !s_eth_hdr_ready_reg && !s_eth_payload_axis_tlast) || (!m_axis_tready_int_reg && !send_eth_payload_reg && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !send_eth_header_reg && !s_eth_payload_axis_tlast) || (!m_axis_tready_int_reg && !s_eth_payload_axis_tvalid && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !send_eth_payload_reg) || (!send_eth_payload_reg && !send_eth_header_reg && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !s_eth_payload_axis_tlast) || (!s_eth_hdr_valid && !s_eth_payload_axis_tvalid && !shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg) || (!s_eth_payload_axis_tvalid && !shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg && !s_eth_hdr_ready_reg)"
+   },
+   {
+    "src": "S_1",
+    "dst": "S_0",
+    "cond": "(s_eth_hdr_valid && !m_axis_tready_int_reg && s_eth_hdr_ready_reg) || (s_eth_hdr_valid && !send_eth_header_reg && s_eth_hdr_ready_reg) || (m_axis_tready_int_reg && send_eth_payload_reg && shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg && s_eth_payload_axis_tlast) || <datapath condition>"
+   },
+   {
+    "src": "S_1",
+    "dst": "S_2",
+    "cond": "m_axis_tready_int_reg && send_eth_header_reg || <datapath condition>"
+   },
+   {
+    "src": "S_2",
+    "dst": "S_2",
+    "cond": "(!s_eth_hdr_valid && !send_eth_payload_reg && !send_eth_header_reg) || (!m_axis_tready_int_reg && !s_eth_hdr_ready_reg && !s_eth_payload_axis_tlast) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !s_eth_payload_axis_tvalid) || (!send_eth_header_reg && !s_eth_hdr_ready_reg && !s_eth_payload_axis_tlast) || (!m_axis_tready_int_reg && !send_eth_payload_reg && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !send_eth_header_reg && !s_eth_payload_axis_tlast) || (!m_axis_tready_int_reg && !s_eth_payload_axis_tvalid && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !send_eth_payload_reg) || (!send_eth_payload_reg && !send_eth_header_reg && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !s_eth_payload_axis_tlast) || (!s_eth_hdr_valid && !s_eth_payload_axis_tvalid && !shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg) || (!s_eth_payload_axis_tvalid && !shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg && !s_eth_hdr_ready_reg)"
+   },
+   {
+    "src": "S_2",
+    "dst": "S_0",
+    "cond": "(s_eth_hdr_valid && !m_axis_tready_int_reg && s_eth_hdr_ready_reg) || (s_eth_hdr_valid && !send_eth_header_reg && s_eth_hdr_ready_reg) || (m_axis_tready_int_reg && send_eth_payload_reg && shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg && s_eth_payload_axis_tlast) || (s_eth_hdr_valid && m_axis_tready_int_reg && send_eth_payload_reg && s_eth_payload_axis_tvalid && !send_eth_header_reg && s_eth_payload_axis_tlast) || <datapath condition>"
+   },
+   {
+    "src": "S_2",
+    "dst": "S_3",
+    "cond": "m_axis_tready_int_reg && send_eth_header_reg || <datapath condition>"
+   },
+   {
+    "src": "S_3",
+    "dst": "S_3",
+    "cond": "(!s_eth_hdr_valid && !send_eth_payload_reg && !send_eth_header_reg) || (!m_axis_tready_int_reg && !s_eth_hdr_ready_reg && !s_eth_payload_axis_tlast) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !s_eth_payload_axis_tvalid) || (!send_eth_header_reg && !s_eth_hdr_ready_reg && !s_eth_payload_axis_tlast) || (!m_axis_tready_int_reg && !send_eth_payload_reg && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !send_eth_header_reg && !s_eth_payload_axis_tlast) || (!m_axis_tready_int_reg && !s_eth_payload_axis_tvalid && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !send_eth_payload_reg) || (!send_eth_payload_reg && !send_eth_header_reg && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !s_eth_payload_axis_tlast) || (!s_eth_hdr_valid && !s_eth_payload_axis_tvalid && !shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg) || (!s_eth_payload_axis_tvalid && !shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg && !s_eth_hdr_ready_reg)"
+   },
+   {
+    "src": "S_3",
+    "dst": "S_0",
+    "cond": "(s_eth_hdr_valid && !m_axis_tready_int_reg && s_eth_hdr_ready_reg) || (s_eth_hdr_valid && !send_eth_header_reg && s_eth_hdr_ready_reg) || (m_axis_tready_int_reg && send_eth_payload_reg && shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg && s_eth_payload_axis_tlast) || <datapath condition>"
+   },
+   {
+    "src": "S_3",
+    "dst": "PTR_WIDTH",
+    "cond": "m_axis_tready_int_reg && send_eth_header_reg || <datapath condition>"
+   },
+   {
+    "src": "PTR_WIDTH",
+    "dst": "PTR_WIDTH",
+    "cond": "(!s_eth_hdr_valid && !send_eth_payload_reg && !send_eth_header_reg) || (!m_axis_tready_int_reg && !s_eth_hdr_ready_reg && !s_eth_payload_axis_tlast) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !s_eth_payload_axis_tvalid) || (!send_eth_header_reg && !s_eth_hdr_ready_reg && !s_eth_payload_axis_tlast) || (!m_axis_tready_int_reg && !send_eth_payload_reg && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !send_eth_header_reg && !s_eth_payload_axis_tlast) || (!m_axis_tready_int_reg && !s_eth_payload_axis_tvalid && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !send_eth_payload_reg) || (!send_eth_payload_reg && !send_eth_header_reg && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !s_eth_payload_axis_tlast) || (!s_eth_hdr_valid && !s_eth_payload_axis_tvalid && !shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg) || (!s_eth_payload_axis_tvalid && !shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg && !s_eth_hdr_ready_reg)"
+   },
+   {
+    "src": "PTR_WIDTH",
+    "dst": "S_0",
+    "cond": "(s_eth_hdr_valid && !m_axis_tready_int_reg && s_eth_hdr_ready_reg) || (s_eth_hdr_valid && !send_eth_header_reg && s_eth_hdr_ready_reg) || (m_axis_tready_int_reg && send_eth_payload_reg && shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg && s_eth_payload_axis_tlast) || <datapath condition>"
+   },
+   {
+    "src": "PTR_WIDTH",
+    "dst": "S_5",
+    "cond": "m_axis_tready_int_reg && send_eth_header_reg || <datapath condition>"
+   },
+   {
+    "src": "S_5",
+    "dst": "S_5",
+    "cond": "(!s_eth_hdr_valid && !send_eth_payload_reg && !send_eth_header_reg) || (!m_axis_tready_int_reg && !s_eth_hdr_ready_reg && !s_eth_payload_axis_tlast) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !s_eth_payload_axis_tvalid) || (!send_eth_header_reg && !s_eth_hdr_ready_reg && !s_eth_payload_axis_tlast) || (!m_axis_tready_int_reg && !send_eth_payload_reg && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !send_eth_header_reg && !s_eth_payload_axis_tlast) || (!m_axis_tready_int_reg && !s_eth_payload_axis_tvalid && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !send_eth_payload_reg) || (!send_eth_payload_reg && !send_eth_header_reg && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !s_eth_payload_axis_tlast) || (!s_eth_hdr_valid && !s_eth_payload_axis_tvalid && !shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg) || (!s_eth_payload_axis_tvalid && !shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg && !s_eth_hdr_ready_reg)"
+   },
+   {
+    "src": "S_5",
+    "dst": "S_0",
+    "cond": "(s_eth_hdr_valid && !m_axis_tready_int_reg && s_eth_hdr_ready_reg) || (s_eth_hdr_valid && !send_eth_header_reg && s_eth_hdr_ready_reg) || (m_axis_tready_int_reg && send_eth_payload_reg && shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg && s_eth_payload_axis_tlast) || <datapath condition>"
+   },
+   {
+    "src": "S_5",
+    "dst": "S_6",
+    "cond": "m_axis_tready_int_reg && send_eth_header_reg || <datapath condition>"
+   },
+   {
+    "src": "S_6",
+    "dst": "S_6",
+    "cond": "(!s_eth_hdr_valid && !send_eth_payload_reg && !send_eth_header_reg) || (!m_axis_tready_int_reg && !s_eth_hdr_ready_reg && !s_eth_payload_axis_tlast) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !s_eth_payload_axis_tvalid) || (!send_eth_header_reg && !s_eth_hdr_ready_reg && !s_eth_payload_axis_tlast) || (!m_axis_tready_int_reg && !send_eth_payload_reg && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !send_eth_header_reg && !s_eth_payload_axis_tlast) || (!m_axis_tready_int_reg && !s_eth_payload_axis_tvalid && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !send_eth_payload_reg) || (!send_eth_payload_reg && !send_eth_header_reg && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !s_eth_payload_axis_tlast) || (!s_eth_hdr_valid && !s_eth_payload_axis_tvalid && !shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg) || (!s_eth_payload_axis_tvalid && !shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg && !s_eth_hdr_ready_reg)"
+   },
+   {
+    "src": "S_6",
+    "dst": "S_0",
+    "cond": "(s_eth_hdr_valid && !send_eth_header_reg && s_eth_hdr_ready_reg) || (s_eth_hdr_valid && !m_axis_tready_int_reg && s_eth_hdr_ready_reg) || (m_axis_tready_int_reg && send_eth_payload_reg && shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg && s_eth_payload_axis_tlast) || (s_eth_hdr_valid && !m_axis_tready_int_reg && send_eth_payload_reg && s_eth_payload_axis_tvalid && !shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg && s_eth_payload_axis_tlast) || <datapath condition>"
+   },
+   {
+    "src": "S_6",
+    "dst": "S_7",
+    "cond": "m_axis_tready_int_reg && send_eth_header_reg || <datapath condition>"
+   },
+   {
+    "src": "S_7",
+    "dst": "S_7",
+    "cond": "(!s_eth_hdr_valid && !send_eth_payload_reg && !send_eth_header_reg) || (!m_axis_tready_int_reg && !s_eth_hdr_ready_reg && !s_eth_payload_axis_tlast) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !s_eth_payload_axis_tvalid) || (!send_eth_header_reg && !s_eth_hdr_ready_reg && !s_eth_payload_axis_tlast) || (!m_axis_tready_int_reg && !send_eth_payload_reg && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !send_eth_header_reg && !s_eth_payload_axis_tlast) || (!m_axis_tready_int_reg && !s_eth_payload_axis_tvalid && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !send_eth_payload_reg) || (!send_eth_payload_reg && !send_eth_header_reg && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !s_eth_payload_axis_tlast) || (!s_eth_hdr_valid && !s_eth_payload_axis_tvalid && !shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg) || (!s_eth_payload_axis_tvalid && !shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg && !s_eth_hdr_ready_reg)"
+   },
+   {
+    "src": "S_7",
+    "dst": "S_0",
+    "cond": "(s_eth_hdr_valid && !m_axis_tready_int_reg && s_eth_hdr_ready_reg) || (s_eth_hdr_valid && !send_eth_header_reg && s_eth_hdr_ready_reg) || (m_axis_tready_int_reg && send_eth_payload_reg && shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg && s_eth_payload_axis_tlast) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && send_eth_payload_reg && s_eth_payload_axis_tvalid && !shift_eth_payload_axis_extra_cycle_reg && send_eth_header_reg && !s_eth_hdr_ready_reg && s_eth_payload_axis_tlast) || <datapath condition>"
+   },
+   {
+    "src": "S_7",
+    "dst": "DATA_WIDTH",
+    "cond": "m_axis_tready_int_reg && send_eth_header_reg || <datapath condition>"
+   },
+   {
+    "src": "DATA_WIDTH",
+    "dst": "DATA_WIDTH",
+    "cond": "(!s_eth_hdr_valid && !send_eth_payload_reg && !send_eth_header_reg) || (!m_axis_tready_int_reg && !s_eth_hdr_ready_reg && !s_eth_payload_axis_tlast) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !s_eth_payload_axis_tvalid) || (!send_eth_header_reg && !s_eth_hdr_ready_reg && !s_eth_payload_axis_tlast) || (!m_axis_tready_int_reg && !send_eth_payload_reg && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !send_eth_header_reg && !s_eth_payload_axis_tlast) || (!m_axis_tready_int_reg && !s_eth_payload_axis_tvalid && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !send_eth_payload_reg) || (!send_eth_payload_reg && !send_eth_header_reg && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !s_eth_payload_axis_tlast) || (!s_eth_hdr_valid && !s_eth_payload_axis_tvalid && !shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg) || (!s_eth_payload_axis_tvalid && !shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg && !s_eth_hdr_ready_reg)"
+   },
+   {
+    "src": "DATA_WIDTH",
+    "dst": "S_0",
+    "cond": "(s_eth_hdr_valid && !send_eth_header_reg && s_eth_hdr_ready_reg) || (s_eth_hdr_valid && !m_axis_tready_int_reg && s_eth_hdr_ready_reg) || (m_axis_tready_int_reg && send_eth_payload_reg && shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg && s_eth_payload_axis_tlast) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && send_eth_payload_reg && s_eth_payload_axis_tvalid && shift_eth_payload_axis_extra_cycle_reg && send_eth_header_reg && !s_eth_hdr_ready_reg && s_eth_payload_axis_tlast) || <datapath condition>"
+   },
+   {
+    "src": "DATA_WIDTH",
+    "dst": "S_9",
+    "cond": "m_axis_tready_int_reg && send_eth_header_reg || <datapath condition>"
+   },
+   {
+    "src": "S_9",
+    "dst": "S_9",
+    "cond": "(!s_eth_hdr_valid && !send_eth_payload_reg && !send_eth_header_reg) || (!m_axis_tready_int_reg && !s_eth_hdr_ready_reg && !s_eth_payload_axis_tlast) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !s_eth_payload_axis_tvalid) || (!send_eth_header_reg && !s_eth_hdr_ready_reg && !s_eth_payload_axis_tlast) || (!m_axis_tready_int_reg && !send_eth_payload_reg && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !send_eth_header_reg && !s_eth_payload_axis_tlast) || (!m_axis_tready_int_reg && !s_eth_payload_axis_tvalid && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !send_eth_payload_reg) || (!send_eth_payload_reg && !send_eth_header_reg && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !s_eth_payload_axis_tlast) || (!s_eth_hdr_valid && !s_eth_payload_axis_tvalid && !shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg) || (!s_eth_payload_axis_tvalid && !shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg && !s_eth_hdr_ready_reg)"
+   },
+   {
+    "src": "S_9",
+    "dst": "S_0",
+    "cond": "(s_eth_hdr_valid && !m_axis_tready_int_reg && s_eth_hdr_ready_reg) || (s_eth_hdr_valid && !send_eth_header_reg && s_eth_hdr_ready_reg) || (m_axis_tready_int_reg && send_eth_payload_reg && shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg && s_eth_payload_axis_tlast) || (s_eth_hdr_valid && m_axis_tready_int_reg && send_eth_payload_reg && s_eth_payload_axis_tvalid && !send_eth_header_reg && s_eth_payload_axis_tlast) || <datapath condition>"
+   },
+   {
+    "src": "S_9",
+    "dst": "S_10",
+    "cond": "m_axis_tready_int_reg && send_eth_header_reg || <datapath condition>"
+   },
+   {
+    "src": "S_10",
+    "dst": "S_10",
+    "cond": "(!s_eth_hdr_valid && !send_eth_payload_reg && !send_eth_header_reg) || (!m_axis_tready_int_reg && !s_eth_hdr_ready_reg && !s_eth_payload_axis_tlast) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !s_eth_payload_axis_tvalid) || (!send_eth_header_reg && !s_eth_hdr_ready_reg && !s_eth_payload_axis_tlast) || (!m_axis_tready_int_reg && !send_eth_payload_reg && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !send_eth_header_reg && !s_eth_payload_axis_tlast) || (!m_axis_tready_int_reg && !s_eth_payload_axis_tvalid && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !send_eth_payload_reg) || (!send_eth_payload_reg && !send_eth_header_reg && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !s_eth_payload_axis_tlast) || (!s_eth_hdr_valid && !s_eth_payload_axis_tvalid && !shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg) || (!s_eth_payload_axis_tvalid && !shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && shift_eth_payload_axis_extra_cycle_reg && send_eth_header_reg && !s_eth_hdr_ready_reg)"
+   },
+   {
+    "src": "S_10",
+    "dst": "S_0",
+    "cond": "(s_eth_hdr_valid && !m_axis_tready_int_reg && s_eth_hdr_ready_reg) || (s_eth_hdr_valid && !send_eth_header_reg && s_eth_hdr_ready_reg) || (m_axis_tready_int_reg && send_eth_payload_reg && shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg && s_eth_payload_axis_tlast) || <datapath condition>"
+   },
+   {
+    "src": "S_10",
+    "dst": "S_11",
+    "cond": "m_axis_tready_int_reg && send_eth_header_reg || <datapath condition>"
+   },
+   {
+    "src": "S_11",
+    "dst": "S_11",
+    "cond": "(!s_eth_hdr_valid && !send_eth_payload_reg && !send_eth_header_reg) || (!m_axis_tready_int_reg && !s_eth_hdr_ready_reg && !s_eth_payload_axis_tlast) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !s_eth_payload_axis_tvalid) || (!send_eth_header_reg && !s_eth_hdr_ready_reg && !s_eth_payload_axis_tlast) || (!m_axis_tready_int_reg && !send_eth_payload_reg && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !send_eth_header_reg && !s_eth_payload_axis_tlast) || (!m_axis_tready_int_reg && !s_eth_payload_axis_tvalid && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !send_eth_payload_reg) || (!send_eth_payload_reg && !send_eth_header_reg && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !s_eth_payload_axis_tlast) || (!s_eth_hdr_valid && !s_eth_payload_axis_tvalid && !shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg) || (!s_eth_payload_axis_tvalid && !shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg && !s_eth_hdr_ready_reg)"
+   },
+   {
+    "src": "S_11",
+    "dst": "S_0",
+    "cond": "(s_eth_hdr_valid && !m_axis_tready_int_reg && s_eth_hdr_ready_reg) || (s_eth_hdr_valid && !send_eth_header_reg && s_eth_hdr_ready_reg) || (m_axis_tready_int_reg && send_eth_payload_reg && shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg && s_eth_payload_axis_tlast) || (!s_eth_hdr_valid && send_eth_payload_reg && s_eth_payload_axis_tvalid && shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg && !s_eth_hdr_ready_reg && s_eth_payload_axis_tlast) || <datapath condition>"
+   },
+   {
+    "src": "S_11",
+    "dst": "S_12",
+    "cond": "m_axis_tready_int_reg && send_eth_header_reg || <datapath condition>"
+   },
+   {
+    "src": "S_12",
+    "dst": "S_12",
+    "cond": "(!s_eth_hdr_valid && !send_eth_payload_reg && !send_eth_header_reg) || (!m_axis_tready_int_reg && !s_eth_hdr_ready_reg && !s_eth_payload_axis_tlast) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !s_eth_payload_axis_tvalid) || (!send_eth_header_reg && !s_eth_hdr_ready_reg && !s_eth_payload_axis_tlast) || (!m_axis_tready_int_reg && !send_eth_payload_reg && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !send_eth_header_reg && !s_eth_payload_axis_tlast) || (!m_axis_tready_int_reg && !s_eth_payload_axis_tvalid && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !send_eth_payload_reg) || (!send_eth_payload_reg && !send_eth_header_reg && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !s_eth_payload_axis_tlast) || (!s_eth_hdr_valid && !s_eth_payload_axis_tvalid && !shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg) || (!s_eth_payload_axis_tvalid && !shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg && !s_eth_hdr_ready_reg)"
+   },
+   {
+    "src": "S_12",
+    "dst": "S_0",
+    "cond": "(s_eth_hdr_valid && !m_axis_tready_int_reg && s_eth_hdr_ready_reg) || (s_eth_hdr_valid && !send_eth_header_reg && s_eth_hdr_ready_reg) || (m_axis_tready_int_reg && send_eth_payload_reg && shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg && s_eth_payload_axis_tlast) || <datapath condition>"
+   },
+   {
+    "src": "S_12",
+    "dst": "S_13",
+    "cond": "m_axis_tready_int_reg && send_eth_header_reg || <datapath condition>"
+   },
+   {
+    "src": "S_13",
+    "dst": "S_13",
+    "cond": "(!s_eth_hdr_valid && !send_eth_payload_reg && !send_eth_header_reg) || (!m_axis_tready_int_reg && !s_eth_hdr_ready_reg && !s_eth_payload_axis_tlast) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !s_eth_payload_axis_tvalid) || (!send_eth_header_reg && !s_eth_hdr_ready_reg && !s_eth_payload_axis_tlast) || (!m_axis_tready_int_reg && !send_eth_payload_reg && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !send_eth_header_reg && !s_eth_payload_axis_tlast) || (!m_axis_tready_int_reg && !s_eth_payload_axis_tvalid && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !send_eth_payload_reg) || (!send_eth_payload_reg && !send_eth_header_reg && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !s_eth_payload_axis_tlast) || (!s_eth_hdr_valid && !s_eth_payload_axis_tvalid && !shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg) || (!s_eth_payload_axis_tvalid && !shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg && !s_eth_hdr_ready_reg)"
+   },
+   {
+    "src": "S_13",
+    "dst": "S_0",
+    "cond": "(s_eth_hdr_valid && !send_eth_header_reg && s_eth_hdr_ready_reg) || (s_eth_hdr_valid && !m_axis_tready_int_reg && s_eth_hdr_ready_reg) || (m_axis_tready_int_reg && send_eth_payload_reg && shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg && s_eth_payload_axis_tlast) || (!m_axis_tready_int_reg && send_eth_payload_reg && s_eth_payload_axis_tvalid && shift_eth_payload_axis_extra_cycle_reg && send_eth_header_reg && s_eth_hdr_ready_reg && s_eth_payload_axis_tlast) || <datapath condition>"
+   },
+   {
+    "src": "S_13",
+    "dst": "S_14",
+    "cond": "m_axis_tready_int_reg && send_eth_header_reg || <datapath condition>"
+   },
+   {
+    "src": "S_14",
+    "dst": "S_14",
+    "cond": "(!s_eth_hdr_valid && !send_eth_payload_reg && !send_eth_header_reg) || (!m_axis_tready_int_reg && !s_eth_hdr_ready_reg && !s_eth_payload_axis_tlast) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !s_eth_payload_axis_tvalid) || (!send_eth_header_reg && !s_eth_hdr_ready_reg && !s_eth_payload_axis_tlast) || (!m_axis_tready_int_reg && !send_eth_payload_reg && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !send_eth_header_reg && !s_eth_payload_axis_tlast) || (!m_axis_tready_int_reg && !s_eth_payload_axis_tvalid && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !send_eth_payload_reg) || (!send_eth_payload_reg && !send_eth_header_reg && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !s_eth_payload_axis_tlast) || (!s_eth_hdr_valid && !s_eth_payload_axis_tvalid && !shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg) || (!s_eth_payload_axis_tvalid && !shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg && !s_eth_hdr_ready_reg)"
+   },
+   {
+    "src": "S_14",
+    "dst": "S_0",
+    "cond": "(s_eth_hdr_valid && !m_axis_tready_int_reg && s_eth_hdr_ready_reg) || (s_eth_hdr_valid && !send_eth_header_reg && s_eth_hdr_ready_reg) || (m_axis_tready_int_reg && send_eth_payload_reg && shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg && s_eth_payload_axis_tlast) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && send_eth_payload_reg && s_eth_payload_axis_tvalid && !shift_eth_payload_axis_extra_cycle_reg && send_eth_header_reg && !s_eth_hdr_ready_reg && s_eth_payload_axis_tlast) || <datapath condition>"
+   },
+   {
+    "src": "S_14",
+    "dst": "S_15",
+    "cond": "m_axis_tready_int_reg && send_eth_header_reg || <datapath condition>"
+   },
+   {
+    "src": "S_15",
+    "dst": "S_15",
+    "cond": "(!s_eth_hdr_valid && !send_eth_payload_reg && !send_eth_header_reg) || (!m_axis_tready_int_reg && !s_eth_hdr_ready_reg && !s_eth_payload_axis_tlast) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !s_eth_payload_axis_tvalid) || (!send_eth_header_reg && !s_eth_hdr_ready_reg && !s_eth_payload_axis_tlast) || (!m_axis_tready_int_reg && !send_eth_payload_reg && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !send_eth_header_reg && !s_eth_payload_axis_tlast) || (!m_axis_tready_int_reg && !s_eth_payload_axis_tvalid && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !send_eth_payload_reg) || (!send_eth_payload_reg && !send_eth_header_reg && !s_eth_hdr_ready_reg) || (!s_eth_hdr_valid && !m_axis_tready_int_reg && !s_eth_payload_axis_tlast) || (!s_eth_hdr_valid && !s_eth_payload_axis_tvalid && !shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg) || (!s_eth_payload_axis_tvalid && !shift_eth_payload_axis_extra_cycle_reg && !send_eth_header_reg && !s_eth_hdr_ready_reg)"
+   },
+   {
+    "src": "S_15",
+    "dst": "S_0",
+    "cond": "(s_eth_hdr_valid && s_eth_hdr_ready_reg) || (m_axis_tready_int_reg && send_eth_header_reg) || (m_axis_tready_int_reg && send_eth_payload_reg && shift_eth_payload_axis_extra_cycle_reg && s_eth_payload_axis_tlast) || <datapath condition>"
+   }
+  ],
+  "outputs": [],
+  "warnings": [
+   "extracted by execution (coding style not recognized syntactically)"
+  ],
+  "semantic_check": "semantic-only"
+ }
+]

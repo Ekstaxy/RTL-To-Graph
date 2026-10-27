@@ -1,0 +1,127 @@
+[
+ {
+  "module": "axi_ram_wr_if",
+  "instance": "axi_ram_wr_rd_if.axi_ram_wr_if_inst",
+  "state": "state_reg",
+  "next": "state_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "STATE_IDLE",
+    "value": "2'b0"
+   },
+   {
+    "name": "STATE_BURST",
+    "value": "2'b1"
+   },
+   {
+    "name": "STATE_RESP",
+    "value": "2'b10"
+   }
+  ],
+  "reset_state": "STATE_IDLE",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_BURST",
+    "cond": "s_axi_awready && s_axi_awvalid"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_IDLE",
+    "cond": "!(s_axi_awready && s_axi_awvalid)"
+   },
+   {
+    "src": "STATE_BURST",
+    "dst": "STATE_BURST",
+    "cond": "s_axi_wready && s_axi_wvalid && write_count_reg > 0"
+   },
+   {
+    "src": "STATE_BURST",
+    "dst": "STATE_IDLE",
+    "cond": "s_axi_wready && s_axi_wvalid && !(write_count_reg > 0) && (s_axi_bready || !s_axi_bvalid)"
+   },
+   {
+    "src": "STATE_BURST",
+    "dst": "STATE_RESP",
+    "cond": "s_axi_wready && s_axi_wvalid && !(write_count_reg > 0) && !(s_axi_bready || !s_axi_bvalid)"
+   },
+   {
+    "src": "STATE_BURST",
+    "dst": "STATE_BURST",
+    "cond": "!(s_axi_wready && s_axi_wvalid)"
+   },
+   {
+    "src": "STATE_RESP",
+    "dst": "STATE_IDLE",
+    "cond": "(s_axi_bready || !s_axi_bvalid)"
+   },
+   {
+    "src": "STATE_RESP",
+    "dst": "STATE_RESP",
+    "cond": "!(s_axi_bready || !s_axi_bvalid)"
+   }
+  ],
+  "outputs": [],
+  "warnings": [],
+  "semantic_check": "consistent"
+ },
+ {
+  "module": "axi_ram_rd_if",
+  "instance": "axi_ram_wr_rd_if.axi_ram_rd_if_inst",
+  "state": "state_reg",
+  "next": "state_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "STATE_IDLE",
+    "value": "1'b0"
+   },
+   {
+    "name": "STATE_BURST",
+    "value": "1'b1"
+   }
+  ],
+  "reset_state": "STATE_IDLE",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_BURST",
+    "cond": "s_axi_arready && s_axi_arvalid"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_IDLE",
+    "cond": "!(s_axi_arready && s_axi_arvalid)"
+   },
+   {
+    "src": "STATE_BURST",
+    "dst": "STATE_BURST",
+    "cond": "ram_rd_cmd_ready && ram_rd_cmd_en && read_count_reg > 0"
+   },
+   {
+    "src": "STATE_BURST",
+    "dst": "STATE_IDLE",
+    "cond": "ram_rd_cmd_ready && ram_rd_cmd_en && !(read_count_reg > 0)"
+   },
+   {
+    "src": "STATE_BURST",
+    "dst": "STATE_BURST",
+    "cond": "!(ram_rd_cmd_ready && ram_rd_cmd_en)"
+   }
+  ],
+  "outputs": [],
+  "warnings": [],
+  "semantic_check": "consistent"
+ }
+]

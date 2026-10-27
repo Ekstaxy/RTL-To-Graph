@@ -1,0 +1,50 @@
+{
+ "module_summary": "10GBASE-R 64b/66b block decoder to AXI-Stream: classifies blocks into types, realigns lane-swapped starts, pipelines two stages, and a 3-state FSM frames packets with LFSR CRC check.",
+ "anchors": [
+  {"id": "E16", "name": "state_reg", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "IDLE/PAYLOAD/LAST frame FSM driving tvalid, tkeep, tlast, CRC reset and errors", "lines": [166, 286, 387]},
+  {"id": "E3", "name": "encoded_rx_data", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "64-bit encoded block payload; decoded for block type and masked into datapath", "lines": [51, 252, 412]},
+  {"id": "E5", "name": "m_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "AXI-Stream output data from m_axis_tdata_reg", "lines": [57, 219]},
+  {"id": "E7", "name": "m_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "AXI-Stream valid asserted in PAYLOAD/LAST states", "lines": [59, 221]},
+  {"id": "E4", "name": "encoded_rx_hdr", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "2-bit sync header distinguishing data vs control blocks", "lines": [52, 251, 412]},
+  {"id": "E8", "name": "m_axis_tlast", "role": "INTERFACE_DATA", "importance": "major", "trace": "control_backward", "why": "End-of-frame marker set on terminate or error", "lines": [60, 222]},
+  {"id": "E6", "name": "m_axis_tkeep", "role": "INTERFACE_DATA", "importance": "major", "trace": "control_backward", "why": "Byte-valid mask derived from terminate block type", "lines": [58, 220]},
+  {"id": "E26", "name": "input_type_d0", "role": "DECODE", "importance": "major", "trace": "data_backward", "why": "Decoded block type (data/start/term/error) steering FSM transitions and tkeep", "lines": [182, 316, 446]},
+  {"id": "E24", "name": "input_data_d0", "role": "PIPELINE_REG", "importance": "major", "trace": "data_backward", "why": "First pipeline stage of aligned payload; fed to CRC LFSR", "lines": [179, 240, 415]},
+  {"id": "E47", "name": "crc_state", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Running Ethernet CRC32 state, reset by FSM, updated from LFSR", "lines": [200, 241, 530]},
+  {"id": "E19", "name": "lanes_swapped", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Start on lane 4 detected; selects swapped data assembly and type remap", "lines": [171, 417, 426]},
+  {"id": "E13", "name": "error_bad_frame", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Pulse reporting bad frame (CRC fail or control char in payload)", "lines": [77, 226]},
+  {"id": "E49", "name": "crc_valid", "role": "CONTROL_FLAG", "importance": "minor", "trace": "data_backward", "why": "Per-byte-offset CRC residue match flags checked at terminate", "lines": [204, 207, 331]},
+  {"id": "E50", "name": "crc_valid_save", "role": "PIPELINE_REG", "importance": "minor", "trace": "data_backward", "why": "Delayed CRC match flags used for late terminates", "lines": [205, 330, 533]},
+  {"id": "E27", "name": "input_type_d1", "role": "PIPELINE_REG", "importance": "minor", "trace": "data_backward", "why": "Second-stage block type used for start detect and LAST tkeep", "lines": [183, 291, 524]},
+  {"id": "E25", "name": "input_data_d1", "role": "PIPELINE_REG", "importance": "minor", "trace": "data_backward", "why": "Second-stage payload feeding m_axis_tdata_next", "lines": [180, 276, 525]},
+  {"id": "E23", "name": "encoded_rx_data_masked", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Input data with control bytes zeroed before staging", "lines": [177, 252, 415]},
+  {"id": "E20", "name": "swap_data", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Upper half of previous block used to realign swapped lanes", "lines": [172, 402, 425]},
+  {"id": "E21", "name": "delay_type_valid", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Selects delayed block type when lanes swapped; triggers start_packet", "lines": [174, 420, 507]},
+  {"id": "E22", "name": "delay_type", "role": "DECODE", "importance": "minor", "trace": "data_backward", "why": "Remapped block type for half-block-shifted lane alignment", "lines": [175, 489, 507]},
+  {"id": "E11", "name": "cfg_rx_enable", "role": "ENABLE", "importance": "minor", "trace": "interface", "why": "Enables packet start acceptance in IDLE state", "lines": [71, 291]},
+  {"id": "E9", "name": "m_axis_tuser", "role": "INTERFACE_DATA", "importance": "minor", "trace": "control_backward", "why": "User sideband: bad-frame bit plus optional PTP timestamp", "lines": [61, 223]},
+  {"id": "E14", "name": "error_bad_fcs", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Pulse reporting CRC/FCS mismatch", "lines": [78, 227]},
+  {"id": "E12", "name": "start_packet", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Start-of-packet pulse indicating lane 0 or lane 4 start", "lines": [76, 225]},
+  {"id": "E15", "name": "rx_bad_block", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Pulse on invalid block header or block type", "lines": [79, 228]},
+  {"id": "E44", "name": "ptp_ts_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Captured PTP timestamp at packet start for tuser", "lines": [196, 510, 520]},
+  {"id": "E52", "name": "ts_inc_reg", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Timestamp increment per cycle used for half-cycle start correction", "lines": [217, 510, 536]},
+  {"id": "E10", "name": "ptp_ts", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Incoming PTP time captured into ptp_ts_reg", "lines": [66, 520]}
+ ],
+ "groups": [
+  {"name": "Frame FSM", "kind": "CONTROLLER", "anchor_ids": ["E16"], "member_ids": ["E17", "E18"], "description": "IDLE/PAYLOAD/LAST controller producing stream framing and error flags"},
+  {"name": "Block decoder and lane alignment", "kind": "DECODER", "anchor_ids": ["E26", "E19", "E23", "E20", "E21", "E22", "E4"], "member_ids": [], "description": "Classifies 64b/66b block types and realigns lane-4 starts"},
+  {"name": "Input pipeline", "kind": "PIPELINE_STAGE", "anchor_ids": ["E24", "E25", "E27"], "member_ids": [], "description": "Two-stage data/type delay line feeding output and CRC"},
+  {"name": "CRC checker", "kind": "DATAPATH", "anchor_ids": ["E47", "E49", "E50"], "member_ids": ["I1", "E48"], "description": "LFSR-based CRC32 accumulation with residue match per terminate offset"},
+  {"name": "AXI-Stream output", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E5", "E7", "E8", "E6", "E9"], "member_ids": ["E28", "E29", "E30", "E31", "E32", "E33", "E34", "E35", "E36", "E37"], "description": "Registered tdata/tkeep/tvalid/tlast/tuser outputs"},
+  {"name": "Status flags", "kind": "OTHER", "anchor_ids": ["E13", "E14", "E12", "E15"], "member_ids": ["E38", "E39", "E40", "E41", "E42", "E43"], "description": "Registered start, bad frame, bad FCS and bad block pulses"},
+  {"name": "PTP timestamp", "kind": "DATAPATH", "anchor_ids": ["E44", "E52", "E10"], "member_ids": ["E45", "E46", "E51"], "description": "Captures and adjusts start-of-packet timestamp for tuser"}
+ ],
+ "interfaces": [
+  {"name": "Clock and reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "BASE-R encoded input", "protocol": "STREAM", "direction": "IN", "member_ids": ["E3", "E4"]},
+  {"name": "AXI-Stream output", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E5", "E6", "E7", "E8", "E9"]},
+  {"name": "PTP time", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E10"]},
+  {"name": "Configuration", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E11"]},
+  {"name": "Status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E12", "E13", "E14", "E15"]}
+ ]
+}

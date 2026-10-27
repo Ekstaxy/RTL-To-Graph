@@ -1,0 +1,47 @@
+{
+ "module_summary": "IP-to-Ethernet transmitter: latches parallel IP header fields, an FSM serializes the 20-byte IPv4 header with running one's-complement checksum, then passes payload bytes through a skid-buffered AXI-stream output.",
+ "anchors": [
+  {"id": "E35", "name": "state_reg", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "FSM: idle, write header, write payload, last-word hold, wait last", "lines": [209, 379]},
+  {"id": "E3", "name": "s_ip_hdr_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "IP header valid that triggers header latch and frame start", "lines": [215]},
+  {"id": "E4", "name": "s_ip_hdr_ready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Header ready from FSM ready register, accepts next frame header", "lines": [165, 215]},
+  {"id": "E18", "name": "s_ip_payload_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Input payload bytes passed through after header", "lines": [300]},
+  {"id": "E19", "name": "s_ip_payload_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Payload valid gating byte transfers and word count", "lines": [304, 338]},
+  {"id": "E20", "name": "s_ip_payload_axis_tready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Payload ready from FSM, following output buffer early ready", "lines": [166, 304]},
+  {"id": "E21", "name": "s_ip_payload_axis_tlast", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "End of payload; checked against expected word count", "lines": [308, 339]},
+  {"id": "E28", "name": "m_eth_payload_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Output Ethernet payload: IP header bytes then payload", "lines": [434]},
+  {"id": "E29", "name": "m_eth_payload_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Output payload valid from skid buffer", "lines": [435]},
+  {"id": "E30", "name": "m_eth_payload_axis_tready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Downstream ready controlling output and temp register moves", "lines": [440, 453, 462]},
+  {"id": "E23", "name": "m_eth_hdr_valid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Ethernet header valid asserted when IP header accepted", "lines": [168]},
+  {"id": "E24", "name": "m_eth_hdr_ready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Downstream header ready clearing header valid", "lines": [200]},
+  {"id": "E25", "name": "m_eth_dest_mac", "role": "INTERFACE_ADDR", "importance": "minor", "trace": "interface", "why": "Passed-through destination MAC of the Ethernet header", "lines": [169]},
+  {"id": "E37", "name": "store_ip_hdr", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Load enable latching all IP and Ethernet header fields", "lines": [216, 397]},
+  {"id": "E48", "name": "ip_length_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Latched IP length; representative of header field registers, sets payload count", "lines": [403, 231, 246]},
+  {"id": "E39", "name": "hdr_ptr_reg", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Header byte index selecting which field byte is emitted", "lines": [234, 237]},
+  {"id": "E41", "name": "word_count_reg", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Remaining payload bytes, detects early termination and last word", "lines": [306, 309, 318]},
+  {"id": "E43", "name": "hdr_sum_reg", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Running one's-complement IP header checksum, emitted inverted", "lines": [247, 277, 394]},
+  {"id": "E68", "name": "m_eth_payload_axis_tdata_int", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Output byte mux: header fields, checksum, payload or held last word", "lines": [242, 300, 334]},
+  {"id": "E45", "name": "last_word_data_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Holds last payload byte until frame tlast arrives", "lines": [414, 334]},
+  {"id": "E38", "name": "store_last_word", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Enables capture of the last payload byte", "lines": [319, 413]},
+  {"id": "E70", "name": "m_eth_payload_axis_tready_int_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Internal ready of output buffer gating FSM header emission", "lines": [233, 451, 472]},
+  {"id": "E79", "name": "temp_m_eth_payload_axis_tdata_reg", "role": "STORAGE", "importance": "minor", "trace": "data_backward", "why": "Skid buffer temp byte when output stalls", "lines": [487, 481]},
+  {"id": "E84", "name": "store_eth_payload_int_to_output", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Load enable of output register from internal datapath", "lines": [456, 476]},
+  {"id": "E33", "name": "busy", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "Busy level when FSM not idle", "lines": [173]},
+  {"id": "E34", "name": "error_payload_early_termination", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "Error flag when payload tlast arrives before length", "lines": [174]}
+ ],
+ "groups": [
+  {"name": "Frame FSM", "kind": "CONTROLLER", "anchor_ids": ["E35", "E37", "E38", "E33", "E34"], "member_ids": ["E36", "E56", "E57", "E58", "E59", "E60", "E61", "E65", "E66", "E67"], "description": "Sequences header emission, payload pass-through and frame termination"},
+  {"name": "Header field registers", "kind": "REGISTER_BANK", "anchor_ids": ["E48", "E25"], "member_ids": ["E46", "E47", "E49", "E50", "E51", "E52", "E53", "E54", "E55", "E62", "E63", "E64", "E26", "E27"], "description": "Latched IP and Ethernet header fields loaded on store_ip_hdr"},
+  {"name": "Header serializer and checksum", "kind": "SERIALIZER", "anchor_ids": ["E39", "E43", "E68"], "member_ids": ["E40", "E44"], "description": "Byte pointer muxing header fields out while summing checksum"},
+  {"name": "Payload counter", "kind": "COUNTER_TIMER", "anchor_ids": ["E41", "E45"], "member_ids": ["E42"], "description": "Counts payload bytes against IP length, holds last byte"},
+  {"name": "Output skid buffer", "kind": "BUFFER", "anchor_ids": ["E70", "E79", "E84", "E28", "E29", "E30"], "member_ids": ["E69", "E71", "E72", "E73", "E74", "E75", "E76", "E77", "E78", "E80", "E81", "E82", "E83", "E85", "E86"], "description": "Two-register AXI-stream output buffer with early ready"},
+  {"name": "Input handshake", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E3", "E4", "E18", "E19", "E20", "E21", "E23", "E24"], "member_ids": ["E22"], "description": "IP header and payload input handshakes and Ethernet header valid"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "s_ip_hdr", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12", "E13", "E14", "E15", "E16", "E17"]},
+  {"name": "s_ip_payload_axis", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E18", "E19", "E20", "E21", "E22"]},
+  {"name": "m_eth_hdr", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E23", "E24", "E25", "E26", "E27"]},
+  {"name": "m_eth_payload_axis", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E28", "E29", "E30", "E31", "E32"]},
+  {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E33", "E34"]}
+ ]
+}

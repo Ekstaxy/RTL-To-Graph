@@ -1,0 +1,997 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-axi_axi_ram",
+ "tops": [
+  "axi_ram"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "axi_ram": {
+   "source": "teacher",
+   "canonical_instance": "axi_ram",
+   "file": "data/rtl/verilog-axi/rtl/axi_ram.v",
+   "lines": [
+    34,
+    371
+   ],
+   "summary": "AXI4 slave RAM: independent write and read burst FSMs latch AXI address/length/size/burst, step addresses through a byte-strobed memory array, and return B responses and registered (optionally pipelined) R data.",
+   "blocks": [
+    {
+     "name": "Write channel controller",
+     "kind": "CONTROLLER",
+     "description": "Write burst FSM with address/count/size/burst latches and B response generation",
+     "anchors": [
+      {
+       "id": "E40",
+       "name": "write_state_reg",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 98.7,
+       "struct_score": 96.7,
+       "trace": "control_backward",
+       "why": "Write FSM IDLE/BURST/RESP controlling awready, wready, memory write and bvalid",
+       "lines": [
+        116,
+        194,
+        252
+       ]
+      },
+      {
+       "id": "E56",
+       "name": "write_addr_reg",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 47.0,
+       "struct_score": 20.2,
+       "trace": "data_backward",
+       "why": "Current write burst address, incremented per beat, addresses mem write",
+       "lines": [
+        152,
+        218,
+        255
+       ]
+      },
+      {
+       "id": "E58",
+       "name": "write_count_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 52.6,
+       "struct_score": 42.8,
+       "trace": "control_backward",
+       "why": "Remaining write beats counter deciding burst end",
+       "lines": [
+        220,
+        221,
+        256
+       ]
+      },
+      {
+       "id": "E62",
+       "name": "write_burst_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 16.0,
+       "struct_score": 7.9,
+       "trace": "data_backward",
+       "why": "Latched write burst type enabling address increment",
+       "lines": [
+        217,
+        258
+       ]
+      },
+      {
+       "id": "E60",
+       "name": "write_size_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 16.7,
+       "struct_score": 10.8,
+       "trace": "data_backward",
+       "why": "Latched write beat size setting address step",
+       "lines": [
+        218,
+        257
+       ]
+      },
+      {
+       "id": "E54",
+       "name": "write_id_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 17.7,
+       "struct_score": 14.9,
+       "trace": "data_backward",
+       "why": "Latched AWID returned as BID",
+       "lines": [
+        226,
+        254
+       ]
+      },
+      {
+       "id": "E42",
+       "name": "mem_wr_en",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 14.9,
+       "struct_score": 3.5,
+       "trace": "control_backward",
+       "why": "Memory write enable on accepted write beat",
+       "lines": [
+        216,
+        266
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E41",
+       "name": "write_state_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E55",
+       "name": "write_id_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E57",
+       "name": "write_addr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E59",
+       "name": "write_count_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E61",
+       "name": "write_size_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E63",
+       "name": "write_burst_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E64",
+       "name": "s_axi_awready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E65",
+       "name": "s_axi_awready_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E66",
+       "name": "s_axi_wready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E67",
+       "name": "s_axi_wready_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E68",
+       "name": "s_axi_bid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E69",
+       "name": "s_axi_bid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E70",
+       "name": "s_axi_bvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E71",
+       "name": "s_axi_bvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E90",
+       "name": "write_addr_valid",
+       "kind": "wire"
+      },
+      {
+       "id": "E87",
+       "name": "s_axi_awaddr_valid",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Read channel controller",
+     "kind": "CONTROLLER",
+     "description": "Read burst FSM with address/count latches issuing registered R beats",
+     "anchors": [
+      {
+       "id": "E38",
+       "name": "read_state_reg",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 98.3,
+       "struct_score": 95.8,
+       "trace": "control_backward",
+       "why": "Read FSM IDLE/BURST controlling arready, memory read and rvalid",
+       "lines": [
+        109,
+        297,
+        338
+       ]
+      },
+      {
+       "id": "E46",
+       "name": "read_addr_reg",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 47.0,
+       "struct_score": 20.2,
+       "trace": "data_backward",
+       "why": "Current read burst address, incremented per beat, addresses mem read",
+       "lines": [
+        151,
+        321,
+        341
+       ]
+      },
+      {
+       "id": "E48",
+       "name": "read_count_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 51.8,
+       "struct_score": 40.0,
+       "trace": "control_backward",
+       "why": "Remaining read beats counter deciding rlast and burst end",
+       "lines": [
+        319,
+        323,
+        324
+       ]
+      },
+      {
+       "id": "E52",
+       "name": "read_burst_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 16.0,
+       "struct_score": 7.9,
+       "trace": "data_backward",
+       "why": "Latched read burst type enabling address increment",
+       "lines": [
+        320,
+        344
+       ]
+      },
+      {
+       "id": "E50",
+       "name": "read_size_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 16.7,
+       "struct_score": 10.8,
+       "trace": "data_backward",
+       "why": "Latched read beat size setting address step",
+       "lines": [
+        321,
+        343
+       ]
+      },
+      {
+       "id": "E44",
+       "name": "read_id_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 17.7,
+       "struct_score": 14.9,
+       "trace": "data_backward",
+       "why": "Latched ARID returned as RID",
+       "lines": [
+        318,
+        340
+       ]
+      },
+      {
+       "id": "E43",
+       "name": "mem_rd_en",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 14.9,
+       "struct_score": 3.7,
+       "trace": "control_backward",
+       "why": "Memory read enable loading rdata register",
+       "lines": [
+        316,
+        351
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E39",
+       "name": "read_state_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E45",
+       "name": "read_id_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E47",
+       "name": "read_addr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E49",
+       "name": "read_count_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E51",
+       "name": "read_size_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E53",
+       "name": "read_burst_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E72",
+       "name": "s_axi_arready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E73",
+       "name": "s_axi_arready_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E74",
+       "name": "s_axi_rid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E75",
+       "name": "s_axi_rid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E78",
+       "name": "s_axi_rlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E79",
+       "name": "s_axi_rlast_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E80",
+       "name": "s_axi_rvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E81",
+       "name": "s_axi_rvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E89",
+       "name": "read_addr_valid",
+       "kind": "wire"
+      },
+      {
+       "id": "E88",
+       "name": "s_axi_araddr_valid",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "RAM array",
+     "kind": "MEMORY",
+     "description": "Byte-strobed memory with registered read data",
+     "anchors": [
+      {
+       "id": "E86",
+       "name": "mem",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 91.7,
+       "struct_score": 79.0,
+       "trace": "data_backward",
+       "why": "RAM array written by strobed wdata, read into rdata register",
+       "lines": [
+        147,
+        267,
+        352
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E76",
+       "name": "s_axi_rdata_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E77",
+       "name": "s_axi_rdata_next",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Read output pipeline",
+     "kind": "PIPELINE_STAGE",
+     "description": "Optional extra register stage on R channel when PIPELINE_OUTPUT set",
+     "anchors": [
+      {
+       "id": "E83",
+       "name": "s_axi_rdata_pipe_reg",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 20.1,
+       "struct_score": 24.6,
+       "trace": "data_backward",
+       "why": "Optional extra output pipeline stage for read data",
+       "lines": [
+        142,
+        161,
+        357
+       ]
+      },
+      {
+       "id": "E85",
+       "name": "s_axi_rvalid_pipe_reg",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 19.8,
+       "struct_score": 23.5,
+       "trace": "control_backward",
+       "why": "Valid of optional output pipeline stage, gates read issue",
+       "lines": [
+        287,
+        315,
+        359
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E82",
+       "name": "s_axi_rid_pipe_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E84",
+       "name": "s_axi_rlast_pipe_reg",
+       "kind": "reg"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E4",
+     "name": "s_axi_awaddr",
+     "role": "INTERFACE_ADDR",
+     "importance": "critical",
+     "score": 82.7,
+     "struct_score": 50.3,
+     "trace": "interface",
+     "why": "Write burst start address latched into write_addr_reg",
+     "lines": [
+      52,
+      200
+     ]
+    },
+    {
+     "id": "E11",
+     "name": "s_axi_awvalid",
+     "role": "HANDSHAKE_VALID",
+     "importance": "major",
+     "score": 60.0,
+     "struct_score": 69.5,
+     "trace": "interface",
+     "why": "Write address valid starting write burst",
+     "lines": [
+      59,
+      198
+     ]
+    },
+    {
+     "id": "E12",
+     "name": "s_axi_awready",
+     "role": "HANDSHAKE_READY",
+     "importance": "minor",
+     "score": 32.0,
+     "struct_score": 69.5,
+     "trace": "control_backward",
+     "why": "Write address ready from write FSM",
+     "lines": [
+      154,
+      198
+     ]
+    },
+    {
+     "id": "E13",
+     "name": "s_axi_wdata",
+     "role": "INTERFACE_DATA",
+     "importance": "critical",
+     "score": 87.1,
+     "struct_score": 66.5,
+     "trace": "interface",
+     "why": "Write data stored into mem",
+     "lines": [
+      61,
+      267
+     ]
+    },
+    {
+     "id": "E14",
+     "name": "s_axi_wstrb",
+     "role": "ENABLE",
+     "importance": "minor",
+     "score": 18.5,
+     "struct_score": 18.3,
+     "trace": "interface",
+     "why": "Byte strobes enabling per-byte memory writes",
+     "lines": [
+      62,
+      266
+     ]
+    },
+    {
+     "id": "E16",
+     "name": "s_axi_wvalid",
+     "role": "HANDSHAKE_VALID",
+     "importance": "major",
+     "score": 60.0,
+     "struct_score": 69.5,
+     "trace": "interface",
+     "why": "Write data valid advancing write burst",
+     "lines": [
+      64,
+      215
+     ]
+    },
+    {
+     "id": "E17",
+     "name": "s_axi_wready",
+     "role": "HANDSHAKE_READY",
+     "importance": "minor",
+     "score": 32.0,
+     "struct_score": 69.5,
+     "trace": "control_backward",
+     "why": "Write data ready from write FSM",
+     "lines": [
+      155,
+      215
+     ]
+    },
+    {
+     "id": "E20",
+     "name": "s_axi_bvalid",
+     "role": "HANDSHAKE_VALID",
+     "importance": "major",
+     "score": 62.1,
+     "struct_score": 75.1,
+     "trace": "control_backward",
+     "why": "Write response valid issued at burst end",
+     "lines": [
+      158,
+      225,
+      239
+     ]
+    },
+    {
+     "id": "E21",
+     "name": "s_axi_bready",
+     "role": "HANDSHAKE_READY",
+     "importance": "minor",
+     "score": 23.9,
+     "struct_score": 40.3,
+     "trace": "interface",
+     "why": "Write response ready clearing bvalid",
+     "lines": [
+      192,
+      225,
+      239
+     ]
+    },
+    {
+     "id": "E23",
+     "name": "s_axi_araddr",
+     "role": "INTERFACE_ADDR",
+     "importance": "critical",
+     "score": 82.7,
+     "struct_score": 50.3,
+     "trace": "interface",
+     "why": "Read burst start address latched into read_addr_reg",
+     "lines": [
+      71,
+      303
+     ]
+    },
+    {
+     "id": "E30",
+     "name": "s_axi_arvalid",
+     "role": "HANDSHAKE_VALID",
+     "importance": "major",
+     "score": 59.4,
+     "struct_score": 67.3,
+     "trace": "interface",
+     "why": "Read address valid starting read burst",
+     "lines": [
+      78,
+      301
+     ]
+    },
+    {
+     "id": "E31",
+     "name": "s_axi_arready",
+     "role": "HANDSHAKE_READY",
+     "importance": "minor",
+     "score": 31.4,
+     "struct_score": 67.4,
+     "trace": "control_backward",
+     "why": "Read address ready from read FSM",
+     "lines": [
+      159,
+      301
+     ]
+    },
+    {
+     "id": "E33",
+     "name": "s_axi_rdata",
+     "role": "INTERFACE_DATA",
+     "importance": "critical",
+     "score": 89.0,
+     "struct_score": 72.3,
+     "trace": "data_backward",
+     "why": "Read data from rdata register or pipeline register",
+     "lines": [
+      81,
+      161
+     ]
+    },
+    {
+     "id": "E35",
+     "name": "s_axi_rlast",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 23.8,
+     "struct_score": 39.7,
+     "trace": "data_backward",
+     "why": "Last read beat marker from read count",
+     "lines": [
+      83,
+      163
+     ]
+    },
+    {
+     "id": "E36",
+     "name": "s_axi_rvalid",
+     "role": "HANDSHAKE_VALID",
+     "importance": "major",
+     "score": 56.4,
+     "struct_score": 56.6,
+     "trace": "control_backward",
+     "why": "Read data valid from read path registers",
+     "lines": [
+      84,
+      164
+     ]
+    },
+    {
+     "id": "E37",
+     "name": "s_axi_rready",
+     "role": "HANDSHAKE_READY",
+     "importance": "minor",
+     "score": 28.8,
+     "struct_score": 58.1,
+     "trace": "interface",
+     "why": "Read data ready allowing next beat and pipeline advance",
+     "lines": [
+      287,
+      315,
+      355
+     ]
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "axi_aw",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axi_awid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axi_awaddr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axi_awlen",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_axi_awsize",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "s_axi_awburst",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_axi_awlock",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_axi_awcache",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "s_axi_awprot",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "s_axi_awvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E12",
+       "name": "s_axi_awready",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "axi_w",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17"
+     ],
+     "members": [
+      {
+       "id": "E13",
+       "name": "s_axi_wdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E14",
+       "name": "s_axi_wstrb",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "s_axi_wlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E16",
+       "name": "s_axi_wvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E17",
+       "name": "s_axi_wready",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "axi_b",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E18",
+      "E19",
+      "E20",
+      "E21"
+     ],
+     "members": [
+      {
+       "id": "E18",
+       "name": "s_axi_bid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "s_axi_bresp",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "s_axi_bvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E21",
+       "name": "s_axi_bready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "axi_ar",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E22",
+      "E23",
+      "E24",
+      "E25",
+      "E26",
+      "E27",
+      "E28",
+      "E29",
+      "E30",
+      "E31"
+     ],
+     "members": [
+      {
+       "id": "E22",
+       "name": "s_axi_arid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E23",
+       "name": "s_axi_araddr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E24",
+       "name": "s_axi_arlen",
+       "kind": "port_in"
+      },
+      {
+       "id": "E25",
+       "name": "s_axi_arsize",
+       "kind": "port_in"
+      },
+      {
+       "id": "E26",
+       "name": "s_axi_arburst",
+       "kind": "port_in"
+      },
+      {
+       "id": "E27",
+       "name": "s_axi_arlock",
+       "kind": "port_in"
+      },
+      {
+       "id": "E28",
+       "name": "s_axi_arcache",
+       "kind": "port_in"
+      },
+      {
+       "id": "E29",
+       "name": "s_axi_arprot",
+       "kind": "port_in"
+      },
+      {
+       "id": "E30",
+       "name": "s_axi_arvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E31",
+       "name": "s_axi_arready",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "axi_r",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E32",
+      "E33",
+      "E34",
+      "E35",
+      "E36",
+      "E37"
+     ],
+     "members": [
+      {
+       "id": "E32",
+       "name": "s_axi_rid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E33",
+       "name": "s_axi_rdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E34",
+       "name": "s_axi_rresp",
+       "kind": "port_out"
+      },
+      {
+       "id": "E35",
+       "name": "s_axi_rlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E36",
+       "name": "s_axi_rvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E37",
+       "name": "s_axi_rready",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

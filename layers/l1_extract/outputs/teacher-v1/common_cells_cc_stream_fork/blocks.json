@@ -1,0 +1,244 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "common_cells_cc_stream_fork",
+ "tops": [
+  "cc_stream_fork"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "cc_stream_fork": {
+   "source": "teacher",
+   "canonical_instance": "cc_stream_fork",
+   "file": "data/rtl/common_cells/src/cc_stream_fork.sv",
+   "lines": [
+    22,
+    120
+   ],
+   "summary": "Stream fork replicating one valid/ready input to NumOup outputs, using an input READY/WAIT FSM and per-output FSMs so the input handshakes only after every output has handshaked.",
+   "blocks": [
+    {
+     "name": "Input controller",
+     "kind": "CONTROLLER",
+     "description": "Joins output handshakes into a single input handshake",
+     "anchors": [
+      {
+       "id": "E11",
+       "name": "inp_state_q",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.9,
+       "struct_score": 99.7,
+       "trace": "control_backward",
+       "why": "Input FSM waiting until all outputs handshake before ready_o",
+       "lines": [
+        38,
+        45,
+        75
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "ready_o",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 98.0,
+       "struct_score": 95.0,
+       "trace": "control_backward",
+       "why": "Input ready asserted when all outputs have handshaked",
+       "lines": [
+        29,
+        50,
+        62
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "oup_ready",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 55.2,
+       "struct_score": 52.3,
+       "trace": "control_backward",
+       "why": "Per-output done flags; all ones releases input in WAIT",
+       "lines": [
+        36,
+        61,
+        95
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E10",
+       "name": "inp_state_d",
+       "kind": "comb"
+      },
+      {
+       "id": "E9",
+       "name": "all_ones",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Output controllers",
+     "kind": "CONTROLLER",
+     "description": "Replicated per-output FSMs generating valid_o bits",
+     "anchors": [
+      {
+       "id": "E13",
+       "name": "gen_oup_state[*].oup_state_q",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.9,
+       "struct_score": 99.8,
+       "trace": "control_backward",
+       "why": "Per-output FSM remembering completed output handshake",
+       "lines": [
+        79,
+        86,
+        110
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "valid_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 98.9,
+       "struct_score": 97.3,
+       "trace": "control_backward",
+       "why": "Per-output valid vector, dropped after that output handshaked",
+       "lines": [
+        30,
+        48,
+        89
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E12",
+       "name": "gen_oup_state[*].oup_state_d",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Handshake ports",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Input valid and output readies feeding the FSMs",
+     "anchors": [
+      {
+       "id": "E4",
+       "name": "valid_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 98.2,
+       "struct_score": 95.5,
+       "trace": "interface",
+       "why": "Input valid broadcast to all output valids",
+       "lines": [
+        28,
+        47,
+        88
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "ready_i",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 95.3,
+       "struct_score": 88.2,
+       "trace": "interface",
+       "why": "Per-output ready vector completing output handshakes",
+       "lines": [
+        31,
+        48,
+        90
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2",
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_ni",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "clr_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "stream_in",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "valid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "ready_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "stream_out",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "valid_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "ready_i",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

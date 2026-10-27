@@ -1,0 +1,45 @@
+{
+ "module_summary": "AXI-stream statistics counter: counts cycles, bytes and frames on a monitored stream; on trigger it snapshots the counters and a 2-state FSM serializes tag plus counts byte-by-byte through a skid-buffered AXI-stream output.",
+ "anchors": [
+  {"id": "E15", "name": "state_reg", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "IDLE/OUTPUT_DATA readout FSM; starts on trigger, ends after last byte.", "lines": [104, 151, 261]},
+  {"id": "E17", "name": "tick_count_reg", "role": "COUNTER", "importance": "critical", "trace": "control_backward", "why": "Cycle counter incremented every clock, cleared on trigger.", "lines": [106, 155, 262]},
+  {"id": "E19", "name": "byte_count_reg", "role": "COUNTER", "importance": "critical", "trace": "control_backward", "why": "Byte counter incremented by tkeep count on monitored transfers.", "lines": [107, 156, 263]},
+  {"id": "E21", "name": "frame_count_reg", "role": "COUNTER", "importance": "critical", "trace": "control_backward", "why": "Frame counter incremented on first beat of each monitored frame.", "lines": [108, 157, 264]},
+  {"id": "E23", "name": "frame_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "In-frame flag so frame_count increments once per frame.", "lines": [109, 252, 265]},
+  {"id": "E28", "name": "tick_count_output_reg", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Snapshot of counters held during serialization; representative of byte/frame output regs.", "lines": [114, 197, 271]},
+  {"id": "E25", "name": "store_output", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Load enable capturing counters into output snapshot registers.", "lines": [111, 154, 270]},
+  {"id": "E26", "name": "frame_ptr_reg", "role": "INDEX", "importance": "major", "trace": "control_backward", "why": "Byte index into tag/count frame selecting m_axis_tdata_int and tlast.", "lines": [112, 188, 218]},
+  {"id": "E32", "name": "m_axis_tdata_int", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Selected output byte from tag or snapshot registers.", "lines": [121, 197, 346]},
+  {"id": "E33", "name": "m_axis_tvalid_int", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "Internal valid from FSM into the output skid buffer.", "lines": [122, 183, 324]},
+  {"id": "E34", "name": "m_axis_tready_int_reg", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Registered internal ready gating FSM byte advance.", "lines": [123, 180, 341]},
+  {"id": "E45", "name": "temp_m_axis_tdata_reg", "role": "STORAGE", "importance": "minor", "trace": "data_backward", "why": "Skid buffer temp register holding a byte when output stalls.", "lines": [293, 356]},
+  {"id": "E46", "name": "temp_m_axis_tvalid_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Temp register occupied flag driving early ready and temp-to-output.", "lines": [294, 309, 342]},
+  {"id": "E50", "name": "store_axis_int_to_output", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Loads output registers from internal datapath.", "lines": [299, 345]},
+  {"id": "E51", "name": "store_axis_int_to_temp", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Loads skid temp registers when output is stalled.", "lines": [300, 355]},
+  {"id": "E52", "name": "store_axis_temp_to_output", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Moves skid temp data into output registers.", "lines": [301, 349]},
+  {"id": "E4", "name": "monitor_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Monitored stream valid; with tready marks counted transfers.", "lines": [68, 233]},
+  {"id": "E5", "name": "monitor_axis_tready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Monitored stream ready qualifying byte and frame counting.", "lines": [69, 233]},
+  {"id": "E3", "name": "monitor_axis_tkeep", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Monitored byte enables converted to byte count.", "lines": [67, 241]},
+  {"id": "E6", "name": "monitor_axis_tlast", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Monitored end-of-frame marker clearing frame_reg.", "lines": [70, 249]},
+  {"id": "E7", "name": "m_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Output status byte stream from m_axis_tdata_reg.", "lines": [75, 303]},
+  {"id": "E8", "name": "m_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Output valid from m_axis_tvalid_reg.", "lines": [76, 304]},
+  {"id": "E9", "name": "m_axis_tready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Downstream ready steering output/temp register transfers.", "lines": [77, 309, 322]},
+  {"id": "E10", "name": "m_axis_tlast", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Marks final byte of the statistics frame.", "lines": [78, 305]},
+  {"id": "E13", "name": "trigger", "role": "COMMAND", "importance": "major", "trace": "interface", "why": "Starts snapshot, counter clear and frame readout from IDLE.", "lines": [85, 153]},
+  {"id": "E12", "name": "tag", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Tag bytes prepended to the output statistics frame.", "lines": [84, 189]},
+  {"id": "E14", "name": "busy", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Level busy while FSM is outside IDLE.", "lines": [90, 128]}
+ ],
+ "groups": [
+  {"name": "readout_fsm", "kind": "CONTROLLER", "anchor_ids": ["E15", "E26", "E13", "E14"], "member_ids": ["E16", "E27", "E31", "E38"], "description": "Trigger-started FSM stepping frame_ptr through tag and count bytes."},
+  {"name": "stat_counters", "kind": "COUNTER_TIMER", "anchor_ids": ["E17", "E19", "E21", "E23", "E4", "E5", "E3", "E6"], "member_ids": ["E18", "E20", "E22", "E24", "E39"], "description": "Cycle, byte and frame counters fed by the monitored stream."},
+  {"name": "snapshot_mux", "kind": "DATAPATH", "anchor_ids": ["E28", "E25", "E32", "E12"], "member_ids": ["E29", "E30", "E35", "E36"], "description": "Counter snapshot registers and byte select feeding the output path."},
+  {"name": "output_skid_buffer", "kind": "BUFFER", "anchor_ids": ["E7", "E8", "E9", "E10", "E33", "E34", "E45", "E46", "E50", "E51", "E52"], "member_ids": ["E11", "E37", "E40", "E41", "E42", "E43", "E44", "E47", "E48", "E49"], "description": "Output and temp registers forming an AXI-stream skid buffer."}
+ ],
+ "interfaces": [
+  {"name": "clk_rst", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "monitor_axis", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6"]},
+  {"name": "m_axis", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E7", "E8", "E9", "E10", "E11"]},
+  {"name": "config", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E12", "E13"]},
+  {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E14"]}
+ ]
+}

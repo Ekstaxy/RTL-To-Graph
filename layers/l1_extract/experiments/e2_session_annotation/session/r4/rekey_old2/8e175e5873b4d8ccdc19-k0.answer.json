@@ -1,0 +1,40 @@
+{
+ "module_summary": "DarkRISCV SoC top: a darkbridge-wrapped core drives an X-bus whose address bits [31:30] decode chip selects for BRAM, I/O, SDRAM/stub and unmapped regions, muxing back read data and acks.",
+ "anchors": [
+  {"id": "E14", "name": "XDREQ", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Core data-bus request from bridge0, gated per region into XDREQMUX.", "lines": [141, 149, 187]},
+  {"id": "E15", "name": "XADDR", "role": "INTERFACE_ADDR", "importance": "critical", "trace": "data_backward", "why": "Core data-bus address; bits [31:30] select the target slave.", "lines": [142, 149, 189]},
+  {"id": "E16", "name": "XATAO", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Core write data broadcast to BRAM, I/O and SDRAM slaves.", "lines": [143, 229, 262]},
+  {"id": "E20", "name": "XDREQMUX", "role": "DECODE", "importance": "critical", "trace": "control_backward", "why": "Address-decoded per-slave request selects: BRAM, I/O, SDRAM, unmapped.", "lines": [147, 149, 224]},
+  {"id": "E21", "name": "XATAIMUX", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Per-slave read data array, indexed by XADDR[31:30] back to core.", "lines": [154, 189, 230]},
+  {"id": "E22", "name": "XDACKMUX", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "Per-slave ack array selected by XADDR[31:30] for the core.", "lines": [155, 194, 231]},
+  {"id": "E17", "name": "XWR", "role": "COMMAND", "importance": "minor", "trace": "forward", "why": "Write strobe from core to BRAM and I/O slaves.", "lines": [144, 192, 226]},
+  {"id": "E18", "name": "XRD", "role": "COMMAND", "importance": "minor", "trace": "forward", "why": "Read strobe from core to BRAM and I/O slaves.", "lines": [145, 191, 225]},
+  {"id": "E19", "name": "XBE", "role": "ENABLE", "importance": "minor", "trace": "forward", "why": "Byte enables for slave writes.", "lines": [146, 193, 227]},
+  {"id": "E26", "name": "HLT", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Core halt from bridge stalling on pending requests; fed to BRAM and I/O.", "lines": [163, 181, 217]},
+  {"id": "E28", "name": "IADDR", "role": "INTERFACE_ADDR", "importance": "minor", "trace": "data_backward", "why": "Harvard instruction address from bridge to BRAM instruction port.", "lines": [166, 198, 220]},
+  {"id": "E29", "name": "IDATA", "role": "INTERFACE_DATA", "importance": "minor", "trace": "data_backward", "why": "Instruction word returned from BRAM to the core.", "lines": [167, 199, 221]},
+  {"id": "E13", "name": "XIRQ", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "forward", "why": "Timer interrupt from io0 to the core bridge.", "lines": [140, 184, 254]},
+  {"id": "E32", "name": "DTACK2", "role": "COUNTER", "importance": "minor", "trace": "control_backward", "why": "Wait-state counter acking unmapped SDRAM region accesses.", "lines": [327, 332, 343]},
+  {"id": "E34", "name": "DTACK3", "role": "COUNTER", "importance": "minor", "trace": "control_backward", "why": "Wait-state counter acking unmapped region 3 accesses.", "lines": [349, 354, 365]},
+  {"id": "E12", "name": "RES", "role": "CLOCK_GEN", "importance": "minor", "trace": "control_backward", "why": "Internal stretched reset generated from XRES distributed to all blocks.", "lines": [87, 112, 180]},
+  {"id": "E3", "name": "UART_RXD", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "UART receive line into io0.", "lines": [42, 266]},
+  {"id": "E4", "name": "UART_TXD", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "UART transmit line from io0.", "lines": [43, 267]},
+  {"id": "E5", "name": "LED", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "LED register output from io0.", "lines": [66, 275]},
+  {"id": "E10", "name": "oport", "role": "INTERFACE_DATA", "importance": "minor", "trace": "data_backward", "why": "GPIO output from io0 driving OPORT.", "lines": [73, 74, 277]},
+  {"id": "E9", "name": "iport", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "GPIO input from IPORT into io0.", "lines": [72, 76, 276]}
+ ],
+ "groups": [
+  {"name": "CPU bridge", "kind": "CONTROLLER", "anchor_ids": ["E14", "E15", "E16", "E17", "E18", "E19", "E26", "E13"], "member_ids": ["I2", "E23", "E24", "E25", "E27", "E30"], "description": "darkbridge core issuing X-bus data requests and Y-bus instruction fetches."},
+  {"name": "Address decoder and return mux", "kind": "DECODER", "anchor_ids": ["E20", "E21", "E22"], "member_ids": [], "description": "XADDR[31:30] selects slave request and muxes read data/ack."},
+  {"name": "Block RAM", "kind": "MEMORY", "anchor_ids": ["E28", "E29"], "member_ids": ["I3"], "description": "Dual-port BRAM for instructions and data at region 0."},
+  {"name": "I/O block", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E3", "E4", "E5", "E10", "E9"], "member_ids": ["I4", "E31", "E6", "E7"], "description": "darkio UART, GPIO, LED and timer IRQ at region 1."},
+  {"name": "Unmapped region responders", "kind": "COUNTER_TIMER", "anchor_ids": ["E32", "E34"], "member_ids": ["E33", "E35"], "description": "Countdown acks returning deadbeef for regions 2 and 3."},
+  {"name": "Clock/reset", "kind": "OTHER", "anchor_ids": ["E12"], "member_ids": ["I1", "E11", "E2"], "description": "Reset stretcher/PLL producing CLK and RES."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "uart", "protocol": "SERIAL", "direction": "BIDIR", "member_ids": ["E3", "E4"]},
+  {"name": "gpio", "protocol": "SIMPLE", "direction": "BIDIR", "member_ids": ["E5", "E6", "E7"]},
+  {"name": "debug", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E8"]}
+ ]
+}

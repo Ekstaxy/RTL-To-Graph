@@ -1,0 +1,280 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-wishbone_wb_ram",
+ "tops": [
+  "wb_ram"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "wb_ram": {
+   "source": "teacher",
+   "canonical_instance": "wb_ram",
+   "file": "data/rtl/verilog-wishbone/rtl/wb_ram.v",
+   "lines": [
+    32,
+    94
+   ],
+   "summary": "Wishbone slave RAM: single-port word memory with byte-select writes, registered read data and a one-cycle registered acknowledge per strobe.",
+   "blocks": [
+    {
+     "name": "ram_array",
+     "kind": "MEMORY",
+     "description": "Word memory with registered read output.",
+     "anchors": [
+      {
+       "id": "E12",
+       "name": "mem",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 99.4,
+       "struct_score": 98.4,
+       "trace": "data_backward",
+       "why": "Main RAM array, byte-lane written and read at adr_i_valid.",
+       "lines": [
+        62,
+        86,
+        88
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "adr_i_valid",
+       "role": "INDEX",
+       "importance": "minor",
+       "score": 24.9,
+       "struct_score": 43.8,
+       "trace": "data_backward",
+       "why": "Word index into mem derived from adr_i.",
+       "lines": [
+        64,
+        86,
+        88
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "dat_o_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 32.6,
+       "struct_score": 71.1,
+       "trace": "data_backward",
+       "why": "Registered read data captured from mem on access.",
+       "lines": [
+        58,
+        66,
+        88
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "wishbone_slave",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Wishbone access decode and registered ack generation.",
+     "anchors": [
+      {
+       "id": "E2",
+       "name": "adr_i",
+       "role": "INTERFACE_ADDR",
+       "importance": "critical",
+       "score": 91.0,
+       "struct_score": 77.2,
+       "trace": "interface",
+       "why": "Wishbone byte address shifted to word index.",
+       "lines": [
+        41,
+        64
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "dat_i",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 96.4,
+       "struct_score": 90.8,
+       "trace": "interface",
+       "why": "Write data stored into selected byte lanes of mem.",
+       "lines": [
+        42,
+        86
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "dat_o",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 97.0,
+       "struct_score": 92.5,
+       "trace": "interface",
+       "why": "Read data output driven from dat_o_reg.",
+       "lines": [
+        43,
+        66
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "stb_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 95.9,
+       "struct_score": 89.6,
+       "trace": "interface",
+       "why": "Strobe qualifying a bus access with cyc_i.",
+       "lines": [
+        46,
+        84
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "cyc_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 67.9,
+       "struct_score": 89.6,
+       "trace": "interface",
+       "why": "Bus cycle active qualifier for accesses.",
+       "lines": [
+        48,
+        84
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "ack_o",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 96.1,
+       "struct_score": 90.2,
+       "trace": "interface",
+       "why": "Acknowledge driven by ack_o_reg; blocks re-access while asserted.",
+       "lines": [
+        47,
+        67,
+        84
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "we_i",
+       "role": "COMMAND",
+       "importance": "major",
+       "score": 51.9,
+       "struct_score": 40.1,
+       "trace": "interface",
+       "why": "Write-vs-read command enabling memory writes.",
+       "lines": [
+        44,
+        85
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "sel_i",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 54.9,
+       "struct_score": 50.9,
+       "trace": "interface",
+       "why": "Per-byte-lane write enables.",
+       "lines": [
+        45,
+        85
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E11",
+       "name": "ack_o_reg",
+       "kind": "reg"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "wishbone",
+     "protocol": "MEMORY_BUS",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E2",
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9"
+     ],
+     "members": [
+      {
+       "id": "E2",
+       "name": "adr_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "dat_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "dat_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "we_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "sel_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "stb_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "ack_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "cyc_i",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

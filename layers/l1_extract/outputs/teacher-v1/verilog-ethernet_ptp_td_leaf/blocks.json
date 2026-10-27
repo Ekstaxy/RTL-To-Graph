@@ -1,0 +1,1646 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-ethernet_ptp_td_leaf",
+ "tops": [
+  "ptp_td_leaf"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "ptp_td_leaf": {
+   "source": "teacher",
+   "canonical_instance": "ptp_td_leaf",
+   "file": "data/rtl/verilog-ethernet/rtl/ptp_td_leaf.v",
+   "lines": [
+    34,
+    1022
+   ],
+   "summary": "PTP time-distribution leaf: deserializes a serial TD stream, crosses it to the local clock, and disciplines local ToD/relative timestamp counters with a sample-clock phase detector, DDS phase loop and PI period controller.",
+   "blocks": [
+    {
+     "name": "TD deserializer",
+     "kind": "SERIALIZER",
+     "description": "Pipelines serial TD input, detects start bits, shifts 16-bit words and tags them with IDs",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "ptp_td_sdi",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 75.1,
+       "struct_score": 20.8,
+       "trace": "interface",
+       "why": "Serial time-distribution input bit stream from the PTP master, fed through input pipeline",
+       "lines": [
+        55,
+        111
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "td_shift_reg",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 51.9,
+       "struct_score": 40.4,
+       "trace": "data_backward",
+       "why": "16-bit deserializer shift register collecting serial TD bits",
+       "lines": [
+        146,
+        155
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "bit_cnt_reg",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 21.1,
+       "struct_score": 28.8,
+       "trace": "control_backward",
+       "why": "Counts 16 bits of a TD word after start bit detection",
+       "lines": [
+        150,
+        167
+       ]
+      },
+      {
+       "id": "E19",
+       "name": "td_index_reg",
+       "role": "INDEX",
+       "importance": "minor",
+       "score": 14.8,
+       "struct_score": 3.4,
+       "trace": "control_backward",
+       "why": "Word index within TD frame, forms low nibble of word ID",
+       "lines": [
+        159,
+        163
+       ]
+      },
+      {
+       "id": "E21",
+       "name": "td_tdata_reg",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 17.7,
+       "struct_score": 15.1,
+       "trace": "data_backward",
+       "why": "Deserialized 16-bit TD word captured from shift register",
+       "lines": [
+        155,
+        343
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "td_tvalid_reg",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 46.1,
+       "struct_score": 16.7,
+       "trace": "control_backward",
+       "why": "One-cycle valid for each deserialized TD word in ptp_clk domain",
+       "lines": [
+        156,
+        240
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "td_tlast_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 15.0,
+       "struct_score": 4.1,
+       "trace": "control_backward",
+       "why": "Last word of TD frame; restarts source sync delay counter",
+       "lines": [
+        157,
+        277
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "td_tid_reg",
+       "role": "INDEX",
+       "importance": "minor",
+       "score": 15.4,
+       "struct_score": 5.8,
+       "trace": "control_backward",
+       "why": "TD word ID (message, index) selecting which shadow field is loaded",
+       "lines": [
+        158,
+        241
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "td_sync_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 15.3,
+       "struct_score": 5.4,
+       "trace": "forward",
+       "why": "Toggle per TD word used to cross word into clk domain",
+       "lines": [
+        164,
+        195
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E14",
+       "name": "ptp_td_sdi_pipe",
+       "kind": "mem"
+      },
+      {
+       "id": "E15",
+       "name": "pipe_stage[*].ptp_td_sdi_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E20",
+       "name": "td_msg_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "TD clock-domain crossing",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Toggle synchronizer moving TD words from ptp_clk into clk domain",
+     "anchors": [
+      {
+       "id": "E27",
+       "name": "dst_td_tvalid_reg",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 48.2,
+       "struct_score": 25.2,
+       "trace": "control_backward",
+       "why": "Valid of TD word in local clk domain, gates shadow register updates",
+       "lines": [
+        205,
+        693
+       ]
+      },
+      {
+       "id": "E26",
+       "name": "dst_td_tdata_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 19.5,
+       "struct_score": 22.2,
+       "trace": "data_backward",
+       "why": "TD data word captured in clk domain after toggle synchronizer",
+       "lines": [
+        204,
+        700
+       ]
+      },
+      {
+       "id": "E28",
+       "name": "dst_td_tid_reg",
+       "role": "INDEX",
+       "importance": "minor",
+       "score": 16.1,
+       "struct_score": 8.4,
+       "trace": "data_backward",
+       "why": "TD word ID in clk domain decoded to select shadow fields",
+       "lines": [
+        206,
+        699
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E29",
+       "name": "td_sync_sync1_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E30",
+       "name": "td_sync_sync2_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E31",
+       "name": "td_sync_sync3_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Source time reconstruction",
+     "kind": "DATAPATH",
+     "description": "Rebuilds master ns time in ptp_clk from TD shadow fields and period",
+     "anchors": [
+      {
+       "id": "E40",
+       "name": "src_ns_reg",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 44.5,
+       "struct_score": 10.3,
+       "trace": "data_backward",
+       "why": "Reconstructed source ns time in ptp_clk domain, compared against local time",
+       "lines": [
+        235,
+        262,
+        532
+       ]
+      },
+      {
+       "id": "E32",
+       "name": "src_sync_delay_reg",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 18.6,
+       "struct_score": 18.7,
+       "trace": "control_backward",
+       "why": "Delay countdown after frame end before loading source time shadow",
+       "lines": [
+        268,
+        278
+       ]
+      },
+      {
+       "id": "E33",
+       "name": "src_load_reg",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.2,
+       "struct_score": 4.9,
+       "trace": "control_backward",
+       "why": "Loads source ns and period from shadow registers",
+       "lines": [
+        261,
+        269
+       ]
+      },
+      {
+       "id": "E34",
+       "name": "src_phase_reg",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 17.4,
+       "struct_score": 13.8,
+       "trace": "none",
+       "why": "Phase counter whose carry produces periodic source update",
+       "lines": [
+        232
+       ]
+      },
+      {
+       "id": "E36",
+       "name": "src_sync_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 15.9,
+       "struct_score": 7.7,
+       "trace": "forward",
+       "why": "Toggle marking source time updates, synchronized to clk and sample_clk",
+       "lines": [
+        236,
+        344
+       ]
+      },
+      {
+       "id": "E37",
+       "name": "src_marker_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 15.3,
+       "struct_score": 5.1,
+       "trace": "forward",
+       "why": "Toggle on source load, resets destination load counter",
+       "lines": [
+        265,
+        347
+       ]
+      },
+      {
+       "id": "E38",
+       "name": "src_period_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 16.7,
+       "struct_score": 10.9,
+       "trace": "data_backward",
+       "why": "Source clock period used to advance src_ns_reg",
+       "lines": [
+        235,
+        263
+       ]
+      },
+      {
+       "id": "E41",
+       "name": "src_ns_shadow_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 16.8,
+       "struct_score": 11.5,
+       "trace": "data_backward",
+       "why": "Shadow of source ns assembled from TD words 6-8",
+       "lines": [
+        242,
+        262
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E39",
+       "name": "src_period_shadow_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E35",
+       "name": "src_update_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Sample-clock phase detector",
+     "kind": "DATAPATH",
+     "description": "Compares source and destination sync toggles on sample_clk, accumulates phase error",
+     "anchors": [
+      {
+       "id": "E87",
+       "name": "sample_acc_reg",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 15.5,
+       "struct_score": 6.0,
+       "trace": "data_backward",
+       "why": "Accumulates sample-clock phase detector edge differences",
+       "lines": [
+        382,
+        393
+       ]
+      },
+      {
+       "id": "E89",
+       "name": "sample_cnt_reg",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 18.7,
+       "struct_score": 19.3,
+       "trace": "none",
+       "why": "Sample period counter dumping accumulator every 16 sample clocks",
+       "lines": [
+        384,
+        390
+       ]
+      },
+      {
+       "id": "E94",
+       "name": "edge_1_reg",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 15.2,
+       "struct_score": 5.0,
+       "trace": "control_backward",
+       "why": "Phase/frequency detector output: destination edge leads source",
+       "lines": [
+        373,
+        382
+       ]
+      },
+      {
+       "id": "E97",
+       "name": "sample_acc_sync_reg",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 16.5,
+       "struct_score": 10.2,
+       "trace": "data_backward",
+       "why": "Phase error sample crossed into clk domain, drives DDS loop",
+       "lines": [
+        446,
+        514
+       ]
+      },
+      {
+       "id": "E98",
+       "name": "sample_acc_sync_valid_reg",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.6,
+       "struct_score": 6.3,
+       "trace": "control_backward",
+       "why": "Enables DDS loop filter update when new phase sample arrives",
+       "lines": [
+        428,
+        515
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E75",
+       "name": "src_sync_sync1_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E76",
+       "name": "src_sync_sync2_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E77",
+       "name": "src_sync_sync3_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E78",
+       "name": "src_marker_sync1_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E79",
+       "name": "src_marker_sync2_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E80",
+       "name": "src_marker_sync3_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E81",
+       "name": "src_sync_sample_sync1_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E82",
+       "name": "src_sync_sample_sync2_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E83",
+       "name": "src_sync_sample_sync3_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E84",
+       "name": "dst_sync_sample_sync1_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E85",
+       "name": "dst_sync_sample_sync2_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E86",
+       "name": "dst_sync_sample_sync3_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E88",
+       "name": "sample_acc_out_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E90",
+       "name": "sample_update_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E91",
+       "name": "sample_update_sync1_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E92",
+       "name": "sample_update_sync2_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E93",
+       "name": "sample_update_sync3_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E95",
+       "name": "edge_2_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E96",
+       "name": "active_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "DDS phase loop",
+     "kind": "CONTROLLER",
+     "description": "PI-filtered phase accumulator generating local update events locked to source updates",
+     "anchors": [
+      {
+       "id": "E68",
+       "name": "dst_phase_reg",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 21.7,
+       "struct_score": 31.5,
+       "trace": "data_backward",
+       "why": "DDS phase accumulator whose carry generates dst_update events",
+       "lines": [
+        418,
+        507
+       ]
+      },
+      {
+       "id": "E70",
+       "name": "dst_phase_inc_reg",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 46.0,
+       "struct_score": 16.1,
+       "trace": "data_backward",
+       "why": "DDS phase increment from loop filter, tracks source update rate",
+       "lines": [
+        418,
+        508
+       ]
+      },
+      {
+       "id": "E73",
+       "name": "dst_update_reg",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 45.0,
+       "struct_score": 12.2,
+       "trace": "control_backward",
+       "why": "DDS overflow pulse capturing local time and gating timestamp checks",
+       "lines": [
+        509,
+        518,
+        757
+       ]
+      },
+      {
+       "id": "E72",
+       "name": "dst_sync_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.9,
+       "struct_score": 16.1,
+       "trace": "control_backward",
+       "why": "Destination sync toggle fed to phase detector, gates timestamp loads",
+       "lines": [
+        522,
+        757
+       ]
+      },
+      {
+       "id": "E99",
+       "name": "dst_err_int_reg",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 17.8,
+       "struct_score": 15.3,
+       "trace": "data_backward",
+       "why": "Integral term of DDS phase loop filter",
+       "lines": [
+        446,
+        576
+       ]
+      },
+      {
+       "id": "E106",
+       "name": "dst_gain_sel_reg",
+       "role": "MUX_SELECT",
+       "importance": "minor",
+       "score": 18.2,
+       "struct_score": 17.0,
+       "trace": "control_backward",
+       "why": "Selects high/low gain for DDS loop filter",
+       "lines": [
+        445,
+        460
+       ]
+      },
+      {
+       "id": "E102",
+       "name": "dst_sync_lock_count_reg",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 18.2,
+       "struct_score": 17.1,
+       "trace": "control_backward",
+       "why": "Hysteresis counter for DDS sync lock detection",
+       "lines": [
+        476,
+        479
+       ]
+      },
+      {
+       "id": "E104",
+       "name": "dst_sync_locked_reg",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 14.7,
+       "struct_score": 2.7,
+       "trace": "control_backward",
+       "why": "DDS sync lock flag feeding locked output",
+       "lines": [
+        579,
+        641
+       ]
+      },
+      {
+       "id": "E108",
+       "name": "dst_load_cnt_reg",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 22.8,
+       "struct_score": 36.0,
+       "trace": "control_backward",
+       "why": "Counts DDS updates since source marker; zero enables timestamp load",
+       "lines": [
+        526,
+        538,
+        757
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E69",
+       "name": "dst_phase_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E71",
+       "name": "dst_phase_inc_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E74",
+       "name": "dst_update_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E100",
+       "name": "dst_err_int_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E101",
+       "name": "dst_ovf",
+       "kind": "comb"
+      },
+      {
+       "id": "E103",
+       "name": "dst_sync_lock_count_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E105",
+       "name": "dst_sync_locked_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E107",
+       "name": "dst_gain_sel_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Period PI controller and lock",
+     "kind": "CONTROLLER",
+     "description": "Compares source vs local time, PI-adjusts period_ns_reg, tracks frequency and PTP lock",
+     "anchors": [
+      {
+       "id": "E42",
+       "name": "period_ns_reg",
+       "role": "DATAPATH_MAJOR",
+       "importance": "critical",
+       "score": 74.3,
+       "struct_score": 17.5,
+       "trace": "data_backward",
+       "why": "PI-controlled local clock period added each cycle to advance the timestamps",
+       "lines": [
+        746,
+        939
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "locked",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 43.9,
+       "struct_score": 7.6,
+       "trace": "control_backward",
+       "why": "Lock indication: AND of PTP, frequency and DDS sync lock flags",
+       "lines": [
+        74,
+        641
+       ]
+      },
+      {
+       "id": "E149",
+       "name": "ts_ns_diff_reg",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 45.8,
+       "struct_score": 15.4,
+       "trace": "data_backward",
+       "why": "Source minus local ns time error input to PI period controller",
+       "lines": [
+        883,
+        898
+       ]
+      },
+      {
+       "id": "E151",
+       "name": "ts_ns_diff_valid_reg",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.6,
+       "struct_score": 6.5,
+       "trace": "control_backward",
+       "why": "Enables PI controller update on new time error",
+       "lines": [
+        863,
+        973
+       ]
+      },
+      {
+       "id": "E153",
+       "name": "time_err_int_reg",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 17.4,
+       "struct_score": 13.8,
+       "trace": "data_backward",
+       "why": "Integral term of PI period controller with saturation",
+       "lines": [
+        883,
+        912
+       ]
+      },
+      {
+       "id": "E164",
+       "name": "gain_sel_reg",
+       "role": "MUX_SELECT",
+       "importance": "minor",
+       "score": 18.2,
+       "struct_score": 17.0,
+       "trace": "control_backward",
+       "why": "Selects PI gain based on time error magnitude",
+       "lines": [
+        882,
+        897
+       ]
+      },
+      {
+       "id": "E44",
+       "name": "dst_ns_capt_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 17.1,
+       "struct_score": 12.4,
+       "trace": "data_backward",
+       "why": "Local timestamp captured at DDS update for comparison",
+       "lines": [
+        520,
+        838
+       ]
+      },
+      {
+       "id": "E45",
+       "name": "src_ns_sync_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 17.1,
+       "struct_score": 12.4,
+       "trace": "data_backward",
+       "why": "Source ns captured on synchronized source toggle",
+       "lines": [
+        532,
+        838
+       ]
+      },
+      {
+       "id": "E117",
+       "name": "ts_sync_valid_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.4,
+       "struct_score": 13.7,
+       "trace": "control_backward",
+       "why": "Source capture pending; with capt valid triggers comparison",
+       "lines": [
+        534,
+        542
+       ]
+      },
+      {
+       "id": "E118",
+       "name": "ts_capt_valid_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.3,
+       "struct_score": 13.2,
+       "trace": "control_backward",
+       "why": "Local capture pending; with sync valid triggers comparison",
+       "lines": [
+        523,
+        542
+       ]
+      },
+      {
+       "id": "E109",
+       "name": "phase_err_acc_reg",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 15.5,
+       "struct_score": 6.0,
+       "trace": "data_backward",
+       "why": "Coarse phase detector edge accumulator",
+       "lines": [
+        565,
+        571
+       ]
+      },
+      {
+       "id": "E110",
+       "name": "phase_err_out_reg",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 15.9,
+       "struct_score": 7.6,
+       "trace": "data_backward",
+       "why": "Coarse phase error used for frequency lock and pre-lock correction",
+       "lines": [
+        571,
+        843
+       ]
+      },
+      {
+       "id": "E112",
+       "name": "phase_err_out_valid_reg",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.3,
+       "struct_score": 5.4,
+       "trace": "control_backward",
+       "why": "Enables frequency lock evaluation on new coarse phase error",
+       "lines": [
+        572,
+        841
+       ]
+      },
+      {
+       "id": "E156",
+       "name": "freq_lock_count_reg",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 18.2,
+       "struct_score": 17.1,
+       "trace": "control_backward",
+       "why": "Hysteresis counter for frequency lock",
+       "lines": [
+        844,
+        850
+       ]
+      },
+      {
+       "id": "E158",
+       "name": "freq_locked_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.7,
+       "struct_score": 10.8,
+       "trace": "control_backward",
+       "why": "Frequency locked; selects fine vs coarse error and gates PTP lock",
+       "lines": [
+        641,
+        837,
+        857
+       ]
+      },
+      {
+       "id": "E160",
+       "name": "ptp_lock_count_reg",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 18.9,
+       "struct_score": 19.8,
+       "trace": "control_backward",
+       "why": "Hysteresis counter for PTP time lock",
+       "lines": [
+        923,
+        929
+       ]
+      },
+      {
+       "id": "E162",
+       "name": "ptp_locked_reg",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 14.7,
+       "struct_score": 2.7,
+       "trace": "control_backward",
+       "why": "PTP time lock flag feeding locked output",
+       "lines": [
+        641,
+        980
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E43",
+       "name": "period_ns_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E150",
+       "name": "ts_ns_diff_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E152",
+       "name": "ts_ns_diff_valid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E154",
+       "name": "time_err_int_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E155",
+       "name": "ptp_ovf",
+       "kind": "comb"
+      },
+      {
+       "id": "E157",
+       "name": "freq_lock_count_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E159",
+       "name": "freq_locked_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E161",
+       "name": "ptp_lock_count_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E163",
+       "name": "ptp_locked_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E165",
+       "name": "gain_sel_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E111",
+       "name": "phase_err_cnt_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E113",
+       "name": "phase_last_src_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E114",
+       "name": "phase_last_dst_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E115",
+       "name": "phase_edge_1_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E116",
+       "name": "phase_edge_2_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Timestamp counters",
+     "kind": "COUNTER_TIMER",
+     "description": "Relative and ToD timestamp counters advanced by period, PPS generation",
+     "anchors": [
+      {
+       "id": "E7",
+       "name": "output_ts_rel",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 87.6,
+       "struct_score": 68.0,
+       "trace": "data_backward",
+       "why": "Relative timestamp output built from ts_rel_ns_reg and fractional ns",
+       "lines": [
+        60,
+        632
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "output_ts_tod",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 89.4,
+       "struct_score": 73.1,
+       "trace": "data_backward",
+       "why": "Time-of-day timestamp output built from seconds, ns and fractional ns registers",
+       "lines": [
+        62,
+        635
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "output_ts_rel_step",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 15.6,
+       "struct_score": 6.7,
+       "trace": "data_backward",
+       "why": "Indicates relative timestamp was stepped/reloaded",
+       "lines": [
+        61,
+        633
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "output_ts_tod_step",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 15.6,
+       "struct_score": 6.7,
+       "trace": "data_backward",
+       "why": "Indicates ToD timestamp was stepped/reloaded",
+       "lines": [
+        63,
+        636
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "output_pps",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 43.6,
+       "struct_score": 6.7,
+       "trace": "data_backward",
+       "why": "Pulse-per-second output generated on ToD seconds rollover",
+       "lines": [
+        68,
+        638
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "output_pps_str",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 15.6,
+       "struct_score": 6.7,
+       "trace": "data_backward",
+       "why": "Stretched PPS level, cleared halfway through the second",
+       "lines": [
+        69,
+        639
+       ]
+      },
+      {
+       "id": "E52",
+       "name": "ts_rel_ns_reg",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 25.6,
+       "struct_score": 46.3,
+       "trace": "data_backward",
+       "why": "Relative timestamp ns counter, stepped from shadow on mismatch",
+       "lines": [
+        632,
+        754
+       ]
+      },
+      {
+       "id": "E58",
+       "name": "ts_tod_ns_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 52.8,
+       "struct_score": 43.5,
+       "trace": "data_backward",
+       "why": "ToD nanoseconds counter; rollover increments seconds and fires PPS",
+       "lines": [
+        635,
+        795
+       ]
+      },
+      {
+       "id": "E56",
+       "name": "ts_tod_s_reg",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 26.0,
+       "struct_score": 47.7,
+       "trace": "data_backward",
+       "why": "ToD seconds counter",
+       "lines": [
+        635,
+        797
+       ]
+      },
+      {
+       "id": "E60",
+       "name": "ts_tod_offset_ns_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 16.4,
+       "struct_score": 9.6,
+       "trace": "data_backward",
+       "why": "ToD ns offset from TD message added to shared ns LSBs",
+       "lines": [
+        788,
+        950
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E46",
+       "name": "ts_fns_lsb_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E47",
+       "name": "ts_fns_lsb_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E48",
+       "name": "ts_fns_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E49",
+       "name": "ts_fns_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E50",
+       "name": "ts_rel_ns_lsb_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E51",
+       "name": "ts_rel_ns_lsb_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E53",
+       "name": "ts_rel_ns_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E54",
+       "name": "ts_rel_step_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E55",
+       "name": "ts_rel_step_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E57",
+       "name": "ts_tod_s_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E59",
+       "name": "ts_tod_ns_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E61",
+       "name": "ts_tod_offset_ns_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E62",
+       "name": "ts_tod_step_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E63",
+       "name": "ts_tod_step_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E64",
+       "name": "pps_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E65",
+       "name": "pps_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E66",
+       "name": "pps_str_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E67",
+       "name": "pps_str_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Timestamp shadow and step check",
+     "kind": "CONTROLLER",
+     "description": "Holds master timestamp MSBs from TD, compares and steps local counters on mismatch",
+     "anchors": [
+      {
+       "id": "E121",
+       "name": "dst_rel_ns_shadow_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 19.1,
+       "struct_score": 20.7,
+       "trace": "data_backward",
+       "why": "Shadow of master relative ns assembled from TD words",
+       "lines": [
+        761,
+        764
+       ]
+      },
+      {
+       "id": "E123",
+       "name": "dst_rel_shadow_valid_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.6,
+       "struct_score": 10.5,
+       "trace": "control_backward",
+       "why": "Relative shadow complete; enables relative timestamp check",
+       "lines": [
+        757
+       ]
+      },
+      {
+       "id": "E129",
+       "name": "dst_tod_s_shadow_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 19.1,
+       "struct_score": 20.7,
+       "trace": "data_backward",
+       "why": "Shadow of master ToD seconds assembled from TD words",
+       "lines": [
+        809,
+        813
+       ]
+      },
+      {
+       "id": "E131",
+       "name": "dst_tod_shadow_valid_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.7,
+       "struct_score": 11.0,
+       "trace": "control_backward",
+       "why": "ToD shadow complete; enables ToD timestamp check",
+       "lines": [
+        805
+       ]
+      },
+      {
+       "id": "E139",
+       "name": "ts_rel_load_ts_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 15.8,
+       "struct_score": 7.5,
+       "trace": "control_backward",
+       "why": "Forces relative timestamp reload after repeated mismatches",
+       "lines": [
+        759,
+        965
+       ]
+      },
+      {
+       "id": "E147",
+       "name": "ts_tod_load_ts_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.2,
+       "struct_score": 8.8,
+       "trace": "control_backward",
+       "why": "Forces ToD timestamp reload after repeated mismatches",
+       "lines": [
+        807,
+        970
+       ]
+      },
+      {
+       "id": "E137",
+       "name": "ts_rel_mismatch_cnt_reg",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 17.2,
+       "struct_score": 13.1,
+       "trace": "control_backward",
+       "why": "Counts consecutive relative timestamp MSB mismatches",
+       "lines": [
+        774,
+        778
+       ]
+      },
+      {
+       "id": "E145",
+       "name": "ts_tod_mismatch_cnt_reg",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 17.2,
+       "struct_score": 13.1,
+       "trace": "control_backward",
+       "why": "Counts consecutive ToD timestamp mismatches",
+       "lines": [
+        823,
+        827
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E119",
+       "name": "dst_rel_step_shadow_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E120",
+       "name": "dst_rel_step_shadow_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E122",
+       "name": "dst_rel_ns_shadow_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E124",
+       "name": "dst_rel_shadow_valid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E125",
+       "name": "dst_tod_step_shadow_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E126",
+       "name": "dst_tod_step_shadow_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E127",
+       "name": "dst_tod_ns_shadow_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E128",
+       "name": "dst_tod_ns_shadow_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E130",
+       "name": "dst_tod_s_shadow_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E132",
+       "name": "dst_tod_shadow_valid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E133",
+       "name": "ts_rel_diff_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E134",
+       "name": "ts_rel_diff_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E135",
+       "name": "ts_rel_diff_valid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E136",
+       "name": "ts_rel_diff_valid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E138",
+       "name": "ts_rel_mismatch_cnt_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E140",
+       "name": "ts_rel_load_ts_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E141",
+       "name": "ts_tod_diff_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E142",
+       "name": "ts_tod_diff_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E143",
+       "name": "ts_tod_diff_valid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E144",
+       "name": "ts_tod_diff_valid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E146",
+       "name": "ts_tod_mismatch_cnt_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E148",
+       "name": "ts_tod_load_ts_next",
+       "kind": "comb"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clocks_resets",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2",
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "sample_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "ptp_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "ptp_rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "ptp_td_serial",
+     "protocol": "SERIAL",
+     "direction": "IN",
+     "member_ids": [
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "ptp_td_sdi",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "timestamp_out",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E7",
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E7",
+       "name": "output_ts_rel",
+       "kind": "port_out"
+      },
+      {
+       "id": "E8",
+       "name": "output_ts_rel_step",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "output_ts_tod",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "output_ts_tod_step",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "pps_out",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E11",
+      "E12"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "output_pps",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "output_pps_str",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E13"
+     ],
+     "members": [
+      {
+       "id": "E13",
+       "name": "locked",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

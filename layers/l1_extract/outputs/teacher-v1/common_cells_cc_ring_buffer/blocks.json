@@ -1,0 +1,413 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "common_cells_cc_ring_buffer",
+ "tops": [
+  "cc_ring_buffer"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "cc_ring_buffer": {
+   "source": "teacher",
+   "canonical_instance": "cc_ring_buffer",
+   "file": "data/rtl/common_cells/src/cc_ring_buffer.sv",
+   "lines": [
+    22,
+    176
+   ],
+   "summary": "Ring buffer with register-array storage: valid/ready writes advance a wrap-bit write pointer, random-access reads are range-checked between pointers, and the read pointer advances by a variable step.",
+   "blocks": [
+    {
+     "name": "Ring storage",
+     "kind": "MEMORY",
+     "description": "Register array written at wptr, read randomly at raddr.",
+     "anchors": [
+      {
+       "id": "E18",
+       "name": "mem_q",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 95.2,
+       "struct_score": 87.9,
+       "trace": "data_backward",
+       "why": "Depth-entry register array holding buffered data.",
+       "lines": [
+        69,
+        118
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "wdata_i",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 86.7,
+       "struct_score": 65.0,
+       "trace": "interface",
+       "why": "Write data stored at write pointer.",
+       "lines": [
+        85
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "raddr_i",
+       "role": "INTERFACE_ADDR",
+       "importance": "critical",
+       "score": 89.6,
+       "struct_score": 73.7,
+       "trace": "interface",
+       "why": "Random-access read address, range-checked against pointers.",
+       "lines": [
+        113,
+        118
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "rdata_o",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 89.3,
+       "struct_score": 73.0,
+       "trace": "data_backward",
+       "why": "Read data from mem_q at raddr.",
+       "lines": [
+        118
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E17",
+       "name": "mem_d",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Pointer and status logic",
+     "kind": "BUFFER",
+     "description": "Write/read pointers, full/empty, and read range check.",
+     "anchors": [
+      {
+       "id": "E22",
+       "name": "wptr_q",
+       "role": "FIFO_PTR",
+       "importance": "critical",
+       "score": 91.3,
+       "struct_score": 78.0,
+       "trace": "control_backward",
+       "why": "Write pointer with wrap bit; addresses writes, increments per write.",
+       "lines": [
+        85,
+        86
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "rptr_q",
+       "role": "FIFO_PTR",
+       "importance": "critical",
+       "score": 87.4,
+       "struct_score": 67.4,
+       "trace": "control_backward",
+       "why": "Read pointer with wrap bit; advanced by step_i.",
+       "lines": [
+        91,
+        102
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "wvalid_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 91.7,
+       "struct_score": 79.1,
+       "trace": "interface",
+       "why": "Write request valid; with ready stores wdata and bumps wptr.",
+       "lines": [
+        84
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "wready_o",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 93.2,
+       "struct_score": 82.9,
+       "trace": "control_backward",
+       "why": "Write ready when buffer not full.",
+       "lines": [
+        84,
+        117
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "rready_o",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 63.3,
+       "struct_score": 77.9,
+       "trace": "control_backward",
+       "why": "Read ready only when raddr lies between read and write pointers.",
+       "lines": [
+        113
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "advance_i",
+       "role": "COMMAND",
+       "importance": "major",
+       "score": 49.4,
+       "struct_score": 29.9,
+       "trace": "interface",
+       "why": "Command to advance read pointer by step.",
+       "lines": [
+        90
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "step_i",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 62.8,
+       "struct_score": 76.8,
+       "trace": "interface",
+       "why": "Read pointer increment amount.",
+       "lines": [
+        91
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "full_o",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 55.0,
+       "struct_score": 51.4,
+       "trace": "control_backward",
+       "why": "Full when pointers equal except wrap bit; blocks writes.",
+       "lines": [
+        103,
+        117
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "empty_o",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 56.5,
+       "struct_score": 56.9,
+       "trace": "control_backward",
+       "why": "Empty when write and read pointers equal.",
+       "lines": [
+        102
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "wptr_o",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 27.7,
+       "struct_score": 53.8,
+       "trace": "data_backward",
+       "why": "Exported write pointer index.",
+       "lines": [
+        99
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "rptr_o",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 27.7,
+       "struct_score": 53.8,
+       "trace": "data_backward",
+       "why": "Exported read pointer index.",
+       "lines": [
+        100
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E19",
+       "name": "rptr_d",
+       "kind": "comb"
+      },
+      {
+       "id": "E21",
+       "name": "wptr_d",
+       "kind": "comb"
+      },
+      {
+       "id": "E7",
+       "name": "rvalid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E23",
+       "name": "max_step",
+       "kind": "comb"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2",
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_ni",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "clr_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "write",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E4",
+      "E5",
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "wvalid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "wready_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "wdata_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "random_read",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E7",
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E7",
+       "name": "rvalid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "rready_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "raddr_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "rdata_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "read_advance",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E11",
+      "E12"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "advance_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E12",
+       "name": "step_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E13",
+      "E14",
+      "E15",
+      "E16"
+     ],
+     "members": [
+      {
+       "id": "E13",
+       "name": "wptr_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "rptr_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "full_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "empty_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

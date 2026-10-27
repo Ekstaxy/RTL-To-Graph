@@ -1,0 +1,277 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "common_cells_cc_isochronous_spill_register",
+ "tops": [
+  "cc_isochronous_spill_register"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "cc_isochronous_spill_register": {
+   "source": "teacher",
+   "canonical_instance": "cc_isochronous_spill_register",
+   "file": "data/rtl/common_cells/src/cc_isochronous_spill_register.sv",
+   "lines": [
+    41,
+    106
+   ],
+   "summary": "Two-entry isochronous clock-crossing FIFO: source domain writes a 2-slot memory with a wrapping write pointer, destination domain reads via read pointer; pointer XOR gives full/empty.",
+   "blocks": [
+    {
+     "name": "Two-entry buffer",
+     "kind": "BUFFER",
+     "description": "Two data slots written at wr_pointer, read at rd_pointer.",
+     "anchors": [
+      {
+       "id": "E14",
+       "name": "gen_isochronous_spill_register.mem_q",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 93.9,
+       "struct_score": 84.6,
+       "trace": "data_backward",
+       "why": "Two-entry data storage written in source domain.",
+       "lines": [
+        86,
+        87,
+        96
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E13",
+       "name": "gen_isochronous_spill_register.mem_d",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Pointer control",
+     "kind": "CONTROLLER",
+     "description": "Write/read pointers in two domains; XOR derives full and empty.",
+     "anchors": [
+      {
+       "id": "E12",
+       "name": "gen_isochronous_spill_register.wr_pointer_q",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 62.7,
+       "struct_score": 76.6,
+       "trace": "control_backward",
+       "why": "Source-domain write pointer with extra wrap bit.",
+       "lines": [
+        80,
+        82,
+        90
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "gen_isochronous_spill_register.rd_pointer_q",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 63.0,
+       "struct_score": 77.3,
+       "trace": "control_backward",
+       "why": "Destination-domain read pointer with extra wrap bit.",
+       "lines": [
+        80,
+        84,
+        96
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "src_ready_o",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 96.2,
+       "struct_score": 90.4,
+       "trace": "control_backward",
+       "why": "Source ready, low when pointers indicate FIFO full.",
+       "lines": [
+        54,
+        93
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "dst_valid_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 97.4,
+       "struct_score": 93.6,
+       "trace": "control_backward",
+       "why": "Destination valid when pointers differ (FIFO not empty).",
+       "lines": [
+        62,
+        95
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E3",
+     "name": "src_valid_i",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 95.1,
+     "struct_score": 87.6,
+     "trace": "interface",
+     "why": "Source valid; with ready pushes data and advances write pointer.",
+     "lines": [
+      52,
+      82,
+      87
+     ]
+    },
+    {
+     "id": "E5",
+     "name": "src_data_i",
+     "role": "INTERFACE_DATA",
+     "importance": "critical",
+     "score": 90.6,
+     "struct_score": 76.2,
+     "trace": "interface",
+     "why": "Source payload written into mem slot selected by write pointer.",
+     "lines": [
+      56,
+      90
+     ]
+    },
+    {
+     "id": "E9",
+     "name": "dst_ready_i",
+     "role": "HANDSHAKE_READY",
+     "importance": "critical",
+     "score": 89.0,
+     "struct_score": 72.2,
+     "trace": "interface",
+     "why": "Destination ready; with valid advances read pointer.",
+     "lines": [
+      64,
+      84
+     ]
+    },
+    {
+     "id": "E10",
+     "name": "dst_data_o",
+     "role": "INTERFACE_DATA",
+     "importance": "critical",
+     "score": 93.2,
+     "struct_score": 82.9,
+     "trace": "data_backward",
+     "why": "Output data read from mem slot at read pointer.",
+     "lines": [
+      66,
+      96
+     ]
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "src_clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "src_clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "src_rst_ni",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "dst_clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "dst_clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "dst_rst_ni",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "src_stream",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "src_valid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "src_ready_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "src_data_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "dst_stream",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E8",
+       "name": "dst_valid_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "dst_ready_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "dst_data_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

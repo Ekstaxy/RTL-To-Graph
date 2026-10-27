@@ -1,0 +1,34 @@
+{
+ "module_summary": "Clearable two-phase clock-domain-crossing channel: source and destination halves exchange payload via a 2-phase req/ack handshake and coordinate isolate/clear phases through cross-coupled reset-controller handshakes.",
+ "anchors": [
+  {"id": "E5", "name": "src_data_i", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Source-domain payload accepted by the source half.", "lines": [72, 128]},
+  {"id": "E6", "name": "src_valid_i", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Source-side valid starting a payload transfer.", "lines": [73, 129, 170]},
+  {"id": "E7", "name": "src_ready_o", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Source-side ready, gated during isolation.", "lines": [74, 130]},
+  {"id": "E12", "name": "dst_data_o", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Destination-domain payload output from destination half.", "lines": [80, 154]},
+  {"id": "E13", "name": "dst_valid_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Destination valid indicating captured payload.", "lines": [81, 155]},
+  {"id": "E14", "name": "dst_ready_i", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Destination ready consuming payload and triggering ack.", "lines": [82, 156]},
+  {"id": "E15", "name": "async_payload_req", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "forward", "why": "Two-phase request toggle crossing src to dst.", "lines": [85, 131, 157]},
+  {"id": "E16", "name": "async_payload_ack", "role": "HANDSHAKE_READY", "importance": "major", "trace": "forward", "why": "Two-phase acknowledge toggle crossing dst to src.", "lines": [86, 132, 158]},
+  {"id": "E17", "name": "async_payload_data", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Payload held stable across domains during handshake.", "lines": [87, 133, 159]},
+  {"id": "E3", "name": "src_clear_i", "role": "COMMAND", "importance": "major", "trace": "interface", "why": "Source-side clear request starting the clear sequence.", "lines": [70, 126, 170]},
+  {"id": "E10", "name": "dst_clear_i", "role": "COMMAND", "importance": "major", "trace": "interface", "why": "Destination-side clear request starting the clear sequence.", "lines": [78, 152]},
+  {"id": "E4", "name": "src_clear_pending_o", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "Source-side isolate/clear in progress indication.", "lines": [71, 127]},
+  {"id": "E11", "name": "dst_clear_pending_o", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "Destination-side isolate/clear in progress indication.", "lines": [79, 153]},
+  {"id": "E18", "name": "async_reset_src2dst_req", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "forward", "why": "Clear-phase request from source controller to destination.", "lines": [90, 135, 164]},
+  {"id": "E20", "name": "async_reset_src2dst_next_phase", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "forward", "why": "Clear sequence phase (isolate/clear/post-clear) sent src to dst.", "lines": [92, 134, 163]},
+  {"id": "E21", "name": "async_reset_dst2src_req", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "forward", "why": "Clear-phase request from destination controller to source.", "lines": [93, 161, 138]}
+ ],
+ "groups": [
+  {"name": "Source half", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E5", "E6", "E7", "E3", "E4"], "member_ids": ["I1"], "description": "Accepts source stream, launches 2-phase req, runs source clear controller."},
+  {"name": "Destination half", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E12", "E13", "E14", "E10", "E11"], "member_ids": ["I2"], "description": "Captures payload, returns ack, runs destination clear controller."},
+  {"name": "Async payload channel", "kind": "OTHER", "anchor_ids": ["E15", "E16", "E17"], "member_ids": [], "description": "Two-phase req/ack toggles and stable payload crossing domains."},
+  {"name": "Clear sequencing handshake", "kind": "CONTROLLER", "anchor_ids": ["E18", "E20", "E21"], "member_ids": ["E19", "E22", "E23"], "description": "Cross-coupled phase handshakes coordinating isolate and clear."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2", "E8", "E9"]},
+  {"name": "src_stream", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E5", "E6", "E7"]},
+  {"name": "dst_stream", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E12", "E13", "E14"]},
+  {"name": "src_clear", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E3", "E4"]},
+  {"name": "dst_clear", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E10", "E11"]}
+ ]
+}

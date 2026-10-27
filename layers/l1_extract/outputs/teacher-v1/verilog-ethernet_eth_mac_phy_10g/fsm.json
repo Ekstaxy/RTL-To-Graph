@@ -1,0 +1,581 @@
+[
+ {
+  "module": "eth_phy_10g_rx_frame_sync",
+  "instance": "eth_mac_phy_10g.eth_mac_phy_10g_rx_inst.eth_phy_10g_rx_if_inst.eth_phy_10g_rx_frame_sync_inst",
+  "state": "rx_block_lock_reg",
+  "next": "rx_block_lock_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "1",
+    "value": "1"
+   },
+   {
+    "name": "0",
+    "value": "0"
+   }
+  ],
+  "reset_state": null,
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "1",
+    "cond": "!bitslip_count_reg && !serdes_rx_bitslip_reg && (serdes_rx_hdr == SYNC_CTRL || serdes_rx_hdr == SYNC_DATA) && &sh_count_reg && !sh_invalid_count_reg"
+   },
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "!bitslip_count_reg && !serdes_rx_bitslip_reg && !(serdes_rx_hdr == SYNC_CTRL || serdes_rx_hdr == SYNC_DATA) && (!rx_block_lock_reg || &sh_invalid_count_reg)"
+   },
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "rst"
+   }
+  ],
+  "outputs": [
+   {
+    "signal": "rx_block_lock",
+    "kind": "moore",
+    "port": true
+   }
+  ],
+  "warnings": [
+   "semantic_check: mismatch (syntactic 2 states / 2 edges vs executed 1 / 0); semantic transitions attached"
+  ],
+  "semantic_check": "mismatch",
+  "semantic_transitions": [
+   {
+    "src": "0",
+    "dst": "0",
+    "cond": "1"
+   }
+  ]
+ },
+ {
+  "module": "axis_baser_rx_64",
+  "instance": "eth_mac_phy_10g.eth_mac_phy_10g_rx_inst.axis_baser_rx_inst",
+  "state": "state_reg",
+  "next": "state_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "STATE_IDLE",
+    "value": "2'b0"
+   },
+   {
+    "name": "STATE_PAYLOAD",
+    "value": "2'b1"
+   },
+   {
+    "name": "STATE_LAST",
+    "value": "2'b10"
+   }
+  ],
+  "reset_state": null,
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_PAYLOAD",
+    "cond": "input_type_d1 == INPUT_TYPE_START_0 && cfg_rx_enable"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_IDLE",
+    "cond": "!(input_type_d1 == INPUT_TYPE_START_0 && cfg_rx_enable)"
+   },
+   {
+    "src": "STATE_PAYLOAD",
+    "dst": "STATE_PAYLOAD",
+    "cond": "input_type_d0 == INPUT_TYPE_DATA"
+   },
+   {
+    "src": "STATE_PAYLOAD",
+    "dst": "STATE_IDLE",
+    "cond": "!(input_type_d0 == INPUT_TYPE_DATA) && input_type_d0[3] && input_type_d0 <= INPUT_TYPE_TERM_4"
+   },
+   {
+    "src": "STATE_PAYLOAD",
+    "dst": "STATE_LAST",
+    "cond": "!(input_type_d0 == INPUT_TYPE_DATA) && input_type_d0[3] && !(input_type_d0 <= INPUT_TYPE_TERM_4)"
+   },
+   {
+    "src": "STATE_PAYLOAD",
+    "dst": "STATE_IDLE",
+    "cond": "!(input_type_d0 == INPUT_TYPE_DATA) && !input_type_d0[3]"
+   },
+   {
+    "src": "STATE_LAST",
+    "dst": "STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "*",
+    "dst": "STATE_IDLE",
+    "cond": "rst"
+   }
+  ],
+  "outputs": [
+   {
+    "signal": "m_axis_tvalid_next",
+    "kind": "moore",
+    "port": false
+   }
+  ],
+  "warnings": [
+   "semantic_check: unsupported (unsupported: packed select of array)"
+  ],
+  "semantic_check": "unsupported"
+ },
+ {
+  "module": "axis_baser_tx_64",
+  "instance": "eth_mac_phy_10g.eth_mac_phy_10g_tx_inst.axis_baser_tx_inst",
+  "state": "state_reg",
+  "next": "state_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "STATE_IDLE",
+    "value": "3'b0"
+   },
+   {
+    "name": "STATE_PAYLOAD",
+    "value": "3'b1"
+   },
+   {
+    "name": "STATE_PAD",
+    "value": "3'b10"
+   },
+   {
+    "name": "STATE_ERR",
+    "value": "3'b101"
+   },
+   {
+    "name": "STATE_FCS_1",
+    "value": "3'b11"
+   },
+   {
+    "name": "STATE_FCS_2",
+    "value": "3'b100"
+   },
+   {
+    "name": "STATE_IFG",
+    "value": "3'b110"
+   }
+  ],
+  "reset_state": null,
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_PAYLOAD",
+    "cond": "s_axis_tvalid && cfg_tx_enable"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_IDLE",
+    "cond": "!(s_axis_tvalid && cfg_tx_enable)"
+   },
+   {
+    "src": "STATE_PAYLOAD",
+    "dst": "STATE_PAD",
+    "cond": "(!s_axis_tvalid || s_axis_tlast) && frame_min_count_reg && frame_min_count_reg > KEEP_WIDTH"
+   },
+   {
+    "src": "STATE_PAYLOAD",
+    "dst": "STATE_ERR",
+    "cond": "(!s_axis_tvalid || s_axis_tlast) && frame_min_count_reg && !(frame_min_count_reg > KEEP_WIDTH) && frame_error_next"
+   },
+   {
+    "src": "STATE_PAYLOAD",
+    "dst": "STATE_FCS_1",
+    "cond": "(!s_axis_tvalid || s_axis_tlast) && frame_min_count_reg && !(frame_min_count_reg > KEEP_WIDTH) && !frame_error_next"
+   },
+   {
+    "src": "STATE_PAYLOAD",
+    "dst": "STATE_ERR",
+    "cond": "(!s_axis_tvalid || s_axis_tlast) && !frame_min_count_reg && frame_error_next"
+   },
+   {
+    "src": "STATE_PAYLOAD",
+    "dst": "STATE_FCS_1",
+    "cond": "(!s_axis_tvalid || s_axis_tlast) && !frame_min_count_reg && !frame_error_next"
+   },
+   {
+    "src": "STATE_PAYLOAD",
+    "dst": "STATE_PAYLOAD",
+    "cond": "!(!s_axis_tvalid || s_axis_tlast)"
+   },
+   {
+    "src": "STATE_PAD",
+    "dst": "STATE_PAD",
+    "cond": "frame_min_count_reg > KEEP_WIDTH"
+   },
+   {
+    "src": "STATE_PAD",
+    "dst": "STATE_ERR",
+    "cond": "!(frame_min_count_reg > KEEP_WIDTH) && frame_error_reg"
+   },
+   {
+    "src": "STATE_PAD",
+    "dst": "STATE_FCS_1",
+    "cond": "!(frame_min_count_reg > KEEP_WIDTH) && !frame_error_reg"
+   },
+   {
+    "src": "STATE_FCS_1",
+    "dst": "STATE_FCS_2",
+    "cond": "s_empty_reg <= 4"
+   },
+   {
+    "src": "STATE_FCS_1",
+    "dst": "STATE_IFG",
+    "cond": "!(s_empty_reg <= 4)"
+   },
+   {
+    "src": "STATE_FCS_2",
+    "dst": "STATE_IFG",
+    "cond": "ifg_count_next > 8'd7"
+   },
+   {
+    "src": "STATE_FCS_2",
+    "dst": "STATE_IDLE",
+    "cond": "!(ifg_count_next > 8'd7)"
+   },
+   {
+    "src": "STATE_ERR",
+    "dst": "STATE_IFG",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_IFG",
+    "dst": "STATE_IFG",
+    "cond": "(ifg_count_next > 8'd7 || frame_reg)"
+   },
+   {
+    "src": "STATE_IFG",
+    "dst": "STATE_IDLE",
+    "cond": "!(ifg_count_next > 8'd7 || frame_reg)"
+   },
+   {
+    "src": "*",
+    "dst": "STATE_IDLE",
+    "cond": "rst"
+   }
+  ],
+  "outputs": [
+   {
+    "signal": "reset_crc",
+    "kind": "moore",
+    "port": false
+   },
+   {
+    "signal": "update_crc",
+    "kind": "moore",
+    "port": false
+   }
+  ],
+  "warnings": [
+   "semantic_check: unsupported (unsupported: packed select of array)"
+  ],
+  "semantic_check": "unsupported"
+ },
+ {
+  "module": "eth_phy_10g_rx_ber_mon",
+  "instance": "eth_mac_phy_10g.eth_mac_phy_10g_rx_inst.eth_phy_10g_rx_if_inst.eth_phy_10g_rx_ber_mon_inst",
+  "state": "ber_count_reg",
+  "next": null,
+  "style": "semantic",
+  "states": [
+   {
+    "name": "S_0",
+    "value": "0"
+   },
+   {
+    "name": "SYNC_CTRL",
+    "value": "1"
+   },
+   {
+    "name": "S_2",
+    "value": "2"
+   },
+   {
+    "name": "S_3",
+    "value": "3"
+   },
+   {
+    "name": "S_4",
+    "value": "4"
+   },
+   {
+    "name": "S_5",
+    "value": "5"
+   },
+   {
+    "name": "S_6",
+    "value": "6"
+   },
+   {
+    "name": "S_7",
+    "value": "7"
+   },
+   {
+    "name": "S_8",
+    "value": "8"
+   },
+   {
+    "name": "S_9",
+    "value": "9"
+   },
+   {
+    "name": "S_10",
+    "value": "10"
+   },
+   {
+    "name": "S_11",
+    "value": "11"
+   },
+   {
+    "name": "S_12",
+    "value": "12"
+   },
+   {
+    "name": "S_13",
+    "value": "13"
+   },
+   {
+    "name": "S_14",
+    "value": "14"
+   },
+   {
+    "name": "COUNT_WIDTH",
+    "value": "15"
+   }
+  ],
+  "reset_state": "S_0",
+  "transitions": [
+   {
+    "src": "S_0",
+    "dst": "SYNC_CTRL",
+    "cond": "(!serdes_rx_hdr[0] && !serdes_rx_hdr[1]) || (serdes_rx_hdr[0] && serdes_rx_hdr[1])"
+   },
+   {
+    "src": "S_0",
+    "dst": "S_0",
+    "cond": "(!serdes_rx_hdr[0] && serdes_rx_hdr[1]) || (serdes_rx_hdr[0] && !serdes_rx_hdr[1])"
+   },
+   {
+    "src": "SYNC_CTRL",
+    "dst": "S_2",
+    "cond": "(!serdes_rx_hdr[0] && !serdes_rx_hdr[1]) || (serdes_rx_hdr[0] && serdes_rx_hdr[1])"
+   },
+   {
+    "src": "SYNC_CTRL",
+    "dst": "SYNC_CTRL",
+    "cond": "(!serdes_rx_hdr[0] && serdes_rx_hdr[1]) || (serdes_rx_hdr[0] && !serdes_rx_hdr[1])"
+   },
+   {
+    "src": "S_2",
+    "dst": "S_3",
+    "cond": "(!serdes_rx_hdr[0] && !serdes_rx_hdr[1]) || (serdes_rx_hdr[0] && serdes_rx_hdr[1])"
+   },
+   {
+    "src": "S_2",
+    "dst": "S_2",
+    "cond": "(!serdes_rx_hdr[0] && serdes_rx_hdr[1]) || (serdes_rx_hdr[0] && !serdes_rx_hdr[1])"
+   },
+   {
+    "src": "S_3",
+    "dst": "S_4",
+    "cond": "(!serdes_rx_hdr[0] && !serdes_rx_hdr[1]) || (serdes_rx_hdr[0] && serdes_rx_hdr[1])"
+   },
+   {
+    "src": "S_3",
+    "dst": "S_3",
+    "cond": "(!serdes_rx_hdr[0] && serdes_rx_hdr[1]) || (serdes_rx_hdr[0] && !serdes_rx_hdr[1])"
+   },
+   {
+    "src": "S_4",
+    "dst": "S_5",
+    "cond": "(!serdes_rx_hdr[0] && !serdes_rx_hdr[1]) || (serdes_rx_hdr[0] && serdes_rx_hdr[1])"
+   },
+   {
+    "src": "S_4",
+    "dst": "S_4",
+    "cond": "(!serdes_rx_hdr[0] && serdes_rx_hdr[1]) || (serdes_rx_hdr[0] && !serdes_rx_hdr[1])"
+   },
+   {
+    "src": "S_5",
+    "dst": "S_6",
+    "cond": "(!serdes_rx_hdr[0] && !serdes_rx_hdr[1]) || (serdes_rx_hdr[0] && serdes_rx_hdr[1])"
+   },
+   {
+    "src": "S_5",
+    "dst": "S_5",
+    "cond": "(!serdes_rx_hdr[0] && serdes_rx_hdr[1]) || (serdes_rx_hdr[0] && !serdes_rx_hdr[1])"
+   },
+   {
+    "src": "S_6",
+    "dst": "S_7",
+    "cond": "(!serdes_rx_hdr[0] && !serdes_rx_hdr[1]) || (serdes_rx_hdr[0] && serdes_rx_hdr[1])"
+   },
+   {
+    "src": "S_6",
+    "dst": "S_6",
+    "cond": "(!serdes_rx_hdr[0] && serdes_rx_hdr[1]) || (serdes_rx_hdr[0] && !serdes_rx_hdr[1])"
+   },
+   {
+    "src": "S_7",
+    "dst": "S_8",
+    "cond": "(!serdes_rx_hdr[0] && !serdes_rx_hdr[1]) || (serdes_rx_hdr[0] && serdes_rx_hdr[1]) || <datapath condition>"
+   },
+   {
+    "src": "S_7",
+    "dst": "S_7",
+    "cond": "!serdes_rx_hdr[0] && serdes_rx_hdr[1]"
+   },
+   {
+    "src": "S_7",
+    "dst": "S_0",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "S_8",
+    "dst": "S_9",
+    "cond": "(!serdes_rx_hdr[0] && !serdes_rx_hdr[1]) || (serdes_rx_hdr[0] && serdes_rx_hdr[1])"
+   },
+   {
+    "src": "S_8",
+    "dst": "S_8",
+    "cond": "(!serdes_rx_hdr[0] && serdes_rx_hdr[1]) || (serdes_rx_hdr[0] && !serdes_rx_hdr[1])"
+   },
+   {
+    "src": "S_9",
+    "dst": "S_10",
+    "cond": "(!serdes_rx_hdr[0] && !serdes_rx_hdr[1]) || (serdes_rx_hdr[0] && serdes_rx_hdr[1])"
+   },
+   {
+    "src": "S_9",
+    "dst": "S_9",
+    "cond": "(!serdes_rx_hdr[0] && serdes_rx_hdr[1]) || (serdes_rx_hdr[0] && !serdes_rx_hdr[1])"
+   },
+   {
+    "src": "S_10",
+    "dst": "S_11",
+    "cond": "(!serdes_rx_hdr[0] && !serdes_rx_hdr[1]) || (serdes_rx_hdr[0] && serdes_rx_hdr[1])"
+   },
+   {
+    "src": "S_10",
+    "dst": "S_10",
+    "cond": "(!serdes_rx_hdr[0] && serdes_rx_hdr[1]) || (serdes_rx_hdr[0] && !serdes_rx_hdr[1])"
+   },
+   {
+    "src": "S_11",
+    "dst": "S_12",
+    "cond": "(!serdes_rx_hdr[0] && !serdes_rx_hdr[1]) || (serdes_rx_hdr[0] && serdes_rx_hdr[1])"
+   },
+   {
+    "src": "S_11",
+    "dst": "S_11",
+    "cond": "(!serdes_rx_hdr[0] && serdes_rx_hdr[1]) || (serdes_rx_hdr[0] && !serdes_rx_hdr[1])"
+   },
+   {
+    "src": "S_12",
+    "dst": "S_13",
+    "cond": "(!serdes_rx_hdr[0] && !serdes_rx_hdr[1]) || (serdes_rx_hdr[0] && serdes_rx_hdr[1])"
+   },
+   {
+    "src": "S_12",
+    "dst": "S_12",
+    "cond": "(!serdes_rx_hdr[0] && serdes_rx_hdr[1]) || (serdes_rx_hdr[0] && !serdes_rx_hdr[1])"
+   },
+   {
+    "src": "S_13",
+    "dst": "S_14",
+    "cond": "(!serdes_rx_hdr[0] && !serdes_rx_hdr[1]) || (serdes_rx_hdr[0] && serdes_rx_hdr[1])"
+   },
+   {
+    "src": "S_13",
+    "dst": "S_13",
+    "cond": "(!serdes_rx_hdr[0] && serdes_rx_hdr[1]) || (serdes_rx_hdr[0] && !serdes_rx_hdr[1])"
+   },
+   {
+    "src": "S_14",
+    "dst": "COUNT_WIDTH",
+    "cond": "(!serdes_rx_hdr[0] && !serdes_rx_hdr[1]) || (serdes_rx_hdr[0] && serdes_rx_hdr[1])"
+   },
+   {
+    "src": "S_14",
+    "dst": "S_14",
+    "cond": "(!serdes_rx_hdr[0] && serdes_rx_hdr[1]) || (serdes_rx_hdr[0] && !serdes_rx_hdr[1])"
+   },
+   {
+    "src": "COUNT_WIDTH",
+    "dst": "COUNT_WIDTH",
+    "cond": "1"
+   }
+  ],
+  "outputs": [],
+  "warnings": [
+   "extracted by execution (coding style not recognized syntactically)"
+  ],
+  "semantic_check": "semantic-only"
+ },
+ {
+  "module": "eth_phy_10g_rx_watchdog",
+  "instance": "eth_mac_phy_10g.eth_mac_phy_10g_rx_inst.eth_phy_10g_rx_if_inst.eth_phy_10g_rx_watchdog_inst",
+  "state": "error_count_reg",
+  "next": null,
+  "style": "semantic",
+  "states": [
+   {
+    "name": "S_0",
+    "value": "0"
+   },
+   {
+    "name": "SYNC_CTRL",
+    "value": "1"
+   },
+   {
+    "name": "S_2",
+    "value": "2"
+   }
+  ],
+  "reset_state": "S_0",
+  "transitions": [
+   {
+    "src": "S_0",
+    "dst": "S_0",
+    "cond": "1"
+   },
+   {
+    "src": "SYNC_CTRL",
+    "dst": "SYNC_CTRL",
+    "cond": "1"
+   },
+   {
+    "src": "S_2",
+    "dst": "S_2",
+    "cond": "!saw_ctrl_sh_reg"
+   },
+   {
+    "src": "S_2",
+    "dst": "S_0",
+    "cond": "<datapath condition>"
+   }
+  ],
+  "outputs": [],
+  "warnings": [
+   "extracted by execution (coding style not recognized syntactically)"
+  ],
+  "semantic_check": "semantic-only"
+ }
+]

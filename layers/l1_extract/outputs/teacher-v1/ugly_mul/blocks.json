@@ -1,0 +1,299 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "ugly_mul",
+ "tops": [
+  "ugly_mul"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "ugly_mul": {
+   "source": "teacher",
+   "canonical_instance": "ugly_mul",
+   "file": "examples/rtl/ugly_mul.v",
+   "lines": [
+    3,
+    34
+   ],
+   "summary": "Sequential 16x16 shift-and-add multiplier: a 3-state FSM loads operands, adds the shifting multiplicand into an accumulator for 16 cycles, then pulses done.",
+   "blocks": [
+    {
+     "name": "mul_controller",
+     "kind": "CONTROLLER",
+     "description": "Start/run/finish FSM producing busy level and done pulse.",
+     "anchors": [
+      {
+       "id": "E8",
+       "name": "m",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.9,
+       "struct_score": 99.7,
+       "trace": "control_backward",
+       "why": "Idle/run/finish controller; gates operand load, accumulate steps and done pulse.",
+       "lines": [
+        24,
+        28,
+        30
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "s",
+       "role": "COMMAND",
+       "importance": "critical",
+       "score": 85.8,
+       "struct_score": 61.5,
+       "trace": "interface",
+       "why": "Start input loading operands and entering run state from idle.",
+       "lines": [
+        25
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "d",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 95.8,
+       "struct_score": 89.4,
+       "trace": "control_backward",
+       "why": "One-cycle done pulse in finish state accompanying the product.",
+       "lines": [
+        23,
+        30
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "bz",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 51.7,
+       "struct_score": 39.2,
+       "trace": "control_backward",
+       "why": "Busy level decoded from run state.",
+       "lines": [
+        18
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "shift_add_datapath",
+     "kind": "DATAPATH",
+     "description": "Shifting operand registers and adder updating the accumulator/product.",
+     "anchors": [
+      {
+       "id": "E9",
+       "name": "x",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 57.1,
+       "struct_score": 59.1,
+       "trace": "data_backward",
+       "why": "Multiplicand register shifted left each run cycle, added into acc.",
+       "lines": [
+        25,
+        27
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "y",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 54.4,
+       "struct_score": 49.2,
+       "trace": "data_backward",
+       "why": "Multiplier register shifted right; LSB selects whether to add.",
+       "lines": [
+        17,
+        25,
+        27
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "t",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 54.4,
+       "struct_score": 49.5,
+       "trace": "data_backward",
+       "why": "Conditional add acc+x selected by y[0]; next accumulator value.",
+       "lines": [
+        17,
+        27
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "p",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 96.8,
+       "struct_score": 92.0,
+       "trace": "data_backward",
+       "why": "Product output, direct copy of accumulator acc.",
+       "lines": [
+        19
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "a",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 94.9,
+       "struct_score": 87.2,
+       "trace": "interface",
+       "why": "Multiplicand operand loaded into x.",
+       "lines": [
+        25
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "b",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 94.9,
+       "struct_score": 87.2,
+       "trace": "interface",
+       "why": "Multiplier operand loaded into y.",
+       "lines": [
+        25
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E10",
+       "name": "acc",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "step_counter",
+     "kind": "COUNTER_TIMER",
+     "description": "Counts 16 iterations and flags completion.",
+     "anchors": [
+      {
+       "id": "E12",
+       "name": "k",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 58.0,
+       "struct_score": 62.2,
+       "trace": "control_backward",
+       "why": "Step counter incremented each run cycle; reaching 16 ends run.",
+       "lines": [
+        16,
+        27
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "z",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 19.7,
+       "struct_score": 23.0,
+       "trace": "control_backward",
+       "why": "Terminal-count flag moving FSM from run to finish.",
+       "lines": [
+        16,
+        28
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "c",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rn",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "operands_start",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "a",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "b",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "result",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E7",
+      "E13",
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E7",
+       "name": "p",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "d",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "bz",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

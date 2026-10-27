@@ -1,0 +1,23 @@
+{
+  "module_summary": "Traffic-light controller: a 2-bit FSM cycles red/green/yellow via next-light registers, while a reloadable down-counter times each phase and shortens green on pass_request.",
+  "anchors": [
+    {"id": "E9", "name": "state", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Controller state (idle/red/yellow/green) driving the next-light registers."},
+    {"id": "E8", "name": "cnt", "role": "COUNTER", "importance": "critical", "trace": "control_backward", "why": "Phase timer reloaded 60/5/10 on light change, decremented, steers FSM transitions."},
+    {"id": "E5", "name": "red", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Red light output registered from p_red; falling edge reloads cnt."},
+    {"id": "E6", "name": "yellow", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Yellow light output registered from p_yellow; falling edge reloads cnt."},
+    {"id": "E7", "name": "green", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Green light output; enables pass_request shortening and reloads cnt."},
+    {"id": "E3", "name": "pass_request", "role": "COMMAND", "importance": "major", "trace": "forward", "why": "Pedestrian request shortening remaining green time to 10 cycles."},
+    {"id": "E10", "name": "p_red", "role": "HOLDING_REG", "importance": "minor", "trace": "control_backward", "why": "FSM-decoded next red value; p_yellow/p_green are twins."}
+  ],
+  "groups": [
+    {"name": "light_fsm", "kind": "CONTROLLER", "anchor_ids": ["E9", "E10"], "member_ids": ["E11", "E12"], "description": "State machine producing next-light values per phase."},
+    {"name": "phase_timer", "kind": "COUNTER_TIMER", "anchor_ids": ["E8", "E3"], "member_ids": ["E4"], "description": "Down-counter reloaded per light, exposed on clock output."},
+    {"name": "light_outputs", "kind": "OTHER", "anchor_ids": ["E5", "E6", "E7"], "member_ids": [], "description": "Registered light outputs one cycle after next-light registers."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "pedestrian_request", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E3"]},
+    {"name": "lights", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E5", "E6", "E7"]},
+    {"name": "count_out", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E4"]}
+  ]
+}

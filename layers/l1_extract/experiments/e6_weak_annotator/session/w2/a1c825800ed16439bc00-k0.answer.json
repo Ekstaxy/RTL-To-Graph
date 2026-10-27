@@ -1,0 +1,118 @@
+{
+  "module_summary": "Combines 8-bit input with phase-tracked held byte into 16-bit output, firing valid pulse when both input-valid and odd-phase conditions align.",
+  "anchors": [
+    {
+      "id": "E3",
+      "name": "valid_in",
+      "role": "HANDSHAKE_VALID",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Input strobe signal driving the phase-hold child and gating output combination.",
+      "lines": [29, 40]
+    },
+    {
+      "id": "E4",
+      "name": "data_in",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "8-bit input data payload, lower byte of the final 16-bit output.",
+      "lines": [30, 58]
+    },
+    {
+      "id": "E5",
+      "name": "valid_out",
+      "role": "HANDSHAKE_VALID",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Output valid pulse strobing 16-bit result when combination fires.",
+      "lines": [32, 57]
+    },
+    {
+      "id": "E6",
+      "name": "data_out",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "16-bit output register holding the concatenated result.",
+      "lines": [33, 58]
+    },
+    {
+      "id": "E9",
+      "name": "fire_k",
+      "role": "CONTROL_FLAG",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Combines valid_in and u_parity; gates both valid_out pulse and data_out update.",
+      "lines": [40, 58]
+    },
+    {
+      "id": "E7",
+      "name": "u_pending",
+      "role": "HOLDING_REG",
+      "importance": "major",
+      "trace": "data_backward",
+      "why": "Holds high byte from child phase_hold module, concatenated as upper 8 bits of output.",
+      "lines": [35, 58]
+    },
+    {
+      "id": "E8",
+      "name": "u_parity",
+      "role": "CONTROL_FLAG",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Odd-phase toggle from child, used to gate fire condition with valid_in.",
+      "lines": [36, 40]
+    }
+  ],
+  "groups": [
+    {
+      "name": "Input Interface",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E3", "E4"],
+      "member_ids": [],
+      "description": "Receives valid strobe and 8-bit data input."
+    },
+    {
+      "name": "Child Module Outputs",
+      "kind": "REGISTER_BANK",
+      "anchor_ids": ["E7", "E8"],
+      "member_ids": ["I1"],
+      "description": "High byte holding register and odd-phase control flag from child phase_hold module."
+    },
+    {
+      "name": "Output Fire Logic",
+      "kind": "DATAPATH",
+      "anchor_ids": ["E9"],
+      "member_ids": ["E10"],
+      "description": "Combines valid_in and u_parity to gate output register updates."
+    },
+    {
+      "name": "Output Interface",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E5", "E6"],
+      "member_ids": [],
+      "description": "Delivers 16-bit result with valid pulse."
+    }
+  ],
+  "interfaces": [
+    {
+      "name": "Input Handshake",
+      "protocol": "VALID_READY",
+      "direction": "IN",
+      "member_ids": ["E3", "E4"]
+    },
+    {
+      "name": "Output Handshake",
+      "protocol": "VALID_READY",
+      "direction": "OUT",
+      "member_ids": ["E5", "E6"]
+    },
+    {
+      "name": "Clock and Reset",
+      "protocol": "CLOCK_RESET",
+      "direction": "IN",
+      "member_ids": ["E1", "E2"]
+    }
+  ]
+}

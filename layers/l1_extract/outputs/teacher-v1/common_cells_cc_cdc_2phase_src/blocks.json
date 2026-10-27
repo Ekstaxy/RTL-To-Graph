@@ -1,0 +1,244 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "common_cells_cc_cdc_2phase_src",
+ "tops": [
+  "cc_cdc_2phase_src"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "cc_cdc_2phase_src": {
+   "source": "teacher",
+   "canonical_instance": "cc_cdc_2phase_src",
+   "file": "data/rtl/common_cells/src/cc_cdc_2phase.sv",
+   "lines": [
+    104,
+    149
+   ],
+   "summary": "Source half of a two-phase CDC: on valid/ready accept it toggles a request register and latches data, ready when synchronized ack phase matches request.",
+   "blocks": [
+    {
+     "name": "Two-phase request/ack control",
+     "kind": "CONTROLLER",
+     "description": "Toggle request register and ack synchronizer deciding source readiness.",
+     "anchors": [
+      {
+       "id": "E4",
+       "name": "valid_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 94.6,
+       "struct_score": 86.3,
+       "trace": "interface",
+       "why": "Source-side valid; with ready_o forms src_accept to launch a transfer.",
+       "lines": [
+        111,
+        124
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "ready_o",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 96.0,
+       "struct_score": 89.8,
+       "trace": "control_backward",
+       "why": "Ready when request phase equals synchronized ack phase (no transfer in flight).",
+       "lines": [
+        124,
+        145
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "src_accept",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 51.0,
+       "struct_score": 36.6,
+       "trace": "control_backward",
+       "why": "Load enable toggling req_src_q and capturing data_src_q.",
+       "lines": [
+        124,
+        141,
+        142
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "async_req_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 95.3,
+       "struct_score": 88.1,
+       "trace": "control_backward",
+       "why": "Two-phase request toggle driven by req_src_q toward destination domain.",
+       "lines": [
+        113,
+        146
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "async_ack_i",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 85.6,
+       "struct_score": 60.8,
+       "trace": "interface",
+       "why": "Asynchronous two-phase ack from destination, synchronized by tc_sync.",
+       "lines": [
+        114,
+        136
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "ack_synced",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 22.7,
+       "struct_score": 35.3,
+       "trace": "control_backward",
+       "why": "Synchronized ack phase compared with req_src_q to produce ready_o.",
+       "lines": [
+        137,
+        145
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E9",
+       "name": "req_src_q",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "CDC data holding",
+     "kind": "DATAPATH",
+     "description": "data_src_q holds payload stable while request is outstanding.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "data_i",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 62.7,
+       "struct_score": 76.6,
+       "trace": "interface",
+       "why": "Source data payload latched into data_src_q on accept.",
+       "lines": [
+        110,
+        142
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "async_data_o",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 92.2,
+       "struct_score": 80.3,
+       "trace": "data_backward",
+       "why": "Data held stable in data_src_q crossing to destination domain.",
+       "lines": [
+        115,
+        147
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E11",
+       "name": "data_src_q",
+       "kind": "reg"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "rst_ni",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "clk_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "src_stream",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "data_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "valid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "ready_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "async_link",
+     "protocol": "REQ_ACK",
+     "direction": "OUT",
+     "member_ids": [
+      "E6",
+      "E7",
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "async_req_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "async_ack_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "async_data_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

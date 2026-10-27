@@ -1,0 +1,29 @@
+{
+ "module_summary": "Clock-domain-crossing FIFO split into source and destination halves; the source-side register array is read asynchronously while write/read pointers cross via 2-phase req/ack links.",
+ "anchors": [
+  {"id": "E3", "name": "src_data_i", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Source-domain payload written into the FIFO array", "lines": [61, 90]},
+  {"id": "E4", "name": "src_valid_i", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Source write request valid", "lines": [62, 91]},
+  {"id": "E5", "name": "src_ready_o", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Source ready, deasserted when FIFO full", "lines": [63, 92]},
+  {"id": "E8", "name": "dst_data_o", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Destination-domain payload read from FIFO array", "lines": [67, 110]},
+  {"id": "E9", "name": "dst_valid_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Destination valid when read pointer differs from write pointer", "lines": [68, 111]},
+  {"id": "E10", "name": "dst_ready_i", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Destination ready advancing the read pointer", "lines": [69, 112]},
+  {"id": "E11", "name": "async_data", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "FIFO data array held in source domain, read by destination", "lines": [75, 94, 114]},
+  {"id": "E14", "name": "async_wptr_data", "role": "FIFO_PTR", "importance": "major", "trace": "data_backward", "why": "Write pointer sent to destination over 2-phase CDC", "lines": [78, 97, 117]},
+  {"id": "E12", "name": "async_wptr_req", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "forward", "why": "2-phase request for write pointer transfer", "lines": [76, 95, 115]},
+  {"id": "E13", "name": "async_wptr_ack", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "forward", "why": "2-phase acknowledge for write pointer transfer", "lines": [77, 96, 116]},
+  {"id": "E17", "name": "async_rptr_data", "role": "FIFO_PTR", "importance": "major", "trace": "data_backward", "why": "Read pointer returned to source over 2-phase CDC for full detection", "lines": [81, 100, 120]},
+  {"id": "E15", "name": "async_rptr_req", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "forward", "why": "2-phase request for read pointer transfer", "lines": [79, 98, 118]},
+  {"id": "E16", "name": "async_rptr_ack", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "forward", "why": "2-phase acknowledge for read pointer transfer", "lines": [80, 99, 119]}
+ ],
+ "groups": [
+  {"name": "Source half", "kind": "BUFFER", "anchor_ids": ["E3", "E4", "E5", "E11"], "member_ids": ["I1"], "description": "Writes words into array and tracks write pointer and full"},
+  {"name": "Destination half", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E8", "E9", "E10"], "member_ids": ["I2"], "description": "Reads array via local read pointer and derives valid"},
+  {"name": "Pointer CDC links", "kind": "OTHER", "anchor_ids": ["E14", "E12", "E13", "E17", "E15", "E16"], "member_ids": [], "description": "2-phase req/ack crossings for write and read pointers"}
+ ],
+ "interfaces": [
+  {"name": "src_clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "src_stream", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5"]},
+  {"name": "dst_clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E6", "E7"]},
+  {"name": "dst_stream", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E8", "E9", "E10"]}
+ ]
+}

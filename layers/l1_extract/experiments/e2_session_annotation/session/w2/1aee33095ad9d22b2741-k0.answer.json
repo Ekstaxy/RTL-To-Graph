@@ -1,0 +1,20 @@
+{
+ "module_summary": "4-way round-robin arbiter: a double-width subtract-and-mask picks the first request at/after a rotating one-hot priority pointer, locks the grant until release, then rotates priority.",
+ "anchors": [
+  {"id": "E3", "name": "n2_42d", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Request vector from 4 requesters; feeds priority select and starts a grant cycle."},
+  {"id": "E4", "name": "n4_120", "role": "ARBITRATION", "importance": "critical", "trace": "data_backward", "why": "One-hot grant vector output, copy of registered grant held while locked."},
+  {"id": "E10", "name": "n0_5be", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Two-state lock flag: freezes grant while held, cleared on release which rotates priority."},
+  {"id": "E7", "name": "n6_6c8", "role": "ARBITRATION", "importance": "major", "trace": "control_backward", "why": "One-hot round-robin priority pointer, rotated past the granted requester on release."},
+  {"id": "E5", "name": "n7_889", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Release/done input from grantee ending the locked grant and advancing priority."},
+  {"id": "E12", "name": "n3_438", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Double-width isolate-first-set result giving the winning request relative to pointer."},
+  {"id": "E9", "name": "n8_39f", "role": "ARBITRATION", "importance": "minor", "trace": "control_backward", "why": "Next-grant combinational value; holds grant when locked, else folds priority-select halves."}
+ ],
+ "groups": [
+  {"name": "Round-robin select", "kind": "ARBITER", "anchor_ids": ["E3", "E4", "E7", "E12", "E9"], "member_ids": ["E8", "E11"], "description": "Doubled request masked by priority pointer to pick and register the one-hot grant."},
+  {"name": "Grant lock control", "kind": "CONTROLLER", "anchor_ids": ["E10", "E5"], "member_ids": ["E6"], "description": "Locks grant on any request, releases on done and rotates priority."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "request_grant", "protocol": "REQ_ACK", "direction": "BIDIR", "member_ids": ["E3", "E4", "E5", "E6"]}
+ ]
+}

@@ -1,0 +1,43 @@
+{
+ "module_summary": "AXI-Lite to pipelined Wishbone bridge: separate write and read bridge instances each master a Wishbone port, merged onto one bus by a two-master Wishbone arbiter.",
+ "anchors": [
+  {"id": "E3", "name": "i_axi_awvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "AXI write address valid into the write bridge.", "lines": [60, 170]},
+  {"id": "E5", "name": "i_axi_awaddr", "role": "INTERFACE_ADDR", "importance": "major", "trace": "interface", "why": "AXI write address forwarded to write bridge.", "lines": [62, 172]},
+  {"id": "E7", "name": "i_axi_wvalid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "AXI write data valid into write bridge.", "lines": [67, 175]},
+  {"id": "E9", "name": "i_axi_wdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "AXI write data passed to write bridge for WB writes.", "lines": [69, 177]},
+  {"id": "E11", "name": "o_axi_bvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Write response valid from write bridge.", "lines": [74, 180, 213]},
+  {"id": "E14", "name": "i_axi_arvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "AXI read address valid into the read bridge.", "lines": [80, 247]},
+  {"id": "E16", "name": "i_axi_araddr", "role": "INTERFACE_ADDR", "importance": "major", "trace": "interface", "why": "AXI read address forwarded to read bridge.", "lines": [82, 249]},
+  {"id": "E18", "name": "o_axi_rvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Read data valid from read bridge.", "lines": [87, 252]},
+  {"id": "E20", "name": "o_axi_rdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "AXI read data returned by read bridge from WB.", "lines": [89, 254]},
+  {"id": "E23", "name": "o_wb_cyc", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "data_backward", "why": "Shared Wishbone cycle from arbiter output.", "lines": [96, 410]},
+  {"id": "E24", "name": "o_wb_stb", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "data_backward", "why": "Shared Wishbone strobe from arbiter output.", "lines": [97, 410]},
+  {"id": "E26", "name": "o_wb_addr", "role": "INTERFACE_ADDR", "importance": "critical", "trace": "data_backward", "why": "Arbitrated Wishbone address from read or write side.", "lines": [99, 411]},
+  {"id": "E27", "name": "o_wb_data", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Arbitrated Wishbone write data.", "lines": [100, 412]},
+  {"id": "E30", "name": "i_wb_ack", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Wishbone ack routed by arbiter to owning bridge.", "lines": [103, 415]},
+  {"id": "E31", "name": "i_wb_data", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Wishbone read data fed directly to read bridge.", "lines": [104, 263]},
+  {"id": "E29", "name": "i_wb_stall", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Wishbone stall routed back through arbiter.", "lines": [102, 414]},
+  {"id": "E44", "name": "w_wb_cyc", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "forward", "why": "Write bridge WB cycle request into arbiter channel B.", "lines": [184, 399]},
+  {"id": "E39", "name": "r_wb_cyc", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "forward", "why": "Read bridge WB cycle request into arbiter channel A.", "lines": [257, 388]},
+  {"id": "E33", "name": "w_wb_addr", "role": "INTERFACE_ADDR", "importance": "minor", "trace": "forward", "why": "Write bridge WB address into arbiter.", "lines": [186, 401]},
+  {"id": "E34", "name": "r_wb_addr", "role": "INTERFACE_ADDR", "importance": "minor", "trace": "forward", "why": "Read bridge WB address into arbiter.", "lines": [259, 390]},
+  {"id": "E35", "name": "w_wb_data", "role": "INTERFACE_DATA", "importance": "minor", "trace": "forward", "why": "Write bridge WB write data into arbiter.", "lines": [187, 402]},
+  {"id": "E47", "name": "w_wb_ack", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "forward", "why": "Arbiter-routed ack back to write bridge.", "lines": [190, 405]},
+  {"id": "E42", "name": "r_wb_ack", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "forward", "why": "Arbiter-routed ack back to read bridge.", "lines": [262, 394]},
+  {"id": "E22", "name": "o_reset", "role": "STATUS", "importance": "minor", "trace": "none", "why": "Active-high reset output derived from AXI reset.", "lines": [434]}
+ ],
+ "groups": [
+  {"name": "AXI write bridge", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E3", "E5", "E7", "E9", "E11", "E44", "E33", "E35", "E47"], "member_ids": ["I1", "E36", "E43", "E45", "E46", "E49"], "description": "Write decoder converting AW/W beats to WB writes and B responses."},
+  {"name": "AXI read bridge", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E14", "E16", "E18", "E20", "E39", "E34", "E42"], "member_ids": ["I2", "E37", "E38", "E40", "E41", "E48"], "description": "Read decoder converting AR requests to WB reads and R responses."},
+  {"name": "Wishbone arbiter", "kind": "ARBITER", "anchor_ids": ["E23", "E24", "E26", "E27", "E30", "E31", "E29"], "member_ids": ["I3", "E25", "E28", "E32"], "description": "Two-master arbiter muxing read and write bridges onto shared WB bus."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2", "E22"]},
+  {"name": "axi_write_address", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6"]},
+  {"name": "axi_write_data", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E7", "E8", "E9", "E10"]},
+  {"name": "axi_write_response", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E11", "E12", "E13"]},
+  {"name": "axi_read_address", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E14", "E15", "E16", "E17"]},
+  {"name": "axi_read_data", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E18", "E19", "E20", "E21"]},
+  {"name": "wishbone_master", "protocol": "MEMORY_BUS", "direction": "OUT", "member_ids": ["E23", "E24", "E25", "E26", "E27", "E28", "E29", "E30", "E31", "E32"]}
+ ]
+}

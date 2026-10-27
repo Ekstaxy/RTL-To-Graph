@@ -1,0 +1,39 @@
+{
+ "module_summary": "Dual-clock AXI-Stream FIFO wrapper: optional width adapters before/after (bypassed when widths match) around an async FIFO instance exposing pause and depth/frame status.",
+ "anchors": [
+  {"id": "E3", "name": "s_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Input stream payload routed through pre-FIFO path into async FIFO.", "lines": [104, 244]},
+  {"id": "E5", "name": "s_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Input stream valid forwarded to FIFO write side.", "lines": [106, 246]},
+  {"id": "E6", "name": "s_axis_tready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Input backpressure from FIFO write side.", "lines": [107, 247]},
+  {"id": "E7", "name": "s_axis_tlast", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Frame end marker stored with data for frame handling.", "lines": [108, 248]},
+  {"id": "E4", "name": "s_axis_tkeep", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Input byte-lane keep forwarded to FIFO.", "lines": [105, 245]},
+  {"id": "E10", "name": "s_axis_tuser", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Input sideband user bits, used for bad-frame marking.", "lines": [111, 251]},
+  {"id": "E8", "name": "s_axis_tid", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Input stream ID sideband, disabled by ID_ENABLE=0 default.", "lines": [109, 249]},
+  {"id": "E9", "name": "s_axis_tdest", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Input stream dest sideband, disabled by DEST_ENABLE=0 default.", "lines": [110, 250]},
+  {"id": "E13", "name": "m_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Output stream payload from async FIFO read side.", "lines": [118, 363]},
+  {"id": "E15", "name": "m_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Output stream valid from FIFO read side.", "lines": [120, 365]},
+  {"id": "E16", "name": "m_axis_tready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Downstream backpressure feeding FIFO read enable.", "lines": [121, 366]},
+  {"id": "E17", "name": "m_axis_tlast", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Output frame end marker from FIFO.", "lines": [122, 367]},
+  {"id": "E14", "name": "m_axis_tkeep", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Output byte-lane keep from FIFO.", "lines": [119, 364]},
+  {"id": "E20", "name": "m_axis_tuser", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Output sideband user bits from FIFO.", "lines": [125, 370]},
+  {"id": "E25", "name": "s_status_depth", "role": "STATUS", "importance": "major", "trace": "data_backward", "why": "Write-domain FIFO occupancy reported by the async FIFO.", "lines": [138, 308]},
+  {"id": "E30", "name": "m_status_depth", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "Read-domain FIFO occupancy reported by the async FIFO.", "lines": [143, 313]},
+  {"id": "E27", "name": "s_status_overflow", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "Write-side overflow indication from FIFO frame logic.", "lines": [140, 310]},
+  {"id": "E28", "name": "s_status_bad_frame", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "Write-side bad frame indication from FIFO.", "lines": [141, 311]},
+  {"id": "E29", "name": "s_status_good_frame", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "Write-side good frame indication from FIFO.", "lines": [142, 312]},
+  {"id": "E21", "name": "s_pause_req", "role": "COMMAND", "importance": "minor", "trace": "forward", "why": "Pause request to FIFO write side, disabled by PAUSE_ENABLE=0 default.", "lines": [130, 303]},
+  {"id": "E23", "name": "m_pause_req", "role": "COMMAND", "importance": "minor", "trace": "forward", "why": "Pause request to FIFO read side, disabled by PAUSE_ENABLE=0 default.", "lines": [132, 305]}
+ ],
+ "groups": [
+  {"name": "Input stream path", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E3", "E5", "E6", "E7", "E4", "E10", "E8", "E9"], "member_ids": ["E35", "E36", "E37", "E38", "E39", "E40", "E41", "E42"], "description": "Slave AXI-Stream input, optionally upsized, feeding the FIFO write side."},
+  {"name": "Async FIFO", "kind": "BUFFER", "anchor_ids": ["E25", "E30", "E27", "E28", "E29", "E21", "E23"], "member_ids": ["I1", "E22", "E24", "E26", "E31", "E32", "E33", "E34"], "description": "Dual-clock FIFO instance buffering stream words, with pause control and status outputs."},
+  {"name": "Output stream path", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E13", "E15", "E16", "E17", "E14", "E20"], "member_ids": ["E43", "E44", "E45", "E46", "E47", "E48", "E49", "E50", "E18", "E19"], "description": "FIFO read side, optionally downsized, driving master AXI-Stream output."}
+ ],
+ "interfaces": [
+  {"name": "clocks_resets", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2", "E11", "E12"]},
+  {"name": "s_axis", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10"]},
+  {"name": "m_axis", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E13", "E14", "E15", "E16", "E17", "E18", "E19", "E20"]},
+  {"name": "pause", "protocol": "REQ_ACK", "direction": "IN", "member_ids": ["E21", "E22", "E23", "E24"]},
+  {"name": "s_status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E25", "E26", "E27", "E28", "E29"]},
+  {"name": "m_status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E30", "E31", "E32", "E33", "E34"]}
+ ]
+}

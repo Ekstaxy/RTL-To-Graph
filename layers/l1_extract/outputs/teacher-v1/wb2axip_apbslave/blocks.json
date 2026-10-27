@@ -1,0 +1,292 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "wb2axip_apbslave",
+ "tops": [
+  "apbslave"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "apbslave": {
+   "source": "teacher",
+   "canonical_instance": "apbslave",
+   "file": "data/rtl/wb2axip/rtl/apbslave.v",
+   "lines": [
+    35,
+    228
+   ],
+   "summary": "APB slave wrapping a 1024-word byte-strobed demo memory: setup-phase PSEL decode writes or reads memory and asserts PREADY one cycle later.",
+   "blocks": [
+    {
+     "name": "APB handshake control",
+     "kind": "CONTROLLER",
+     "description": "Detects APB setup phase and generates one-cycle PREADY",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "PSEL",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 96.9,
+       "struct_score": 92.2,
+       "trace": "interface",
+       "why": "APB select qualifying setup phase for PREADY, memory write and read",
+       "lines": [
+        46,
+        72,
+        81
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "PENABLE",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 68.9,
+       "struct_score": 92.2,
+       "trace": "interface",
+       "why": "APB access-phase strobe; setup phase detected as PSEL and not PENABLE",
+       "lines": [
+        47,
+        72,
+        92
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "PREADY",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 93.5,
+       "struct_score": 83.6,
+       "trace": "control_backward",
+       "why": "Registered ready asserted one cycle after setup phase",
+       "lines": [
+        48,
+        71,
+        73
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "PWRITE",
+       "role": "COMMAND",
+       "importance": "major",
+       "score": 56.3,
+       "struct_score": 56.3,
+       "trace": "interface",
+       "why": "Selects memory write versus PRDATA read",
+       "lines": [
+        50,
+        81,
+        92
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Demo memory",
+     "kind": "MEMORY",
+     "description": "Byte-strobed memory array with registered read port",
+     "anchors": [
+      {
+       "id": "E13",
+       "name": "mem",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 99.2,
+       "struct_score": 98.0,
+       "trace": "data_backward",
+       "why": "1024x32 demo memory written with strobes and read to PRDATA",
+       "lines": [
+        62,
+        85,
+        93
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "PADDR",
+       "role": "INTERFACE_ADDR",
+       "importance": "critical",
+       "score": 96.3,
+       "struct_score": 90.7,
+       "trace": "interface",
+       "why": "Word address indexing memory for writes and reads",
+       "lines": [
+        49,
+        85,
+        93
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "PWDATA",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 96.5,
+       "struct_score": 91.1,
+       "trace": "interface",
+       "why": "Write data bytes stored into memory",
+       "lines": [
+        51,
+        85
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "PWSTRB",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 55.3,
+       "struct_score": 52.4,
+       "trace": "interface",
+       "why": "Per-byte write enables for memory writes",
+       "lines": [
+        52,
+        84
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "PRDATA",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 98.9,
+       "struct_score": 97.1,
+       "trace": "data_backward",
+       "why": "Registered read data loaded from memory on read setup",
+       "lines": [
+        54,
+        93
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E10",
+       "name": "PPROT",
+       "kind": "port_in"
+      },
+      {
+       "id": "E14",
+       "name": "unused",
+       "kind": "wire"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E12",
+     "name": "PSLVERR",
+     "role": "STATUS",
+     "importance": "minor",
+     "score": 22.9,
+     "struct_score": 36.0,
+     "trace": "none",
+     "why": "Slave error output tied to zero",
+     "lines": [
+      55,
+      98
+     ]
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "PCLK",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "PRESETn",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "apb",
+     "protocol": "MEMORY_BUS",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "PSEL",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "PENABLE",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "PREADY",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "PADDR",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "PWRITE",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "PWDATA",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "PWSTRB",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "PPROT",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "PRDATA",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "PSLVERR",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

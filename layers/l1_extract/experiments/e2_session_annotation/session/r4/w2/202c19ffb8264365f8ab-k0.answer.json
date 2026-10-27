@@ -1,0 +1,42 @@
+{
+ "module_summary": "10G Ethernet MAC wrapper: instantiates separate XGMII-to-AXIS receive and AXIS-to-XGMII transmit cores on independent clocks, with optional MAC-control/pause logic bypassed by direct stream wiring.",
+ "anchors": [
+  {"id": "E5", "name": "tx_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Transmit AXIS payload into the XGMII TX core.", "lines": [62, 689]},
+  {"id": "E7", "name": "tx_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Transmit stream valid forwarded to TX core.", "lines": [64, 691]},
+  {"id": "E8", "name": "tx_axis_tready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Transmit backpressure from TX core.", "lines": [65, 692]},
+  {"id": "E11", "name": "rx_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Received frame data from RX core to AXIS output.", "lines": [72, 696]},
+  {"id": "E13", "name": "rx_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Received stream valid from RX core.", "lines": [74, 698]},
+  {"id": "E16", "name": "xgmii_rxd", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "XGMII receive data lanes into RX core.", "lines": [81, 231]},
+  {"id": "E18", "name": "xgmii_txd", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "XGMII transmit data lanes from TX core.", "lines": [83, 269]},
+  {"id": "E61", "name": "cfg_ifg", "role": "CONFIG_REG", "importance": "major", "trace": "interface", "why": "Configured inter-frame gap for TX core.", "lines": [150, 275]},
+  {"id": "E62", "name": "cfg_tx_enable", "role": "CONFIG_REG", "importance": "major", "trace": "interface", "why": "Enables the transmit core.", "lines": [151, 276]},
+  {"id": "E63", "name": "cfg_rx_enable", "role": "CONFIG_REG", "importance": "major", "trace": "interface", "why": "Enables the receive core.", "lines": [152, 239]},
+  {"id": "E17", "name": "xgmii_rxc", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "XGMII receive control lanes into RX core.", "lines": [82, 232]},
+  {"id": "E19", "name": "xgmii_txc", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "XGMII transmit control lanes from TX core.", "lines": [84, 270]},
+  {"id": "E95", "name": "tx_axis_tdata_int", "role": "INTERFACE_DATA", "importance": "minor", "trace": "data_backward", "why": "Internal TX stream between optional MAC control and TX core.", "lines": [263, 689]},
+  {"id": "E97", "name": "tx_axis_tvalid_int", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "data_backward", "why": "Internal TX stream valid into TX core.", "lines": [265, 691]},
+  {"id": "E101", "name": "rx_axis_tdata_int", "role": "INTERFACE_DATA", "importance": "minor", "trace": "data_backward", "why": "Internal RX stream from RX core before optional MAC control.", "lines": [233, 696]},
+  {"id": "E103", "name": "rx_axis_tvalid_int", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "data_backward", "why": "Internal RX stream valid from RX core.", "lines": [235, 698]},
+  {"id": "E42", "name": "rx_error_bad_fcs", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "RX core CRC error indication.", "lines": [127, 242]},
+  {"id": "E41", "name": "rx_error_bad_frame", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "RX core framing error indication.", "lines": [126, 241]},
+  {"id": "E39", "name": "tx_error_underflow", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "TX core underflow error indication.", "lines": [124, 278]},
+  {"id": "E38", "name": "tx_start_packet", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "TX start-of-packet lane indication.", "lines": [123, 277]},
+  {"id": "E40", "name": "rx_start_packet", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "RX start-of-packet lane indication.", "lines": [125, 240]},
+  {"id": "E22", "name": "tx_axis_ptp_ts", "role": "INTERFACE_DATA", "importance": "minor", "trace": "data_backward", "why": "PTP transmit timestamp output from TX core.", "lines": [91, 272]}
+ ],
+ "groups": [
+  {"name": "tx_path", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E5", "E7", "E8", "E18", "E19", "E95", "E97", "E61", "E62", "E39", "E38", "E22"], "member_ids": ["I2", "E6", "E9", "E10", "E96", "E98", "E99", "E100", "E20", "E23", "E24"], "description": "AXIS to XGMII transmit core with IFG and enable configuration."},
+  {"name": "rx_path", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E11", "E13", "E16", "E17", "E101", "E103", "E63", "E42", "E41", "E40"], "member_ids": ["I1", "E12", "E14", "E15", "E102", "E104", "E105", "E21"], "description": "XGMII to AXIS receive core with CRC and framing checks."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2", "E3", "E4"]},
+  {"name": "tx_axis", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E5", "E6", "E7", "E8", "E9", "E10"]},
+  {"name": "rx_axis", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E11", "E12", "E13", "E14", "E15"]},
+  {"name": "xgmii_rx", "protocol": "STREAM", "direction": "IN", "member_ids": ["E16", "E17"]},
+  {"name": "xgmii_tx", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E18", "E19"]},
+  {"name": "ptp", "protocol": "OTHER", "direction": "BIDIR", "member_ids": ["E20", "E21", "E22", "E23", "E24"]},
+  {"name": "flow_control", "protocol": "REQ_ACK", "direction": "BIDIR", "member_ids": ["E25", "E26", "E27", "E28", "E29", "E30", "E31", "E32", "E33", "E34", "E35", "E36", "E37"]},
+  {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E38", "E39", "E40", "E41", "E42", "E43", "E44", "E45", "E46", "E47", "E48", "E49", "E50", "E51", "E52", "E53", "E54", "E55", "E56", "E57", "E58", "E59", "E60"]},
+  {"name": "config", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E61", "E62", "E63", "E64", "E65", "E66", "E67", "E68", "E69", "E70", "E71", "E72", "E73", "E74", "E75", "E76", "E77", "E78", "E79", "E80", "E81", "E82", "E83", "E84", "E85", "E86", "E87", "E88", "E89", "E90", "E91", "E92", "E93", "E94"]}
+ ]
+}

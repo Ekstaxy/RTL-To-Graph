@@ -1,0 +1,24 @@
+{
+ "module_summary": "Parameterized arbiter: two priority encoders (plain and round-robin-masked) pick a requester; registered one-hot grant, valid and encoded index, with optional blocking until acknowledge.",
+ "anchors": [
+  {"id": "E3", "name": "request", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "per-port request vector fed to both priority encoders", "lines": [50, 75, 92]},
+  {"id": "E5", "name": "grant", "role": "ARBITRATION", "importance": "critical", "trace": "control_backward", "why": "registered one-hot grant vector output", "lines": [53, 63]},
+  {"id": "E6", "name": "grant_valid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "indicates a grant is active; used for ack-blocking hold", "lines": [54, 62, 109]},
+  {"id": "E7", "name": "grant_encoded", "role": "INTERFACE_ADDR", "importance": "major", "trace": "data_backward", "why": "binary index of granted port output", "lines": [55, 64]},
+  {"id": "E4", "name": "acknowledge", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "per-port ack releasing blocking grant; only active when ARB_BLOCK set", "lines": [51, 109]},
+  {"id": "E14", "name": "request_valid", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "any request present; gates new grant computation", "lines": [66, 76, 114]},
+  {"id": "E15", "name": "request_index", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "priority-encoded winner index loaded into grant_encoded", "lines": [67, 77, 128]},
+  {"id": "E17", "name": "mask_reg", "role": "ARBITRATION", "importance": "minor", "trace": "control_backward", "why": "round-robin mask of ports above last winner; disabled by default parameter", "lines": [81, 92, 147]},
+  {"id": "E19", "name": "masked_request_valid", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "masked request present; selects masked encoder result in round-robin mode", "lines": [83, 93, 116]}
+ ],
+ "groups": [
+  {"name": "Priority encoders", "kind": "ARBITER", "anchor_ids": ["E14", "E15", "E19"], "member_ids": ["I1", "I2", "E16", "E20", "E21"], "description": "Plain and masked priority encoders selecting winning requester"},
+  {"name": "Round-robin mask", "kind": "ARBITER", "anchor_ids": ["E17"], "member_ids": ["E18"], "description": "Masks requests at or below last winner for round-robin fairness"},
+  {"name": "Grant registers", "kind": "CONTROLLER", "anchor_ids": ["E5", "E6", "E7", "E4"], "member_ids": ["E8", "E9", "E10", "E11", "E12", "E13"], "description": "Registered grant, valid and index; hold until ack/request drop when blocking"}
+ ],
+ "interfaces": [
+  {"name": "clock/reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "request/acknowledge", "protocol": "REQ_ACK", "direction": "IN", "member_ids": ["E3", "E4"]},
+  {"name": "grant", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E5", "E6", "E7"]}
+ ]
+}

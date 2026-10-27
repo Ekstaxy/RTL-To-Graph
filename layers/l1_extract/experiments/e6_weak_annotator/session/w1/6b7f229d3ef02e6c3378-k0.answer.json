@@ -1,0 +1,152 @@
+{
+  "module_summary": "8-to-16 bit width converter: buffers odd/even bytes and outputs combined 16-bit result when second byte arrives.",
+  "anchors": [
+    {
+      "id": "E9",
+      "name": "phz",
+      "role": "CONTROL_FLAG",
+      "importance": "critical",
+      "trace": "control_backward",
+      "why": "Phase toggle distinguishing odd/even input bytes for buffering.",
+      "lines": [20, 32]
+    },
+    {
+      "id": "E10",
+      "name": "hi_q",
+      "role": "HOLDING_REG",
+      "importance": "major",
+      "trace": "data_backward",
+      "why": "Latches high byte when odd input arrives.",
+      "lines": [41, 42, 50]
+    },
+    {
+      "id": "E8",
+      "name": "hit",
+      "role": "CONTROL_FLAG",
+      "importance": "critical",
+      "trace": "forward",
+      "why": "Completion trigger when second byte (even) received.",
+      "lines": [20, 33]
+    },
+    {
+      "id": "E12",
+      "name": "pk",
+      "role": "DATAPATH_MAJOR",
+      "importance": "major",
+      "trace": "data_backward",
+      "why": "Packs high byte and current input into 16-bit output.",
+      "lines": [24, 50]
+    },
+    {
+      "id": "E5",
+      "name": "valid_out",
+      "role": "HANDSHAKE_VALID",
+      "importance": "critical",
+      "trace": "forward",
+      "why": "Output valid pulse when second byte received.",
+      "lines": [30, 33]
+    },
+    {
+      "id": "E6",
+      "name": "data_out",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "16-bit output result when valid_out asserts.",
+      "lines": [50, 51]
+    },
+    {
+      "id": "E3",
+      "name": "valid_in",
+      "role": "HANDSHAKE_VALID",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Input byte valid pulse triggering phase toggle.",
+      "lines": [20, 32]
+    },
+    {
+      "id": "E4",
+      "name": "data_in",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Input byte stream packed into 16-bit words.",
+      "lines": [24, 41, 42]
+    },
+    {
+      "id": "E7",
+      "name": "arm_n",
+      "role": "CONTROL_FLAG",
+      "importance": "minor",
+      "trace": "forward",
+      "why": "Inverted arm signal: disables high-byte capture when phz or not valid.",
+      "lines": [21, 41]
+    },
+    {
+      "id": "E11",
+      "name": "hi_q_dup",
+      "role": "HOLDING_REG",
+      "importance": "minor",
+      "trace": "none",
+      "why": "Duplicate high byte register for redundancy.",
+      "lines": [43]
+    }
+  ],
+  "groups": [
+    {
+      "name": "Phase Control",
+      "kind": "CONTROLLER",
+      "anchor_ids": ["E9"],
+      "member_ids": [],
+      "description": "Phase toggle managing odd/even byte sequencing."
+    },
+    {
+      "name": "Storage",
+      "kind": "REGISTER_BANK",
+      "anchor_ids": ["E10"],
+      "member_ids": ["E11"],
+      "description": "High byte latch and duplicate for buffer control."
+    },
+    {
+      "name": "Datapath",
+      "kind": "DATAPATH",
+      "anchor_ids": ["E12"],
+      "member_ids": [],
+      "description": "Combines high and low bytes into packed 16-bit result."
+    },
+    {
+      "name": "Control & Status",
+      "kind": "OTHER",
+      "anchor_ids": ["E8", "E5"],
+      "member_ids": ["E7"],
+      "description": "Hit completion flag and output valid handshake."
+    },
+    {
+      "name": "Ports",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E3", "E4", "E6"],
+      "member_ids": [],
+      "description": "Input/output data and valid signals."
+    }
+  ],
+  "interfaces": [
+    {
+      "name": "Input Stream",
+      "protocol": "VALID_READY",
+      "direction": "IN",
+      "member_ids": ["E3", "E4"]
+    },
+    {
+      "name": "Output Stream",
+      "protocol": "VALID_READY",
+      "direction": "OUT",
+      "member_ids": ["E5", "E6"]
+    },
+    {
+      "name": "Clock/Reset",
+      "protocol": "CLOCK_RESET",
+      "direction": "IN",
+      "member_ids": ["E1", "E2"]
+    }
+  ]
+}

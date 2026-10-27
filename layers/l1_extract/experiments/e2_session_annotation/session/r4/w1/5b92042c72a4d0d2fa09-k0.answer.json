@@ -1,0 +1,43 @@
+{
+ "module_summary": "Direct-mapped ARP cache: LFSR CRC hashes of IP addresses index valid/IP/MAC memories for registered query lookups and writes, with a sequential clear sweep.",
+ "anchors": [
+  {"id": "E3", "name": "query_request_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Query request valid; accepted query latches IP and hashed read pointer.", "lines": [44, 173]},
+  {"id": "E5", "name": "query_request_ip", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "IP address to look up; hashed by rd_hash and stored in query_ip_reg.", "lines": [46, 114, 226]},
+  {"id": "E6", "name": "query_response_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Response valid output from query_response_valid_reg after lookup.", "lines": [48, 98]},
+  {"id": "E9", "name": "query_response_mac", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Looked-up MAC address read from mac_addr_mem.", "lines": [51, 100]},
+  {"id": "E8", "name": "query_response_error", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Miss indication: set when entry invalid or stored IP mismatches query IP.", "lines": [50, 99]},
+  {"id": "E10", "name": "write_request_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Write request valid; latches IP/MAC and hashed write pointer.", "lines": [56, 188]},
+  {"id": "E13", "name": "write_request_mac", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "MAC address to store, latched into write_mac_reg.", "lines": [59, 231]},
+  {"id": "E12", "name": "write_request_ip", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "IP address key for write, hashed by wr_hash and latched.", "lines": [58, 130, 230]},
+  {"id": "E4", "name": "query_request_ready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Query ready, deasserted while clearing or response stalled.", "lines": [45, 96]},
+  {"id": "E11", "name": "write_request_ready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Write ready, deasserted during cache clear.", "lines": [57, 102]},
+  {"id": "E14", "name": "clear_cache", "role": "COMMAND", "importance": "major", "trace": "forward", "why": "Clear command: resets write pointer and starts invalidation sweep.", "lines": [64, 194]},
+  {"id": "E25", "name": "clear_cache_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Clear in progress: increments wr_ptr, writes invalid entries, blocks requests.", "lines": [197, 199, 239]},
+  {"id": "E32", "name": "ip_addr_mem", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "Stored IP tags compared against query IP for hit detection.", "lines": [82, 166, 240]},
+  {"id": "E33", "name": "mac_addr_mem", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "Stored MAC addresses read out as query response.", "lines": [83, 236, 241]},
+  {"id": "E31", "name": "valid_mem", "role": "STORAGE", "importance": "minor", "trace": "data_backward", "why": "Per-entry valid bits; cleared by sweep, checked on lookup.", "lines": [81, 166, 239]},
+  {"id": "E29", "name": "rd_ptr_reg", "role": "INDEX", "importance": "major", "trace": "data_backward", "why": "Hashed read index into cache memories for queries.", "lines": [79, 166, 236]},
+  {"id": "E27", "name": "wr_ptr_reg", "role": "INDEX", "importance": "major", "trace": "data_backward", "why": "Hashed write index; also sweeps all entries during clear.", "lines": [78, 198, 239]},
+  {"id": "E43", "name": "query_request_hash", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "CRC hash of query IP from rd_hash LFSR, low bits form read index.", "lines": [93, 117, 176]},
+  {"id": "E44", "name": "write_request_hash", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "CRC hash of write IP from wr_hash LFSR, low bits form write index.", "lines": [94, 133, 191]},
+  {"id": "E18", "name": "query_ip_valid_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Query pending flag; triggers response generation next cycle.", "lines": [71, 163]},
+  {"id": "E20", "name": "query_ip_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Holds query IP for tag comparison against ip_addr_mem.", "lines": [72, 166, 226]},
+  {"id": "E21", "name": "write_ip_valid_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Write pending flag; asserts mem_write next cycle.", "lines": [73, 183]},
+  {"id": "E24", "name": "write_mac_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Holds MAC to write into mac_addr_mem.", "lines": [75, 231, 241]},
+  {"id": "E23", "name": "write_ip_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Holds IP to write into ip_addr_mem.", "lines": [74, 230, 240]},
+  {"id": "E15", "name": "mem_write", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Write enable for valid/IP/MAC memories (write or clear sweep).", "lines": [185, 200, 238]}
+ ],
+ "groups": [
+  {"name": "Cache memories", "kind": "MEMORY", "anchor_ids": ["E32", "E33", "E31"], "member_ids": [], "description": "Direct-mapped valid, IP tag and MAC arrays indexed by hashed pointers."},
+  {"name": "Query path", "kind": "DATAPATH", "anchor_ids": ["E3", "E5", "E4", "E6", "E9", "E8", "E43", "E29", "E18", "E20"], "member_ids": ["I1", "E16", "E34", "E36", "E38", "E40"], "description": "Hashes query IP, reads entry, compares tag, returns MAC or error."},
+  {"name": "Write path", "kind": "DATAPATH", "anchor_ids": ["E10", "E12", "E13", "E11", "E44", "E27", "E21", "E23", "E24", "E15"], "member_ids": ["I2", "E17", "E41"], "description": "Hashes write IP, latches IP/MAC, writes entry at hashed index."},
+  {"name": "Clear controller", "kind": "CONTROLLER", "anchor_ids": ["E14", "E25"], "member_ids": ["E26"], "description": "Sweeps wr_ptr through all entries clearing valid bits, blocking requests."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "query_request", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5"]},
+  {"name": "query_response", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E6", "E7", "E8", "E9"]},
+  {"name": "write_request", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E10", "E11", "E12", "E13"]},
+  {"name": "config", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E14"]}
+ ]
+}

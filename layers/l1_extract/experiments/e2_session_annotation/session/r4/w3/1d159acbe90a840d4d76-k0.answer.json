@@ -1,0 +1,53 @@
+{
+ "module_summary": "Scatter-gather AXI DMA wrapper: an AXI-lite register bank starts an SG FSM that fetches table entries via a prefetch unit and programs an inner AXI DMA, with an arbiter merging prefetch and DMA read channels.",
+ "anchors": [
+  {"id": "E76", "name": "r_busy", "role": "CONTROL_FLAG", "importance": "critical", "trace": "control_backward", "why": "Busy from SG FSM; gates all register writes, start, error and interrupt logic.", "lines": [473, 556, 656]},
+  {"id": "E65", "name": "r_tbl_addr", "role": "CONFIG_REG", "importance": "critical", "trace": "data_backward", "why": "Scatter-gather table base address, written over AXI-lite and updated by FSM while busy.", "lines": [570, 579, 960]},
+  {"id": "E138", "name": "pf_wins_arbitration", "role": "ARBITRATION", "importance": "critical", "trace": "control_backward", "why": "Grant selecting prefetch or DMA read requests onto the shared AR channel.", "lines": [864, 874, 903]},
+  {"id": "E56", "name": "M_AXI_RDATA", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "AXI master read data shared by DMA engine and table prefetcher.", "lines": [781, 833]},
+  {"id": "E35", "name": "M_AXI_WDATA", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "AXI master write data produced by the inner DMA engine.", "lines": [753]},
+  {"id": "E74", "name": "r_start", "role": "COMMAND", "importance": "major", "trace": "control_backward", "why": "Start pulse from control register write, kicks off the SG FSM.", "lines": [458, 958]},
+  {"id": "E69", "name": "r_abort", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Abort flag set by ABORT_KEY write while busy; aborts FSM and blocks start.", "lines": [527, 463, 959]},
+  {"id": "E68", "name": "r_err", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Sticky error bit from FSM error, readable in control register.", "lines": [479, 652]},
+  {"id": "E59", "name": "o_int", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Interrupt output raised on FSM interrupt when enabled and busy.", "lines": [486, 489]},
+  {"id": "E60", "name": "axil_write_ready", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "AXI-lite write accept enabling control/table register updates and BVALID.", "lines": [431, 444, 556]},
+  {"id": "E20", "name": "S_AXIL_RDATA", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Control/status and table-address readback mux register.", "lines": [650, 652, 660]},
+  {"id": "E45", "name": "M_AXI_ARADDR", "role": "INTERFACE_ADDR", "importance": "major", "trace": "interface", "why": "Arbitrated AXI read address from prefetch or DMA through output skid buffer.", "lines": [924]},
+  {"id": "E105", "name": "dmac_wvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "FSM write valid programming the inner DMA control registers.", "lines": [708, 982]},
+  {"id": "E89", "name": "pf_valid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "data_backward", "why": "Prefetch word valid delivering table entries to the SG FSM.", "lines": [820, 975]},
+  {"id": "E88", "name": "pf_insn", "role": "INTERFACE_DATA", "importance": "minor", "trace": "data_backward", "why": "Table entry word fetched by prefetcher, consumed by FSM.", "lines": [819, 976]},
+  {"id": "E107", "name": "dmac_wdata", "role": "INTERFACE_DATA", "importance": "minor", "trace": "data_backward", "why": "Descriptor word written by FSM into inner DMA registers.", "lines": [715, 985]},
+  {"id": "E84", "name": "new_pc", "role": "COMMAND", "importance": "minor", "trace": "forward", "why": "FSM request restarting prefetch at a new table address.", "lines": [815, 971]},
+  {"id": "E85", "name": "pf_ready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "FSM ready accepting prefetch words.", "lines": [817, 973]},
+  {"id": "E127", "name": "dma_complete", "role": "STATUS", "importance": "minor", "trace": "forward", "why": "Inner DMA completion interrupt fed back to the SG FSM.", "lines": [785, 988]},
+  {"id": "E66", "name": "r_int_enable", "role": "CONFIG_REG", "importance": "minor", "trace": "data_backward", "why": "Interrupt enable bit gating o_int.", "lines": [567, 486]},
+  {"id": "E67", "name": "r_int", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Sticky interrupt status bit, cleared by control write.", "lines": [503, 508, 655]},
+  {"id": "E72", "name": "r_qos", "role": "CONFIG_REG", "importance": "minor", "trace": "data_backward", "why": "QoS field programmed via control register, passed to FSM.", "lines": [563, 961]},
+  {"id": "E73", "name": "r_prot", "role": "CONFIG_REG", "importance": "minor", "trace": "data_backward", "why": "AXI protection field programmed via control register, passed to FSM.", "lines": [562, 962]},
+  {"id": "E78", "name": "awskd_addr", "role": "INDEX", "importance": "minor", "trace": "data_backward", "why": "Write register address selecting control or table-address register.", "lines": [558, 539]},
+  {"id": "E80", "name": "wskd_data", "role": "INTERFACE_DATA", "importance": "minor", "trace": "data_backward", "why": "Skid-buffered AXI-lite write data for register updates.", "lines": [584, 562]},
+  {"id": "E61", "name": "axil_read_ready", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "AXI-lite read accept advancing RVALID and readback.", "lines": [626, 639]},
+  {"id": "E11", "name": "S_AXIL_BVALID", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "AXI-lite write response valid.", "lines": [444]},
+  {"id": "E18", "name": "S_AXIL_RVALID", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "AXI-lite read data valid.", "lines": [639]},
+  {"id": "E129", "name": "m_axi_arvalid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "Arbitrated read request valid into output skid buffer.", "lines": [876, 886, 919]},
+  {"id": "E91", "name": "pf_axi_arvalid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "Prefetcher read request competing for AR channel.", "lines": [863, 876]},
+  {"id": "E115", "name": "sdma_arvalid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "Inner DMA read request competing for AR channel.", "lines": [863, 886]},
+  {"id": "E22", "name": "M_AXI_AWVALID", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Write burst address valid from inner DMA.", "lines": [735]},
+  {"id": "E53", "name": "M_AXI_RVALID", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Read data valid steered by RID to DMA or prefetcher.", "lines": [778, 831]}
+ ],
+ "groups": [
+  {"name": "AXI-lite control register bank", "kind": "REGISTER_BANK", "anchor_ids": ["E65", "E74", "E69", "E68", "E59", "E60", "E20", "E66", "E67", "E72", "E73", "E78", "E80", "E61", "E11", "E18"], "member_ids": ["I1", "I2", "I3", "E62", "E63", "E77", "E79", "E81", "E82", "E83"], "description": "Skid-buffered AXI-lite slave holding start/abort/error/interrupt bits and table address."},
+  {"name": "Scatter-gather sequencer", "kind": "CONTROLLER", "anchor_ids": ["E76", "E105", "E107", "E84", "E85", "E127"], "member_ids": ["I7", "E70", "E71", "E75", "E64", "E86", "E87", "E104", "E106", "E108", "E113"], "description": "SG FSM reads table entries and programs inner DMA registers, reporting busy/error/interrupt."},
+  {"name": "Table prefetcher", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E89", "E88", "E91"], "member_ids": ["I5", "E90", "E92", "E93", "E94", "E95", "E101"], "description": "AXI fetch unit reading descriptor words from memory for the SG FSM."},
+  {"name": "Inner DMA engine", "kind": "DATAPATH", "anchor_ids": ["E56", "E35", "E22", "E53", "E115"], "member_ids": ["I4", "E116", "E117", "E118", "E125", "E126"], "description": "AXI DMA moving data with read bursts into FIFO and write bursts out."},
+  {"name": "AR channel arbiter", "kind": "ARBITER", "anchor_ids": ["E138", "E129", "E45"], "member_ids": ["I6", "E130", "E131", "E132", "E139", "E42"], "description": "Arbitrates prefetch vs DMA read requests and muxes onto the skid-buffered AR channel."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "axil_write", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12", "E13"]},
+  {"name": "axil_read", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E14", "E15", "E16", "E17", "E18", "E19", "E20", "E21"]},
+  {"name": "axi_master_write", "protocol": "MEMORY_BUS", "direction": "OUT", "member_ids": ["E22", "E23", "E24", "E25", "E26", "E27", "E28", "E29", "E30", "E31", "E32", "E33", "E34", "E35", "E36", "E37", "E38", "E39", "E40", "E41"]},
+  {"name": "axi_master_read", "protocol": "MEMORY_BUS", "direction": "IN", "member_ids": ["E42", "E43", "E44", "E45", "E46", "E47", "E48", "E49", "E50", "E51", "E52", "E53", "E54", "E55", "E56", "E57", "E58"]},
+  {"name": "interrupt", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E59"]}
+ ]
+}

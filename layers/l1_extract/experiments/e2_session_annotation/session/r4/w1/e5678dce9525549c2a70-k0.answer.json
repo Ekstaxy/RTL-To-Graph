@@ -1,0 +1,24 @@
+{
+ "module_summary": "Destination half of a 2-phase CDC: synchronizes the toggling async request, captures async data on a request edge, and toggles an ack register when the local valid/ready handshake completes.",
+ "anchors": [
+  {"id": "E12", "name": "data_dst_q", "role": "HOLDING_REG", "importance": "critical", "trace": "data_backward", "why": "Captures async_data_i on request transition, held until consumed, drives data_o", "lines": [171, 196, 203]},
+  {"id": "E11", "name": "ack_dst_q", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Phase-toggle ack register flipped on each accepted item, drives async_ack_o", "lines": [192, 202, 204]},
+  {"id": "E4", "name": "valid_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Valid when synchronized request phase differs from ack phase", "lines": [161, 174, 202]},
+  {"id": "E5", "name": "ready_i", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Downstream ready; with valid_o forms dst_accept to toggle ack", "lines": [162, 174]},
+  {"id": "E3", "name": "data_o", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Synchronous-side data output copied from data_dst_q", "lines": [160, 203]},
+  {"id": "E10", "name": "req_synced_q1", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Delayed synchronized request for edge detection; compared for data load and valid", "lines": [175, 199, 202]},
+  {"id": "E9", "name": "req_synced", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Async request after tc_sync synchronizer, edge triggers data capture", "lines": [175, 188, 199]},
+  {"id": "E14", "name": "dst_data_load", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Load enable for data_dst_q on request transition when not already valid", "lines": [175, 196]},
+  {"id": "E13", "name": "dst_accept", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Accept handshake strobe enabling ack_dst_q toggle", "lines": [174, 192]}
+ ],
+ "groups": [
+  {"name": "req_sync", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E9", "E10"], "member_ids": ["E6"], "description": "Synchronizes async request and delays it for transition detection"},
+  {"name": "data_capture", "kind": "DATAPATH", "anchor_ids": ["E12", "E14", "E3"], "member_ids": ["E8"], "description": "Loads async data on request edge and presents it as data_o"},
+  {"name": "ack_handshake", "kind": "CONTROLLER", "anchor_ids": ["E11", "E4", "E5", "E13"], "member_ids": ["E7"], "description": "Valid/ready handshake toggling 2-phase ack back to the source"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "dst_stream", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E3", "E4", "E5"]},
+  {"name": "async_link", "protocol": "REQ_ACK", "direction": "IN", "member_ids": ["E6", "E7", "E8"]}
+ ]
+}

@@ -1,0 +1,894 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "biriscv_biriscv_npc",
+ "tops": [
+  "biriscv_npc"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "biriscv_npc_lfsr": {
+   "source": "teacher",
+   "canonical_instance": "biriscv_npc.BRANCH_PREDICTION.u_lru",
+   "file": "data/rtl/biriscv/src/core/biriscv_npc.v",
+   "lines": [
+    399,
+    446
+   ],
+   "summary": "Pseudo-random replacement selector: a 16-bit Galois LFSR steps on each allocation and its low bits give the entry to allocate.",
+   "blocks": [
+    {
+     "name": "replacement_lfsr",
+     "kind": "COUNTER_TIMER",
+     "description": "LFSR stepping on alloc_i, providing pseudo-random allocation entry.",
+     "anchors": [
+      {
+       "id": "E7",
+       "name": "lfsr_q",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 97.2,
+       "struct_score": 92.9,
+       "trace": "data_backward",
+       "why": "16-bit Galois LFSR state, shifted with tap XOR on each alloc.",
+       "lines": [
+        431,
+        435,
+        440
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "alloc_entry_o",
+       "role": "INTERFACE_ADDR",
+       "importance": "critical",
+       "score": 93.2,
+       "struct_score": 82.9,
+       "trace": "data_backward",
+       "why": "Entry index to allocate, low ADDR_W bits of the LFSR.",
+       "lines": [
+        440
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "alloc_i",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 57.8,
+       "struct_score": 61.6,
+       "trace": "forward",
+       "why": "Allocation request advancing the LFSR.",
+       "lines": [
+        432
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E3",
+       "name": "hit_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "hit_entry_i",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "hit",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "hit_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "hit_entry_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "alloc",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E5",
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "alloc_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "alloc_entry_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "biriscv_npc": {
+   "source": "teacher",
+   "canonical_instance": "biriscv_npc",
+   "file": "data/rtl/biriscv/src/core/biriscv_npc.v",
+   "lines": [
+    26,
+    396
+   ],
+   "summary": "RISC-V next-PC predictor: a fully associative BTB, a 2-bit saturating BHT and a speculative return address stack predict the fetch next PC, all trained by resolved branch updates.",
+   "blocks": [
+    {
+     "name": "branch_target_buffer",
+     "kind": "MEMORY",
+     "description": "Associative BTB lookup/update with LFSR replacement on allocation.",
+     "anchors": [
+      {
+       "id": "E39",
+       "name": "BRANCH_PREDICTION.btb_pc_q",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 98.1,
+       "struct_score": 95.3,
+       "trace": "data_backward",
+       "why": "BTB tag array of branch source PCs matched against fetch PC.",
+       "lines": [
+        222,
+        250,
+        327
+       ]
+      },
+      {
+       "id": "E40",
+       "name": "BRANCH_PREDICTION.btb_target_q",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 67.1,
+       "struct_score": 87.7,
+       "trace": "data_backward",
+       "why": "BTB target array supplying predicted branch target PC.",
+       "lines": [
+        223,
+        257,
+        338
+       ]
+      },
+      {
+       "id": "E44",
+       "name": "BRANCH_PREDICTION.btb_valid_r",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 49.3,
+       "struct_score": 29.7,
+       "trace": "control_backward",
+       "why": "BTB lookup hit gating prediction, RAS pushes/pops and LFSR hit.",
+       "lines": [
+        228,
+        252,
+        357
+       ]
+      },
+      {
+       "id": "E54",
+       "name": "BRANCH_PREDICTION.btb_miss_r",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 47.2,
+       "struct_score": 21.1,
+       "trace": "control_backward",
+       "why": "Update missed BTB; allocates new entry via LFSR replacement.",
+       "lines": [
+        286,
+        307,
+        360
+       ]
+      },
+      {
+       "id": "E53",
+       "name": "BRANCH_PREDICTION.btb_hit_r",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 19.3,
+       "struct_score": 21.5,
+       "trace": "control_backward",
+       "why": "Update hit existing BTB entry; enables in-place entry update.",
+       "lines": [
+        285,
+        301,
+        325
+       ]
+      },
+      {
+       "id": "E51",
+       "name": "BRANCH_PREDICTION.btb_wr_entry_r",
+       "role": "INDEX",
+       "importance": "minor",
+       "score": 22.0,
+       "struct_score": 32.6,
+       "trace": "control_backward",
+       "why": "Matching BTB entry index for update on hit.",
+       "lines": [
+        282,
+        303,
+        327
+       ]
+      },
+      {
+       "id": "E52",
+       "name": "BRANCH_PREDICTION.btb_wr_alloc_w",
+       "role": "INDEX",
+       "importance": "minor",
+       "score": 21.1,
+       "struct_score": 28.9,
+       "trace": "data_backward",
+       "why": "LFSR-chosen BTB entry index for allocation on miss.",
+       "lines": [
+        283,
+        337,
+        361
+       ]
+      },
+      {
+       "id": "E50",
+       "name": "BRANCH_PREDICTION.btb_entry_r",
+       "role": "INDEX",
+       "importance": "minor",
+       "score": 15.5,
+       "struct_score": 6.0,
+       "trace": "control_backward",
+       "why": "Index of BTB entry hit by fetch lookup, sent to replacement logic.",
+       "lines": [
+        235,
+        259,
+        358
+       ]
+      },
+      {
+       "id": "E49",
+       "name": "BRANCH_PREDICTION.btb_is_jmp_r",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 19.0,
+       "struct_score": 20.5,
+       "trace": "control_backward",
+       "why": "BTB entry is unconditional jump; forces taken prediction.",
+       "lines": [
+        233,
+        256,
+        372
+       ]
+      },
+      {
+       "id": "E48",
+       "name": "BRANCH_PREDICTION.btb_next_pc_r",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 19.9,
+       "struct_score": 24.0,
+       "trace": "data_backward",
+       "why": "BTB target or sequential PC candidate for next PC mux.",
+       "lines": [
+        232,
+        257,
+        372
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "BRANCH_PREDICTION.u_lru",
+       "module": "biriscv_npc_lfsr"
+      }
+     ],
+     "members": [
+      {
+       "id": "E41",
+       "name": "BRANCH_PREDICTION.btb_is_call_q",
+       "kind": "mem"
+      },
+      {
+       "id": "E42",
+       "name": "BRANCH_PREDICTION.btb_is_ret_q",
+       "kind": "mem"
+      },
+      {
+       "id": "E43",
+       "name": "BRANCH_PREDICTION.btb_is_jmp_q",
+       "kind": "mem"
+      },
+      {
+       "id": "E45",
+       "name": "BRANCH_PREDICTION.btb_upper_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E46",
+       "name": "BRANCH_PREDICTION.btb_is_call_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E47",
+       "name": "BRANCH_PREDICTION.btb_is_ret_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E18",
+       "name": "BRANCH_PREDICTION.btb_valid_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E19",
+       "name": "BRANCH_PREDICTION.btb_upper_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E20",
+       "name": "BRANCH_PREDICTION.btb_next_pc_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E21",
+       "name": "BRANCH_PREDICTION.btb_is_call_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E22",
+       "name": "BRANCH_PREDICTION.btb_is_ret_w",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "branch_history_table",
+     "kind": "MEMORY",
+     "description": "Saturating counter table and global history predicting branch direction.",
+     "anchors": [
+      {
+       "id": "E35",
+       "name": "BRANCH_PREDICTION.bht_sat_q",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 89.2,
+       "struct_score": 72.7,
+       "trace": "data_backward",
+       "why": "Branch history table of 2-bit saturating counters predicting taken.",
+       "lines": [
+        198,
+        213,
+        217
+       ]
+      },
+      {
+       "id": "E38",
+       "name": "BRANCH_PREDICTION.bht_predict_taken_w",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 47.2,
+       "struct_score": 21.1,
+       "trace": "control_backward",
+       "why": "BHT taken prediction selecting BTB target as next PC.",
+       "lines": [
+        217,
+        372
+       ]
+      },
+      {
+       "id": "E36",
+       "name": "BRANCH_PREDICTION.bht_wr_entry_w",
+       "role": "INDEX",
+       "importance": "minor",
+       "score": 16.2,
+       "struct_score": 8.9,
+       "trace": "data_backward",
+       "why": "BHT counter index for training updates.",
+       "lines": [
+        200,
+        213
+       ]
+      },
+      {
+       "id": "E37",
+       "name": "BRANCH_PREDICTION.bht_rd_entry_w",
+       "role": "INDEX",
+       "importance": "minor",
+       "score": 18.7,
+       "struct_score": 18.9,
+       "trace": "data_backward",
+       "why": "BHT counter index for fetch prediction.",
+       "lines": [
+        201,
+        217
+       ]
+      },
+      {
+       "id": "E32",
+       "name": "BRANCH_PREDICTION.global_history_q",
+       "role": "STORAGE",
+       "importance": "minor",
+       "score": 33.9,
+       "struct_score": 74.5,
+       "trace": "control_backward",
+       "why": "Speculative global branch history shift register for gshare indexing.",
+       "lines": [
+        180,
+        190,
+        193
+       ]
+      },
+      {
+       "id": "E31",
+       "name": "BRANCH_PREDICTION.global_history_real_q",
+       "role": "STORAGE",
+       "importance": "minor",
+       "score": 27.6,
+       "struct_score": 53.7,
+       "trace": "control_backward",
+       "why": "Committed global history used to repair speculative history.",
+       "lines": [
+        169,
+        175,
+        187
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E33",
+       "name": "BRANCH_PREDICTION.gshare_wr_entry_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E34",
+       "name": "BRANCH_PREDICTION.gshare_rd_entry_w",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "return_address_stack",
+     "kind": "MEMORY",
+     "description": "Speculative and committed RAS pointers with return address storage.",
+     "anchors": [
+      {
+       "id": "E25",
+       "name": "BRANCH_PREDICTION.ras_stack_q",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 97.2,
+       "struct_score": 93.0,
+       "trace": "data_backward",
+       "why": "Return address stack storing call return PCs for return prediction.",
+       "lines": [
+        112,
+        117,
+        151
+       ]
+      },
+      {
+       "id": "E26",
+       "name": "BRANCH_PREDICTION.ras_index_q",
+       "role": "INDEX",
+       "importance": "major",
+       "score": 50.3,
+       "struct_score": 33.8,
+       "trace": "control_backward",
+       "why": "Speculative RAS stack pointer selecting predicted return address.",
+       "lines": [
+        113,
+        117,
+        152
+       ]
+      },
+      {
+       "id": "E30",
+       "name": "BRANCH_PREDICTION.ras_ret_pred_w",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 49.0,
+       "struct_score": 28.4,
+       "trace": "control_backward",
+       "why": "Predicted return selecting RAS top as next PC and popping stack.",
+       "lines": [
+        119,
+        133,
+        371
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "BRANCH_PREDICTION.ras_index_real_q",
+       "role": "INDEX",
+       "importance": "minor",
+       "score": 16.5,
+       "struct_score": 10.3,
+       "trace": "control_backward",
+       "why": "Committed RAS pointer restoring speculative pointer on mispredict.",
+       "lines": [
+        90,
+        98,
+        127
+       ]
+      },
+      {
+       "id": "E29",
+       "name": "BRANCH_PREDICTION.ras_call_pred_w",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.8,
+       "struct_score": 15.3,
+       "trace": "control_backward",
+       "why": "Predicted call pushing return address onto RAS.",
+       "lines": [
+        118,
+        155
+       ]
+      },
+      {
+       "id": "E28",
+       "name": "BRANCH_PREDICTION.ras_pc_pred_w",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 23.2,
+       "struct_score": 37.3,
+       "trace": "data_backward",
+       "why": "RAS top-of-stack predicted return address.",
+       "lines": [
+        117,
+        371
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E24",
+       "name": "BRANCH_PREDICTION.ras_index_real_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E27",
+       "name": "BRANCH_PREDICTION.ras_index_r",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "next_pc_select",
+     "kind": "DATAPATH",
+     "description": "Selects RAS, BTB target or sequential next fetch PC and taken slot.",
+     "anchors": [
+      {
+       "id": "E14",
+       "name": "next_pc_f_o",
+       "role": "INTERFACE_ADDR",
+       "importance": "critical",
+       "score": 91.7,
+       "struct_score": 79.1,
+       "trace": "data_backward",
+       "why": "Predicted next fetch PC chosen from RAS, BTB target or sequential PC.",
+       "lines": [
+        62,
+        371
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "pc_f_i",
+       "role": "INTERFACE_ADDR",
+       "importance": "critical",
+       "score": 92.1,
+       "struct_score": 80.1,
+       "trace": "interface",
+       "why": "Current fetch PC used for BTB lookup and BHT index.",
+       "lines": [
+        58,
+        250
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "pc_accept_i",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 56.4,
+       "struct_score": 56.4,
+       "trace": "interface",
+       "why": "Fetch accepted PC; qualifies speculative RAS and history updates.",
+       "lines": [
+        59,
+        131,
+        379
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "next_taken_f_o",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 33.6,
+       "struct_score": 73.8,
+       "trace": "control_backward",
+       "why": "Predicted-taken slot indication for the fetched instruction pair.",
+       "lines": [
+        63,
+        375
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "BRANCH_PREDICTION.pred_taken_w",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.5,
+       "struct_score": 18.1,
+       "trace": "control_backward",
+       "why": "Accepted taken prediction shifting speculative global history.",
+       "lines": [
+        77,
+        189,
+        379
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E17",
+       "name": "BRANCH_PREDICTION.pred_ntaken_w",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "branch_update_port",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Resolved branch info training BTB, BHT and RAS.",
+     "anchors": [
+      {
+       "id": "E4",
+       "name": "branch_request_i",
+       "role": "COMMAND",
+       "importance": "critical",
+       "score": 80.9,
+       "struct_score": 43.9,
+       "trace": "interface",
+       "why": "Resolved branch update triggering BTB learn, RAS and history repair.",
+       "lines": [
+        50,
+        186,
+        295
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "branch_source_i",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 63.1,
+       "struct_score": 77.5,
+       "trace": "interface",
+       "why": "Resolved branch PC used for BTB tag match, BHT index and RAS push.",
+       "lines": [
+        53,
+        299,
+        327
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "branch_is_taken_i",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 20.8,
+       "struct_score": 27.6,
+       "trace": "interface",
+       "why": "Resolved taken outcome training BHT counters and history.",
+       "lines": [
+        51,
+        212
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "branch_pc_i",
+       "role": "INTERFACE_ADDR",
+       "importance": "minor",
+       "score": 29.2,
+       "struct_score": 59.5,
+       "trace": "interface",
+       "why": "Resolved branch target written into BTB target array.",
+       "lines": [
+        57,
+        338
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E6",
+       "name": "branch_is_not_taken_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "branch_is_call_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "branch_is_ret_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "branch_is_jmp_i",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "branch_update",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "invalidate_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "branch_request_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "branch_is_taken_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "branch_is_not_taken_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "branch_source_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "branch_is_call_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "branch_is_ret_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "branch_is_jmp_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "branch_pc_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "fetch_next_pc",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E12",
+      "E13",
+      "E14",
+      "E15"
+     ],
+     "members": [
+      {
+       "id": "E12",
+       "name": "pc_f_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "pc_accept_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E14",
+       "name": "next_pc_f_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "next_taken_f_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

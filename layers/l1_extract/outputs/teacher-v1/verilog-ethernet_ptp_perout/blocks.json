@@ -1,0 +1,674 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-ethernet_ptp_perout",
+ "tops": [
+  "ptp_perout"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "ptp_perout": {
+   "source": "teacher",
+   "canonical_instance": "ptp_perout",
+   "file": "data/rtl/verilog-ethernet/rtl/ptp_perout.v",
+   "lines": [
+    34,
+    324
+   ],
+   "summary": "PTP periodic output generator: a 3-state FSM compares the registered PTP time against a next-edge timestamp and schedules rising/falling edges using start, period and width config registers with ns-overflow lookahead adders.",
+   "blocks": [
+    {
+     "name": "Edge scheduler FSM",
+     "kind": "CONTROLLER",
+     "description": "FSM waits for edge time, toggles output level, triggers next-edge updates and restarts",
+     "anchors": [
+      {
+       "id": "E15",
+       "name": "state_reg",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.5,
+       "struct_score": 98.7,
+       "trace": "control_backward",
+       "why": "IDLE/UPDATE_RISE/UPDATE_FALL controller sequencing edge comparison and next-edge computation",
+       "lines": [
+        150,
+        239
+       ]
+      },
+      {
+       "id": "E49",
+       "name": "restart_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 50.0,
+       "struct_score": 32.4,
+       "trace": "control_backward",
+       "why": "Set by start/period config writes; reloads edge times from start registers",
+       "lines": [
+        217,
+        254
+       ]
+      },
+      {
+       "id": "E54",
+       "name": "ffwd_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 21.9,
+       "struct_score": 32.2,
+       "trace": "control_backward",
+       "why": "Fast-forward flag skipping past edges after restart until time catches up",
+       "lines": [
+        152,
+        180,
+        230
+       ]
+      },
+      {
+       "id": "E56",
+       "name": "level_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 21.7,
+       "struct_score": 31.2,
+       "trace": "control_backward",
+       "why": "Current output level; selects period versus width addition and next state",
+       "lines": [
+        152,
+        169,
+        176
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E16",
+       "name": "state_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E50",
+       "name": "locked_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E51",
+       "name": "locked_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E52",
+       "name": "error_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E53",
+       "name": "error_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E55",
+       "name": "ffwd_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E57",
+       "name": "level_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E58",
+       "name": "output_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E59",
+       "name": "output_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Edge time datapath",
+     "kind": "DATAPATH",
+     "description": "Compares current time to next edge and computes next edge with ns overflow lookahead",
+     "anchors": [
+      {
+       "id": "E26",
+       "name": "next_edge_s_reg",
+       "role": "HOLDING_REG",
+       "importance": "critical",
+       "score": 81.5,
+       "struct_score": 46.1,
+       "trace": "data_backward",
+       "why": "Next scheduled edge time (seconds) compared against current time to trigger output",
+       "lines": [
+        165,
+        280
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "next_rise_s_reg",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 51.1,
+       "struct_score": 37.0,
+       "trace": "data_backward",
+       "why": "Holds last rising-edge time used as base for period and width additions",
+       "lines": [
+        187,
+        274
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "time_s_reg",
+       "role": "PIPELINE_REG",
+       "importance": "major",
+       "score": 54.1,
+       "struct_score": 48.3,
+       "trace": "data_backward",
+       "why": "Registered PTP time seconds sampled from input_ts_96 each cycle for edge compare",
+       "lines": [
+        165,
+        242
+       ]
+      },
+      {
+       "id": "E45",
+       "name": "ts_96_ns_ovf_reg",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 51.7,
+       "struct_score": 39.3,
+       "trace": "data_backward",
+       "why": "Overflow lookahead sum minus 1e9 ns; sign bit selects seconds increment",
+       "lines": [
+        156,
+        185,
+        188
+       ]
+      },
+      {
+       "id": "E41",
+       "name": "ts_96_ns_inc_reg",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 22.5,
+       "struct_score": 34.4,
+       "trace": "data_backward",
+       "why": "Rise time plus period or width ns sum used when no seconds carry",
+       "lines": [
+        155,
+        193
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E18",
+       "name": "time_ns_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E19",
+       "name": "time_fns_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E21",
+       "name": "next_rise_s_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E22",
+       "name": "next_rise_ns_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E23",
+       "name": "next_rise_ns_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E24",
+       "name": "next_rise_fns_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E25",
+       "name": "next_rise_fns_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E27",
+       "name": "next_edge_s_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E28",
+       "name": "next_edge_ns_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E29",
+       "name": "next_edge_ns_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E30",
+       "name": "next_edge_fns_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E31",
+       "name": "next_edge_fns_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E42",
+       "name": "ts_96_ns_inc_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E43",
+       "name": "ts_96_fns_inc_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E44",
+       "name": "ts_96_fns_inc_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E46",
+       "name": "ts_96_ns_ovf_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E47",
+       "name": "ts_96_fns_ovf_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E48",
+       "name": "ts_96_fns_ovf_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Configuration registers",
+     "kind": "REGISTER_BANK",
+     "description": "Start, period and width timestamps loaded by their valid strobes",
+     "anchors": [
+      {
+       "id": "E35",
+       "name": "period_s_reg",
+       "role": "CONFIG_REG",
+       "importance": "major",
+       "score": 47.9,
+       "struct_score": 24.0,
+       "trace": "data_backward",
+       "why": "Programmable output period, loaded on input_period_valid, added to rise time",
+       "lines": [
+        187,
+        258
+       ]
+      },
+      {
+       "id": "E38",
+       "name": "width_s_reg",
+       "role": "CONFIG_REG",
+       "importance": "major",
+       "score": 47.9,
+       "struct_score": 24.0,
+       "trace": "data_backward",
+       "why": "Programmable pulse width, loaded on input_width_valid, sets falling edge time",
+       "lines": [
+        204,
+        267
+       ]
+      },
+      {
+       "id": "E32",
+       "name": "start_s_reg",
+       "role": "CONFIG_REG",
+       "importance": "major",
+       "score": 49.3,
+       "struct_score": 29.9,
+       "trace": "data_backward",
+       "why": "Programmable start time loaded into next rise/edge on restart or time step",
+       "lines": [
+        219,
+        249
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "input_start_valid",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 21.1,
+       "struct_score": 29.0,
+       "trace": "forward",
+       "why": "Write enable loading start config registers and triggering restart",
+       "lines": [
+        62,
+        248
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "input_period_valid",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 21.1,
+       "struct_score": 29.0,
+       "trace": "forward",
+       "why": "Write enable loading period config registers and triggering restart",
+       "lines": [
+        64,
+        257
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "input_width_valid",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 20.4,
+       "struct_score": 25.8,
+       "trace": "forward",
+       "why": "Write enable loading width config registers",
+       "lines": [
+        66,
+        266
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E33",
+       "name": "start_ns_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E34",
+       "name": "start_fns_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E36",
+       "name": "period_ns_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E37",
+       "name": "period_fns_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E39",
+       "name": "width_ns_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E40",
+       "name": "width_fns_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E6",
+       "name": "input_start",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "input_period",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "input_width",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Output and status",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Pulse output plus locked and error status driven from registers",
+     "anchors": [
+      {
+       "id": "E14",
+       "name": "output_pulse",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 81.7,
+       "struct_score": 46.8,
+       "trace": "interface",
+       "why": "Generated periodic pulse output driven by output_reg",
+       "lines": [
+        77,
+        125
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "locked",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 45.8,
+       "struct_score": 15.5,
+       "trace": "interface",
+       "why": "Indicates output is locked after first scheduled rising edge",
+       "lines": [
+        71,
+        123
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "error",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 17.8,
+       "struct_score": 15.5,
+       "trace": "interface",
+       "why": "Reports a timestamp step disturbed the schedule",
+       "lines": [
+        72,
+        124
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E58",
+       "name": "output_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E50",
+       "name": "locked_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E52",
+       "name": "error_reg",
+       "kind": "reg"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E3",
+     "name": "input_ts_96",
+     "role": "INTERFACE_DATA",
+     "importance": "critical",
+     "score": 95.8,
+     "struct_score": 89.4,
+     "trace": "interface",
+     "why": "96-bit PTP timestamp input sampled into time registers",
+     "lines": [
+      54,
+      242
+     ]
+    },
+    {
+     "id": "E4",
+     "name": "input_ts_step",
+     "role": "COMMAND",
+     "importance": "minor",
+     "score": 23.9,
+     "struct_score": 40.2,
+     "trace": "forward",
+     "why": "Timestamp step event forcing schedule reload and error flag",
+     "lines": [
+      217,
+      233
+     ]
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "ptp_timestamp",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "input_ts_96",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "input_ts_step",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "control",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "enable",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "input_start",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "input_start_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "input_period",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "input_period_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "input_width",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "input_width_valid",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E12",
+      "E13"
+     ],
+     "members": [
+      {
+       "id": "E12",
+       "name": "locked",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "error",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "pulse_output",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E14"
+     ],
+     "members": [
+      {
+       "id": "E14",
+       "name": "output_pulse",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,237 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "common_cells_cc_exp_backoff",
+ "tops": [
+  "cc_exp_backoff"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "cc_exp_backoff": {
+   "source": "teacher",
+   "canonical_instance": "cc_exp_backoff",
+   "file": "data/rtl/common_cells/src/cc_exp_backoff.sv",
+   "lines": [
+    26,
+    90
+   ],
+   "summary": "Randomized exponential backoff timer: a 16-bit LFSR masked by an exponentially growing shift-register mask loads a down-counter whose zero flag permits retries.",
+   "blocks": [
+    {
+     "name": "random_generator",
+     "kind": "DATAPATH",
+     "description": "LFSR and exponential mask generating masked random backoff values.",
+     "anchors": [
+      {
+       "id": "E8",
+       "name": "lfsr_q",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 69.6,
+       "struct_score": 94.1,
+       "trace": "data_backward",
+       "why": "16-bit LFSR shift register providing random wait counts.",
+       "lines": [
+        56,
+        61,
+        70
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "lfsr",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 18.9,
+       "struct_score": 19.7,
+       "trace": "data_backward",
+       "why": "LFSR feedback XOR bit shifted into lfsr_q.",
+       "lines": [
+        56,
+        61
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "mask_q",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 67.7,
+       "struct_score": 89.1,
+       "trace": "data_backward",
+       "why": "Exponential mask shift register widening on each failed trial.",
+       "lines": [
+        66,
+        70,
+        76
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E7",
+       "name": "lfsr_d",
+       "kind": "wire"
+      },
+      {
+       "id": "E11",
+       "name": "mask_d",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "backoff_counter",
+     "kind": "COUNTER_TIMER",
+     "description": "Down-counter loaded on set and zero-detect output.",
+     "anchors": [
+      {
+       "id": "E10",
+       "name": "cnt_q",
+       "role": "COUNTER",
+       "importance": "critical",
+       "score": 94.7,
+       "struct_score": 86.6,
+       "trace": "control_backward",
+       "why": "Backoff down-counter loaded with masked random value, decremented to zero.",
+       "lines": [
+        71,
+        73,
+        77
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "is_zero_o",
+       "role": "STATUS",
+       "importance": "critical",
+       "score": 83.7,
+       "struct_score": 54.1,
+       "trace": "control_backward",
+       "why": "Counter-zero indication allowing a new trial; also stops decrement.",
+       "lines": [
+        43,
+        71,
+        73
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E9",
+       "name": "cnt_d",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "command_inputs",
+     "kind": "CONTROLLER",
+     "description": "Set/clear pulses sequencing LFSR, mask and counter updates.",
+     "anchors": [
+      {
+       "id": "E4",
+       "name": "set_cnt_i",
+       "role": "COMMAND",
+       "importance": "critical",
+       "score": 86.4,
+       "struct_score": 63.6,
+       "trace": "interface",
+       "why": "Trial-failed pulse: advances LFSR, widens mask and loads counter.",
+       "lines": [
+        39,
+        61,
+        70
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "clr_cnt_i",
+       "role": "COMMAND",
+       "importance": "major",
+       "score": 55.9,
+       "struct_score": 54.9,
+       "trace": "interface",
+       "why": "Trial-succeeded pulse: clears mask and counter.",
+       "lines": [
+        41,
+        65,
+        69
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2",
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_ni",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "clr_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "backoff_control",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "set_cnt_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "clr_cnt_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "backoff_status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "is_zero_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

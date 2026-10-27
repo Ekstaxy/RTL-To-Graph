@@ -1,0 +1,72 @@
+MODULE: RefModule
+DETAIL: full (importance tiers drive the coarser views)
+
+ENTITY TABLE:
+id | name | kind | size | type | driven_by | fan | flags | line
+E1 | clk | port_in | 1b | logic | driven_by=port_in | fanin=0 fanout=1 ctrl_fanout=0 addr_fanout=0 | CLOCK | L3
+E2 | areset | port_in | 1b | logic | driven_by=port_in | fanin=0 fanout=1 ctrl_fanout=0 addr_fanout=0 | RESET | L4
+E3 | bump_left | port_in | 1b | logic | driven_by=port_in | fanin=0 fanout=1 ctrl_fanout=1 addr_fanout=0 | - | L5
+E4 | bump_right | port_in | 1b | logic | driven_by=port_in | fanin=0 fanout=1 ctrl_fanout=1 addr_fanout=0 | - | L6
+E5 | walk_left | port_out | 1b | logic | driven_by=assign | fanin=1 fanout=0 ctrl_fanout=0 addr_fanout=0 | - | L7
+E6 | walk_right | port_out | 1b | logic | driven_by=assign | fanin=1 fanout=0 ctrl_fanout=0 addr_fanout=0 | - | L8
+E7 | state | reg | 1b | reg | driven_by=always_ff | fanin=3 fanout=3 ctrl_fanout=1 addr_fanout=0 | STATE | L12
+E8 | next | comb | 1b | reg | driven_by=always_comb | fanin=3 fanout=1 ctrl_fanout=0 addr_fanout=0 | - | L13
+
+RTL (line-numbered):
+   2| module RefModule (
+   3|   input clk,
+   4|   input areset,
+   5|   input bump_left,
+   6|   input bump_right,
+   7|   output walk_left,
+   8|   output walk_right
+   9| );
+  10| 
+  11|   parameter WL=0, WR=1;
+  12|   reg state;
+  13|   reg next;
+  14| 
+  15|   always_comb begin
+  16|     case (state)
+  17|       WL: next = bump_left ? WR : WL;
+  18|       WR: next = bump_right ? WL: WR;
+  19|     endcase
+  20|   end
+  21| 
+  22|   always @(posedge clk, posedge areset) begin
+  23|     if (areset) state <= WL;
+  24|       else state <= next;
+  25|   end
+  26| 
+  27|   assign walk_left = (state==WL);
+  28|   assign walk_right = (state==WR);
+  29| 
+  30| endmodule
+
+DESIGN SPEC (teacher-only reference; use it to understand intent, but anchors must be grounded in the RTL and entity table, and the RTL wins if they disagree):
+I would like you to implement a module named TopModule with the following
+interface. All input and output ports are one bit unless otherwise
+specified.
+
+ - input  clk
+ - input  areset
+ - input  bump_left
+ - input  bump_right
+ - output walk_left
+ - output walk_right
+
+The module should implement a simple game called Lemmings which involves
+critters with fairly simple brains. So simple that we are going to model
+it using a finite state machine. In the Lemmings' 2D world, Lemmings can
+be in one of two states: walking left (walk_left is 1) or walking right
+(walk_right is 1). It will switch directions if it hits an obstacle. In
+particular, if a Lemming is bumped on the left (by receiving a 1 on
+bump_left), it will walk right. If it's bumped on the right (by receiving
+a 1 on bump_right), it will walk left. If it's bumped on both sides at
+the same time, it will still switch directions.
+
+The module should implement a Moore state machine with two states, two
+inputs, and one output (internal to the module) that models this
+behaviour. areset is positive edge triggered asynchronous resetting the
+Lemming machine to walk left. Assume all sequential logic is triggered on
+the positive edge of the clock.

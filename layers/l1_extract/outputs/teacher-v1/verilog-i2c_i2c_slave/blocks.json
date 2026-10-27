@@ -1,0 +1,874 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-i2c_i2c_slave",
+ "tops": [
+  "i2c_slave"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "i2c_slave": {
+   "source": "teacher",
+   "canonical_instance": "i2c_slave",
+   "file": "data/rtl/verilog-i2c/rtl/i2c_slave.v",
+   "lines": [
+    32,
+    503
+   ],
+   "summary": "I2C slave bridging to AXI-Stream: filtered SCL/SDA edge and start/stop detection drive an 8-state FSM that shifts bytes through a data register with clock stretching.",
+   "blocks": [
+    {
+     "name": "I2C slave FSM",
+     "kind": "CONTROLLER",
+     "description": "Sequences address, ACK, write and read byte phases",
+     "anchors": [
+      {
+       "id": "E25",
+       "name": "state_reg",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.6,
+       "struct_score": 99.1,
+       "trace": "control_backward",
+       "why": "IDLE/ADDRESS/ACK/WRITE/READ FSM sequencing I2C bits and AXI transfers",
+       "lines": [
+        181,
+        282,
+        440
+       ]
+      },
+      {
+       "id": "E37",
+       "name": "mode_read_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 47.2,
+       "struct_score": 21.1,
+       "trace": "control_backward",
+       "why": "Latched R/W bit choosing read or write path after ACK",
+       "lines": [
+        189,
+        303,
+        320
+       ]
+      },
+      {
+       "id": "E39",
+       "name": "bit_count_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 54.7,
+       "struct_score": 50.5,
+       "trace": "control_backward",
+       "why": "Counts bits of address/data byte, ends shift phases",
+       "lines": [
+        191,
+        293,
+        450
+       ]
+      },
+      {
+       "id": "E31",
+       "name": "data_valid_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 22.1,
+       "struct_score": 33.1,
+       "trace": "control_backward",
+       "why": "data_reg holds a full byte; gates read shift and output store",
+       "lines": [
+        185,
+        343,
+        389
+       ]
+      },
+      {
+       "id": "E33",
+       "name": "data_out_reg_valid_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.9,
+       "struct_score": 20.0,
+       "trace": "control_backward",
+       "why": "Delayed write byte pending, released to tvalid when next byte arrives",
+       "lines": [
+        186,
+        270,
+        366
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E26",
+       "name": "state_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E38",
+       "name": "mode_read_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E40",
+       "name": "bit_count_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E32",
+       "name": "data_valid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E34",
+       "name": "data_out_reg_valid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E35",
+       "name": "last_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E36",
+       "name": "last_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Bit shift datapath",
+     "kind": "SERIALIZER",
+     "description": "Shifts SDA bits in/out of data_reg and drives SDA/SCL with stretching",
+     "anchors": [
+      {
+       "id": "E29",
+       "name": "data_reg",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 86.8,
+       "struct_score": 65.3,
+       "trace": "data_backward",
+       "why": "Shift register for address/data bits in and out of SDA",
+       "lines": [
+        184,
+        296,
+        395
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "sda_o",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 80.8,
+       "struct_score": 43.6,
+       "trace": "data_backward",
+       "why": "SDA open-drain output for ACK and read data bits",
+       "lines": [
+        61,
+        225
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "scl_o",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 80.8,
+       "struct_score": 43.6,
+       "trace": "control_backward",
+       "why": "SCL output held low for clock stretching",
+       "lines": [
+        58,
+        223
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E30",
+       "name": "data_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E53",
+       "name": "scl_o_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E54",
+       "name": "scl_o_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E55",
+       "name": "sda_o_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E56",
+       "name": "sda_o_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E14",
+       "name": "scl_t",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "sda_t",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "Bus condition detector",
+     "kind": "OTHER",
+     "description": "Filters SCL/SDA and detects edges, START and STOP",
+     "anchors": [
+      {
+       "id": "E67",
+       "name": "start_bit",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 48.4,
+       "struct_score": 26.0,
+       "trace": "control_backward",
+       "why": "START condition detect restarting FSM at ADDRESS",
+       "lines": [
+        237,
+        264,
+        481
+       ]
+      },
+      {
+       "id": "E68",
+       "name": "stop_bit",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 48.4,
+       "struct_score": 26.0,
+       "trace": "control_backward",
+       "why": "STOP condition detect returning FSM to IDLE",
+       "lines": [
+        238,
+        273,
+        483
+       ]
+      },
+      {
+       "id": "E63",
+       "name": "scl_posedge",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 17.4,
+       "struct_score": 14.0,
+       "trace": "control_backward",
+       "why": "SCL rising edge strobe sampling SDA bits",
+       "lines": [
+        232,
+        292,
+        358
+       ]
+      },
+      {
+       "id": "E64",
+       "name": "scl_negedge",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 17.4,
+       "struct_score": 14.0,
+       "trace": "control_backward",
+       "why": "SCL falling edge strobe driving SDA changes",
+       "lines": [
+        233,
+        317,
+        387
+       ]
+      },
+      {
+       "id": "E52",
+       "name": "sda_i_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 18.0,
+       "struct_score": 16.4,
+       "trace": "data_backward",
+       "why": "Glitch-filtered SDA input sampled into data_reg",
+       "lines": [
+        203,
+        296,
+        421
+       ]
+      },
+      {
+       "id": "E49",
+       "name": "scl_i_filter",
+       "role": "STORAGE",
+       "importance": "minor",
+       "score": 20.7,
+       "struct_score": 27.3,
+       "trace": "data_backward",
+       "why": "Shift-register glitch filter for SCL input",
+       "lines": [
+        199,
+        458,
+        461
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E50",
+       "name": "sda_i_filter",
+       "kind": "reg"
+      },
+      {
+       "id": "E51",
+       "name": "scl_i_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E57",
+       "name": "last_scl_i_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E58",
+       "name": "last_sda_i_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E65",
+       "name": "sda_posedge",
+       "kind": "wire"
+      },
+      {
+       "id": "E66",
+       "name": "sda_negedge",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "AXI-Stream ports",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Registered AXI stream input and output byte interfaces",
+     "anchors": [
+      {
+       "id": "E8",
+       "name": "m_axis_data_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 85.8,
+       "struct_score": 61.6,
+       "trace": "interface",
+       "why": "Bytes written over I2C, output on AXI stream",
+       "lines": [
+        49,
+        219
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "m_axis_data_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 93.0,
+       "struct_score": 82.2,
+       "trace": "control_backward",
+       "why": "Output byte valid; stalls write via clock stretching when not accepted",
+       "lines": [
+        50,
+        220,
+        337
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_data_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 85.9,
+       "struct_score": 61.9,
+       "trace": "control_backward",
+       "why": "Ready to accept byte for I2C read transfer",
+       "lines": [
+        46,
+        217,
+        377
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_data_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 56.4,
+       "struct_score": 56.6,
+       "trace": "interface",
+       "why": "Byte supplied for I2C read, loaded into data_reg",
+       "lines": [
+        44,
+        380
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_data_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 29.7,
+       "struct_score": 61.3,
+       "trace": "interface",
+       "why": "Input byte valid for read transfer",
+       "lines": [
+        45,
+        377
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "m_axis_data_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 27.9,
+       "struct_score": 54.7,
+       "trace": "interface",
+       "why": "Downstream accepts output byte; clears tvalid",
+       "lines": [
+        51,
+        256,
+        337
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "m_axis_data_tlast",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 24.8,
+       "struct_score": 43.6,
+       "trace": "control_backward",
+       "why": "Marks last byte of write at start/stop",
+       "lines": [
+        52,
+        221
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E41",
+       "name": "s_axis_data_tready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E42",
+       "name": "s_axis_data_tready_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E43",
+       "name": "m_axis_data_tdata_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E44",
+       "name": "m_axis_data_tdata_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E45",
+       "name": "m_axis_data_tvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E46",
+       "name": "m_axis_data_tvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E47",
+       "name": "m_axis_data_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E48",
+       "name": "m_axis_data_tlast_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Address match and status",
+     "kind": "OTHER",
+     "description": "Address compare configuration and bus status reporting",
+     "anchors": [
+      {
+       "id": "E23",
+       "name": "device_address",
+       "role": "CONFIG_REG",
+       "importance": "minor",
+       "score": 22.7,
+       "struct_score": 35.6,
+       "trace": "interface",
+       "why": "Slave address compared against received address",
+       "lines": [
+        76,
+        300
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "device_address_mask",
+       "role": "CONFIG_REG",
+       "importance": "minor",
+       "score": 22.7,
+       "struct_score": 35.6,
+       "trace": "interface",
+       "why": "Mask selecting address bits to compare",
+       "lines": [
+        77,
+        300
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "enable",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 20.5,
+       "struct_score": 26.5,
+       "trace": "interface",
+       "why": "Enables responding to address match",
+       "lines": [
+        75,
+        300
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "release_bus",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 23.7,
+       "struct_score": 39.2,
+       "trace": "interface",
+       "why": "Host command forcing FSM back to IDLE",
+       "lines": [
+        42,
+        273
+       ]
+      },
+      {
+       "id": "E19",
+       "name": "bus_address",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 19.7,
+       "struct_score": 23.1,
+       "trace": "data_backward",
+       "why": "Matched bus address latched in addr_reg",
+       "lines": [
+        68,
+        215
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "busy",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 17.4,
+       "struct_score": 13.9,
+       "trace": "control_backward",
+       "why": "FSM not idle indication",
+       "lines": [
+        67,
+        228
+       ]
+      },
+      {
+       "id": "E21",
+       "name": "bus_active",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 17.4,
+       "struct_score": 13.9,
+       "trace": "control_backward",
+       "why": "Bus active between start and stop",
+       "lines": [
+        70,
+        229
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "bus_addressed",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 17.4,
+       "struct_score": 13.9,
+       "trace": "control_backward",
+       "why": "Module currently addressed on bus",
+       "lines": [
+        69,
+        230
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E27",
+       "name": "addr_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E28",
+       "name": "addr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E59",
+       "name": "busy_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E60",
+       "name": "bus_active_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E61",
+       "name": "bus_addressed_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E62",
+       "name": "bus_addressed_next",
+       "kind": "comb"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "Clock and reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Host control",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "release_bus",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "AXI-Stream input (read data)",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E4",
+      "E5",
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "s_axis_data_tdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_data_tvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_data_tready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_data_tlast",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "AXI-Stream output (write data)",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E8",
+      "E9",
+      "E10",
+      "E11"
+     ],
+     "members": [
+      {
+       "id": "E8",
+       "name": "m_axis_data_tdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "m_axis_data_tvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "m_axis_data_tready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "m_axis_data_tlast",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "I2C bus",
+     "protocol": "SERIAL",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E12",
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17"
+     ],
+     "members": [
+      {
+       "id": "E12",
+       "name": "scl_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "scl_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "scl_t",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "sda_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E16",
+       "name": "sda_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "sda_t",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "Status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E18",
+      "E19",
+      "E20",
+      "E21"
+     ],
+     "members": [
+      {
+       "id": "E18",
+       "name": "busy",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "bus_address",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "bus_addressed",
+       "kind": "port_out"
+      },
+      {
+       "id": "E21",
+       "name": "bus_active",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "Configuration",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E22",
+      "E23",
+      "E24"
+     ],
+     "members": [
+      {
+       "id": "E22",
+       "name": "enable",
+       "kind": "port_in"
+      },
+      {
+       "id": "E23",
+       "name": "device_address",
+       "kind": "port_in"
+      },
+      {
+       "id": "E24",
+       "name": "device_address_mask",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

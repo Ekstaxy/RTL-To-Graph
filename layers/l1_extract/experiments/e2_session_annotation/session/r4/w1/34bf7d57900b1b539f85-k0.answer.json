@@ -1,0 +1,41 @@
+{
+  "module_summary": "Direct-mapped ARP cache: CRC32 LFSR hashes of IP addresses index valid/IP/MAC memories; queries compare stored IP for hit or error, writes are registered then committed, and clear sweeps all entries.",
+  "anchors": [
+    {"id": "E32", "name": "ip_addr_mem", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "Stored IP tag per entry, compared against queried IP for hit detection.", "lines": [166, 240]},
+    {"id": "E33", "name": "mac_addr_mem", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "Stored MAC per entry, read out as query response.", "lines": [236, 241]},
+    {"id": "E31", "name": "valid_mem", "role": "STORAGE", "importance": "minor", "trace": "data_backward", "why": "Per-entry valid bit, cleared by cache sweep, qualifies hits.", "lines": [166, 239]},
+    {"id": "E29", "name": "rd_ptr_reg", "role": "INDEX", "importance": "major", "trace": "data_backward", "why": "Query index from IP hash addressing valid/IP/MAC memories.", "lines": [166, 236]},
+    {"id": "E27", "name": "wr_ptr_reg", "role": "INDEX", "importance": "major", "trace": "data_backward", "why": "Write index from IP hash, or sweep counter during cache clear.", "lines": [198, 239]},
+    {"id": "E43", "name": "query_request_hash", "role": "INDEX", "importance": "minor", "trace": "data_backward", "why": "LFSR hash of query IP, low bits load rd_ptr.", "lines": [176]},
+    {"id": "E44", "name": "write_request_hash", "role": "INDEX", "importance": "minor", "trace": "data_backward", "why": "LFSR hash of write IP, low bits load wr_ptr.", "lines": [191]},
+    {"id": "E18", "name": "query_ip_valid_reg", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Pending query flag; triggers lookup compare and response generation.", "lines": [163, 173]},
+    {"id": "E20", "name": "query_ip_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Latched query IP compared with stored IP tag.", "lines": [166, 226]},
+    {"id": "E21", "name": "write_ip_valid_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Pending write flag committing latched IP/MAC to memories.", "lines": [183]},
+    {"id": "E23", "name": "write_ip_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Latched write IP/MAC awaiting commit to cache memories.", "lines": [230, 240]},
+    {"id": "E15", "name": "mem_write", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Memory write enable for entry commit or clear sweep.", "lines": [185, 238]},
+    {"id": "E16", "name": "store_query", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Load enable latching query IP on request accept.", "lines": [174, 225]},
+    {"id": "E17", "name": "store_write", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Load enable latching write IP/MAC on request accept.", "lines": [189, 229]},
+    {"id": "E3", "name": "query_request_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Query request valid accepting a lookup IP.", "lines": [173]},
+    {"id": "E4", "name": "query_request_ready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Query ready, low during cache clear or stalled response.", "lines": [96, 173]},
+    {"id": "E5", "name": "query_request_ip", "role": "INTERFACE_ADDR", "importance": "minor", "trace": "interface", "why": "Lookup IP hashed into cache index.", "lines": [114, 226]},
+    {"id": "E6", "name": "query_response_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Query response valid with MAC and error.", "lines": [98]},
+    {"id": "E7", "name": "query_response_ready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Downstream response ready clearing response valid.", "lines": [160]},
+    {"id": "E9", "name": "query_response_mac", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "MAC read from cache for the queried IP.", "lines": [100]},
+    {"id": "E8", "name": "query_response_error", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Miss indication when entry invalid or IP tag mismatches.", "lines": [99]},
+    {"id": "E10", "name": "write_request_valid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Write request valid inserting an IP/MAC pair.", "lines": [188]},
+    {"id": "E11", "name": "write_request_ready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Write ready, low during cache clear.", "lines": [102, 188]},
+    {"id": "E13", "name": "write_request_mac", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "MAC to store for the written IP.", "lines": [231]}
+  ],
+  "groups": [
+    {"name": "Cache memories", "kind": "MEMORY", "anchor_ids": ["E32", "E33", "E31", "E15"], "member_ids": [], "description": "Direct-mapped valid, IP tag and MAC arrays."},
+    {"name": "Query path", "kind": "CONTROLLER", "anchor_ids": ["E3", "E4", "E5", "E6", "E7", "E9", "E8", "E18", "E20", "E16", "E29", "E43"], "member_ids": ["I1", "E19", "E30", "E34", "E35", "E36", "E37", "E38", "E39", "E40"], "description": "Hash query IP, read entry, compare tag, return MAC or error."},
+    {"name": "Write and clear path", "kind": "CONTROLLER", "anchor_ids": ["E10", "E11", "E13", "E21", "E23", "E17", "E27", "E44"], "member_ids": ["I2", "E12", "E22", "E24", "E28", "E41", "E42", "E25", "E26", "E14"], "description": "Hash write IP, latch IP/MAC and commit; clear sweeps wr_ptr over all entries."}
+  ],
+  "interfaces": [
+    {"name": "clock/reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "query request", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5"]},
+    {"name": "query response", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E6", "E7", "E8", "E9"]},
+    {"name": "write request", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E10", "E11", "E12", "E13"]},
+    {"name": "configuration", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E14"]}
+  ]
+}

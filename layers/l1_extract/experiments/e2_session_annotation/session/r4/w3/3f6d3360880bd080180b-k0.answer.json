@@ -1,0 +1,50 @@
+{
+ "module_summary": "UDP checksum generator: an FSM latches header fields, sums pseudo-header and payload bytes while payload streams into an AXIS FIFO, then queues header with length/checksum in a header FIFO.",
+ "anchors": [
+  {"id": "E54", "name": "state_reg", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Sequences idle, three header-sum states, payload summing and checksum finish.", "lines": [450, 519, 525]},
+  {"id": "E61", "name": "checksum_reg", "role": "DATAPATH_MAJOR", "importance": "critical", "trace": "data_backward", "why": "Ones-complement checksum accumulator over pseudo-header and payload; written into header FIFO.", "lines": [469, 536, 375]},
+  {"id": "E59", "name": "frame_ptr_reg", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Payload byte counter selecting byte lane and giving UDP length stored in header FIFO.", "lines": [496, 535, 374]},
+  {"id": "E58", "name": "checksum_part", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Folded carry sum used to finalize the inverted checksum.", "lines": [509, 510]},
+  {"id": "E56", "name": "store_udp_hdr", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Load enable capturing all input header fields into holding registers on header accept.", "lines": [456, 539]},
+  {"id": "E57", "name": "shift_payload_in", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Enables payload stream handshake into payload FIFO during payload summing.", "lines": [485, 242, 243]},
+  {"id": "E79", "name": "hdr_valid_reg", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "Pulse after checksum finish requesting header FIFO write.", "lines": [340, 530]},
+  {"id": "E85", "name": "busy_reg", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Busy indication while FSM is not idle, drives busy output.", "lines": [523, 532]},
+  {"id": "E75", "name": "ip_source_ip_reg", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Representative latched header field held during checksum, summed and queued to header FIFO.", "lines": [552, 469, 370]},
+  {"id": "E117", "name": "udp_checksum_mem", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "Header FIFO storage (representative array) holding computed checksum per frame.", "lines": [375, 428]},
+  {"id": "E96", "name": "header_fifo_wr_ptr_reg", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "Header FIFO write pointer addressing all header field memories.", "lines": [345, 354, 358]},
+  {"id": "E98", "name": "header_fifo_rd_ptr_reg", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "Header FIFO read pointer addressing header memories for output registers.", "lines": [393, 406, 411]},
+  {"id": "E140", "name": "header_fifo_write", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Header FIFO write strobe when header valid and FIFO not full.", "lines": [344, 357]},
+  {"id": "E141", "name": "header_fifo_read", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Header FIFO read strobe loading output header registers.", "lines": [391, 410]},
+  {"id": "E138", "name": "header_fifo_full", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Header FIFO full; blocks writes and input header ready.", "lines": [300, 342, 309]},
+  {"id": "E139", "name": "header_fifo_empty", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Header FIFO empty; withholds output header valid.", "lines": [303, 389]},
+  {"id": "E3", "name": "s_udp_hdr_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Input header valid starting a new frame checksum.", "lines": [455]},
+  {"id": "E4", "name": "s_udp_hdr_ready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Input header ready in idle when header FIFO has room.", "lines": [432, 455]},
+  {"id": "E21", "name": "s_udp_payload_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Payload bytes summed into checksum and forwarded to payload FIFO.", "lines": [491, 241]},
+  {"id": "E22", "name": "s_udp_payload_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Payload stream valid gated into payload FIFO.", "lines": [242, 487]},
+  {"id": "E23", "name": "s_udp_payload_axis_tready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Payload ready from FIFO gated by shift_payload_in.", "lines": [243, 487]},
+  {"id": "E24", "name": "s_udp_payload_axis_tlast", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "End of payload, moves FSM to checksum finish.", "lines": [498, 244]},
+  {"id": "E48", "name": "m_udp_payload_axis_tdata", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Output payload stream from payload FIFO.", "lines": [247]},
+  {"id": "E49", "name": "m_udp_payload_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Output payload valid from payload FIFO.", "lines": [248]},
+  {"id": "E26", "name": "m_udp_hdr_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Output header valid when a header entry is read from header FIFO.", "lines": [311, 387]},
+  {"id": "E27", "name": "m_udp_hdr_ready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Output header ready advancing the header FIFO read.", "lines": [387]},
+  {"id": "E47", "name": "m_udp_checksum", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Computed UDP checksum output from header FIFO.", "lines": [332]},
+  {"id": "E46", "name": "m_udp_length", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Computed UDP length output from header FIFO.", "lines": [331]},
+  {"id": "E35", "name": "m_ip_length", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "IP length derived as UDP length plus 20.", "lines": [320]}
+ ],
+ "groups": [
+  {"name": "Checksum FSM", "kind": "CONTROLLER", "anchor_ids": ["E54", "E56", "E57", "E79", "E85", "E3", "E4"], "member_ids": ["E55", "E80", "E81", "E82", "E83", "E84", "E53"], "description": "Accepts header, steps header-sum states, sums payload, finishes checksum and requests header FIFO write."},
+  {"name": "Checksum datapath", "kind": "DATAPATH", "anchor_ids": ["E61", "E59", "E58"], "member_ids": ["E62", "E60"], "description": "Accumulates ones-complement checksum and counts payload bytes for UDP length."},
+  {"name": "Header holding registers", "kind": "REGISTER_BANK", "anchor_ids": ["E75"], "member_ids": ["E63", "E64", "E65", "E66", "E67", "E68", "E69", "E70", "E71", "E72", "E73", "E74", "E76", "E77", "E78"], "description": "Latched input header fields used for pseudo-header sum and queued into header FIFO."},
+  {"name": "Header FIFO", "kind": "BUFFER", "anchor_ids": ["E117", "E96", "E98", "E140", "E141", "E138", "E139"], "member_ids": ["E97", "E99", "E100", "E101", "E102", "E103", "E104", "E105", "E106", "E107", "E108", "E109", "E110", "E111", "E112", "E113", "E114", "E115", "E116", "E142", "E118", "E119", "E120", "E121", "E122", "E123", "E124", "E125", "E126", "E127", "E128", "E129", "E130", "E131", "E132", "E133", "E134", "E135", "E136", "E137"], "description": "Per-field memories with wr/rd pointers queuing completed headers with length and checksum."},
+  {"name": "Payload FIFO", "kind": "BUFFER", "anchor_ids": ["E21", "E22", "E23", "E24", "E48", "E49"], "member_ids": ["I1", "E86", "E87", "E88", "E89", "E90", "E91", "E92", "E93", "E94", "E95"], "description": "AXIS FIFO buffering payload while checksum is computed."},
+  {"name": "Output header interface", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E26", "E27", "E47", "E46", "E35"], "member_ids": [], "description": "Presents queued header fields with computed length and checksum on output handshake."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "s_udp_hdr", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12", "E13", "E14", "E15", "E16", "E17", "E18", "E19", "E20"]},
+  {"name": "s_udp_payload_axis", "protocol": "STREAM", "direction": "IN", "member_ids": ["E21", "E22", "E23", "E24", "E25"]},
+  {"name": "m_udp_hdr", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E26", "E27", "E28", "E29", "E30", "E31", "E32", "E33", "E34", "E35", "E36", "E37", "E38", "E39", "E40", "E41", "E42", "E43", "E44", "E45", "E46", "E47"]},
+  {"name": "m_udp_payload_axis", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E48", "E49", "E50", "E51", "E52"]},
+  {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E53"]}
+ ]
+}

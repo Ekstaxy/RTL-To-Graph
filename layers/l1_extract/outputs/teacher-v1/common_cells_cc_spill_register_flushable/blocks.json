@@ -1,0 +1,392 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "common_cells_cc_spill_register_flushable",
+ "tops": [
+  "cc_spill_register_flushable"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "cc_spill_register_flushable": {
+   "source": "teacher",
+   "canonical_instance": "cc_spill_register_flushable",
+   "file": "data/rtl/common_cells/src/cc_spill_register_flushable.sv",
+   "lines": [
+    19,
+    85
+   ],
+   "summary": "Two-entry spill register (A slice + B spill) decoupling valid/ready handshakes, with flush draining both entries and output muxed from B first.",
+   "blocks": [
+    {
+     "name": "A slice register",
+     "kind": "BUFFER",
+     "description": "First stage holding register with full flag and fill/drain controls.",
+     "anchors": [
+      {
+       "id": "E11",
+       "name": "gen_spill_reg.a_data_q",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 89.9,
+       "struct_score": 74.5,
+       "trace": "data_backward",
+       "why": "Register A data slice loaded from data_i on a_fill.",
+       "lines": [
+        43,
+        47,
+        55
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "gen_spill_reg.a_full_q",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 56.8,
+       "struct_score": 58.0,
+       "trace": "control_backward",
+       "why": "A-register occupancy flag; gates ready_o, valid_o, a_drain.",
+       "lines": [
+        44,
+        48,
+        61
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "gen_spill_reg.a_fill",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 20.7,
+       "struct_score": 27.3,
+       "trace": "control_backward",
+       "why": "Load enable for A data and full flag.",
+       "lines": [
+        47,
+        60
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "gen_spill_reg.a_drain",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 20.3,
+       "struct_score": 25.6,
+       "trace": "control_backward",
+       "why": "Clears A full flag and triggers B fill.",
+       "lines": [
+        61,
+        66
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "B spill register",
+     "kind": "BUFFER",
+     "description": "Spill entry absorbing data when downstream not ready.",
+     "anchors": [
+      {
+       "id": "E15",
+       "name": "gen_spill_reg.b_data_q",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 87.5,
+       "struct_score": 67.7,
+       "trace": "data_backward",
+       "why": "Spill register B data, loaded from A when downstream stalls.",
+       "lines": [
+        51,
+        55,
+        78
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "gen_spill_reg.b_full_q",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 58.1,
+       "struct_score": 62.5,
+       "trace": "control_backward",
+       "why": "B occupancy flag; selects data_o source, gates ready_o and a_drain.",
+       "lines": [
+        52,
+        56,
+        78
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "gen_spill_reg.b_fill",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 20.7,
+       "struct_score": 27.3,
+       "trace": "control_backward",
+       "why": "Load enable moving A data into B register.",
+       "lines": [
+        55,
+        66
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "gen_spill_reg.b_drain",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 18.6,
+       "struct_score": 18.5,
+       "trace": "control_backward",
+       "why": "Clears B full flag when consumed or flushed.",
+       "lines": [
+        56,
+        67
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Handshake control",
+     "kind": "CONTROLLER",
+     "description": "Derives ready/valid from occupancy flags; flush drains entries.",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "ready_o",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 94.1,
+       "struct_score": 85.0,
+       "trace": "control_backward",
+       "why": "Upstream ready, high while A or B register is empty.",
+       "lines": [
+        30,
+        72
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "valid_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 94.5,
+       "struct_score": 86.2,
+       "trace": "control_backward",
+       "why": "Downstream valid, asserted when either register is full.",
+       "lines": [
+        32,
+        75
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "flush_i",
+       "role": "COMMAND",
+       "importance": "major",
+       "score": 56.6,
+       "struct_score": 57.3,
+       "trace": "forward",
+       "why": "Flush request draining both registers and blocking fills.",
+       "lines": [
+        28,
+        61,
+        67
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E4",
+       "name": "valid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "ready_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Output mux",
+     "kind": "DATAPATH",
+     "description": "Selects B data when B full, else A data.",
+     "anchors": [
+      {
+       "id": "E10",
+       "name": "data_o",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 92.0,
+       "struct_score": 79.9,
+       "trace": "data_backward",
+       "why": "Output payload muxed from B register if full, else A.",
+       "lines": [
+        34,
+        78
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E7",
+       "name": "data_i",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E4",
+     "name": "valid_i",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 92.8,
+     "struct_score": 81.8,
+     "trace": "interface",
+     "why": "Upstream valid; with ready_o fills register A.",
+     "lines": [
+      27,
+      60
+     ]
+    },
+    {
+     "id": "E7",
+     "name": "data_i",
+     "role": "INTERFACE_DATA",
+     "importance": "critical",
+     "score": 88.4,
+     "struct_score": 70.7,
+     "trace": "interface",
+     "why": "Input payload captured into register A.",
+     "lines": [
+      31,
+      47
+     ]
+    },
+    {
+     "id": "E9",
+     "name": "ready_i",
+     "role": "HANDSHAKE_READY",
+     "importance": "critical",
+     "score": 90.3,
+     "struct_score": 75.4,
+     "trace": "interface",
+     "why": "Downstream ready; drains B or prevents B fill.",
+     "lines": [
+      33,
+      66,
+      67
+     ]
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2",
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_ni",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "clr_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "upstream",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E4",
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "valid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "ready_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "data_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "downstream",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E8",
+       "name": "valid_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "ready_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "data_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "flush",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "flush_i",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

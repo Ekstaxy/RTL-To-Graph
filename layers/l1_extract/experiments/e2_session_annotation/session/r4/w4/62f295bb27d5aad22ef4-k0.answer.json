@@ -1,0 +1,42 @@
+{
+ "module_summary": "10G Ethernet MAC+PHY top that wires an AXI-Stream-to-64b/66b transmit path and a SERDES-to-AXI-Stream receive path in separate clock domains, with no glue logic.",
+ "anchors": [
+  {"id": "E5", "name": "tx_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "64-bit AXI-Stream transmit payload into the TX MAC/PHY path.", "lines": [68, 190]},
+  {"id": "E7", "name": "tx_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Transmit stream valid into TX path.", "lines": [70, 192]},
+  {"id": "E8", "name": "tx_axis_tready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Transmit stream ready from TX path backpressure.", "lines": [71, 193]},
+  {"id": "E6", "name": "tx_axis_tkeep", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Byte-enable for transmit stream words.", "lines": [69, 191]},
+  {"id": "E9", "name": "tx_axis_tlast", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "End-of-frame marker for transmit stream.", "lines": [72, 194]},
+  {"id": "E11", "name": "rx_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "64-bit AXI-Stream received payload from RX path.", "lines": [78, 146]},
+  {"id": "E13", "name": "rx_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Receive stream valid from RX path.", "lines": [80, 148]},
+  {"id": "E14", "name": "rx_axis_tlast", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "End-of-frame marker for received stream.", "lines": [81, 149]},
+  {"id": "E16", "name": "serdes_tx_data", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Scrambled 64b/66b transmit block data to SERDES.", "lines": [87, 196]},
+  {"id": "E17", "name": "serdes_tx_hdr", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "64b/66b sync header for transmit blocks.", "lines": [88, 197]},
+  {"id": "E18", "name": "serdes_rx_data", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Received 64b/66b block data from SERDES.", "lines": [89, 151]},
+  {"id": "E19", "name": "serdes_rx_hdr", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Received 64b/66b sync header used for block lock.", "lines": [90, 152]},
+  {"id": "E20", "name": "serdes_rx_bitslip", "role": "COMMAND", "importance": "major", "trace": "interface", "why": "Bitslip request to SERDES during block alignment.", "lines": [91, 153]},
+  {"id": "E21", "name": "serdes_rx_reset_req", "role": "COMMAND", "importance": "minor", "trace": "interface", "why": "Requests SERDES receiver reset on lost lock.", "lines": [92, 154]},
+  {"id": "E34", "name": "rx_block_lock", "role": "STATUS", "importance": "major", "trace": "interface", "why": "Reports 64b/66b block lock achieved by RX PHY.", "lines": [113, 161]},
+  {"id": "E36", "name": "rx_status", "role": "STATUS", "importance": "major", "trace": "interface", "why": "Overall receive link status from RX path.", "lines": [115, 163]},
+  {"id": "E35", "name": "rx_high_ber", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "High bit-error-rate indication from RX PHY.", "lines": [114, 162]},
+  {"id": "E30", "name": "rx_error_count", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "PRBS/block error count output from RX path.", "lines": [109, 157]},
+  {"id": "E28", "name": "tx_error_underflow", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "Transmit underflow error from TX path.", "lines": [107, 203]},
+  {"id": "E31", "name": "rx_error_bad_frame", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "Receive bad-frame error from RX path.", "lines": [110, 158]},
+  {"id": "E24", "name": "tx_axis_ptp_ts", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Transmit PTP timestamp output; parameter-disabled by default.", "lines": [99, 199]},
+  {"id": "E26", "name": "tx_axis_ptp_ts_valid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Valid for transmit PTP timestamp; parameter-disabled by default.", "lines": [101, 201]},
+  {"id": "E37", "name": "cfg_ifg", "role": "CONFIG_REG", "importance": "minor", "trace": "interface", "why": "Configures inter-frame gap in TX path.", "lines": [120, 204]}
+ ],
+ "groups": [
+  {"name": "tx_path", "kind": "DATAPATH", "anchor_ids": ["E5", "E7", "E8", "E6", "E9", "E16", "E17", "E28", "E24", "E26", "E37"], "member_ids": ["I2", "E10", "E22", "E25", "E27", "E38", "E40"], "description": "Encodes AXI-Stream frames to scrambled 64b/66b SERDES blocks."},
+  {"name": "rx_path", "kind": "DATAPATH", "anchor_ids": ["E11", "E13", "E14", "E18", "E19", "E20", "E21", "E34", "E36", "E35", "E30", "E31"], "member_ids": ["I1", "E12", "E15", "E23", "E29", "E32", "E33", "E39", "E41"], "description": "Block-syncs, descrambles and decodes SERDES data into AXI-Stream frames."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2", "E3", "E4"]},
+  {"name": "tx_axis", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E5", "E6", "E7", "E8", "E9", "E10"]},
+  {"name": "rx_axis", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E11", "E12", "E13", "E14", "E15"]},
+  {"name": "serdes_tx", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E16", "E17"]},
+  {"name": "serdes_rx", "protocol": "STREAM", "direction": "IN", "member_ids": ["E18", "E19", "E20", "E21"]},
+  {"name": "ptp", "protocol": "OTHER", "direction": "BIDIR", "member_ids": ["E22", "E23", "E24", "E25", "E26"]},
+  {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E27", "E28", "E29", "E30", "E31", "E32", "E33", "E34", "E35", "E36"]},
+  {"name": "config", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E37", "E38", "E39", "E40", "E41"]}
+ ]
+}

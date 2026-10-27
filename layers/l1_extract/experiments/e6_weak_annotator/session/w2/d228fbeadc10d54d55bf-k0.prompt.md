@@ -1,0 +1,151 @@
+MODULE: uart_rx
+DETAIL: full (importance tiers drive the coarser views)
+
+ENTITY TABLE:
+id | name | kind | size | type | driven_by | fan | flags | line
+E1 | clk | port_in | 1b | logic | driven_by=port_in | fanin=0 fanout=9 ctrl_fanout=0 addr_fanout=0 | CLOCK | L53
+E2 | rst | port_in | 1b | logic | driven_by=port_in | fanin=0 fanout=9 ctrl_fanout=0 addr_fanout=0 | RESET | L54
+E3 | m_axis_tdata | port_out | 8b | logic[7:0] | driven_by=assign | fanin=1 fanout=0 ctrl_fanout=0 addr_fanout=0 | - | L56
+E4 | m_axis_tvalid | port_out | 1b | logic | driven_by=assign | fanin=1 fanout=0 ctrl_fanout=0 addr_fanout=0 | - | L57
+E5 | m_axis_tready | port_in | 1b | logic | driven_by=port_in | fanin=0 fanout=1 ctrl_fanout=1 addr_fanout=0 | - | L58
+E6 | rxd | port_in | 1b | logic | driven_by=port_in | fanin=0 fanout=1 ctrl_fanout=0 addr_fanout=0 | - | L60
+E7 | busy | port_out | 1b | logic | driven_by=assign | fanin=1 fanout=0 ctrl_fanout=0 addr_fanout=0 | - | L62
+E8 | overrun_error | port_out | 1b | logic | driven_by=assign | fanin=1 fanout=0 ctrl_fanout=0 addr_fanout=0 | - | L63
+E9 | frame_error | port_out | 1b | logic | driven_by=assign | fanin=1 fanout=0 ctrl_fanout=0 addr_fanout=0 | - | L64
+E10 | prescale | port_in | 16b | logic[15:0] | driven_by=port_in | fanin=0 fanout=1 ctrl_fanout=0 addr_fanout=0 | - | L66
+E11 | smp | reg | 1b | reg | driven_by=always_ff | fanin=3 fanout=7 ctrl_fanout=1 addr_fanout=0 | STATE | L70
+E12 | phase_k | reg | 4b | reg[3:0] | driven_by=always_ff | fanin=6 fanout=4 ctrl_fanout=0 addr_fanout=0 | STATE | L71
+E13 | ack_v | reg | 1b | reg | driven_by=always_ff | fanin=4 fanout=2 ctrl_fanout=0 addr_fanout=0 | STATE | L72
+E14 | hold_w | reg | 8b | reg[7:0] | driven_by=always_ff | fanin=4 fanout=1 ctrl_fanout=0 addr_fanout=0 | STATE | L73
+E15 | st_a | reg | 1b | reg | driven_by=always_ff | fanin=4 fanout=1 ctrl_fanout=0 addr_fanout=0 | STATE | L74
+E16 | st_b | reg | 1b | reg | driven_by=always_ff | fanin=4 fanout=1 ctrl_fanout=0 addr_fanout=0 | STATE | L75
+E17 | st_c | reg | 1b | reg | driven_by=always_ff | fanin=4 fanout=1 ctrl_fanout=0 addr_fanout=0 | STATE | L76
+E18 | tick_ok | wire | 1b | logic | driven_by=inst_out | fanin=1 fanout=2 ctrl_fanout=0 addr_fanout=0 | - | L78
+E19 | frag | wire | 8b | logic[7:0] | driven_by=inst_out | fanin=1 fanout=1 ctrl_fanout=0 addr_fanout=0 | - | L79
+E20 | seq_live | wire | 1b | logic | driven_by=assign | fanin=1 fanout=2 ctrl_fanout=0 addr_fanout=0 | - | L81
+E21 | t_go | wire | 1b | logic | driven_by=assign | fanin=2 fanout=4 ctrl_fanout=1 addr_fanout=0 | - | L82
+E22 | t_rest | wire | 1b | logic | driven_by=assign | fanin=2 fanout=2 ctrl_fanout=1 addr_fanout=0 | - | L83
+E23 | in_head | wire | 1b | logic | driven_by=assign | fanin=2 fanout=2 ctrl_fanout=1 addr_fanout=0 | - | L84
+E24 | in_body | wire | 1b | logic | driven_by=assign | fanin=2 fanout=2 ctrl_fanout=0 addr_fanout=0 | - | L85
+E25 | in_tail | wire | 1b | logic | driven_by=assign | fanin=2 fanout=2 ctrl_fanout=0 addr_fanout=0 | - | L86
+E26 | kick | wire | 1b | logic | driven_by=assign | fanin=2 fanout=3 ctrl_fanout=1 addr_fanout=0 | - | L87
+E27 | tail_good | wire | 1b | logic | driven_by=assign | fanin=2 fanout=3 ctrl_fanout=3 addr_fanout=0 | - | L88
+I1 | tm0 | inst of urx_tmr | fanin=7 fanout=1 | L96
+I2 | sp0 | inst of urx_sipo | fanin=5 fanout=1 | L105
+
+CHILD SUMMARIES:
+I1 tm0: urx_tmr -- Programmable timeout timer for UART receiver; decrements and loads with configurable divisor.
+    interface Divisor Input: SIMPLE IN
+    interface Load Controls: SIMPLE IN
+    interface Idle Status: SIMPLE OUT
+    interface Clock/Reset: CLOCK_RESET IN
+    key internals: tq(COUNTER)
+I2 sp0: urx_sipo -- urx_sipo (heuristic)
+    interface clock_reset: CLOCK_RESET IN
+    interface misc: SIMPLE OUT
+    interface s: SIMPLE IN
+
+RTL (line-numbered):
+  48| module uart_rx #
+  49| (
+  50|     parameter DATA_WIDTH = 8
+  51| )
+  52| (
+  53|     input  wire                   clk,
+  54|     input  wire                   rst,
+  55| 
+  56|     output wire [DATA_WIDTH-1:0]  m_axis_tdata,
+  57|     output wire                   m_axis_tvalid,
+  58|     input  wire                   m_axis_tready,
+  59| 
+  60|     input  wire                   rxd,
+  61| 
+  62|     output wire                   busy,
+  63|     output wire                   overrun_error,
+  64|     output wire                   frame_error,
+  65| 
+  66|     input  wire [15:0]            prescale
+  67| 
+  68| );
+  69| 
+  70| reg                  smp = 1;
+  71| reg  [3:0]           phase_k = 0;
+  72| reg                  ack_v = 0;
+  73| reg  [DATA_WIDTH-1:0] hold_w = 0;
+  74| reg                  st_a = 0;
+  75| reg                  st_b = 0;
+  76| reg                  st_c = 0;
+  77| 
+  78| wire                 tick_ok;
+  79| wire [DATA_WIDTH-1:0] frag;
+  80| 
+  81| wire seq_live  = |phase_k;
+  82| wire t_go      = tick_ok & seq_live;
+  83| wire t_rest    = tick_ok & ~seq_live;
+  84| wire in_head   = t_go && (phase_k > DATA_WIDTH+1);
+  85| wire in_body   = t_go && !(phase_k > DATA_WIDTH+1) && (phase_k > 1);
+  86| wire in_tail   = t_go && (phase_k == 4'd1);
+  87| wire kick      = t_rest & ~smp;
+  88| wire tail_good = in_tail & smp;
+  89| 
+  90| assign m_axis_tdata  = hold_w;
+  91| assign m_axis_tvalid = ack_v;
+  92| assign busy          = st_a;
+  93| assign overrun_error = st_b;
+  94| assign frame_error   = st_c;
+  95| 
+  96| urx_tmr tm0 (
+  97|     .clk_i  (clk),
+  98|     .sclr   (rst),
+  99|     .ld_long(in_body | (in_head & ~smp)),
+ 100|     .ld_half(kick),
+ 101|     .div_i  (prescale),
+ 102|     .idle_o (tick_ok)
+ 103| );
+ 104| 
+ 105| urx_sipo #(.W(DATA_WIDTH)) sp0 (
+ 106|     .clk_i (clk),
+ 107|     .hold_n(~rst),
+ 108|     .wipe  (kick),
+ 109|     .adv   (in_body),
+ 110|     .s_in  (smp),
+ 111|     .pq    (frag)
+ 112| );
+ 113| 
+ 114| always @(posedge clk) begin
+ 115|     smp <= rst | rxd;
+ 116| end
+ 117| 
+ 118| always @(posedge clk) begin
+ 119|     if (rst) begin
+ 120|         phase_k <= 4'd0;
+ 121|     end else if (kick) begin
+ 122|         phase_k <= DATA_WIDTH + 2;
+ 123|     end else if (in_head && smp) begin
+ 124|         phase_k <= 4'd0;
+ 125|     end else if (t_go) begin
+ 126|         phase_k <= phase_k - 4'd1;
+ 127|     end
+ 128| end
+ 129| 
+ 130| always @(posedge clk) begin
+ 131|     if (rst) begin
+ 132|         hold_w <= 0;
+ 133|         ack_v  <= 1'b0;
+ 134|         st_a   <= 1'b0;
+ 135|         st_b   <= 1'b0;
+ 136|         st_c   <= 1'b0;
+ 137|     end else begin
+ 138|         st_b <= tail_good ? ack_v : 1'b0;
+ 139|         st_c <= in_tail & ~smp;
+ 140|         st_a <= t_rest ? ~smp : st_a;
+ 141|         if (tail_good) begin
+ 142|             hold_w <= frag;
+ 143|             ack_v  <= 1'b1;
+ 144|         end else if (ack_v & m_axis_tready) begin
+ 145|             ack_v  <= 1'b0;
+ 146|         end
+ 147|     end
+ 148| end
+ 149| 
+ 150| endmodule

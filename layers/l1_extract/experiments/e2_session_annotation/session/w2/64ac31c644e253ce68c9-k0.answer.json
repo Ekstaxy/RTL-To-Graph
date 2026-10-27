@@ -1,0 +1,20 @@
+{
+  "module_summary": "8-to-16-bit width converter: a toggle flag tracks byte parity, the first valid byte is held in data_lock and concatenated with the second into data_out with a valid pulse.",
+  "anchors": [
+    {"id": "E4", "name": "data_in", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "8-bit input byte; first latched, second concatenated into data_out."},
+    {"id": "E3", "name": "valid_in", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "forward", "why": "Input valid toggling flag and enabling latch/output updates."},
+    {"id": "E6", "name": "data_out", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "16-bit word {data_lock, data_in} registered on second valid byte."},
+    {"id": "E5", "name": "valid_out", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "One-cycle pulse accompanying completed data_out."},
+    {"id": "E7", "name": "data_lock", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Holds first byte as upper half until second byte arrives."},
+    {"id": "E8", "name": "flag", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Byte-parity toggle selecting latch versus output on valid_in."}
+  ],
+  "groups": [
+    {"name": "pairing_control", "kind": "CONTROLLER", "anchor_ids": ["E8", "E3"], "member_ids": [], "description": "Toggle flag tracking first/second byte of each pair."},
+    {"name": "width_packer", "kind": "DATAPATH", "anchor_ids": ["E4", "E7", "E6", "E5"], "member_ids": [], "description": "Latches first byte and concatenates with second into output."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "byte_in", "protocol": "STREAM", "direction": "IN", "member_ids": ["E3", "E4"]},
+    {"name": "word_out", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E5", "E6"]}
+  ]
+}

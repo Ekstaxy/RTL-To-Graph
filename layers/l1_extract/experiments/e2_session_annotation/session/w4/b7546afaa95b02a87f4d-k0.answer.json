@@ -1,0 +1,28 @@
+{
+ "module_summary": "Sequential 8x8 shift-add multiplier with optional signed mode: start handshake latches operands, a busy flag and 4-bit counter iterate add/shift over a 16-bit product register, then a held done signal awaits acknowledge.",
+ "anchors": [
+  {"id": "E24", "name": "n17_73a", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Two-state busy flag: set on accepted start, cleared at final iteration; gates all datapath updates"},
+  {"id": "E12", "name": "n12_b52", "role": "HOLDING_REG", "importance": "critical", "trace": "data_backward", "why": "16-bit product/multiplier shift register accumulating partial sums each iteration"},
+  {"id": "E6", "name": "n20_389", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Start request input; when idle and not done, latches operands and begins multiplication"},
+  {"id": "E7", "name": "n18_115", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Result-valid output set at last iteration, held until acknowledged; blocks new starts"},
+  {"id": "E9", "name": "n16_fac", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "16-bit product output, sign-corrected halves of product register"},
+  {"id": "E3", "name": "n0_70f", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "8-bit multiplier operand, absolute value loaded into product register"},
+  {"id": "E4", "name": "n2_beb", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "8-bit multiplicand operand, converted to 9-bit addend register"},
+  {"id": "E8", "name": "n6_b16", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Acknowledge input clearing the held result-valid output"},
+  {"id": "E5", "name": "n25_17f", "role": "COMMAND", "importance": "major", "trace": "interface", "why": "Signed-mode select controlling operand negation and output sign correction"},
+  {"id": "E23", "name": "n3_a62", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Iteration counter; bit 3 ends multiplication and sets result-valid"},
+  {"id": "E13", "name": "n9_ede", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "9-bit multiplicand addend latched at start, added each iteration"},
+  {"id": "E22", "name": "n1_b7a", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Add-or-pass partial sum selected by adder carry, shifted into product register"},
+  {"id": "E10", "name": "n8_f0b", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Latched operand copy whose sign bits drive output sign correction"}
+ ],
+ "groups": [
+  {"name": "sequencing control", "kind": "CONTROLLER", "anchor_ids": ["E24", "E23", "E7"], "member_ids": ["E25"], "description": "Busy flag, iteration counter and held done flag with acknowledge"},
+  {"name": "shift-add datapath", "kind": "DATAPATH", "anchor_ids": ["E12", "E13", "E22"], "member_ids": ["E14", "E15", "E16", "E20", "E21"], "description": "Product register, addend register and conditional adder per iteration"},
+  {"name": "sign handling", "kind": "DATAPATH", "anchor_ids": ["E10", "E9"], "member_ids": ["E11", "E18", "E19"], "description": "Latched operand signs and two's-complement correction of product halves"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "request", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E6", "E3", "E4", "E5"]},
+  {"name": "result", "protocol": "REQ_ACK", "direction": "OUT", "member_ids": ["E7", "E8", "E9"]}
+ ]
+}

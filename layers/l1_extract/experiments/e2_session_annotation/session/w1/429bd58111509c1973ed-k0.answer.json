@@ -1,0 +1,30 @@
+{
+ "module_summary": "Synchronous FIFO: a 4-entry, 8-bit register array with write/read pointers and an occupancy counter generating valid/ready handshakes on both sides.",
+ "anchors": [
+  {"id":"E11","name":"mem_q","role":"STORAGE","importance":"critical","trace":"data_backward","why":"4-entry data array written at wptr on push, read at rptr for out_data."},
+  {"id":"E12","name":"wptr_q","role":"FIFO_PTR","importance":"major","trace":"control_backward","why":"Write pointer addressing mem_q; increments on push, cleared by flush."},
+  {"id":"E13","name":"rptr_q","role":"FIFO_PTR","importance":"major","trace":"control_backward","why":"Read pointer selecting out_data from mem_q; increments on pop."},
+  {"id":"E14","name":"count_q","role":"FIFO_PTR","importance":"critical","trace":"control_backward","why":"Occupancy count deriving full (in_ready) and empty (out_valid) status."},
+  {"id":"E15","name":"do_push","role":"ENABLE","importance":"minor","trace":"control_backward","why":"Write handshake fire; enables memory write, wptr and count increment."},
+  {"id":"E16","name":"do_pop","role":"ENABLE","importance":"minor","trace":"control_backward","why":"Read handshake fire; advances rptr and decrements count."},
+  {"id":"E3","name":"flush_i","role":"CONTROL_FLAG","importance":"major","trace":"forward","why":"Synchronous flush clearing pointers and occupancy count."},
+  {"id":"E4","name":"in_valid","role":"HANDSHAKE_VALID","importance":"critical","trace":"interface","why":"Write-side valid; with in_ready forms push."},
+  {"id":"E5","name":"in_ready","role":"HANDSHAKE_READY","importance":"critical","trace":"interface","why":"Write-side ready, deasserted when FIFO full."},
+  {"id":"E6","name":"in_data","role":"INTERFACE_DATA","importance":"critical","trace":"interface","why":"Write payload stored into mem_q."},
+  {"id":"E7","name":"out_valid","role":"HANDSHAKE_VALID","importance":"critical","trace":"interface","why":"Read-side valid, asserted when FIFO non-empty."},
+  {"id":"E8","name":"out_ready","role":"HANDSHAKE_READY","importance":"critical","trace":"interface","why":"Downstream ready; with out_valid forms pop."},
+  {"id":"E9","name":"out_data","role":"INTERFACE_DATA","importance":"critical","trace":"interface","why":"Head-of-FIFO data read from mem_q at rptr."},
+  {"id":"E10","name":"count_o","role":"INTERFACE_DATA","importance":"minor","trace":"interface","why":"Occupancy level exported from count_q."}
+ ],
+ "groups": [
+  {"name":"fifo_storage","kind":"MEMORY","anchor_ids":["E11"],"member_ids":[],"description":"Register array holding FIFO entries."},
+  {"name":"fifo_control","kind":"BUFFER","anchor_ids":["E12","E13","E14","E15","E16","E3"],"member_ids":[],"description":"Pointers, occupancy counter, push/pop logic, and flush producing full/empty."}
+ ],
+ "interfaces": [
+  {"name":"clk_rst","protocol":"CLOCK_RESET","direction":"IN","member_ids":["E1","E2"]},
+  {"name":"write_port","protocol":"VALID_READY","direction":"IN","member_ids":["E4","E5","E6"]},
+  {"name":"read_port","protocol":"VALID_READY","direction":"OUT","member_ids":["E7","E8","E9"]},
+  {"name":"flush_ctrl","protocol":"SIMPLE","direction":"IN","member_ids":["E3"]},
+  {"name":"status","protocol":"SIMPLE","direction":"OUT","member_ids":["E10"]}
+ ]
+}

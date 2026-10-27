@@ -1,0 +1,24 @@
+{
+ "module_summary": "Serial-to-parallel converter: a 4-bit bit counter gates an 8-bit shift register; after 8 valid bits the word is loaded to the output with a one-cycle valid pulse.",
+ "anchors": [
+  {"id": "E11", "name": "sh", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "8-bit shift register assembling serial input bits", "lines": [14, 27, 47]},
+  {"id": "E10", "name": "k", "role": "COUNTER", "importance": "critical", "trace": "control_backward", "why": "Bit counter 0..8 tracking received bits; reset when din_valid drops", "lines": [13, 26]},
+  {"id": "E3", "name": "din_serial", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Serial input bit shifted into sh", "lines": [4, 27]},
+  {"id": "E4", "name": "din_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Input valid qualifying shifting and counting", "lines": [5, 18, 19]},
+  {"id": "E5", "name": "dout_parallel", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Parallel output word loaded from sh on wrap", "lines": [6, 47]},
+  {"id": "E6", "name": "dout_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "One-cycle valid pulse when a full byte is loaded", "lines": [7, 38]},
+  {"id": "E7", "name": "wrap", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Count==8 terminal flag: loads output, raises valid, clears counter", "lines": [17, 38, 44]},
+  {"id": "E8", "name": "take", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Shift enable: din_valid while counter below 8", "lines": [18, 27]},
+  {"id": "E12", "name": "sh_mirror", "role": "STORAGE", "importance": "minor", "trace": "none", "why": "Redundant duplicate shift register with no fanout", "lines": [15, 32]}
+ ],
+ "groups": [
+  {"name": "Bit counter", "kind": "COUNTER_TIMER", "anchor_ids": ["E10", "E7"], "member_ids": ["E9"], "description": "Counts valid bits to 8 and flags word completion"},
+  {"name": "Shift register", "kind": "SERIALIZER", "anchor_ids": ["E11", "E8", "E12", "E3"], "member_ids": [], "description": "Shifts serial bits into 8-bit word when take asserted"},
+  {"name": "Output register", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E5", "E6"], "member_ids": [], "description": "Latches completed word and pulses dout_valid"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "serial_in", "protocol": "SERIAL", "direction": "IN", "member_ids": ["E3", "E4"]},
+  {"name": "parallel_out", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E5", "E6"]}
+ ]
+}

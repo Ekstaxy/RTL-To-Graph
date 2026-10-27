@@ -1,0 +1,420 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-ethernet_ptp_tag_insert",
+ "tops": [
+  "ptp_tag_insert"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "ptp_tag_insert": {
+   "source": "teacher",
+   "canonical_instance": "ptp_tag_insert",
+   "file": "data/rtl/verilog-ethernet/rtl/ptp_tag_insert.v",
+   "lines": [
+    34,
+    109
+   ],
+   "summary": "Inserts a PTP tag into AXI-Stream tuser: a tag register is loaded from a tag valid/ready input and held for one frame, gating stream flow until a tag is available.",
+   "blocks": [
+    {
+     "name": "Tag holding",
+     "kind": "CONTROLLER",
+     "description": "Accepts one tag, holds it until frame tlast transfers.",
+     "anchors": [
+      {
+       "id": "E18",
+       "name": "tag_reg",
+       "role": "HOLDING_REG",
+       "importance": "critical",
+       "score": 79.8,
+       "struct_score": 40.0,
+       "trace": "data_backward",
+       "why": "Holds the tag for the whole frame being forwarded.",
+       "lines": [
+        74,
+        91,
+        100
+       ]
+      },
+      {
+       "id": "E19",
+       "name": "tag_valid_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "critical",
+       "score": 83.6,
+       "struct_score": 53.5,
+       "trace": "control_backward",
+       "why": "Tag-held flag gating stream ready/valid and tag acceptance.",
+       "lines": [
+        75,
+        79,
+        95
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "s_axis_tag_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 63.8,
+       "struct_score": 79.3,
+       "trace": "interface",
+       "why": "Tag valid; sets tag_valid_reg when idle.",
+       "lines": [
+        70,
+        101
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "s_axis_tag_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 60.2,
+       "struct_score": 70.1,
+       "trace": "control_backward",
+       "why": "Tag ready while no tag is held.",
+       "lines": [
+        71,
+        87
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "s_axis_tag",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 65.8,
+       "struct_score": 84.2,
+       "trace": "interface",
+       "why": "Incoming PTP tag value loaded into tag_reg.",
+       "lines": [
+        69,
+        100
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_tlast",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 56.5,
+       "struct_score": 56.8,
+       "trace": "forward",
+       "why": "Frame end; releases held tag after last beat.",
+       "lines": [
+        53,
+        96
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Stream pass-through",
+     "kind": "DATAPATH",
+     "description": "Data/keep/last forwarded, handshake gated by tag-held flag.",
+     "anchors": [
+      {
+       "id": "E5",
+       "name": "s_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 92.7,
+       "struct_score": 81.7,
+       "trace": "interface",
+       "why": "Input beat valid, forwarded when a tag is held.",
+       "lines": [
+        51,
+        83
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 91.7,
+       "struct_score": 79.1,
+       "trace": "control_backward",
+       "why": "Input ready gated by downstream ready and tag_valid_reg.",
+       "lines": [
+        52,
+        79
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "s_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 96.4,
+       "struct_score": 91.0,
+       "trace": "interface",
+       "why": "Stream payload passed straight through to m_axis_tdata.",
+       "lines": [
+        49,
+        81
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "m_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 93.8,
+       "struct_score": 84.2,
+       "trace": "control_backward",
+       "why": "Output valid when input valid and tag held.",
+       "lines": [
+        61,
+        83
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "m_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 87.4,
+       "struct_score": 67.2,
+       "trace": "interface",
+       "why": "Downstream ready propagated to s_axis_tready.",
+       "lines": [
+        62,
+        79
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "m_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 96.9,
+       "struct_score": 92.3,
+       "trace": "data_backward",
+       "why": "Output payload, pass-through of s_axis_tdata.",
+       "lines": [
+        59,
+        81
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E4",
+       "name": "s_axis_tkeep",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "m_axis_tkeep",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "m_axis_tlast",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "User merge",
+     "kind": "DATAPATH",
+     "description": "Overwrites tuser tag field with held tag.",
+     "anchors": [
+      {
+       "id": "E20",
+       "name": "user",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 50.4,
+       "struct_score": 34.0,
+       "trace": "data_backward",
+       "why": "tuser with tag_reg overwritten at TAG_OFFSET.",
+       "lines": [
+        77,
+        90,
+        91
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "m_axis_tuser",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 67.5,
+       "struct_score": 88.7,
+       "trace": "data_backward",
+       "why": "Output tuser carrying inserted tag field.",
+       "lines": [
+        64,
+        85
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "s_axis_tuser",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 38.0,
+       "struct_score": 84.8,
+       "trace": "interface",
+       "why": "Input sideband merged with tag into user.",
+       "lines": [
+        54,
+        90
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axis",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axis_tdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_tkeep",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_tvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_tready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_axis_tuser",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axis",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E9",
+      "E10",
+      "E11",
+      "E12",
+      "E13",
+      "E14"
+     ],
+     "members": [
+      {
+       "id": "E9",
+       "name": "m_axis_tdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "m_axis_tkeep",
+       "kind": "port_out"
+      },
+      {
+       "id": "E11",
+       "name": "m_axis_tvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "m_axis_tready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "m_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "m_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "s_axis_tag",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E15",
+      "E16",
+      "E17"
+     ],
+     "members": [
+      {
+       "id": "E15",
+       "name": "s_axis_tag",
+       "kind": "port_in"
+      },
+      {
+       "id": "E16",
+       "name": "s_axis_tag_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E17",
+       "name": "s_axis_tag_ready",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

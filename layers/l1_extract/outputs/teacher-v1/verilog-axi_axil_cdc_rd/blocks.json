@@ -1,0 +1,572 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-axi_axil_cdc_rd",
+ "tops": [
+  "axil_cdc_rd"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "axil_cdc_rd": {
+   "source": "teacher",
+   "canonical_instance": "axil_cdc_rd",
+   "file": "data/rtl/verilog-axi/rtl/axil_cdc_rd.v",
+   "lines": [
+    34,
+    206
+   ],
+   "summary": "AXI-Lite read-channel clock-domain crossing: slave- and master-side 3-state FSMs exchange a four-phase flag handshake via two-flop synchronizers, holding address and read data in registers.",
+   "blocks": [
+    {
+     "name": "Slave-side controller",
+     "kind": "CONTROLLER",
+     "description": "s_clk FSM raising request flag and returning response.",
+     "anchors": [
+      {
+       "id": "E21",
+       "name": "s_state_reg",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.0,
+       "struct_score": 97.4,
+       "trace": "control_backward",
+       "why": "Slave-domain FSM: request, wait for master flag, return response.",
+       "lines": [
+        73,
+        121,
+        124
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "s_flag_reg",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 51.8,
+       "struct_score": 39.8,
+       "trace": "forward",
+       "why": "Slave-to-master request flag crossing into m_clk domain.",
+       "lines": [
+        74,
+        125,
+        160
+       ]
+      },
+      {
+       "id": "E28",
+       "name": "m_flag_sync_reg_2",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 21.1,
+       "struct_score": 28.7,
+       "trace": "control_backward",
+       "why": "Synchronized completion flag steering slave FSM transitions.",
+       "lines": [
+        85,
+        129,
+        156
+       ]
+      },
+      {
+       "id": "E31",
+       "name": "s_axil_arvalid_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 22.3,
+       "struct_score": 33.7,
+       "trace": "control_backward",
+       "why": "Pending request flag starting slave FSM and blocking arready.",
+       "lines": [
+        89,
+        101,
+        123
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E27",
+       "name": "m_flag_sync_reg_1",
+       "kind": "reg"
+      },
+      {
+       "id": "E34",
+       "name": "s_axil_rvalid_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Master-side controller",
+     "kind": "CONTROLLER",
+     "description": "m_clk FSM issuing read and signalling completion.",
+     "anchors": [
+      {
+       "id": "E25",
+       "name": "m_state_reg",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.0,
+       "struct_score": 97.4,
+       "trace": "control_backward",
+       "why": "Master-domain FSM: issue read, capture response, release flag.",
+       "lines": [
+        80,
+        174,
+        177
+       ]
+      },
+      {
+       "id": "E26",
+       "name": "m_flag_reg",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 47.9,
+       "struct_score": 23.9,
+       "trace": "forward",
+       "why": "Master-to-slave completion flag crossing into s_clk domain.",
+       "lines": [
+        81,
+        155,
+        186
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "s_flag_sync_reg_2",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 21.1,
+       "struct_score": 28.7,
+       "trace": "control_backward",
+       "why": "Synchronized request flag steering master FSM transitions.",
+       "lines": [
+        78,
+        161,
+        176
+       ]
+      },
+      {
+       "id": "E40",
+       "name": "m_axil_rvalid_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 22.0,
+       "struct_score": 32.5,
+       "trace": "control_backward",
+       "why": "Response captured flag advancing master FSM and gating rready.",
+       "lines": [
+        99,
+        109,
+        185
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E23",
+       "name": "s_flag_sync_reg_1",
+       "kind": "reg"
+      },
+      {
+       "id": "E37",
+       "name": "m_axil_arvalid_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Address crossing",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Latched read address and prot carried to master domain.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "s_axil_araddr",
+       "role": "INTERFACE_ADDR",
+       "importance": "critical",
+       "score": 87.2,
+       "struct_score": 66.6,
+       "trace": "interface",
+       "why": "Slave read address latched into s_axil_araddr_reg.",
+       "lines": [
+        49,
+        116
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "s_axil_arvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 87.9,
+       "struct_score": 69.3,
+       "trace": "interface",
+       "why": "Slave read address valid, captured into s_axil_arvalid_reg.",
+       "lines": [
+        51,
+        118
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "s_axil_arready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 56.7,
+       "struct_score": 57.7,
+       "trace": "control_backward",
+       "why": "Slave read address ready when no request or response pending.",
+       "lines": [
+        52,
+        101
+       ]
+      },
+      {
+       "id": "E29",
+       "name": "s_axil_araddr_reg",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 50.0,
+       "struct_score": 32.5,
+       "trace": "data_backward",
+       "why": "Holds request address across the CDC handshake for master side.",
+       "lines": [
+        87,
+        116,
+        178
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "m_axil_araddr",
+       "role": "INTERFACE_ADDR",
+       "importance": "critical",
+       "score": 88.2,
+       "struct_score": 70.2,
+       "trace": "data_backward",
+       "why": "Master read address forwarded from crossed address register.",
+       "lines": [
+        63,
+        106
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "m_axil_arvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 61.2,
+       "struct_score": 72.7,
+       "trace": "control_backward",
+       "why": "Master read address valid driven by m_axil_arvalid_reg.",
+       "lines": [
+        65,
+        108
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E30",
+       "name": "s_axil_arprot_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E35",
+       "name": "m_axil_araddr_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E36",
+       "name": "m_axil_arprot_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E4",
+       "name": "s_axil_arprot",
+       "kind": "port_in"
+      },
+      {
+       "id": "E14",
+       "name": "m_axil_arprot",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "Read data crossing",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Captured read data and resp carried back to slave domain.",
+     "anchors": [
+      {
+       "id": "E17",
+       "name": "m_axil_rdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 92.2,
+       "struct_score": 80.4,
+       "trace": "interface",
+       "why": "Master read data captured into m_axil_rdata_reg.",
+       "lines": [
+        67,
+        169
+       ]
+      },
+      {
+       "id": "E38",
+       "name": "m_axil_rdata_reg",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 49.6,
+       "struct_score": 30.9,
+       "trace": "data_backward",
+       "why": "Holds read data until slave FSM copies it across domains.",
+       "lines": [
+        97,
+        132,
+        169
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "s_axil_rdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 93.2,
+       "struct_score": 82.8,
+       "trace": "data_backward",
+       "why": "Read data returned to slave side from s_axil_rdata_reg.",
+       "lines": [
+        53,
+        102
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "s_axil_rvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 61.2,
+       "struct_score": 72.7,
+       "trace": "control_backward",
+       "why": "Slave read response valid from s_axil_rvalid_reg.",
+       "lines": [
+        55,
+        104
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E39",
+       "name": "m_axil_rresp_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E32",
+       "name": "s_axil_rdata_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E33",
+       "name": "s_axil_rresp_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E8",
+       "name": "s_axil_rresp",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "m_axil_rresp",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "s_clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "s_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "s_rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E11",
+      "E12"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "m_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E12",
+       "name": "m_rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axil_ar",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axil_araddr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axil_arprot",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axil_arvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_axil_arready",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "s_axil_r",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E7",
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E7",
+       "name": "s_axil_rdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E8",
+       "name": "s_axil_rresp",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "s_axil_rvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "s_axil_rready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axil_ar",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E13",
+      "E14",
+      "E15",
+      "E16"
+     ],
+     "members": [
+      {
+       "id": "E13",
+       "name": "m_axil_araddr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "m_axil_arprot",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "m_axil_arvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "m_axil_arready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axil_r",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E17",
+      "E18",
+      "E19",
+      "E20"
+     ],
+     "members": [
+      {
+       "id": "E17",
+       "name": "m_axil_rdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "m_axil_rresp",
+       "kind": "port_in"
+      },
+      {
+       "id": "E19",
+       "name": "m_axil_rvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E20",
+       "name": "m_axil_rready",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

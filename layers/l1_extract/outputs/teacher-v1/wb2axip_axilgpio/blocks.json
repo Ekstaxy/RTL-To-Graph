@@ -1,0 +1,1003 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "wb2axip_axilgpio",
+ "tops": [
+  "axilgpio"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "skidbuffer": {
+   "source": "teacher",
+   "canonical_instance": "axilgpio.SKIDBUFFER_WRITE.axilawskid",
+   "file": "data/rtl/wb2axip/rtl/skidbuffer.v",
+   "lines": [
+    81,
+    501
+   ],
+   "summary": "Valid/ready skid buffer: a one-entry side register captures incoming data when the output stalls, with optionally registered output valid/data.",
+   "blocks": [
+    {
+     "name": "Skid buffer",
+     "kind": "BUFFER",
+     "description": "One-entry overflow register and its full flag absorbing a downstream stall.",
+     "anchors": [
+      {
+       "id": "E10",
+       "name": "LOGIC.r_valid",
+       "role": "CONTROL_FLAG",
+       "importance": "critical",
+       "score": 87.4,
+       "struct_score": 67.3,
+       "trace": "control_backward",
+       "why": "Skid register full flag; deasserts o_ready and selects buffered data for output.",
+       "lines": [
+        137,
+        160,
+        212
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "LOGIC.r_data",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 95.3,
+       "struct_score": 88.0,
+       "trace": "data_backward",
+       "why": "One-entry skid buffer holding i_data captured while downstream is stalled.",
+       "lines": [
+        153,
+        213
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E9",
+       "name": "w_data",
+       "kind": "wire"
+      },
+      {
+       "id": "E12",
+       "name": "unused",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Input handshake",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Upstream valid/ready/data port accepted when skid register empty.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "i_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 97.4,
+       "struct_score": 93.3,
+       "trace": "interface",
+       "why": "Upstream valid; with o_ready accepts data into output or skid register.",
+       "lines": [
+        137,
+        198
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "o_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 95.9,
+       "struct_score": 89.6,
+       "trace": "interface",
+       "why": "Upstream ready, low while skid register holds data.",
+       "lines": [
+        160
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "i_data",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 66.8,
+       "struct_score": 86.9,
+       "trace": "interface",
+       "why": "Incoming payload written to r_data or forwarded to o_data.",
+       "lines": [
+        153,
+        215
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Output stage",
+     "kind": "PIPELINE_STAGE",
+     "description": "Optional output register muxing skid or input data onto downstream port.",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "o_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 98.7,
+       "struct_score": 96.8,
+       "trace": "interface",
+       "why": "Downstream valid, registered or combinational from i_valid or r_valid.",
+       "lines": [
+        172,
+        200
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "i_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 91.8,
+       "struct_score": 79.3,
+       "trace": "interface",
+       "why": "Downstream ready; stall causes capture into skid register, else drains it.",
+       "lines": [
+        137,
+        140,
+        209
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "o_data",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 96.5,
+       "struct_score": 91.2,
+       "trace": "data_backward",
+       "why": "Outgoing payload selected from r_data or i_data.",
+       "lines": [
+        213,
+        215
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "i_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "i_reset",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "input_stream",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "i_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "o_ready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "i_data",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "output_stream",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E6",
+      "E7",
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "o_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "i_ready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "o_data",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "axilgpio": {
+   "source": "teacher",
+   "canonical_instance": "axilgpio",
+   "file": "data/rtl/wb2axip/rtl/axilgpio.v",
+   "lines": [
+    88,
+    807
+   ],
+   "summary": "AXI-lite GPIO peripheral: skid-buffered AW/W/AR channels feed an address-decoded output register (load/set/clear/toggle) and a synchronized input block with sticky change flags, mask and interrupt.",
+   "blocks": [
+    {
+     "name": "AXI-lite write path",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "AW and W skid buffers joined into one write strobe with registered B response.",
+     "anchors": [
+      {
+       "id": "E26",
+       "name": "axil_write_ready",
+       "role": "ENABLE",
+       "importance": "critical",
+       "score": 74.1,
+       "struct_score": 16.8,
+       "trace": "control_backward",
+       "why": "Write strobe when AW and W both valid and B free; enables r_gpio, mask, toggled and bvalid updates.",
+       "lines": [
+        228,
+        259,
+        334
+       ]
+      },
+      {
+       "id": "E27",
+       "name": "awskd_addr",
+       "role": "INDEX",
+       "importance": "major",
+       "score": 43.7,
+       "struct_score": 6.8,
+       "trace": "data_backward",
+       "why": "Skid-buffered write word address; decodes which register/operation the write targets.",
+       "lines": [
+        336,
+        430,
+        447
+       ]
+      },
+      {
+       "id": "E28",
+       "name": "wskd_data",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 25.9,
+       "struct_score": 47.5,
+       "trace": "data_backward",
+       "why": "Skid-buffered write data applied to r_gpio, mask and toggle-clear.",
+       "lines": [
+        224,
+        341,
+        431
+       ]
+      },
+      {
+       "id": "E29",
+       "name": "wskd_strb",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 17.7,
+       "struct_score": 15.1,
+       "trace": "control_backward",
+       "why": "Byte write strobes enabling per-byte updates of r_gpio.",
+       "lines": [
+        340,
+        342
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "S_AXI_BVALID",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 63.8,
+       "struct_score": 79.3,
+       "trace": "interface",
+       "why": "Write response valid, set by write strobe, cleared by BREADY.",
+       "lines": [
+        229,
+        264
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "S_AXI_AWVALID",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 29.8,
+       "struct_score": 61.8,
+       "trace": "interface",
+       "why": "Write address valid into AW skid buffer.",
+       "lines": [
+        205
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "S_AXI_WVALID",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 29.8,
+       "struct_score": 61.8,
+       "trace": "interface",
+       "why": "Write data valid into W skid buffer.",
+       "lines": [
+        221
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "S_AXI_AWREADY",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 25.8,
+       "struct_score": 47.1,
+       "trace": "interface",
+       "why": "Write address ready from AW skid buffer.",
+       "lines": [
+        205
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "S_AXI_WREADY",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 25.8,
+       "struct_score": 47.1,
+       "trace": "interface",
+       "why": "Write data ready from W skid buffer.",
+       "lines": [
+        221
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "S_AXI_BREADY",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 26.0,
+       "struct_score": 47.8,
+       "trace": "interface",
+       "why": "Write response ready; clears bvalid and frees write path.",
+       "lines": [
+        229,
+        261
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "SKIDBUFFER_WRITE.axilawskid",
+       "module": "skidbuffer"
+      },
+      {
+       "id": "I2",
+       "instance": "SKIDBUFFER_WRITE.axilwskid",
+       "module": "skidbuffer"
+      }
+     ],
+     "members": [
+      {
+       "id": "E30",
+       "name": "axil_bvalid",
+       "kind": "reg"
+      },
+      {
+       "id": "E41",
+       "name": "SKIDBUFFER_WRITE.awskd_valid",
+       "kind": "wire"
+      },
+      {
+       "id": "E42",
+       "name": "SKIDBUFFER_WRITE.wskd_valid",
+       "kind": "wire"
+      },
+      {
+       "id": "E5",
+       "name": "S_AXI_AWADDR",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "S_AXI_WDATA",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "S_AXI_WSTRB",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "S_AXI_BRESP",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "AXI-lite read path",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "AR skid buffer and address-muxed read data register with RVALID handshake.",
+     "anchors": [
+      {
+       "id": "E31",
+       "name": "axil_read_ready",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 44.6,
+       "struct_score": 10.6,
+       "trace": "control_backward",
+       "why": "Read accept strobe from AR skid buffer; sets read valid and gates read data.",
+       "lines": [
+        288,
+        308
+       ]
+      },
+      {
+       "id": "E32",
+       "name": "arskd_addr",
+       "role": "MUX_SELECT",
+       "importance": "minor",
+       "score": 18.7,
+       "struct_score": 19.1,
+       "trace": "data_backward",
+       "why": "Skid-buffered read word address selecting which register goes to read data.",
+       "lines": [
+        494
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "S_AXI_RDATA",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 91.7,
+       "struct_score": 79.0,
+       "trace": "interface",
+       "why": "Read data from the address-muxed axil_read_data register.",
+       "lines": [
+        314
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "S_AXI_RVALID",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 61.7,
+       "struct_score": 74.0,
+       "trace": "interface",
+       "why": "Read data valid from axil_read_valid; gates read data reload.",
+       "lines": [
+        313,
+        490
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "S_AXI_ARVALID",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 29.8,
+       "struct_score": 61.8,
+       "trace": "interface",
+       "why": "Read address valid into AR skid buffer.",
+       "lines": [
+        283
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "S_AXI_ARREADY",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 25.8,
+       "struct_score": 47.1,
+       "trace": "interface",
+       "why": "Read address ready from AR skid buffer.",
+       "lines": [
+        283
+       ]
+      },
+      {
+       "id": "E19",
+       "name": "S_AXI_RREADY",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 26.7,
+       "struct_score": 50.3,
+       "trace": "interface",
+       "why": "Read data ready; clears read valid and allows next read.",
+       "lines": [
+        289,
+        310
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I3",
+       "instance": "SKIDBUFFER_READ.axilarskid",
+       "module": "skidbuffer"
+      }
+     ],
+     "members": [
+      {
+       "id": "E33",
+       "name": "axil_read_data",
+       "kind": "reg"
+      },
+      {
+       "id": "E34",
+       "name": "axil_read_valid",
+       "kind": "reg"
+      },
+      {
+       "id": "E43",
+       "name": "SKIDBUFFER_READ.arskd_valid",
+       "kind": "wire"
+      },
+      {
+       "id": "E16",
+       "name": "S_AXI_ARADDR",
+       "kind": "port_in"
+      },
+      {
+       "id": "E21",
+       "name": "S_AXI_RRESP",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "GPIO output register",
+     "kind": "REGISTER_BANK",
+     "description": "Output register with load/set/clear/toggle byte-strobed writes driving o_gpio.",
+     "anchors": [
+      {
+       "id": "E35",
+       "name": "r_gpio",
+       "role": "CONFIG_REG",
+       "importance": "critical",
+       "score": 80.6,
+       "struct_score": 42.9,
+       "trace": "data_backward",
+       "why": "Software-written GPIO output register updated by load/set/clear/toggle with byte strobes.",
+       "lines": [
+        337,
+        341,
+        379
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "o_gpio",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 91.5,
+       "struct_score": 78.5,
+       "trace": "interface",
+       "why": "GPIO output pins driven from r_gpio.",
+       "lines": [
+        384
+       ]
+      },
+      {
+       "id": "E40",
+       "name": "wskd_gpio",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 19.4,
+       "struct_score": 21.8,
+       "trace": "data_backward",
+       "why": "Strobe-merged new GPIO value used for load writes.",
+       "lines": [
+        327,
+        337
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Input sync and interrupt",
+     "kind": "DATAPATH",
+     "description": "Two-flop input synchronizer, change detection, mask register and interrupt generation.",
+     "anchors": [
+      {
+       "id": "E23",
+       "name": "i_gpio",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 61.6,
+       "struct_score": 73.8,
+       "trace": "interface",
+       "why": "External GPIO inputs entering the two-flop synchronizer chain.",
+       "lines": [
+        418
+       ]
+      },
+      {
+       "id": "E45",
+       "name": "INPUT_HANDLING.qq_gpio",
+       "role": "STORAGE",
+       "importance": "minor",
+       "score": 28.1,
+       "struct_score": 55.6,
+       "trace": "data_backward",
+       "why": "Synchronized input stage of the q/qq/last shift chain; readable input data.",
+       "lines": [
+        418,
+        451
+       ]
+      },
+      {
+       "id": "E47",
+       "name": "INPUT_HANDLING.toggled",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 47.0,
+       "struct_score": 20.2,
+       "trace": "control_backward",
+       "why": "Sticky per-bit input change flags, set on edge, cleared by write-one.",
+       "lines": [
+        432,
+        434,
+        452
+       ]
+      },
+      {
+       "id": "E48",
+       "name": "INPUT_HANDLING.r_mask",
+       "role": "CONFIG_REG",
+       "importance": "major",
+       "score": 48.5,
+       "struct_score": 26.4,
+       "trace": "data_backward",
+       "why": "Software interrupt mask register selecting which toggled bits raise interrupt.",
+       "lines": [
+        407,
+        447,
+        448
+       ]
+      },
+      {
+       "id": "E49",
+       "name": "INPUT_HANDLING.wstrb_mask",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 21.0,
+       "struct_score": 28.4,
+       "trace": "data_backward",
+       "why": "Strobe-merged new mask value written into r_mask.",
+       "lines": [
+        441,
+        448
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "o_int",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 46.3,
+       "struct_score": 17.4,
+       "trace": "control_backward",
+       "why": "Interrupt output: registered OR of masked toggled bits.",
+       "lines": [
+        455
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E44",
+       "name": "INPUT_HANDLING.last_gpio",
+       "kind": "reg"
+      },
+      {
+       "id": "E46",
+       "name": "INPUT_HANDLING.q_gpio",
+       "kind": "reg"
+      },
+      {
+       "id": "E50",
+       "name": "INPUT_HANDLING.r_int",
+       "kind": "reg"
+      },
+      {
+       "id": "E36",
+       "name": "ck_gpio",
+       "kind": "wire"
+      },
+      {
+       "id": "E37",
+       "name": "ck_toggled",
+       "kind": "wire"
+      },
+      {
+       "id": "E38",
+       "name": "w_mask",
+       "kind": "wire"
+      },
+      {
+       "id": "E39",
+       "name": "int_toggled",
+       "kind": "wire"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "S_AXI_ACLK",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "S_AXI_ARESETN",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "axil_write_address",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "S_AXI_AWVALID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "S_AXI_AWREADY",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "S_AXI_AWADDR",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "S_AXI_AWPROT",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "axil_write_data",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E7",
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E7",
+       "name": "S_AXI_WVALID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "S_AXI_WREADY",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "S_AXI_WDATA",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "S_AXI_WSTRB",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "axil_write_response",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E11",
+      "E12",
+      "E13"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "S_AXI_BVALID",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "S_AXI_BREADY",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "S_AXI_BRESP",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "axil_read_address",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E14",
+      "E15",
+      "E16",
+      "E17"
+     ],
+     "members": [
+      {
+       "id": "E14",
+       "name": "S_AXI_ARVALID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "S_AXI_ARREADY",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "S_AXI_ARADDR",
+       "kind": "port_in"
+      },
+      {
+       "id": "E17",
+       "name": "S_AXI_ARPROT",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "axil_read_data",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E18",
+      "E19",
+      "E20",
+      "E21"
+     ],
+     "members": [
+      {
+       "id": "E18",
+       "name": "S_AXI_RVALID",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "S_AXI_RREADY",
+       "kind": "port_in"
+      },
+      {
+       "id": "E20",
+       "name": "S_AXI_RDATA",
+       "kind": "port_out"
+      },
+      {
+       "id": "E21",
+       "name": "S_AXI_RRESP",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "gpio_out",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E22"
+     ],
+     "members": [
+      {
+       "id": "E22",
+       "name": "o_gpio",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "gpio_in",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E23"
+     ],
+     "members": [
+      {
+       "id": "E23",
+       "name": "i_gpio",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "interrupt",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E24"
+     ],
+     "members": [
+      {
+       "id": "E24",
+       "name": "o_int",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

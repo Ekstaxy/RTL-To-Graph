@@ -1,0 +1,45 @@
+{
+ "module_summary": "CDMA descriptor multiplexer: a round-robin arbiter grants one of PORTS descriptor inputs, a grant-indexed mux feeds a skid-buffered output register with port index appended to the tag, and status is demuxed back by tag bits.",
+ "anchors": [
+  {"id": "E16", "name": "s_axis_desc_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Per-port descriptor valid; forms arbiter requests", "lines": [145, 124]},
+  {"id": "E17", "name": "s_axis_desc_ready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Ready returned only to granted port when output can accept", "lines": [117, 146]},
+  {"id": "E12", "name": "s_axis_desc_read_addr", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Packed per-port read address descriptors selected by grant", "lines": [120]},
+  {"id": "E14", "name": "s_axis_desc_len", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Packed per-port transfer lengths selected by grant", "lines": [122]},
+  {"id": "E21", "name": "request", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "Arbiter request vector: valid ports not currently granted", "lines": [145, 138]},
+  {"id": "E22", "name": "acknowledge", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Releases arbiter grant on descriptor handshake", "lines": [146, 139]},
+  {"id": "E25", "name": "grant_encoded", "role": "ARBITRATION", "importance": "critical", "trace": "control_backward", "why": "Encoded winning port; selects input descriptor fields and tag prefix", "lines": [120, 152, 117]},
+  {"id": "E24", "name": "grant_valid", "role": "ARBITRATION", "importance": "major", "trace": "control_backward", "why": "Arbiter has a grant; gates ready and internal valid", "lines": [117, 153]},
+  {"id": "E33", "name": "current_s_desc_read_addr", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Grant-selected descriptor fields from muxed input port", "lines": [120, 149]},
+  {"id": "E29", "name": "m_axis_desc_tag_int", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Output tag: grant index concatenated with port tag for routing", "lines": [152, 227]},
+  {"id": "E30", "name": "m_axis_desc_valid_int", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "Internal valid into skid buffer from selected port", "lines": [153, 196]},
+  {"id": "E31", "name": "m_axis_desc_ready_int_reg", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "Skid buffer input ready; gates input accept and store paths", "lines": [117, 192, 218]},
+  {"id": "E39", "name": "m_axis_desc_read_addr_reg", "role": "PIPELINE_REG", "importance": "major", "trace": "data_backward", "why": "Output register stage for descriptor fields", "lines": [224, 229]},
+  {"id": "E43", "name": "m_axis_desc_valid_reg", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Output register valid driving m_axis_desc_valid", "lines": [178, 217]},
+  {"id": "E45", "name": "temp_m_axis_desc_read_addr_reg", "role": "STORAGE", "importance": "minor", "trace": "data_backward", "why": "Skid buffer temp register holding descriptor when output stalls", "lines": [236, 229]},
+  {"id": "E49", "name": "temp_m_axis_desc_valid_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Temp skid register occupied; affects ready and output reload", "lines": [181, 205, 219]},
+  {"id": "E51", "name": "store_axis_int_to_output", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Loads output registers from muxed input", "lines": [197, 223]},
+  {"id": "E52", "name": "store_axis_int_to_temp", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Loads temp skid registers when output stalled", "lines": [201, 235]},
+  {"id": "E53", "name": "store_axis_temp_to_output", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Moves temp registers into output when downstream ready", "lines": [207, 228]},
+  {"id": "E7", "name": "m_axis_desc_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "data_backward", "why": "Descriptor valid to CDMA core", "lines": [178]},
+  {"id": "E8", "name": "m_axis_desc_ready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "CDMA core accepts descriptor; drives skid buffer moves", "lines": [181, 194, 203]},
+  {"id": "E3", "name": "m_axis_desc_read_addr", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Descriptor read address to CDMA core", "lines": [174]},
+  {"id": "E6", "name": "m_axis_desc_tag", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Descriptor tag with port index for status routing", "lines": [177]},
+  {"id": "E11", "name": "s_axis_desc_status_valid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Status valid from CDMA core, demuxed to port by tag", "lines": [256]},
+  {"id": "E9", "name": "s_axis_desc_status_tag", "role": "INDEX", "importance": "major", "trace": "interface", "why": "Status tag; upper bits select destination port", "lines": [256, 259]},
+  {"id": "E56", "name": "m_axis_desc_status_valid_reg", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "data_backward", "why": "Per-port status valid one-hot from tag port bits", "lines": [256, 250]},
+  {"id": "E54", "name": "m_axis_desc_status_tag_reg", "role": "PIPELINE_REG", "importance": "minor", "trace": "data_backward", "why": "Registered status tag broadcast to all ports", "lines": [259, 248]}
+ ],
+ "groups": [
+  {"name": "Port arbiter", "kind": "ARBITER", "anchor_ids": ["E21", "E22", "E25", "E24"], "member_ids": ["I1", "E23"], "description": "Round-robin arbiter selecting one descriptor input port"},
+  {"name": "Descriptor input mux", "kind": "DATAPATH", "anchor_ids": ["E16", "E17", "E12", "E14", "E33", "E29", "E30"], "member_ids": ["E13", "E15", "E34", "E35", "E36", "E37", "E38", "E26", "E27", "E28"], "description": "Selects granted port descriptor fields, prefixes port index to tag"},
+  {"name": "Output skid buffer", "kind": "PIPELINE_STAGE", "anchor_ids": ["E31", "E39", "E43", "E45", "E49", "E51", "E52", "E53", "E7", "E8", "E3", "E6"], "member_ids": ["E32", "E40", "E41", "E42", "E44", "E46", "E47", "E48", "E50", "E4", "E5"], "description": "Two-register skid buffer driving descriptor output to CDMA"},
+  {"name": "Status demux", "kind": "DATAPATH", "anchor_ids": ["E11", "E9", "E56", "E54"], "member_ids": ["E10", "E55", "E18", "E19", "E20"], "description": "Routes CDMA status back to originating port by tag bits"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "m_axis_desc", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8"]},
+  {"name": "s_axis_desc_status", "protocol": "STREAM", "direction": "IN", "member_ids": ["E9", "E10", "E11"]},
+  {"name": "s_axis_desc", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E12", "E13", "E14", "E15", "E16", "E17"]},
+  {"name": "m_axis_desc_status", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E18", "E19", "E20"]}
+ ]
+}

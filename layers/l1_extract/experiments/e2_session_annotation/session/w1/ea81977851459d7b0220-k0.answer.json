@@ -1,0 +1,26 @@
+{
+ "module_summary": "Traffic-light controller: a 4-state FSM cycles red/green/yellow via registered light flags, with a reloadable down-counter timing phases and shortened by pedestrian request.",
+ "anchors": [
+  {"id": "E9", "name": "state", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Light FSM (idle, red, yellow, green); advances on cnt and drives p_* flags."},
+  {"id": "E8", "name": "cnt", "role": "COUNTER", "importance": "critical", "trace": "control_backward", "why": "Phase down-counter reloaded on light changes; terminal value advances FSM; exported as clock."},
+  {"id": "E5", "name": "red", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Registered red light output; falling edge versus p_red reloads cnt."},
+  {"id": "E6", "name": "yellow", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Registered yellow light output; edge versus p_yellow reloads cnt."},
+  {"id": "E7", "name": "green", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Registered green light output; gates pedestrian shortening of cnt."},
+  {"id": "E12", "name": "p_green", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "FSM-decoded green flag; with green detects phase change to reload cnt."},
+  {"id": "E10", "name": "p_red", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "FSM-decoded red flag; feeds red output and cnt reload."},
+  {"id": "E11", "name": "p_yellow", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "FSM-decoded yellow flag; feeds yellow output and cnt reload."},
+  {"id": "E3", "name": "pass_request", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "forward", "why": "Pedestrian request; truncates remaining green time in cnt to 10."},
+  {"id": "E4", "name": "clock", "role": "INTERFACE_DATA", "importance": "minor", "trace": "data_backward", "why": "Exports current counter value."}
+ ],
+ "groups": [
+  {"name": "light_fsm", "kind": "CONTROLLER", "anchor_ids": ["E9", "E10", "E11", "E12"], "member_ids": [], "description": "State machine sequencing light phases and decoding next light flags."},
+  {"name": "phase_timer", "kind": "COUNTER_TIMER", "anchor_ids": ["E8", "E3", "E4"], "member_ids": [], "description": "Down-counter reloaded per phase, shortened by pedestrian request."},
+  {"name": "light_outputs", "kind": "PIPELINE_STAGE", "anchor_ids": ["E5", "E6", "E7"], "member_ids": [], "description": "Registered light outputs delayed one cycle from p_* flags."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "pedestrian_request", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E3"]},
+  {"name": "lights", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E5", "E6", "E7"]},
+  {"name": "count_out", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E4"]}
+ ]
+}

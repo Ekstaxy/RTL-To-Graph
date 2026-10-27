@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<!-- d3-hwschematic, set up as in its examples/example.html; served from the repo root.
+     ?json=<url of a Yosys JSON>. Sets window.__done / window.__error when finished. -->
+<html>
+<head>
+<meta charset="utf-8">
+<script src="/runs/.tools/x3/src/d3-hwschematic/node_modules/d3/dist/d3.js"></script>
+<script src="/runs/.tools/x3/src/d3-hwschematic/node_modules/elkjs/lib/elk.bundled.js"></script>
+<script src="/runs/.tools/x3/src/d3-hwschematic/dist/d3-hwschematic.js"></script>
+<link href="/runs/.tools/x3/src/d3-hwschematic/dist/d3-hwschematic.css" rel="stylesheet">
+<style>body { margin: 0; background: #fff; }</style>
+</head>
+<body>
+<svg id="scheme-placeholder" width="1600" height="1000"></svg>
+<script>
+(async () => {
+  try {
+    const url = new URLSearchParams(location.search).get("json");
+    const yosys = await (await fetch(url)).json();
+    const svg = d3.select("#scheme-placeholder");
+    const hw = new d3.HwSchematic(svg);
+    const g = d3.HwSchematic.fromYosys(yosys);
+    if (new URLSearchParams(location.search).get("collapse") === "top") {
+      // README "LNode": rename children/edges to _children/_edges to start collapsed
+      const top = g.children[0];
+      top._children = top.children; delete top.children;
+      top._edges = top.edges; delete top.edges;
+    }
+    await hw.bindData(g);
+    window.__done = true;
+  } catch (e) {
+    window.__error = String(e && e.stack || e);
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+{
+ "module_summary": "PTP hardware clock: a per-cycle increment computed from period, offset-adjust and drift registers accumulates into 96-bit (s/ns/fns with 1e9 overflow lookahead) and 64-bit timestamp registers, loadable from inputs, also producing step and PPS pulses.",
+ "anchors": [
+  {"id": "E38", "name": "ts_96_s_reg", "role": "HOLDING_REG", "importance": "critical", "trace": "data_backward", "why": "Seconds field of 96-bit time-of-day, incremented on ns overflow or loaded", "lines": [200, 270, 275]},
+  {"id": "E39", "name": "ts_96_ns_reg", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Nanoseconds field of 96-bit timestamp output", "lines": [202, 262, 276]},
+  {"id": "E41", "name": "ts_96_ns_inc_reg", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Accumulator adding per-cycle increment to nanoseconds", "lines": [260, 267]},
+  {"id": "E43", "name": "ts_96_ns_ovf_reg", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Overflow lookahead; sign bit triggers seconds increment and PPS", "lines": [261, 264, 293]},
+  {"id": "E45", "name": "ts_64_ns_reg", "role": "HOLDING_REG", "importance": "critical", "trace": "data_backward", "why": "64-bit relative nanosecond timestamp accumulator", "lines": [204, 285, 289]},
+  {"id": "E32", "name": "ts_inc_ns_reg", "role": "DATAPATH_MAJOR", "importance": "critical", "trace": "data_backward", "why": "Per-cycle time increment: period plus active offset adjust plus drift", "lines": [236, 257, 285]},
+  {"id": "E34", "name": "ts_inc_ns_delay_reg", "role": "PIPELINE_REG", "importance": "minor", "trace": "data_backward", "why": "Delayed increment aligned with overflow lookahead pipeline", "lines": [257, 260]},
+  {"id": "E36", "name": "ts_inc_ns_ovf_reg", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "1e9 minus increment, used for overflow lookahead subtraction", "lines": [258, 261]},
+  {"id": "E23", "name": "period_ns_reg", "role": "CONFIG_REG", "importance": "major", "trace": "data_backward", "why": "Programmable nominal clock period, loaded on input_period_valid", "lines": [219, 236]},
+  {"id": "E25", "name": "adj_ns_reg", "role": "CONFIG_REG", "importance": "minor", "trace": "data_backward", "why": "Offset adjustment amount added while adjustment is active", "lines": [224, 237]},
+  {"id": "E27", "name": "adj_count_reg", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Counts remaining offset-adjust cycles, drives adj_active_reg", "lines": [241, 242]},
+  {"id": "E28", "name": "adj_active_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Enables offset adjustment term in increment computation", "lines": [237, 243]},
+  {"id": "E29", "name": "drift_ns_reg", "role": "CONFIG_REG", "importance": "minor", "trace": "data_backward", "why": "Drift compensation amount added every drift_rate cycles", "lines": [230, 238]},
+  {"id": "E31", "name": "drift_rate_reg", "role": "CONFIG_REG", "importance": "minor", "trace": "data_backward", "why": "Drift application interval reloading drift_cnt", "lines": [232, 251]},
+  {"id": "E48", "name": "drift_cnt", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Down counter gating when drift term is applied", "lines": [238, 250, 253]},
+  {"id": "E47", "name": "ts_step_reg", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Pulses when timestamp is loaded or offset adjusted", "lines": [244, 281, 290]},
+  {"id": "E50", "name": "pps_reg", "role": "CLOCK_GEN", "importance": "minor", "trace": "control_backward", "why": "One-pulse-per-second tick from seconds overflow", "lines": [208, 293]},
+  {"id": "E3", "name": "input_ts_96", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "96-bit timestamp to load into time-of-day registers", "lines": [55, 275]},
+  {"id": "E4", "name": "input_ts_96_valid", "role": "ENABLE", "importance": "minor", "trace": "forward", "why": "Load enable for 96-bit timestamp", "lines": [56, 273]},
+  {"id": "E5", "name": "input_ts_64", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "64-bit timestamp to load", "lines": [57, 289]},
+  {"id": "E19", "name": "output_ts_96", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "96-bit time-of-day timestamp output", "lines": [87, 200]},
+  {"id": "E20", "name": "output_ts_64", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "64-bit relative timestamp output", "lines": [88, 204]},
+  {"id": "E22", "name": "output_pps", "role": "STATUS", "importance": "major", "trace": "interface", "why": "Pulse-per-second output", "lines": [94, 208]},
+  {"id": "E21", "name": "output_ts_step", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "Indicates non-monotonic timestamp step", "lines": [89, 206]}
+ ],
+ "groups": [
+  {"name": "Increment computation", "kind": "DATAPATH", "anchor_ids": ["E32", "E34", "E36"], "member_ids": ["E33", "E35", "E37"], "description": "Sums period, offset and drift into per-cycle increment and lookahead constant"},
+  {"name": "96-bit time-of-day counter", "kind": "COUNTER_TIMER", "anchor_ids": ["E38", "E39", "E41", "E43", "E50"], "member_ids": ["E40", "E42", "E44"], "description": "Seconds/ns/fns accumulator with 1e9 overflow lookahead and PPS"},
+  {"name": "64-bit timestamp counter", "kind": "COUNTER_TIMER", "anchor_ids": ["E45"], "member_ids": ["E46"], "description": "Free-running 64-bit ns accumulator"},
+  {"name": "Adjustment registers", "kind": "REGISTER_BANK", "anchor_ids": ["E23", "E25", "E27", "E28", "E29", "E31", "E48"], "member_ids": ["E24", "E26", "E30"], "description": "Period, offset-adjust and drift configuration with counters"},
+  {"name": "Timestamp I/O", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E3", "E4", "E5", "E19", "E20", "E22", "E21", "E47"], "member_ids": ["E6"], "description": "Timestamp load inputs and timestamp/PPS outputs"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "timestamp_load", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6"]},
+  {"name": "period_adjust", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E7", "E8", "E9"]},
+  {"name": "offset_adjust", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E10", "E11", "E12", "E13", "E14"]},
+  {"name": "drift_adjust", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E15", "E16", "E17", "E18"]},
+  {"name": "timestamp_out", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E19", "E20", "E21"]},
+  {"name": "pps", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E22"]}
+ ]
+}

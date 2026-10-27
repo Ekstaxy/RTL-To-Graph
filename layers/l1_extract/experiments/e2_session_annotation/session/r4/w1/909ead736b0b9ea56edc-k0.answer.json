@@ -1,0 +1,46 @@
+{
+ "module_summary": "Scatter-gather DMA sequencer: an 8-state FSM reads table entries through a prefetch interface and writes source, destination, length and control words to a DMA controller over AXI-lite.",
+ "anchors": [
+  {"id": "E30", "name": "sgstate", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Scatter-gather FSM stepping through table words, DMA start and wait states.", "lines": [205, 292]},
+  {"id": "E3", "name": "i_start", "role": "COMMAND", "importance": "critical", "trace": "forward", "why": "Starts table walk from IDLE, setting new pc and busy.", "lines": [297]},
+  {"id": "E4", "name": "i_abort", "role": "COMMAND", "importance": "major", "trace": "forward", "why": "Abort request; writes abort key to DMA or returns FSM to idle.", "lines": [470, 533]},
+  {"id": "E5", "name": "i_tbl_addr", "role": "INTERFACE_ADDR", "importance": "minor", "trace": "interface", "why": "Starting table address loaded into the prefetch pc while idle.", "lines": [296]},
+  {"id": "E8", "name": "o_busy", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Level busy indication while walking the table; gates prefetch ready.", "lines": [216, 304]},
+  {"id": "E9", "name": "o_done", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Completion pulse when table walk ends, aborts or errors.", "lines": [408, 445]},
+  {"id": "E10", "name": "o_int", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Interrupt on DMA complete with last/int-enable entry or illegal fetch.", "lines": [227, 229]},
+  {"id": "E11", "name": "o_err", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Error flag on DMA error, abort or illegal prefetch.", "lines": [446, 466]},
+  {"id": "E12", "name": "o_tbl_addr", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Current table entry address, advanced by TBL_SIZE after control word.", "lines": [320, 431]},
+  {"id": "E13", "name": "o_new_pc", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Pulse telling prefetch to restart at o_pf_pc on start, skip or jump.", "lines": [299, 359]},
+  {"id": "E14", "name": "o_pf_clear_cache", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Clears prefetch cache when idle, done or aborted.", "lines": [307, 442]},
+  {"id": "E15", "name": "o_pf_ready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "State-decoded ready accepting table words when DMA write channel is free.", "lines": [207, 325]},
+  {"id": "E16", "name": "o_pf_pc", "role": "INTERFACE_ADDR", "importance": "major", "trace": "data_backward", "why": "Prefetch program counter driven from r_pf_pc for table fetches.", "lines": [520]},
+  {"id": "E17", "name": "i_pf_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Prefetch word valid; advances FSM through table entry words.", "lines": [313, 325]},
+  {"id": "E18", "name": "i_pf_insn", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Table entry word forwarded as DMA register data; top bits decode last/skip/jump.", "lines": [317, 343]},
+  {"id": "E21", "name": "o_dmac_wvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "AXI-lite write valid to DMA controller registers.", "lines": [286, 315]},
+  {"id": "E22", "name": "i_dmac_wready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "DMA write ready; clears wvalid and frees next table word.", "lines": [284, 207]},
+  {"id": "E23", "name": "o_dmac_waddr", "role": "INTERFACE_ADDR", "importance": "minor", "trace": "control_backward", "why": "DMA register address selected per FSM state (src, dst, len, control).", "lines": [316, 422]},
+  {"id": "E24", "name": "o_dmac_wdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "DMA register write data: table words, control word or abort key.", "lines": [317, 423]},
+  {"id": "E25", "name": "o_dmac_wstrb", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Write strobe; byte-3-only strobe marks abort-key write.", "lines": [287, 473]},
+  {"id": "E26", "name": "i_dmac_rdata", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "DMA status readback decoded into busy, done, abort, error bits.", "lines": [239, 242]},
+  {"id": "E28", "name": "tbl_last", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Last-entry flag decoded from table word; ends walk after DMA.", "lines": [347, 260]},
+  {"id": "E29", "name": "tbl_int_enable", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Per-entry interrupt enable gating o_int on DMA completion.", "lines": [228, 389]},
+  {"id": "E34", "name": "dma_busy", "role": "CONTROL_FLAG", "importance": "minor", "trace": "data_backward", "why": "DMA busy status bit; blocks op complete and abort return.", "lines": [242, 249]},
+  {"id": "E31", "name": "dma_err", "role": "CONTROL_FLAG", "importance": "minor", "trace": "data_backward", "why": "DMA error status bit; forces terminate and sets o_err.", "lines": [239, 262]},
+  {"id": "E35", "name": "dma_starting", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Covers the cycle after DMA start write before busy is visible.", "lines": [249, 517]},
+  {"id": "E36", "name": "dma_aborting", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Abort in progress during WAIT; forces terminate when DMA stops.", "lines": [260, 534]},
+  {"id": "E38", "name": "dma_op_complete", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "DMA transfer finished; lets WAIT state proceed to next entry or idle.", "lines": [249, 436]},
+  {"id": "E39", "name": "dma_terminate", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Ends the walk after DMA: last entry, abort, error or illegal fetch.", "lines": [260, 440]}
+ ],
+ "groups": [
+  {"name": "Scatter-gather FSM", "kind": "CONTROLLER", "anchor_ids": ["E30", "E28", "E29", "E38", "E39", "E35", "E36"], "member_ids": [], "description": "Table-walk state machine with last/int flags and DMA completion/termination logic."},
+  {"name": "Control and status", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E3", "E4", "E5", "E8", "E9", "E10", "E11", "E12"], "member_ids": [], "description": "Start/abort commands, table address, busy/done/int/err status outputs."},
+  {"name": "Prefetch interface", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E13", "E14", "E15", "E16", "E17", "E18"], "member_ids": ["E37", "E19", "E20"], "description": "Drives prefetch pc/restart and accepts table words with valid/ready."},
+  {"name": "DMA register writer", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E21", "E22", "E23", "E24", "E25", "E26", "E34", "E31"], "member_ids": ["E32", "E33", "E27"], "description": "AXI-lite writes of DMA src/dst/len/control and status bit decode."}
+ ],
+ "interfaces": [
+  {"name": "clock/reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "control", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12"]},
+  {"name": "prefetch", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E13", "E14", "E15", "E16", "E17", "E18", "E19", "E20"]},
+  {"name": "dmac AXI-lite control", "protocol": "MEMORY_BUS", "direction": "OUT", "member_ids": ["E21", "E22", "E23", "E24", "E25", "E26", "E27"]}
+ ]
+}

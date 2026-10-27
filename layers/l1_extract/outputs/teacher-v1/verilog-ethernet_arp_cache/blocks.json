@@ -1,0 +1,714 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-ethernet_arp_cache",
+ "tops": [
+  "arp_cache"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "lfsr": {
+   "source": "heuristic",
+   "canonical_instance": "arp_cache.rd_hash",
+   "file": "data/rtl/verilog-ethernet/rtl/lfsr.v",
+   "lines": [
+    34,
+    445
+   ],
+   "summary": "lfsr (heuristic)",
+   "blocks": [],
+   "ungrouped_anchors": [
+    {
+     "id": "E1",
+     "name": "data_in",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 42.8,
+     "struct_score": 97.0,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    },
+    {
+     "id": "E2",
+     "name": "state_in",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 42.8,
+     "struct_score": 97.0,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    },
+    {
+     "id": "E3",
+     "name": "data_out",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 43.3,
+     "struct_score": 98.3,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    },
+    {
+     "id": "E4",
+     "name": "state_out",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 43.3,
+     "struct_score": 98.3,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "data",
+     "protocol": "SIMPLE",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E1",
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "data_in",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "data_out",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "state",
+     "protocol": "SIMPLE",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E2",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E2",
+       "name": "state_in",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "state_out",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "arp_cache": {
+   "source": "teacher",
+   "canonical_instance": "arp_cache",
+   "file": "data/rtl/verilog-ethernet/rtl/arp_cache.v",
+   "lines": [
+    34,
+    245
+   ],
+   "summary": "Direct-mapped ARP cache: CRC32 LFSR hashes of IP addresses index valid/IP/MAC memories; queries compare stored IP for hit or error, writes are registered then committed, and clear sweeps all entries.",
+   "blocks": [
+    {
+     "name": "Cache memories",
+     "kind": "MEMORY",
+     "description": "Direct-mapped valid, IP tag and MAC arrays.",
+     "anchors": [
+      {
+       "id": "E32",
+       "name": "ip_addr_mem",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 93.4,
+       "struct_score": 83.4,
+       "trace": "data_backward",
+       "why": "Stored IP tag per entry, compared against queried IP for hit detection.",
+       "lines": [
+        166,
+        240
+       ]
+      },
+      {
+       "id": "E33",
+       "name": "mac_addr_mem",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 95.5,
+       "struct_score": 88.6,
+       "trace": "data_backward",
+       "why": "Stored MAC per entry, read out as query response.",
+       "lines": [
+        236,
+        241
+       ]
+      },
+      {
+       "id": "E31",
+       "name": "valid_mem",
+       "role": "STORAGE",
+       "importance": "minor",
+       "score": 29.3,
+       "struct_score": 59.9,
+       "trace": "data_backward",
+       "why": "Per-entry valid bit, cleared by cache sweep, qualifies hits.",
+       "lines": [
+        166,
+        239
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "mem_write",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 44.9,
+       "struct_score": 11.7,
+       "trace": "control_backward",
+       "why": "Memory write enable for entry commit or clear sweep.",
+       "lines": [
+        185,
+        238
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Query path",
+     "kind": "CONTROLLER",
+     "description": "Hash query IP, read entry, compare tag, return MAC or error.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "query_request_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 91.7,
+       "struct_score": 79.0,
+       "trace": "interface",
+       "why": "Query request valid accepting a lookup IP.",
+       "lines": [
+        173
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "query_request_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 32.9,
+       "struct_score": 72.1,
+       "trace": "interface",
+       "why": "Query ready, low during cache clear or stalled response.",
+       "lines": [
+        96,
+        173
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "query_request_ip",
+       "role": "INTERFACE_ADDR",
+       "importance": "minor",
+       "score": 32.5,
+       "struct_score": 71.0,
+       "trace": "interface",
+       "why": "Lookup IP hashed into cache index.",
+       "lines": [
+        114,
+        226
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "query_response_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 88.4,
+       "struct_score": 70.8,
+       "trace": "interface",
+       "why": "Query response valid with MAC and error.",
+       "lines": [
+        98
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "query_response_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 30.8,
+       "struct_score": 65.1,
+       "trace": "interface",
+       "why": "Downstream response ready clearing response valid.",
+       "lines": [
+        160
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "query_response_mac",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 93.6,
+       "struct_score": 83.7,
+       "trace": "data_backward",
+       "why": "MAC read from cache for the queried IP.",
+       "lines": [
+        100
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "query_response_error",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 46.9,
+       "struct_score": 19.7,
+       "trace": "control_backward",
+       "why": "Miss indication when entry invalid or IP tag mismatches.",
+       "lines": [
+        99
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "query_ip_valid_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 49.8,
+       "struct_score": 31.6,
+       "trace": "control_backward",
+       "why": "Pending query flag; triggers lookup compare and response generation.",
+       "lines": [
+        163,
+        173
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "query_ip_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 20.8,
+       "struct_score": 27.5,
+       "trace": "data_backward",
+       "why": "Latched query IP compared with stored IP tag.",
+       "lines": [
+        166,
+        226
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "store_query",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.9,
+       "struct_score": 7.7,
+       "trace": "control_backward",
+       "why": "Load enable latching query IP on request accept.",
+       "lines": [
+        174,
+        225
+       ]
+      },
+      {
+       "id": "E29",
+       "name": "rd_ptr_reg",
+       "role": "INDEX",
+       "importance": "major",
+       "score": 48.5,
+       "struct_score": 26.3,
+       "trace": "data_backward",
+       "why": "Query index from IP hash addressing valid/IP/MAC memories.",
+       "lines": [
+        166,
+        236
+       ]
+      },
+      {
+       "id": "E43",
+       "name": "query_request_hash",
+       "role": "INDEX",
+       "importance": "minor",
+       "score": 17.0,
+       "struct_score": 12.4,
+       "trace": "data_backward",
+       "why": "LFSR hash of query IP, low bits load rd_ptr.",
+       "lines": [
+        176
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "rd_hash",
+       "module": "lfsr"
+      }
+     ],
+     "members": [
+      {
+       "id": "E19",
+       "name": "query_ip_valid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E30",
+       "name": "rd_ptr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E34",
+       "name": "query_request_ready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E35",
+       "name": "query_request_ready_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E36",
+       "name": "query_response_valid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E37",
+       "name": "query_response_valid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E38",
+       "name": "query_response_error_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E39",
+       "name": "query_response_error_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E40",
+       "name": "query_response_mac_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Write and clear path",
+     "kind": "CONTROLLER",
+     "description": "Hash write IP, latch IP/MAC and commit; clear sweeps wr_ptr over all entries.",
+     "anchors": [
+      {
+       "id": "E10",
+       "name": "write_request_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 62.1,
+       "struct_score": 74.9,
+       "trace": "interface",
+       "why": "Write request valid inserting an IP/MAC pair.",
+       "lines": [
+        188
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "write_request_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 34.1,
+       "struct_score": 75.0,
+       "trace": "interface",
+       "why": "Write ready, low during cache clear.",
+       "lines": [
+        102,
+        188
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "write_request_mac",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 64.6,
+       "struct_score": 81.4,
+       "trace": "interface",
+       "why": "MAC to store for the written IP.",
+       "lines": [
+        231
+       ]
+      },
+      {
+       "id": "E21",
+       "name": "write_ip_valid_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 19.3,
+       "struct_score": 21.6,
+       "trace": "control_backward",
+       "why": "Pending write flag committing latched IP/MAC to memories.",
+       "lines": [
+        183
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "write_ip_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 21.3,
+       "struct_score": 29.9,
+       "trace": "data_backward",
+       "why": "Latched write IP/MAC awaiting commit to cache memories.",
+       "lines": [
+        230,
+        240
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "store_write",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 16.4,
+       "struct_score": 9.6,
+       "trace": "control_backward",
+       "why": "Load enable latching write IP/MAC on request accept.",
+       "lines": [
+        189,
+        229
+       ]
+      },
+      {
+       "id": "E27",
+       "name": "wr_ptr_reg",
+       "role": "INDEX",
+       "importance": "major",
+       "score": 51.9,
+       "struct_score": 40.2,
+       "trace": "data_backward",
+       "why": "Write index from IP hash, or sweep counter during cache clear.",
+       "lines": [
+        198,
+        239
+       ]
+      },
+      {
+       "id": "E44",
+       "name": "write_request_hash",
+       "role": "INDEX",
+       "importance": "minor",
+       "score": 17.5,
+       "struct_score": 14.2,
+       "trace": "data_backward",
+       "why": "LFSR hash of write IP, low bits load wr_ptr.",
+       "lines": [
+        191
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I2",
+       "instance": "wr_hash",
+       "module": "lfsr"
+      }
+     ],
+     "members": [
+      {
+       "id": "E12",
+       "name": "write_request_ip",
+       "kind": "port_in"
+      },
+      {
+       "id": "E22",
+       "name": "write_ip_valid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E24",
+       "name": "write_mac_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E28",
+       "name": "wr_ptr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E41",
+       "name": "write_request_ready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E42",
+       "name": "write_request_ready_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E25",
+       "name": "clear_cache_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E26",
+       "name": "clear_cache_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E14",
+       "name": "clear_cache",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock/reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "query request",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "query_request_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "query_request_ready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "query_request_ip",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "query response",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E6",
+      "E7",
+      "E8",
+      "E9"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "query_response_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "query_response_ready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "query_response_error",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "query_response_mac",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "write request",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E10",
+      "E11",
+      "E12",
+      "E13"
+     ],
+     "members": [
+      {
+       "id": "E10",
+       "name": "write_request_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "write_request_ready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "write_request_ip",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "write_request_mac",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "configuration",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E14"
+     ],
+     "members": [
+      {
+       "id": "E14",
+       "name": "clear_cache",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

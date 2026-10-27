@@ -1,0 +1,1508 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "biriscv_biriscv_decode",
+ "tops": [
+  "biriscv_decode"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "fetch_fifo": {
+   "source": "teacher",
+   "canonical_instance": "biriscv_decode.genblk1.u_fifo",
+   "file": "data/rtl/biriscv/src/core/biriscv_decode.v",
+   "lines": [
+    279,
+    428
+   ],
+   "summary": "Two-entry instruction fetch FIFO storing 64-bit fetch pairs with PC and info, presenting two 32-bit instruction slots that pop independently; entry retires when both slots consumed.",
+   "blocks": [
+    {
+     "name": "Entry storage",
+     "kind": "BUFFER",
+     "description": "Two entries of data, PC, info and per-slot valid bits.",
+     "anchors": [
+      {
+       "id": "E26",
+       "name": "ram_q",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 98.3,
+       "struct_score": 95.7,
+       "trace": "data_backward",
+       "why": "Entry array holding 64-bit instruction pair data.",
+       "lines": [
+        334,
+        385,
+        420
+       ]
+      },
+      {
+       "id": "E21",
+       "name": "pc_q",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 69.7,
+       "struct_score": 94.1,
+       "trace": "data_backward",
+       "why": "Per-entry PC storage driving pc0/pc1 outputs.",
+       "lines": [
+        329,
+        386,
+        418
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "valid0_q",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 64.5,
+       "struct_score": 80.9,
+       "trace": "control_backward",
+       "why": "Per-entry slot0 valid bits cleared on pop; valid1_q sibling.",
+       "lines": [
+        330,
+        389,
+        395
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E23",
+       "name": "valid1_q",
+       "kind": "mem"
+      },
+      {
+       "id": "E24",
+       "name": "info0_q",
+       "kind": "mem"
+      },
+      {
+       "id": "E25",
+       "name": "info1_q",
+       "kind": "mem"
+      }
+     ]
+    },
+    {
+     "name": "FIFO control",
+     "kind": "CONTROLLER",
+     "description": "Pointers, occupancy and pop/push qualification logic.",
+     "anchors": [
+      {
+       "id": "E27",
+       "name": "rd_ptr_q",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 67.2,
+       "struct_score": 87.8,
+       "trace": "control_backward",
+       "why": "Read pointer indexing head entry outputs, advances on pop_complete.",
+       "lines": [
+        335,
+        401,
+        420
+       ]
+      },
+      {
+       "id": "E28",
+       "name": "wr_ptr_q",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 61.1,
+       "struct_score": 72.4,
+       "trace": "control_backward",
+       "why": "Write pointer indexing pushed entry.",
+       "lines": [
+        336,
+        385,
+        391
+       ]
+      },
+      {
+       "id": "E29",
+       "name": "count_q",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 56.7,
+       "struct_score": 57.7,
+       "trace": "control_backward",
+       "why": "Occupancy count producing accept and valid outputs.",
+       "lines": [
+        337,
+        404,
+        415
+       ]
+      },
+      {
+       "id": "E33",
+       "name": "pop_complete_w",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 19.6,
+       "struct_score": 22.7,
+       "trace": "control_backward",
+       "why": "Both slots consumed; advances read pointer, decrements count.",
+       "lines": [
+        345,
+        400,
+        405
+       ]
+      },
+      {
+       "id": "E30",
+       "name": "push_w",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 20.2,
+       "struct_score": 25.2,
+       "trace": "control_backward",
+       "why": "Accepted push enabling entry write and pointer increment.",
+       "lines": [
+        342,
+        383,
+        403
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "flush_i",
+       "role": "COMMAND",
+       "importance": "major",
+       "score": 54.8,
+       "struct_score": 50.7,
+       "trace": "forward",
+       "why": "Flush resets pointers, count and info entries.",
+       "lines": [
+        296,
+        366
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E31",
+       "name": "pop1_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E32",
+       "name": "pop2_w",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Push interface",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Accepts fetch pair with PC, prediction and info.",
+     "anchors": [
+      {
+       "id": "E4",
+       "name": "push_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 89.6,
+       "struct_score": 73.6,
+       "trace": "interface",
+       "why": "Push request; with accept_o writes entry at wr_ptr_q.",
+       "lines": [
+        299,
+        342
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "accept_o",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 89.8,
+       "struct_score": 74.1,
+       "trace": "control_backward",
+       "why": "FIFO not full; qualifies push.",
+       "lines": [
+        305,
+        342,
+        415
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "data_in_i",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 94.6,
+       "struct_score": 86.2,
+       "trace": "interface",
+       "why": "64-bit fetch data written into ram_q.",
+       "lines": [
+        302,
+        385
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "pc_in_i",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 59.9,
+       "struct_score": 69.3,
+       "trace": "interface",
+       "why": "Fetch PC stored into pc_q per entry.",
+       "lines": [
+        300,
+        386
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E6",
+       "name": "pred_in_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "info0_in_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "info1_in_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Dual-slot output",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Presents two instruction slots from head entry.",
+     "anchors": [
+      {
+       "id": "E11",
+       "name": "valid0_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 96.2,
+       "struct_score": 90.5,
+       "trace": "control_backward",
+       "why": "Slot0 instruction valid output from head entry.",
+       "lines": [
+        308,
+        413
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "data0_out_o",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 94.5,
+       "struct_score": 86.1,
+       "trace": "data_backward",
+       "why": "Lower 32-bit instruction of head entry.",
+       "lines": [
+        310,
+        420
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "pop0_i",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 55.7,
+       "struct_score": 54.0,
+       "trace": "interface",
+       "why": "Consumer pop of slot0 instruction.",
+       "lines": [
+        312,
+        343
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "valid1_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 68.2,
+       "struct_score": 90.5,
+       "trace": "control_backward",
+       "why": "Slot1 instruction valid output from head entry.",
+       "lines": [
+        314,
+        414
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "data1_out_o",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 66.5,
+       "struct_score": 86.1,
+       "trace": "data_backward",
+       "why": "Upper 32-bit instruction of head entry.",
+       "lines": [
+        316,
+        421
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E12",
+       "name": "pc0_out_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "info0_out_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "pc1_out_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "info1_out_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "pop1_i",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "flush",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "flush_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "push",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "push_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "pc_in_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "pred_in_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "data_in_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "info0_in_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "info1_in_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "accept_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "slot0_out",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "valid0_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "pc0_out_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "data0_out_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "info0_out_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "pop0_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "slot1_out",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20"
+     ],
+     "members": [
+      {
+       "id": "E16",
+       "name": "valid1_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "pc1_out_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "data1_out_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "info1_out_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "pop1_i",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  },
+  "biriscv_decoder": {
+   "source": "heuristic",
+   "canonical_instance": "biriscv_decode.genblk1.u_dec0",
+   "file": "data/rtl/biriscv/src/core/biriscv_decoder.v",
+   "lines": [
+    27,
+    220
+   ],
+   "summary": "biriscv_decoder (heuristic)",
+   "blocks": [],
+   "ungrouped_anchors": [
+    {
+     "id": "E1",
+     "name": "valid_i",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 93.6,
+     "struct_score": 83.9,
+     "trace": "interface",
+     "why": "valid port",
+     "lines": []
+    },
+    {
+     "id": "E4",
+     "name": "opcode_i",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 43.2,
+     "struct_score": 97.9,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    },
+    {
+     "id": "E5",
+     "name": "invalid_o",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 96.1,
+     "struct_score": 90.2,
+     "trace": "interface",
+     "why": "valid port",
+     "lines": []
+    },
+    {
+     "id": "E12",
+     "name": "rd_valid_o",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 94.4,
+     "struct_score": 85.8,
+     "trace": "interface",
+     "why": "valid port",
+     "lines": []
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "valid",
+     "protocol": "STREAM",
+     "direction": "IN",
+     "member_ids": [
+      "E1"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "valid_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "fetch",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E2",
+       "name": "fetch_fault_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "enable",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "enable_muldiv_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "opcode",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "opcode_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "invalid",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "invalid_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "exec",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "exec_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "lsu",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E7",
+       "name": "lsu_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "branch",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E8",
+       "name": "branch_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "mul",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E9"
+     ],
+     "members": [
+      {
+       "id": "E9",
+       "name": "mul_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "div",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E10",
+       "name": "div_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "csr",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E11"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "csr_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "rd",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E12"
+     ],
+     "members": [
+      {
+       "id": "E12",
+       "name": "rd_valid_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "biriscv_decode": {
+   "source": "teacher",
+   "canonical_instance": "biriscv_decode",
+   "file": "data/rtl/biriscv/src/core/biriscv_decode.v",
+   "lines": [
+    26,
+    277
+   ],
+   "summary": "Dual-issue RISC-V decode front end: a fetch_fifo buffers 64-bit fetch pairs (flushed on branch) and presents two instruction slots, each decoded by a biriscv_decoder into functional-unit class flags.",
+   "blocks": [
+    {
+     "name": "Fetch FIFO",
+     "kind": "BUFFER",
+     "description": "Two-entry fetch pair FIFO with two independently popped slots, flushed on branch",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "fetch_in_valid_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 87.2,
+       "struct_score": 66.8,
+       "trace": "interface",
+       "why": "Fetch pair valid; pushes into fetch FIFO",
+       "lines": [
+        217
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "fetch_in_instr_i",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 93.5,
+       "struct_score": 83.6,
+       "trace": "interface",
+       "why": "64-bit instruction pair written into FIFO, zeroed on fault",
+       "lines": [
+        220
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "fetch_in_accept_o",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 83.1,
+       "struct_score": 51.9,
+       "trace": "data_backward",
+       "why": "FIFO accept backpressure to fetch stage",
+       "lines": [
+        223
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "fetch_in_pc_i",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 58.6,
+       "struct_score": 64.5,
+       "trace": "interface",
+       "why": "PC of fetch pair stored in FIFO",
+       "lines": [
+        218
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "fetch_in_fault_fetch_i",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 17.3,
+       "struct_score": 13.4,
+       "trace": "interface",
+       "why": "Fetch fault; zeroes instruction and passes as FIFO info",
+       "lines": [
+        220,
+        221
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "fetch_in_fault_page_i",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 17.3,
+       "struct_score": 13.4,
+       "trace": "interface",
+       "why": "Page fault; zeroes instruction and passes as FIFO info",
+       "lines": [
+        220,
+        221
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "fetch_in_pred_branch_i",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 27.7,
+       "struct_score": 54.1,
+       "trace": "interface",
+       "why": "Branch prediction bits stored with fetch pair",
+       "lines": [
+        219
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "branch_request_i",
+       "role": "COMMAND",
+       "importance": "major",
+       "score": 47.2,
+       "struct_score": 21.3,
+       "trace": "forward",
+       "why": "Branch redirect flushes the fetch FIFO",
+       "lines": [
+        214
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "fetch_out0_accept_i",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 81.7,
+       "struct_score": 46.8,
+       "trace": "interface",
+       "why": "Issue accepts slot 0; pops FIFO slot",
+       "lines": [
+        230
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "fetch_out1_accept_i",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 53.7,
+       "struct_score": 46.8,
+       "trace": "interface",
+       "why": "Issue accepts slot 1; pops FIFO slot",
+       "lines": [
+        236
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "fetch_out0_pc_o",
+       "role": "INTERFACE_ADDR",
+       "importance": "minor",
+       "score": 31.6,
+       "struct_score": 68.0,
+       "trace": "data_backward",
+       "why": "PC of slot 0 instruction",
+       "lines": [
+        227
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "fetch_out0_fault_fetch_o",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 21.3,
+       "struct_score": 29.5,
+       "trace": "data_backward",
+       "why": "Slot 0 fetch fault info from FIFO, feeds decoder fault input",
+       "lines": [
+        229,
+        243
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "genblk1.u_fifo",
+       "module": "fetch_fifo"
+      }
+     ],
+     "members": [
+      {
+       "id": "E19",
+       "name": "fetch_out0_fault_page_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E30",
+       "name": "fetch_out1_pc_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E31",
+       "name": "fetch_out1_fault_fetch_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E32",
+       "name": "fetch_out1_fault_page_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "Slot 0 decoder",
+     "kind": "DECODER",
+     "description": "Decodes slot 0 instruction into unit class flags",
+     "anchors": [
+      {
+       "id": "E15",
+       "name": "fetch_out0_valid_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 92.1,
+       "struct_score": 80.1,
+       "trace": "data_backward",
+       "why": "Slot 0 instruction valid from FIFO, also decoder valid",
+       "lines": [
+        226,
+        242
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "fetch_out0_instr_o",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 95.4,
+       "struct_score": 88.4,
+       "trace": "data_backward",
+       "why": "Slot 0 instruction from FIFO, decoded by u_dec0",
+       "lines": [
+        228,
+        245
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "fetch_out0_instr_exec_o",
+       "role": "DECODE",
+       "importance": "major",
+       "score": 53.0,
+       "struct_score": 44.3,
+       "trace": "data_backward",
+       "why": "Slot 0 decoded class flag; representative of exec/lsu/branch/mul/div/csr",
+       "lines": [
+        248
+       ]
+      },
+      {
+       "id": "E27",
+       "name": "fetch_out0_instr_invalid_o",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 25.0,
+       "struct_score": 44.3,
+       "trace": "data_backward",
+       "why": "Slot 0 illegal instruction flag from decoder",
+       "lines": [
+        247
+       ]
+      },
+      {
+       "id": "E26",
+       "name": "fetch_out0_instr_rd_valid_o",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 25.0,
+       "struct_score": 44.3,
+       "trace": "data_backward",
+       "why": "Slot 0 writes destination register",
+       "lines": [
+        254
+       ]
+      },
+      {
+       "id": "E41",
+       "name": "enable_muldiv_w",
+       "role": "CONFIG_REG",
+       "importance": "minor",
+       "score": 15.6,
+       "struct_score": 6.5,
+       "trace": "none",
+       "why": "Parameter-tied enable for mul/div decode in both decoders",
+       "lines": [
+        85,
+        244,
+        262
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I2",
+       "instance": "genblk1.u_dec0",
+       "module": "biriscv_decoder"
+      }
+     ],
+     "members": [
+      {
+       "id": "E21",
+       "name": "fetch_out0_instr_lsu_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E22",
+       "name": "fetch_out0_instr_branch_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "fetch_out0_instr_mul_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E24",
+       "name": "fetch_out0_instr_div_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E25",
+       "name": "fetch_out0_instr_csr_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "Slot 1 decoder",
+     "kind": "DECODER",
+     "description": "Decodes slot 1 instruction into unit class flags",
+     "anchors": [
+      {
+       "id": "E28",
+       "name": "fetch_out1_valid_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 92.1,
+       "struct_score": 80.1,
+       "trace": "data_backward",
+       "why": "Slot 1 instruction valid from FIFO, also decoder valid",
+       "lines": [
+        232,
+        260
+       ]
+      },
+      {
+       "id": "E29",
+       "name": "fetch_out1_instr_o",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 95.4,
+       "struct_score": 88.4,
+       "trace": "data_backward",
+       "why": "Slot 1 instruction from FIFO, decoded by u_dec1",
+       "lines": [
+        234,
+        263
+       ]
+      },
+      {
+       "id": "E33",
+       "name": "fetch_out1_instr_exec_o",
+       "role": "DECODE",
+       "importance": "major",
+       "score": 53.0,
+       "struct_score": 44.3,
+       "trace": "data_backward",
+       "why": "Slot 1 decoded class flag; representative of slot 1 decode outputs",
+       "lines": [
+        266
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I3",
+       "instance": "genblk1.u_dec1",
+       "module": "biriscv_decoder"
+      }
+     ],
+     "members": [
+      {
+       "id": "E34",
+       "name": "fetch_out1_instr_lsu_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E35",
+       "name": "fetch_out1_instr_branch_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E36",
+       "name": "fetch_out1_instr_mul_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E37",
+       "name": "fetch_out1_instr_div_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E38",
+       "name": "fetch_out1_instr_csr_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E39",
+       "name": "fetch_out1_instr_rd_valid_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E40",
+       "name": "fetch_out1_instr_invalid_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "fetch_in",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E14"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "fetch_in_valid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "fetch_in_instr_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "fetch_in_pred_branch_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "fetch_in_fault_fetch_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "fetch_in_fault_page_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "fetch_in_pc_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E14",
+       "name": "fetch_in_accept_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "branch",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E11",
+      "E12",
+      "E13"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "branch_request_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E12",
+       "name": "branch_pc_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "branch_priv_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "fetch_out0",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E9",
+      "E15",
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20",
+      "E21",
+      "E22",
+      "E23",
+      "E24",
+      "E25",
+      "E26",
+      "E27"
+     ],
+     "members": [
+      {
+       "id": "E9",
+       "name": "fetch_out0_accept_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "fetch_out0_valid_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "fetch_out0_instr_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "fetch_out0_pc_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "fetch_out0_fault_fetch_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "fetch_out0_fault_page_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "fetch_out0_instr_exec_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E21",
+       "name": "fetch_out0_instr_lsu_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E22",
+       "name": "fetch_out0_instr_branch_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "fetch_out0_instr_mul_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E24",
+       "name": "fetch_out0_instr_div_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E25",
+       "name": "fetch_out0_instr_csr_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E26",
+       "name": "fetch_out0_instr_rd_valid_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E27",
+       "name": "fetch_out0_instr_invalid_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "fetch_out1",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E10",
+      "E28",
+      "E29",
+      "E30",
+      "E31",
+      "E32",
+      "E33",
+      "E34",
+      "E35",
+      "E36",
+      "E37",
+      "E38",
+      "E39",
+      "E40"
+     ],
+     "members": [
+      {
+       "id": "E10",
+       "name": "fetch_out1_accept_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E28",
+       "name": "fetch_out1_valid_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E29",
+       "name": "fetch_out1_instr_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E30",
+       "name": "fetch_out1_pc_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E31",
+       "name": "fetch_out1_fault_fetch_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E32",
+       "name": "fetch_out1_fault_page_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E33",
+       "name": "fetch_out1_instr_exec_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E34",
+       "name": "fetch_out1_instr_lsu_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E35",
+       "name": "fetch_out1_instr_branch_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E36",
+       "name": "fetch_out1_instr_mul_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E37",
+       "name": "fetch_out1_instr_div_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E38",
+       "name": "fetch_out1_instr_csr_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E39",
+       "name": "fetch_out1_instr_rd_valid_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E40",
+       "name": "fetch_out1_instr_invalid_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

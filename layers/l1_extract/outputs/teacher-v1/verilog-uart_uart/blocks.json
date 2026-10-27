@@ -1,0 +1,1023 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-uart_uart",
+ "tops": [
+  "uart"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "uart_tx": {
+   "source": "teacher",
+   "canonical_instance": "uart.uart_tx_inst",
+   "file": "data/rtl/verilog-uart/rtl/uart_tx.v",
+   "lines": [
+    32,
+    115
+   ],
+   "summary": "AXI-stream to UART transmitter: accepts a byte on valid/ready, loads a 9-bit shift register and shifts start/data/stop bits out, timed by a prescale counter and bit counter.",
+   "blocks": [
+    {
+     "name": "axis_input",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "AXI-stream input handshake accepting bytes when transmitter idle.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "s_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 93.8,
+       "struct_score": 84.4,
+       "trace": "interface",
+       "why": "Input byte loaded into the transmit shift register on accept.",
+       "lines": [
+        43,
+        97
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 97.3,
+       "struct_score": 93.3,
+       "trace": "interface",
+       "why": "AXI-stream valid; starts a frame when idle and bit_cnt is zero.",
+       "lines": [
+        44,
+        93
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 90.5,
+       "struct_score": 76.1,
+       "trace": "interface",
+       "why": "AXI-stream ready, copy of s_axis_tready_reg, asserted while transmitter is idle.",
+       "lines": [
+        45,
+        73
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E9",
+       "name": "s_axis_tready_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "tx_shifter",
+     "kind": "SERIALIZER",
+     "description": "Shift register serializing start, data and stop bits onto txd.",
+     "anchors": [
+      {
+       "id": "E12",
+       "name": "data_reg",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 92.9,
+       "struct_score": 82.0,
+       "trace": "data_backward",
+       "why": "Shift register holding data plus stop bit, shifted into txd_reg each bit period.",
+       "lines": [
+        69,
+        97,
+        105
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "txd",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 91.2,
+       "struct_score": 77.9,
+       "trace": "interface",
+       "why": "Serial UART output line driven from txd_reg.",
+       "lines": [
+        50,
+        74
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E10",
+       "name": "txd_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "baud_timing",
+     "kind": "COUNTER_TIMER",
+     "description": "Prescale and bit counters sequencing frame bits and busy status.",
+     "anchors": [
+      {
+       "id": "E13",
+       "name": "prescale_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 66.3,
+       "struct_score": 85.5,
+       "trace": "control_backward",
+       "why": "Bit-period down-counter reloaded from prescale; gates shifting and ready.",
+       "lines": [
+        70,
+        86,
+        104
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "bit_cnt",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 62.5,
+       "struct_score": 75.9,
+       "trace": "control_backward",
+       "why": "Counts remaining bits of frame; zero means idle and ready for new byte.",
+       "lines": [
+        71,
+        89,
+        103
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "prescale",
+       "role": "CONFIG_REG",
+       "importance": "minor",
+       "score": 31.2,
+       "struct_score": 66.8,
+       "trace": "interface",
+       "why": "Baud prescale configuration input reloading prescale_reg.",
+       "lines": [
+        60,
+        95
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "busy",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 52.0,
+       "struct_score": 40.7,
+       "trace": "control_backward",
+       "why": "Level busy indication while a frame is being transmitted.",
+       "lines": [
+        55,
+        76
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E11",
+       "name": "busy_reg",
+       "kind": "reg"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clk_rst",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axis",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axis_tdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_tvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_tready",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "uart_tx",
+     "protocol": "SERIAL",
+     "direction": "OUT",
+     "member_ids": [
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "txd",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E7",
+       "name": "busy",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "config",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E8",
+       "name": "prescale",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  },
+  "uart_rx": {
+   "source": "teacher",
+   "canonical_instance": "uart.uart_rx_inst",
+   "file": "data/rtl/verilog-uart/rtl/uart_rx.v",
+   "lines": [
+    32,
+    142
+   ],
+   "summary": "UART receiver: a prescale down-counter times oversampled bit periods, a bit counter sequences start/data/stop, a shift register deserializes rxd into an AXI-stream output register.",
+   "blocks": [
+    {
+     "name": "AXI-stream output",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Output data/valid registers with ready-based valid clear.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "m_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 93.4,
+       "struct_score": 83.5,
+       "trace": "interface",
+       "why": "Received byte presented on AXI-stream output, copied from m_axis_tdata_reg.",
+       "lines": [
+        43,
+        79
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "m_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 94.8,
+       "struct_score": 86.8,
+       "trace": "interface",
+       "why": "AXI-stream valid; set when stop bit received, cleared on accept.",
+       "lines": [
+        44,
+        80,
+        101
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "m_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 85.3,
+       "struct_score": 59.7,
+       "trace": "interface",
+       "why": "Downstream ready; with tvalid clears the output valid register.",
+       "lines": [
+        45,
+        101
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E11",
+       "name": "m_axis_tdata_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E12",
+       "name": "m_axis_tvalid_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Deserializer",
+     "kind": "SERIALIZER",
+     "description": "Synchronizes rxd and shifts sampled bits into data_reg.",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "rxd",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 87.7,
+       "struct_score": 68.5,
+       "trace": "interface",
+       "why": "Serial UART input line, sampled into rxd_reg each cycle.",
+       "lines": [
+        50,
+        97
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "data_reg",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 89.3,
+       "struct_score": 73.0,
+       "trace": "data_backward",
+       "why": "Shift register assembling received data bits LSB first before output.",
+       "lines": [
+        119,
+        123
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E13",
+       "name": "rxd_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Bit timing",
+     "kind": "COUNTER_TIMER",
+     "description": "Prescale timer and bit counter sequencing start, data and stop bits.",
+     "anchors": [
+      {
+       "id": "E18",
+       "name": "prescale_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 64.7,
+       "struct_score": 81.5,
+       "trace": "control_backward",
+       "why": "Baud prescale down-counter timing each bit sample point.",
+       "lines": [
+        105,
+        106,
+        118
+       ]
+      },
+      {
+       "id": "E19",
+       "name": "bit_cnt",
+       "role": "COUNTER",
+       "importance": "critical",
+       "score": 88.9,
+       "struct_score": 71.9,
+       "trace": "control_backward",
+       "why": "Counts remaining start/data/stop bits; sequences reception phases.",
+       "lines": [
+        107,
+        116,
+        134
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "prescale",
+       "role": "CONFIG_REG",
+       "importance": "major",
+       "score": 57.4,
+       "struct_score": 60.2,
+       "trace": "interface",
+       "why": "Configured baud divisor reloading the prescale counter.",
+       "lines": [
+        62,
+        118,
+        133
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Status flags",
+     "kind": "OTHER",
+     "description": "Busy level and overrun/frame error pulses.",
+     "anchors": [
+      {
+       "id": "E7",
+       "name": "busy",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 50.4,
+       "struct_score": 34.2,
+       "trace": "interface",
+       "why": "Level busy indication while a frame is being received.",
+       "lines": [
+        55,
+        82
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "overrun_error",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 22.4,
+       "struct_score": 34.2,
+       "trace": "interface",
+       "why": "Pulses when new byte arrives while previous output still valid.",
+       "lines": [
+        56,
+        83
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "frame_error",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 22.4,
+       "struct_score": 34.2,
+       "trace": "interface",
+       "why": "Pulses when stop bit sampled low.",
+       "lines": [
+        57,
+        84
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E14",
+       "name": "busy_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E15",
+       "name": "overrun_error_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E16",
+       "name": "frame_error_reg",
+       "kind": "reg"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axis",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "m_axis_tdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E4",
+       "name": "m_axis_tvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "m_axis_tready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "uart_rx",
+     "protocol": "SERIAL",
+     "direction": "IN",
+     "member_ids": [
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "rxd",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E7",
+      "E8",
+      "E9"
+     ],
+     "members": [
+      {
+       "id": "E7",
+       "name": "busy",
+       "kind": "port_out"
+      },
+      {
+       "id": "E8",
+       "name": "overrun_error",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "frame_error",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "config",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E10",
+       "name": "prescale",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  },
+  "uart": {
+   "source": "teacher",
+   "canonical_instance": "uart",
+   "file": "data/rtl/verilog-uart/rtl/uart.v",
+   "lines": [
+    32,
+    113
+   ],
+   "summary": "Full-duplex UART wrapper: an AXI-stream-to-serial transmitter and a serial-to-AXI-stream receiver instance sharing one prescale configuration.",
+   "blocks": [
+    {
+     "name": "transmitter",
+     "kind": "SERIALIZER",
+     "description": "uart_tx instance serializing AXI-stream bytes onto txd.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "s_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 93.3,
+       "struct_score": 83.1,
+       "trace": "interface",
+       "why": "Byte to transmit, fed to the UART transmitter.",
+       "lines": [
+        43,
+        82
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 93.0,
+       "struct_score": 82.3,
+       "trace": "interface",
+       "why": "Transmit byte valid into transmitter.",
+       "lines": [
+        44,
+        83
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 89.3,
+       "struct_score": 73.0,
+       "trace": "interface",
+       "why": "Transmitter ready to accept a new byte.",
+       "lines": [
+        45,
+        84
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "txd",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 90.0,
+       "struct_score": 74.8,
+       "trace": "interface",
+       "why": "Serial transmit line from transmitter.",
+       "lines": [
+        58,
+        86
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "tx_busy",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 23.1,
+       "struct_score": 37.1,
+       "trace": "interface",
+       "why": "Transmitter busy status.",
+       "lines": [
+        63,
+        88
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "uart_tx_inst",
+       "module": "uart_tx"
+      }
+     ],
+     "members": []
+    },
+    {
+     "name": "receiver",
+     "kind": "SERIALIZER",
+     "description": "uart_rx instance deserializing rxd into AXI-stream bytes.",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "m_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 94.0,
+       "struct_score": 84.9,
+       "trace": "interface",
+       "why": "Received byte from UART receiver.",
+       "lines": [
+        50,
+        100
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "m_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 93.7,
+       "struct_score": 84.1,
+       "trace": "interface",
+       "why": "Received byte valid from receiver.",
+       "lines": [
+        51,
+        101
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "m_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 60.2,
+       "struct_score": 70.3,
+       "trace": "interface",
+       "why": "Downstream ready consuming received byte.",
+       "lines": [
+        52,
+        102
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "rxd",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 89.0,
+       "struct_score": 72.1,
+       "trace": "interface",
+       "why": "Serial receive line into receiver.",
+       "lines": [
+        57,
+        104
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "rx_busy",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 23.1,
+       "struct_score": 37.1,
+       "trace": "interface",
+       "why": "Receiver busy status.",
+       "lines": [
+        64,
+        106
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "rx_overrun_error",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 23.1,
+       "struct_score": 37.1,
+       "trace": "interface",
+       "why": "Receiver overrun error when output not consumed.",
+       "lines": [
+        65,
+        107
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "rx_frame_error",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 23.1,
+       "struct_score": 37.1,
+       "trace": "interface",
+       "why": "Receiver framing error on bad stop bit.",
+       "lines": [
+        66,
+        108
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I2",
+       "instance": "uart_rx_inst",
+       "module": "uart_rx"
+      }
+     ],
+     "members": []
+    },
+    {
+     "name": "baud_config",
+     "kind": "OTHER",
+     "description": "Shared prescale configuration for both directions.",
+     "anchors": [
+      {
+       "id": "E15",
+       "name": "prescale",
+       "role": "CONFIG_REG",
+       "importance": "major",
+       "score": 60.7,
+       "struct_score": 71.5,
+       "trace": "interface",
+       "why": "Baud prescale setting shared by transmitter and receiver.",
+       "lines": [
+        71,
+        90,
+        110
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clk_rst",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axis",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axis_tdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_tvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_tready",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "m_axis",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E6",
+      "E7",
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "m_axis_tdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "m_axis_tvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E8",
+       "name": "m_axis_tready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "uart_serial",
+     "protocol": "SERIAL",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E9",
+       "name": "rxd",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "txd",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E11",
+      "E12",
+      "E13",
+      "E14"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "tx_busy",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "rx_busy",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "rx_overrun_error",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "rx_frame_error",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "config",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E15"
+     ],
+     "members": [
+      {
+       "id": "E15",
+       "name": "prescale",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

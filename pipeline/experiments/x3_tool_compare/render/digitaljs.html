@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<!-- DigitalJS, set up as in its README (new Circuit(json); displayOn). Served from the repo root.
+     ?json=<url of yosys2digitaljs output>. Simulation is not started: only the layout is wanted. -->
+<html>
+<head>
+<meta charset="utf-8">
+<script src="/runs/.tools/x3/src/digitaljs/node_modules/jquery/dist/jquery.min.js"></script>
+<script src="/runs/.tools/x3/src/digitaljs/dist/main.js"></script>
+<style>body { margin: 0; background: #fff; } #paper { width: 4000px; }</style>
+</head>
+<body>
+<div id="paper"></div>
+<script>
+(async () => {
+  try {
+    const url = new URLSearchParams(location.search).get("json");
+    let json = await (await fetch(url)).json();
+    if (new URLSearchParams(location.search).get("transform") === "1") {
+      // "Simplify diagram" in DigitalJS's own web front end (digitaljs_online, on by default)
+      json = digitaljs.transform.transformCircuit(json);
+    }
+    const circuit = new digitaljs.Circuit(json);
+    const paper = circuit.displayOn($("#paper"));
+    // the ELK layout runs asynchronously; wait until every cell has a position and nothing moves
+    let last = "", stable = 0;
+    for (let i = 0; i < 600 && stable < 10; i++) {
+      await new Promise(r => setTimeout(r, 100));
+      const pos = JSON.stringify(circuit._graph.getElements().map(e => e.position()));
+      stable = pos === last ? stable + 1 : 0;
+      last = pos;
+    }
+    paper.fitToContent({ padding: 20 });
+    window.__done = true;
+  } catch (e) {
+    window.__error = String(e && e.stack || e);
+  }
+})();
+</script>
+</body>
+</html>

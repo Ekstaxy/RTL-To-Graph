@@ -1,0 +1,49 @@
+{
+ "module_summary": "AXI-Lite write-to-Wishbone bridge that pairs AW and W beats (with skid holding registers), issues WB write strobes, and tracks requests via first/mid/last FIFO pointers to return in-order B responses with error propagation.",
+ "anchors": [
+  {"id": "E39", "name": "axi_write_accepted", "role": "ENABLE", "importance": "critical", "trace": "control_backward", "why": "Fires when AW+W pair available, FIFO not full, WB not stalled; launches WB strobe", "lines": [121, 132, 322]},
+  {"id": "E3", "name": "i_axi_awvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "AXI write-address valid captured into r_addr or forwarded", "lines": [118, 167]},
+  {"id": "E4", "name": "o_axi_awready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "AW ready dropped on WB stall, error, FIFO full or missing write data", "lines": [207, 221, 229]},
+  {"id": "E7", "name": "i_axi_wvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "AXI write-data valid captured into r_data or forwarded", "lines": [119, 184]},
+  {"id": "E8", "name": "o_axi_wready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "W ready dropped on WB stall, error, FIFO full or missing address", "lines": [242, 256, 264]},
+  {"id": "E11", "name": "o_axi_bvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Write response valid raised on WB ack/err, held while responses remain", "lines": [401, 405, 407]},
+  {"id": "E13", "name": "o_axi_bresp", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Write response code, SLVERR for the errored transaction location", "lines": [368, 374, 376]},
+  {"id": "E15", "name": "o_wb_stb", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "WB write strobe set on accepted AXI write, cleared when not stalled", "lines": [133, 135]},
+  {"id": "E14", "name": "o_wb_cyc", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "WB cycle active while strobe or acks pending", "lines": [138]},
+  {"id": "E19", "name": "i_wb_ack", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "WB acknowledge advancing r_mid and raising bvalid", "lines": [332, 400]},
+  {"id": "E20", "name": "i_wb_stall", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "WB stall holding strobe/payload and dropping AXI readies", "lines": [122, 134, 144]},
+  {"id": "E21", "name": "i_wb_err", "role": "STATUS", "importance": "major", "trace": "interface", "why": "WB error input setting err_state and err_loc", "lines": [351, 390]},
+  {"id": "E16", "name": "o_wb_addr", "role": "INTERFACE_ADDR", "importance": "major", "trace": "data_backward", "why": "WB word address from r_addr or direct AXI awaddr", "lines": [147, 149]},
+  {"id": "E17", "name": "o_wb_data", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "WB write data from r_data or direct AXI wdata", "lines": [153, 156]},
+  {"id": "E18", "name": "o_wb_sel", "role": "INTERFACE_DATA", "importance": "minor", "trace": "data_backward", "why": "WB byte selects from r_sel or AXI wstrb", "lines": [154, 157]},
+  {"id": "E5", "name": "i_axi_awaddr", "role": "INTERFACE_ADDR", "importance": "minor", "trace": "interface", "why": "AXI write address, word bits sent to WB address", "lines": [149, 169]},
+  {"id": "E9", "name": "i_axi_wdata", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "AXI write data forwarded or held for WB", "lines": [156, 186]},
+  {"id": "E23", "name": "r_awvalid", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Held-address valid when AW arrived before it could be issued", "lines": [146, 170]},
+  {"id": "E25", "name": "r_addr", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Holds AW address until paired write is issued", "lines": [147, 169]},
+  {"id": "E24", "name": "r_wvalid", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Held-data valid when W arrived before it could be issued", "lines": [151, 188]},
+  {"id": "E26", "name": "r_data", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Holds W data until paired write is issued", "lines": [153, 186]},
+  {"id": "E30", "name": "r_first", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "Count of issued WB requests (FIFO write pointer)", "lines": [323, 388]},
+  {"id": "E31", "name": "r_mid", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "Count of WB acks/errs received (middle pointer)", "lines": [333, 335, 352]},
+  {"id": "E32", "name": "r_last", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "Count of B responses returned (FIFO read pointer)", "lines": [345, 388]},
+  {"id": "E28", "name": "fifo_full", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Outstanding-transaction FIFO full; blocks acceptance and AXI readies", "lines": [122, 218, 304]},
+  {"id": "E38", "name": "err_state", "role": "CONTROL_FLAG", "importance": "critical", "trace": "control_backward", "why": "Error mode after WB err; kills strobes and drains responses with errors", "lines": [388, 391, 130]},
+  {"id": "E37", "name": "err_loc", "role": "INDEX", "importance": "minor", "trace": "data_backward", "why": "Records r_mid position of failed transaction for bresp", "lines": [352, 373]},
+  {"id": "E36", "name": "wb_outstanding", "role": "COUNTER", "importance": "minor", "trace": "control_backward", "why": "Counts WB requests awaiting ack", "lines": [278, 282]},
+  {"id": "E35", "name": "wb_pending", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "WB acks pending flag keeping o_wb_cyc high", "lines": [138, 279]},
+  {"id": "E40", "name": "pending_axi_write", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Both address and data available for a write", "lines": [117, 123]},
+  {"id": "E29", "name": "fifo_empty", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "FIFO empty flag (unused, formal only)", "lines": [300, 306]}
+ ],
+ "groups": [
+  {"name": "AXI write intake", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E3", "E4", "E7", "E8", "E5", "E9", "E23", "E25", "E24", "E26", "E40"], "member_ids": ["E6", "E10", "E27"], "description": "AW/W handshakes with holding registers pairing address and data"},
+  {"name": "WB master issue", "kind": "CONTROLLER", "anchor_ids": ["E39", "E15", "E14", "E16", "E17", "E18", "E19", "E20", "E21", "E36", "E35"], "member_ids": [], "description": "Issues WB write strobes and tracks outstanding acks"},
+  {"name": "Transaction tracking FIFO", "kind": "BUFFER", "anchor_ids": ["E30", "E31", "E32", "E28", "E29"], "member_ids": ["E33", "E34"], "description": "First/mid/last pointers tracking issued, acked and responded writes"},
+  {"name": "Response and error", "kind": "CONTROLLER", "anchor_ids": ["E11", "E13", "E38", "E37"], "member_ids": [], "description": "Generates B responses in order, marking WB-errored transactions"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "axi_write_address", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6"]},
+  {"name": "axi_write_data", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E7", "E8", "E9", "E10"]},
+  {"name": "axi_write_response", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E11", "E12", "E13"]},
+  {"name": "wishbone_master", "protocol": "MEMORY_BUS", "direction": "OUT", "member_ids": ["E14", "E15", "E16", "E17", "E18", "E19", "E20", "E21"]}
+ ]
+}
