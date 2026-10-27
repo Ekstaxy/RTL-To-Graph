@@ -1,0 +1,25 @@
+{
+ "module_summary": "UART transmitter: a 4-state FSM accepts a byte via valid/ready, then shifts start bit, 8 LSB-first data bits and stop bit onto the serial line, paced by a baud divider.",
+ "anchors": [
+  {"id": "E8", "name": "n1_409", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Idle/start/data/stop state register selecting serial line level and shift timing."},
+  {"id": "E3", "name": "n5_b37", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Transmit request valid; in idle loads byte into shift register and starts frame."},
+  {"id": "E4", "name": "n2_c30", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Ready to accept a byte, decoded from idle state."},
+  {"id": "E5", "name": "n0_a36", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "8-bit byte to transmit, loaded into shift register."},
+  {"id": "E6", "name": "n6_14d", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Serial TX line: low start bit, shift register LSB, high stop/idle."},
+  {"id": "E13", "name": "n11_74d", "role": "STORAGE", "importance": "major", "trace": "data_backward", "why": "Transmit shift register, shifted right each baud tick in data state."},
+  {"id": "E10", "name": "n3_4bb", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Baud divider counter, cleared in idle, wraps at CLK_DIV-1."},
+  {"id": "E12", "name": "n12_2f4", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Data bit counter; reaching 7 at baud tick moves FSM to stop."},
+  {"id": "E11", "name": "n10_4a4", "role": "CLOCK_GEN", "importance": "major", "trace": "control_backward", "why": "Baud tick clock-enable advancing FSM, shift register and bit counter."},
+  {"id": "E7", "name": "n7_f2a", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Busy level output while FSM not idle."}
+ ],
+ "groups": [
+  {"name": "TX FSM", "kind": "CONTROLLER", "anchor_ids": ["E8", "E3", "E4", "E7"], "member_ids": ["E9"], "description": "Frame sequencing start, data and stop bits; ready and busy decode."},
+  {"name": "Baud generator", "kind": "COUNTER_TIMER", "anchor_ids": ["E10", "E11"], "member_ids": [], "description": "Divides clock to per-bit tick enable."},
+  {"name": "Shift serializer", "kind": "SERIALIZER", "anchor_ids": ["E13", "E12", "E5", "E6"], "member_ids": [], "description": "Loads byte, shifts LSB-first onto TX line, counts 8 bits."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "byte_in", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E7"]},
+  {"name": "serial_out", "protocol": "SERIAL", "direction": "OUT", "member_ids": ["E6"]}
+ ]
+}

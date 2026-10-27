@@ -1,0 +1,29 @@
+{
+  "module_summary": "UART transmitter: one-hot 4-phase FSM (idle/start/data/stop) with a baud divider timer and bit counter shifting an 8-bit shift register onto tx_o.",
+  "anchors": [
+    {"id": "E10", "name": "ph", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "One-hot phase register: idle, start bit, data bits, stop bit; drives tx_o and ready.", "lines": [18, 41, 46]},
+    {"id": "E8", "name": "sr", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "Shift register loaded with tx_data, shifted right per bit; LSB drives tx_o.", "lines": [57, 60, 67]},
+    {"id": "E13", "name": "tmr", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Baud divider counting to CLK_DIV-1 while not idle; produces wrap bit tick.", "lines": [31, 33]},
+    {"id": "E12", "name": "nb", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Bit counter incremented per shifted bit; all-ones ends data phase.", "lines": [46, 58, 61]},
+    {"id": "E3", "name": "tx_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Byte request; starts frame when FSM idle.", "lines": [6, 25, 42]},
+    {"id": "E4", "name": "tx_ready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Ready when FSM is idle, accepting a new byte.", "lines": [7, 65]},
+    {"id": "E5", "name": "tx_data", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Byte payload loaded into the shift register.", "lines": [8, 57]},
+    {"id": "E6", "name": "tx_o", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Serial line output: low start bit, sr LSB data, high stop/idle.", "lines": [9, 67]},
+    {"id": "E7", "name": "busy_o", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Level busy indication whenever FSM is not idle.", "lines": [10, 66]},
+    {"id": "E11", "name": "wrap", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Baud tick when timer reaches CLK_DIV-1; advances phases and shifts.", "lines": [27, 44]},
+    {"id": "E15", "name": "grab", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Load enable: idle and valid loads sr and clears bit counter.", "lines": [25, 56]},
+    {"id": "E16", "name": "roll", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Shift enable: data phase baud tick shifts sr and bumps nb.", "lines": [26, 59]},
+    {"id": "E9", "name": "sr_shadow", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Copy of accepted byte held during the frame; unused downstream.", "lines": [17, 57]}
+  ],
+  "groups": [
+    {"name": "tx_controller", "kind": "CONTROLLER", "anchor_ids": ["E10", "E15", "E16", "E7"], "member_ids": ["E14"], "description": "One-hot phase FSM sequencing start, data and stop bits; idle decode gives ready."},
+    {"name": "baud_and_bit_counters", "kind": "COUNTER_TIMER", "anchor_ids": ["E13", "E12", "E11"], "member_ids": [], "description": "Baud divider timer producing bit ticks and 3-bit data bit counter."},
+    {"name": "tx_shifter", "kind": "SERIALIZER", "anchor_ids": ["E8", "E9", "E6"], "member_ids": [], "description": "Shift register serializing the byte LSB first onto tx_o."},
+    {"name": "byte_input", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E3", "E4", "E5"], "member_ids": ["E14"], "description": "Valid/ready byte input accepted while idle."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "tx_byte_in", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5"]},
+    {"name": "serial_out", "protocol": "SERIAL", "direction": "OUT", "member_ids": ["E6", "E7"]}
+  ]
+}

@@ -1,0 +1,27 @@
+{
+ "module_summary": "Sequential 16x16 shift-and-add multiplier: a 3-state FSM loads operands, adds the shifting multiplicand into an accumulator for 16 cycles, then pulses done.",
+ "anchors": [
+  {"id": "E8", "name": "m", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Idle/run/finish controller; gates operand load, accumulate steps and done pulse.", "lines": [24, 28, 30]},
+  {"id": "E3", "name": "s", "role": "COMMAND", "importance": "critical", "trace": "interface", "why": "Start input loading operands and entering run state from idle.", "lines": [25]},
+  {"id": "E4", "name": "a", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Multiplicand operand loaded into x.", "lines": [25]},
+  {"id": "E5", "name": "b", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Multiplier operand loaded into y.", "lines": [25]},
+  {"id": "E7", "name": "p", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Product output, direct copy of accumulator acc.", "lines": [19]},
+  {"id": "E13", "name": "d", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "One-cycle done pulse in finish state accompanying the product.", "lines": [23, 30]},
+  {"id": "E15", "name": "t", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Conditional add acc+x selected by y[0]; next accumulator value.", "lines": [17, 27]},
+  {"id": "E9", "name": "x", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Multiplicand register shifted left each run cycle, added into acc.", "lines": [25, 27]},
+  {"id": "E11", "name": "y", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Multiplier register shifted right; LSB selects whether to add.", "lines": [17, 25, 27]},
+  {"id": "E12", "name": "k", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Step counter incremented each run cycle; reaching 16 ends run.", "lines": [16, 27]},
+  {"id": "E14", "name": "z", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Terminal-count flag moving FSM from run to finish.", "lines": [16, 28]},
+  {"id": "E6", "name": "bz", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Busy level decoded from run state.", "lines": [18]}
+ ],
+ "groups": [
+  {"name": "mul_controller", "kind": "CONTROLLER", "anchor_ids": ["E8", "E3", "E13", "E6"], "member_ids": [], "description": "Start/run/finish FSM producing busy level and done pulse."},
+  {"name": "shift_add_datapath", "kind": "DATAPATH", "anchor_ids": ["E9", "E11", "E15", "E7", "E4", "E5"], "member_ids": ["E10"], "description": "Shifting operand registers and adder updating the accumulator/product."},
+  {"name": "step_counter", "kind": "COUNTER_TIMER", "anchor_ids": ["E12", "E14"], "member_ids": [], "description": "Counts 16 iterations and flags completion."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "operands_start", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E3", "E4", "E5"]},
+  {"name": "result", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E7", "E13", "E6"]}
+ ]
+}

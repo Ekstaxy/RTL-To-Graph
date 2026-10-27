@@ -1,0 +1,20 @@
+{
+ "module_summary": "PS/2-style 3-byte packet framer: a 4-state FSM syncs on in[3] to count bytes while a 24-bit shift register captures them, output when DONE.",
+ "anchors": [
+  {"id": "E6", "name": "state", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Tracks byte position BYTE1/BYTE2/BYTE3/DONE of the 3-byte packet.", "lines": [17, 27, 30]},
+  {"id": "E9", "name": "out_bytes_r", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "24-bit shift register capturing the last three input bytes.", "lines": [32, 34, 39]},
+  {"id": "E2", "name": "in", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Input byte stream shifted into out_bytes_r.", "lines": [4, 34]},
+  {"id": "E4", "name": "out_bytes", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Packet output driven from out_bytes_r when done.", "lines": [39]},
+  {"id": "E5", "name": "done", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "One-cycle pulse in DONE state qualifying out_bytes packet data.", "lines": [30, 39]},
+  {"id": "E8", "name": "in3", "role": "DECODE", "importance": "minor", "trace": "data_backward", "why": "Sync bit in[3] marking first packet byte; steers FSM transitions.", "lines": [14, 18, 21]}
+ ],
+ "groups": [
+  {"name": "packet_fsm", "kind": "CONTROLLER", "anchor_ids": ["E6", "E5", "E8"], "member_ids": ["E7"], "description": "Byte-position FSM synced by in[3], asserting done after third byte."},
+  {"name": "byte_shift", "kind": "DATAPATH", "anchor_ids": ["E9", "E2", "E4"], "member_ids": [], "description": "Shift register collecting three bytes, gated to output on done."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E3"]},
+  {"name": "byte_in", "protocol": "STREAM", "direction": "IN", "member_ids": ["E2"]},
+  {"name": "packet_out", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E4", "E5"]}
+ ]
+}

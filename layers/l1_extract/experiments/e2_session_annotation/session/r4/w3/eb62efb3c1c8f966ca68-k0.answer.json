@@ -1,0 +1,40 @@
+{
+  "module_summary": "AXI-stream byte packer: input skid buffer, a combinational stage compacting null (TKEEP=0) bytes plus byte count, a second skid buffer, then a partial-word accumulator merging beats into full output words.",
+  "anchors": [
+    {"id": "E3", "name": "S_AXIS_TVALID", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Input stream valid into the slave skid buffer.", "lines": [140]},
+    {"id": "E4", "name": "S_AXIS_TREADY", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Input stream ready from the slave skid buffer.", "lines": [140]},
+    {"id": "E5", "name": "S_AXIS_TDATA", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Input stream payload bytes to be compacted.", "lines": [141]},
+    {"id": "E6", "name": "S_AXIS_TSTRB", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Input byte strobes carried alongside data through packing.", "lines": [141]},
+    {"id": "E7", "name": "S_AXIS_TKEEP", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Input byte keep flags marking which bytes are retained.", "lines": [142]},
+    {"id": "E8", "name": "S_AXIS_TLAST", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Input packet end marker.", "lines": [142]},
+    {"id": "E9", "name": "M_AXIS_TVALID", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Registered output valid loaded from next_valid when output is free.", "lines": [392, 391]},
+    {"id": "E10", "name": "M_AXIS_TREADY", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Output backpressure; stalls packing, mid_fill and output registers.", "lines": [259, 391]},
+    {"id": "E11", "name": "M_AXIS_TDATA", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Packed output word from mid_data or low half of w_packed_data.", "lines": [412, 417]},
+    {"id": "E12", "name": "M_AXIS_TSTRB", "role": "INTERFACE_DATA", "importance": "minor", "trace": "data_backward", "why": "Packed output byte strobes.", "lines": [413, 418]},
+    {"id": "E13", "name": "M_AXIS_TKEEP", "role": "INTERFACE_DATA", "importance": "minor", "trace": "data_backward", "why": "Packed output byte keep flags.", "lines": [414, 419]},
+    {"id": "E14", "name": "M_AXIS_TLAST", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Output packet end, from mid_last flush or next_last.", "lines": [415, 420]},
+    {"id": "E21", "name": "pck_tdata", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Beat with null bytes squeezed out by pack function, fed to beat skid buffer.", "lines": [160, 190]},
+    {"id": "E25", "name": "pck_count", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Popcount of TKEEP giving valid byte count of the packed beat.", "lines": [165, 190]},
+    {"id": "E31", "name": "skd_count", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Registered byte count of current beat; drives fill arithmetic and readiness.", "lines": [258, 274, 365]},
+    {"id": "E27", "name": "skd_valid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "Valid of packed beat from beat skid buffer; gates axis_ready and next_valid.", "lines": [192, 261]},
+    {"id": "E28", "name": "skd_data", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Registered packed beat data shifted into w_packed_data.", "lines": [193, 345]},
+    {"id": "E26", "name": "axis_ready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "Accept of packed beat; drops when accumulator full or ending while output stalled.", "lines": [257, 260, 192]},
+    {"id": "E33", "name": "mid_fill", "role": "FIFO_PTR", "importance": "critical", "trace": "control_backward", "why": "Byte occupancy of partial-word buffer; sets shift amount and when a word is complete.", "lines": [270, 274, 345]},
+    {"id": "E34", "name": "mid_data", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "Partial-word accumulator holding leftover bytes between output words.", "lines": [307, 318, 344]},
+    {"id": "E37", "name": "mid_last", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Pending final word flag; forces flush of mid_data with TLAST.", "lines": [288, 279, 410]},
+    {"id": "E38", "name": "w_packed_data", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Double-width merge of mid_data with skd_data shifted by mid_fill bytes.", "lines": [344, 417, 318]},
+    {"id": "E41", "name": "next_valid", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Full word or final flush available; loads M_AXIS_TVALID and decrements fill.", "lines": [365, 392]},
+    {"id": "E42", "name": "next_last", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Next output word ends the packet; feeds M_AXIS_TLAST and mid_last.", "lines": [377, 420]}
+  ],
+  "groups": [
+    {"name": "Input skid buffer", "kind": "BUFFER", "anchor_ids": ["E3", "E4", "E5", "E6", "E7", "E8"], "member_ids": ["I1", "E15", "E16", "E17", "E18", "E19", "E20"], "description": "Registers incoming AXI-stream beats with full-throughput backpressure."},
+    {"name": "Beat packing stage", "kind": "PIPELINE_STAGE", "anchor_ids": ["E21", "E25", "E31", "E27", "E28"], "member_ids": ["I2", "E22", "E23", "E24", "E29", "E30", "E32"], "description": "Compacts kept bytes to the low end and counts them, registered via beat skid buffer."},
+    {"name": "Word packing accumulator", "kind": "DATAPATH", "anchor_ids": ["E26", "E33", "E34", "E37", "E38", "E41", "E42"], "member_ids": ["E35", "E36", "E39", "E40"], "description": "Accumulates packed beats into full words, tracking fill level and pending last."},
+    {"name": "Output register", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E9", "E10", "E11", "E12", "E13", "E14"], "member_ids": [], "description": "Registered AXI-stream master outputs loaded when output free."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "s_axis", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8"]},
+    {"name": "m_axis", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E9", "E10", "E11", "E12", "E13", "E14"]}
+  ]
+}

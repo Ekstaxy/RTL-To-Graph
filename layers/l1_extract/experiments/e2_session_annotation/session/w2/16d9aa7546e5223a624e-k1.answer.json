@@ -1,0 +1,27 @@
+{
+ "module_summary": "Sequential 16x16 shift-and-add multiplier: a 3-state FSM starts on s, iterates 16 cycles adding shifted multiplicand into an accumulator, then pulses done.",
+ "anchors": [
+  {"id": "E8", "name": "m", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Idle/run/finish state register sequencing load, 16 add-shift iterations and done pulse."},
+  {"id": "E3", "name": "s", "role": "COMMAND", "importance": "critical", "trace": "forward", "why": "Start input; in idle loads operands, clears accumulator and enters run state."},
+  {"id": "E7", "name": "p", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "32-bit product output, direct copy of the accumulator register."},
+  {"id": "E13", "name": "d", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "One-cycle done pulse in finish state marking product valid."},
+  {"id": "E4", "name": "a", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Multiplicand operand loaded into shift register x on start."},
+  {"id": "E5", "name": "b", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Multiplier operand loaded into shift register y on start."},
+  {"id": "E6", "name": "bz", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Busy level output, high while FSM is in run state."},
+  {"id": "E9", "name": "x", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Multiplicand register shifted left each iteration, added into accumulator."},
+  {"id": "E11", "name": "y", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Multiplier register shifted right; its LSB selects whether x is added."},
+  {"id": "E12", "name": "k", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Iteration counter incremented each run cycle; reaching 16 ends multiplication."},
+  {"id": "E15", "name": "t", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Adder result acc+x or acc selected by y[0], written to accumulator."},
+  {"id": "E14", "name": "z", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Terminal-count flag k==16 moving FSM from run to finish."}
+ ],
+ "groups": [
+  {"name": "control_fsm", "kind": "CONTROLLER", "anchor_ids": ["E8", "E3", "E13", "E6"], "member_ids": [], "description": "Idle/run/finish FSM handling start, busy indication and done pulse."},
+  {"name": "iteration_counter", "kind": "COUNTER_TIMER", "anchor_ids": ["E12", "E14"], "member_ids": [], "description": "Counts 16 add-shift iterations and flags completion."},
+  {"name": "shift_add_datapath", "kind": "DATAPATH", "anchor_ids": ["E9", "E11", "E15", "E7", "E4", "E5"], "member_ids": ["E10"], "description": "Operand shift registers, conditional adder and accumulator producing the product."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "operation_request", "protocol": "REQ_ACK", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6"]},
+  {"name": "result", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E7", "E13"]}
+ ]
+}

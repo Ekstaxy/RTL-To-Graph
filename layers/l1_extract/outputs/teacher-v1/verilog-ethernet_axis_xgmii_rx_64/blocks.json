@@ -1,0 +1,885 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-ethernet_axis_xgmii_rx_64",
+ "tops": [
+  "axis_xgmii_rx_64"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "lfsr": {
+   "source": "heuristic",
+   "canonical_instance": "axis_xgmii_rx_64.eth_crc",
+   "file": "data/rtl/verilog-ethernet/rtl/lfsr.v",
+   "lines": [
+    34,
+    445
+   ],
+   "summary": "lfsr (heuristic)",
+   "blocks": [],
+   "ungrouped_anchors": [
+    {
+     "id": "E1",
+     "name": "data_in",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 43.1,
+     "struct_score": 97.8,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    },
+    {
+     "id": "E2",
+     "name": "state_in",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 42.8,
+     "struct_score": 97.0,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    },
+    {
+     "id": "E3",
+     "name": "data_out",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 43.6,
+     "struct_score": 99.1,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    },
+    {
+     "id": "E4",
+     "name": "state_out",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 43.1,
+     "struct_score": 97.7,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "data",
+     "protocol": "SIMPLE",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E1",
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "data_in",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "data_out",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "state",
+     "protocol": "SIMPLE",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E2",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E2",
+       "name": "state_in",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "state_out",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "axis_xgmii_rx_64": {
+   "source": "teacher",
+   "canonical_instance": "axis_xgmii_rx_64",
+   "file": "data/rtl/verilog-ethernet/rtl/axis_xgmii_rx_64.v",
+   "lines": [
+    34,
+    447
+   ],
+   "summary": "XGMII-to-AXI-Stream receiver: aligns lanes on start, detects terminate/framing errors in a 2-stage pipeline, checks CRC via LFSR, and a 3-state FSM emits AXIS beats with tkeep/tlast/error.",
+   "blocks": [
+    {
+     "name": "Receive FSM",
+     "kind": "CONTROLLER",
+     "description": "Three-state frame controller sequencing payload, last beat, CRC reset and errors",
+     "anchors": [
+      {
+       "id": "E15",
+       "name": "state_reg",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.0,
+       "struct_score": 97.4,
+       "trace": "control_backward",
+       "why": "IDLE/PAYLOAD/LAST receive FSM controlling output beats, CRC reset and error flags",
+       "lines": [
+        109,
+        218,
+        312
+       ]
+      },
+      {
+       "id": "E34",
+       "name": "xgmii_start_d1",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.4,
+       "struct_score": 13.7,
+       "trace": "control_backward",
+       "why": "Delayed start detection that launches FSM into PAYLOAD",
+       "lines": [
+        132,
+        223,
+        423
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "cfg_rx_enable",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 19.7,
+       "struct_score": 23.2,
+       "trace": "interface",
+       "why": "Receive enable gating frame start in FSM",
+       "lines": [
+        71,
+        223,
+        297
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E16",
+       "name": "state_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E17",
+       "name": "reset_crc",
+       "kind": "comb"
+      },
+      {
+       "id": "E33",
+       "name": "xgmii_start_d0",
+       "kind": "reg"
+      },
+      {
+       "id": "E32",
+       "name": "xgmii_start_swap",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Lane alignment and terminate detect",
+     "kind": "DATAPATH",
+     "description": "Realigns lane-4 starts, masks control bytes, locates terminate and framing errors",
+     "anchors": [
+      {
+       "id": "E18",
+       "name": "lanes_swapped",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 49.0,
+       "struct_score": 28.6,
+       "trace": "control_backward",
+       "why": "Set when start found in lane 4; selects swapped lane alignment path",
+       "lines": [
+        114,
+        340,
+        384
+       ]
+      },
+      {
+       "id": "E27",
+       "name": "framing_error_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 49.4,
+       "struct_score": 30.3,
+       "trace": "control_backward",
+       "why": "Flags control characters inside frame, forcing FSM to abort with bad frame",
+       "lines": [
+        123,
+        244,
+        362
+       ]
+      },
+      {
+       "id": "E26",
+       "name": "term_present_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 20.8,
+       "struct_score": 27.5,
+       "trace": "control_backward",
+       "why": "Terminate character detected this cycle; drives FSM end-of-frame decision",
+       "lines": [
+        122,
+        251,
+        351
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "term_lane_reg",
+       "role": "INDEX",
+       "importance": "minor",
+       "score": 18.1,
+       "struct_score": 16.7,
+       "trace": "control_backward",
+       "why": "Lane of terminate character; selects tkeep and CRC check lane",
+       "lines": [
+        121,
+        253,
+        255
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "term_lane_d0_reg",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 19.1,
+       "struct_score": 20.8,
+       "trace": "data_backward",
+       "why": "Delayed terminate lane used in STATE_LAST for tkeep and CRC selection",
+       "lines": [
+        121,
+        280,
+        411
+       ]
+      },
+      {
+       "id": "E29",
+       "name": "xgmii_rxd_d0",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 26.4,
+       "struct_score": 49.3,
+       "trace": "data_backward",
+       "why": "Lane-aligned masked data stage feeding CRC LFSR",
+       "lines": [
+        125,
+        187,
+        341
+       ]
+      },
+      {
+       "id": "E30",
+       "name": "xgmii_rxd_d1",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 23.0,
+       "struct_score": 36.4,
+       "trace": "data_backward",
+       "why": "Second data stage aligned with CRC result, source of output tdata",
+       "lines": [
+        126,
+        208,
+        422
+       ]
+      },
+      {
+       "id": "E19",
+       "name": "swap_rxd",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 19.7,
+       "struct_score": 23.1,
+       "trace": "data_backward",
+       "why": "Holds upper 32 bits for lane-swapped realignment",
+       "lines": [
+        115,
+        324,
+        341
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "xgmii_rxd_masked",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 21.7,
+       "struct_score": 31.4,
+       "trace": "data_backward",
+       "why": "Input data with control-character bytes zeroed",
+       "lines": [
+        119,
+        198,
+        357
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "xgmii_term",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 21.5,
+       "struct_score": 30.4,
+       "trace": "data_backward",
+       "why": "Per-lane terminate character decode used in swapped path",
+       "lines": [
+        120,
+        199,
+        326
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E20",
+       "name": "swap_rxc",
+       "kind": "reg"
+      },
+      {
+       "id": "E21",
+       "name": "swap_rxc_term",
+       "kind": "reg"
+      },
+      {
+       "id": "E28",
+       "name": "framing_error_d0_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E31",
+       "name": "xgmii_rxc_d0",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "CRC checker",
+     "kind": "DATAPATH",
+     "description": "LFSR-based CRC32 accumulation with per-lane residue match flags",
+     "anchors": [
+      {
+       "id": "E53",
+       "name": "crc_state",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 48.3,
+       "struct_score": 25.8,
+       "trace": "data_backward",
+       "why": "Running Ethernet CRC32 state fed back through LFSR, reset between frames",
+       "lines": [
+        148,
+        188,
+        417
+       ]
+      },
+      {
+       "id": "E55",
+       "name": "crc_valid",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 47.5,
+       "struct_score": 22.5,
+       "trace": "data_backward",
+       "why": "Per-lane CRC residue match flags deciding good or bad FCS",
+       "lines": [
+        152,
+        155,
+        258
+       ]
+      },
+      {
+       "id": "E56",
+       "name": "crc_valid_save",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 18.4,
+       "struct_score": 17.9,
+       "trace": "data_backward",
+       "why": "Previous-cycle CRC match flags for terminate in lanes 0 and 5-7",
+       "lines": [
+        153,
+        257,
+        420
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "eth_crc",
+       "module": "lfsr"
+      }
+     ],
+     "members": [
+      {
+       "id": "E54",
+       "name": "crc_next",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "AXIS output register",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Registered AXI-Stream beat outputs with keep, last and user error",
+     "anchors": [
+      {
+       "id": "E5",
+       "name": "m_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 92.8,
+       "struct_score": 81.9,
+       "trace": "data_backward",
+       "why": "AXI-Stream output data from delayed aligned XGMII data",
+       "lines": [
+        57,
+        167
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "m_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 86.5,
+       "struct_score": 64.3,
+       "trace": "control_backward",
+       "why": "AXI-Stream valid asserted by FSM in PAYLOAD/LAST states",
+       "lines": [
+        59,
+        169
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "m_axis_tlast",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 53.8,
+       "struct_score": 47.2,
+       "trace": "control_backward",
+       "why": "End-of-frame marker set on terminate or framing error",
+       "lines": [
+        60,
+        170
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "m_axis_tkeep",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 58.8,
+       "struct_score": 65.3,
+       "trace": "control_backward",
+       "why": "Byte-valid mask derived from terminate lane on last beat",
+       "lines": [
+        58,
+        168
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "m_axis_tuser",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 25.8,
+       "struct_score": 47.2,
+       "trace": "control_backward",
+       "why": "Bad-frame flag bit plus optional PTP timestamp sideband",
+       "lines": [
+        61,
+        171
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E35",
+       "name": "m_axis_tdata_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E36",
+       "name": "m_axis_tdata_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E37",
+       "name": "m_axis_tkeep_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E38",
+       "name": "m_axis_tkeep_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E39",
+       "name": "m_axis_tvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E40",
+       "name": "m_axis_tvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E41",
+       "name": "m_axis_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E42",
+       "name": "m_axis_tlast_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E43",
+       "name": "m_axis_tuser_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E44",
+       "name": "m_axis_tuser_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Status outputs",
+     "kind": "OTHER",
+     "description": "Registered error and start-of-packet pulses",
+     "anchors": [
+      {
+       "id": "E13",
+       "name": "error_bad_frame",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 45.9,
+       "struct_score": 15.7,
+       "trace": "control_backward",
+       "why": "Pulse reporting framing or CRC error on received frame",
+       "lines": [
+        77,
+        174
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "error_bad_fcs",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 17.9,
+       "struct_score": 15.7,
+       "trace": "control_backward",
+       "why": "Pulse reporting FCS mismatch",
+       "lines": [
+        78,
+        175
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "start_packet",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 18.5,
+       "struct_score": 18.3,
+       "trace": "control_backward",
+       "why": "Start-of-packet indication per lane alignment",
+       "lines": [
+        76,
+        173
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E45",
+       "name": "start_packet_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E46",
+       "name": "error_bad_frame_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E47",
+       "name": "error_bad_frame_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E48",
+       "name": "error_bad_fcs_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E49",
+       "name": "error_bad_fcs_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "PTP timestamp capture",
+     "kind": "DATAPATH",
+     "description": "Captures and adjusts PTP timestamp at frame start (parameter gated)",
+     "anchors": [
+      {
+       "id": "E50",
+       "name": "ptp_ts_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 26.6,
+       "struct_score": 50.1,
+       "trace": "data_backward",
+       "why": "PTP timestamp captured at frame start, placed in tuser when enabled",
+       "lines": [
+        144,
+        241,
+        397
+       ]
+      },
+      {
+       "id": "E58",
+       "name": "ts_inc_reg",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 19.0,
+       "struct_score": 20.2,
+       "trace": "data_backward",
+       "why": "Per-cycle timestamp increment used to correct swapped-lane start timestamp",
+       "lines": [
+        165,
+        397,
+        426
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E51",
+       "name": "ptp_ts_adj_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E52",
+       "name": "ptp_ts_borrow_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E57",
+       "name": "last_ts_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E10",
+       "name": "ptp_ts",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E3",
+     "name": "xgmii_rxd",
+     "role": "INTERFACE_DATA",
+     "importance": "critical",
+     "score": 95.7,
+     "struct_score": 89.1,
+     "trace": "interface",
+     "why": "64-bit XGMII receive data entering lane-alignment pipeline",
+     "lines": [
+      51,
+      198,
+      365
+     ]
+    },
+    {
+     "id": "E4",
+     "name": "xgmii_rxc",
+     "role": "INTERFACE_DATA",
+     "importance": "major",
+     "score": 64.0,
+     "struct_score": 79.9,
+     "trace": "interface",
+     "why": "XGMII control lane flags used for masking, start/terminate and framing error detection",
+     "lines": [
+      52,
+      198,
+      362
+     ]
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "xgmii_rx",
+     "protocol": "STREAM",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "xgmii_rxd",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "xgmii_rxc",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axis",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "m_axis_tdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "m_axis_tkeep",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "m_axis_tvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E8",
+       "name": "m_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "m_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "ptp",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E10",
+       "name": "ptp_ts",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "config",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E11"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "cfg_rx_enable",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E12",
+      "E13",
+      "E14"
+     ],
+     "members": [
+      {
+       "id": "E12",
+       "name": "start_packet",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "error_bad_frame",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "error_bad_fcs",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

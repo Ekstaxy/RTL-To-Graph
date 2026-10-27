@@ -1,0 +1,33 @@
+{
+ "module_summary": "Combinational bridge from PicoRV32 native memory bus to AXI4-lite master, using per-channel accepted flags and a transfer-done flag to issue each AW/W/AR request once.",
+ "anchors": [
+  {"id": "E20", "name": "mem_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "forward", "why": "Native request valid; gates all AXI valids, readies and clears accepted flags."},
+  {"id": "E22", "name": "mem_ready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Native completion, asserted on AXI write response or read data valid."},
+  {"id": "E25", "name": "mem_wstrb", "role": "MUX_SELECT", "importance": "major", "trace": "forward", "why": "Nonzero strobe selects AXI write channels; zero selects read channels."},
+  {"id": "E3", "name": "mem_axi_awvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "AXI write-address valid, suppressed once ack_awvalid set."},
+  {"id": "E7", "name": "mem_axi_wvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "AXI write-data valid, suppressed once ack_wvalid set."},
+  {"id": "E13", "name": "mem_axi_arvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "AXI read-address valid for reads, suppressed once ack_arvalid set."},
+  {"id": "E27", "name": "ack_awvalid", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Records AW handshake accepted; blocks reissuing awvalid until transfer ends."},
+  {"id": "E29", "name": "ack_wvalid", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Records W handshake accepted; blocks reissuing wvalid until transfer ends."},
+  {"id": "E28", "name": "ack_arvalid", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Records AR handshake accepted; blocks reissuing arvalid until transfer ends."},
+  {"id": "E30", "name": "xfer_done", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Registered native completion; clears all channel accepted flags."},
+  {"id": "E23", "name": "mem_addr", "role": "INTERFACE_ADDR", "importance": "major", "trace": "forward", "why": "Native address forwarded to both AXI awaddr and araddr."},
+  {"id": "E26", "name": "mem_rdata", "role": "INTERFACE_DATA", "importance": "minor", "trace": "data_backward", "why": "Read data passed through from AXI rdata."},
+  {"id": "E9", "name": "mem_axi_wdata", "role": "INTERFACE_DATA", "importance": "minor", "trace": "data_backward", "why": "Write data passed through from native mem_wdata."},
+  {"id": "E16", "name": "mem_axi_arprot", "role": "INTERFACE_DATA", "importance": "minor", "trace": "control_backward", "why": "Marks instruction fetches via mem_instr in AXI protection bits."}
+ ],
+ "groups": [
+  {"name": "channel_tracking", "kind": "CONTROLLER", "anchor_ids": ["E27", "E29", "E28", "E30"], "member_ids": [], "description": "Accepted flags per AXI request channel, cleared on transfer done or idle."},
+  {"name": "request_issue", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E20", "E25", "E3", "E7", "E13", "E23", "E9", "E16"], "member_ids": ["E5", "E15", "E10", "E6"], "description": "Maps native request to AXI AW/W or AR channels by write strobe."},
+  {"name": "response_return", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E22", "E26"], "member_ids": ["E12", "E18"], "description": "AXI B/R responses complete native transfer and return read data."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "native_mem", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E20", "E21", "E22", "E23", "E24", "E25", "E26"]},
+  {"name": "axi_aw", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E3", "E4", "E5", "E6"]},
+  {"name": "axi_w", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E7", "E8", "E9", "E10"]},
+  {"name": "axi_b", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E11", "E12"]},
+  {"name": "axi_ar", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E13", "E14", "E15", "E16"]},
+  {"name": "axi_r", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E17", "E18", "E19"]}
+ ]
+}

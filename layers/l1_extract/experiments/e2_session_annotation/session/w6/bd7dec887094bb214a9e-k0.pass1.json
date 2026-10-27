@@ -1,0 +1,20 @@
+{
+ "module_summary": "PS/2-style 3-byte packet framer: a one-hot FSM syncs on bytes with bit3 set, a 24-bit byte shift window captures the packet, and done qualifies the output.",
+ "anchors": [
+  {"id": "E6", "name": "oh", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "One-hot state (hunt, byte2, byte3, done) sequencing packet reception", "lines": [15, 31, 34]},
+  {"id": "E7", "name": "win", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "24-bit shift window holding last three received bytes", "lines": [16, 24, 40]},
+  {"id": "E2", "name": "in", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Byte stream input shifted into window; bit3 marks packet start", "lines": [4, 20, 24]},
+  {"id": "E4", "name": "out_bytes", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Assembled 3-byte packet output, valid only when done", "lines": [6, 40]},
+  {"id": "E5", "name": "done", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "One-cycle pulse from FIN state qualifying out_bytes", "lines": [7, 38, 40]},
+  {"id": "E9", "name": "go_mid", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Packet-start condition: marker bit seen in HUNT or FIN state", "lines": [18, 21, 31]}
+ ],
+ "groups": [
+  {"name": "Packet FSM", "kind": "CONTROLLER", "anchor_ids": ["E6", "E9", "E5"], "member_ids": ["E8"], "description": "One-hot framer FSM detecting start byte and counting three bytes"},
+  {"name": "Byte window", "kind": "BUFFER", "anchor_ids": ["E7", "E2", "E4"], "member_ids": [], "description": "Shift window of the last three input bytes driving out_bytes"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E3"]},
+  {"name": "byte_in", "protocol": "STREAM", "direction": "IN", "member_ids": ["E2"]},
+  {"name": "packet_out", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E4", "E5"]}
+ ]
+}

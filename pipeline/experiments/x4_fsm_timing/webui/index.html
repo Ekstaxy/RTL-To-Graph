@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RTL Diagram Drop</title>
+<style>
+:root { --bg:#f3f5f6; --panel:#fff; --fg:#1b2328; --muted:#5a6670; --line:#d5dce0;
+  --accent:#1f6f5c; --accent-soft:#e2f0eb; --ok:#23764a; --ok-soft:#e1f2e7; --bad:#b3261e;
+  --bad-soft:#fbe7e5; --warn:#7a5a00; --warn-soft:#fbf0cf;
+  --display:"IBM Plex Sans Condensed","Arial Narrow",sans-serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg:#12171a; --panel:#1a2125; --fg:#e3e8eb; --muted:#9aa7af; --line:#2c363c;
+  --accent:#5fc3a6; --accent-soft:#173a31; --ok:#6fcf97; --ok-soft:#173326; --bad:#ff8a80;
+  --bad-soft:#3d1c1a; --warn:#f2c94c; --warn-soft:#3a3115; color-scheme:dark; } }
+:root[data-theme="dark"] { --bg:#12171a; --panel:#1a2125; --fg:#e3e8eb; --muted:#9aa7af;
+  --line:#2c363c; --accent:#5fc3a6; --accent-soft:#173a31; --ok:#6fcf97; --ok-soft:#173326;
+  --bad:#ff8a80; --bad-soft:#3d1c1a; --warn:#f2c94c; --warn-soft:#3a3115; color-scheme:dark; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.55 var(--body);
+  padding:28px 16px 64px; }
+main { max-width:960px; margin:0 auto; display:grid; gap:20px; }
+main.wide { max-width:1440px; }
+h1 { font:600 clamp(26px, 4vw, 36px)/1.2 var(--display); margin:0; }
+.lede { color:var(--muted); margin:6px 0 0; max-width:72ch; }
+.panel { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:16px;
+  display:grid; gap:14px; min-width:0; }
+#drop { border:2px dashed var(--line); border-radius:10px; padding:28px 16px; text-align:center;
+  display:grid; gap:10px; justify-items:center; transition:border-color .15s, background .15s; }
+#drop.over { border-color:var(--accent); background:var(--accent-soft); }
+#drop b { font:600 18px var(--display); }
+.pick { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+button, .btn { font:500 14px var(--body); border-radius:6px; padding:7px 14px; cursor:pointer;
+  border:1px solid var(--line); background:var(--panel); color:var(--fg); }
+button.primary { background:var(--accent); color:#fff; border-color:var(--accent); font-weight:600; }
+@media (prefers-color-scheme: dark) { button.primary { color:#0d1a16; } }
+button:disabled { opacity:.5; cursor:not-allowed; }
+button:focus-visible, input:focus-visible, select:focus-visible, .btn:focus-within
+  { outline:2px solid var(--accent); outline-offset:2px; }
+.btn input { position:absolute; width:1px; height:1px; opacity:0; }
+.btn { position:relative; display:inline-block; }
+.muted { color:var(--muted); font-size:13.5px; }
+#files { margin:0; padding:0; list-style:none; max-height:180px; overflow:auto; font:12.5px var(--mono);
+  color:var(--muted); }
+.row { display:flex; flex-wrap:wrap; gap:12px 20px; align-items:end; }
+label.field { display:grid; gap:4px; font-size:13.5px; color:var(--muted); min-width:0; }
+input[type=text], select { font:14px/1.5 var(--mono); padding:6px 8px; border:1px solid var(--line);
+  border-radius:6px; background:var(--bg); color:var(--fg); min-width:220px; max-width:100%; }
+fieldset { border:0; padding:0; margin:0; display:flex; gap:14px; flex-wrap:wrap; }
+legend { font-size:13.5px; color:var(--muted); margin-bottom:4px; }
+#msg { padding:10px 14px; border-radius:6px; }
+#msg.error { background:var(--bad-soft); color:var(--bad); }
+#msg.info { background:var(--accent-soft); color:var(--fg); }
+#msg.warn { background:var(--warn-soft); color:var(--fg); }
+.state { display:inline-block; padding:1px 10px; border-radius:999px; font-size:12.5px;
+  font-weight:600; background:var(--warn-soft); color:var(--warn); }
+.state.done { background:var(--ok-soft); color:var(--ok); }
+.state.error { background:var(--bad-soft); color:var(--bad); }
+pre#log { margin:0; max-height:260px; overflow:auto; background:var(--bg); padding:10px;
+  border-radius:6px; font:12px var(--mono); white-space:pre-wrap; word-break:break-word; }
+iframe { width:100%; height:80vh; border:1px solid var(--line); border-radius:10px; background:var(--bg); }
+[hidden] { display:none !important; }
+</style>
+</head>
+<body>
+<main id="main">
+  <header>
+    <h1>RTL to diagrams</h1>
+    <p class="lede">Drop Verilog or SystemVerilog files, or a whole folder. Pick the top module,
+      choose what to draw, and press Run. The block diagram, FSM state graphs and timing
+      diagrams appear below with every check they passed or failed.</p>
+  </header>
+
+  <section class="panel" aria-labelledby="h-in">
+    <h2 id="h-in" hidden>Input</h2>
+    <div id="drop" tabindex="-1">
+      <b>Drop RTL files or a folder here</b>
+      <span class="muted">Only *.v, *.sv, *.vh and *.svh files are kept; folders are searched
+        recursively.</span>
+      <div class="pick">
+        <label class="btn">Choose files<input id="pick-files" type="file" multiple
+          accept=".v,.sv,.vh,.svh"></label>
+        <label class="btn">Choose a folder<input id="pick-dir" type="file" multiple
+          webkitdirectory></label>
+        <button type="button" id="clear" hidden>Clear</button>
+      </div>
+    </div>
+    <div id="summary" class="muted" aria-live="polite">No files yet.</div>
+    <ul id="files"></ul>
+    <div class="row">
+      <label class="field">Top module
+        <input id="top" type="text" autocomplete="off" spellcheck="false" placeholder="top_module">
+      </label>
+      <label class="field" id="top-pick-wrap" hidden>Top candidates
+        <select id="top-pick"></select>
+      </label>
+      <fieldset>
+        <legend>Draw</legend>
+        <label><input type="checkbox" name="part" value="block" checked> Block</label>
+        <label><input type="checkbox" name="part" value="fsm" checked> FSM</label>
+        <label><input type="checkbox" name="part" value="timing" checked> Timing</label>
+      </fieldset>
+      <button type="button" id="run" class="primary" disabled>Run</button>
+    </div>
+  </section>
+
+  <div id="msg" role="status" hidden></div>
+
+  <section class="panel" id="progress" hidden aria-labelledby="h-run">
+    <div class="row" style="align-items:center">
+      <h2 id="h-run" style="margin:0;font:600 18px var(--display)">Run</h2>
+      <span id="state" class="state">queued</span>
+      <span id="elapsed" class="muted"></span>
+      <a id="open" href="#" target="_blank" rel="noopener" hidden>Open the result in a new tab</a>
+    </div>
+    <details id="logbox"><summary class="muted">Log (last lines; Python tracebacks folded)</summary>
+      <pre id="log"></pre>
+      <a id="fulllog" class="muted" href="#" target="_blank" rel="noopener" hidden>Full log</a>
+    </details>
+  </section>
+
+  <iframe id="result" title="Diagram gallery" hidden></iframe>
+</main>
+<script>
+const KEEP = /\.(v|sv|vh|svh)$/i;
+const files = new Map();  // relative path -> File
+const $ = id => document.getElementById(id);
+
+function addFile(file, path) {
+  path = (path || file.webkitRelativePath || file.name).replace(/^\/+/, '');
+  if (KEEP.test(path)) files.set(path, file);
+}
+
+// Drag and drop: walk directories through FileSystemEntry (readEntries returns batches).
+function readAll(reader) {
+  return new Promise((resolve, reject) => {
+    const out = [];
+    const next = () => reader.readEntries(batch => {
+      if (!batch.length) resolve(out); else { out.push(...batch); next(); }
+    }, reject);
+    next();
+  });
+}
+async function walk(entry) {
+  if (entry.isFile) {
+    const f = await new Promise((res, rej) => entry.file(res, rej));
+    addFile(f, entry.fullPath);
+  } else if (entry.isDirectory) {
+    for (const e of await readAll(entry.createReader())) await walk(e);
+  }
+}
+
+const drop = $('drop');
+['dragenter', 'dragover'].forEach(t => drop.addEventListener(t, e => {
+  e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(t => drop.addEventListener(t, () => drop.classList.remove('over')));
+drop.addEventListener('drop', async e => {
+  e.preventDefault();
+  const entries = [...e.dataTransfer.items].map(i => i.webkitGetAsEntry && i.webkitGetAsEntry())
+    .filter(Boolean);
+  try {
+    if (entries.length) { for (const en of entries) await walk(en); }
+    else [...e.dataTransfer.files].forEach(f => addFile(f));
+  } catch (err) { say('error', 'Could not read the dropped items: ' + err); }
+  refresh();
+});
+// Keep the browser from opening a file dropped outside the zone.
+['dragover', 'drop'].forEach(t => window.addEventListener(t, e => e.preventDefault()));
+$('pick-files').addEventListener('change', e => { [...e.target.files].forEach(f => addFile(f)); refresh(); });
+$('pick-dir').addEventListener('change', e => { [...e.target.files].forEach(f => addFile(f)); refresh(); });
+$('clear').addEventListener('click', () => { files.clear(); $('top').value = ''; refresh(); });
+
+// Module names, client side: strip comments, find declarations, then which are instantiated.
+function stripComments(t) { return t.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' '); }
+async function topCandidates() {
+  const bodies = new Map();
+  for (const f of files.values()) {
+    const t = stripComments(await f.text());
+    const re = /\b(?:module|macromodule)\s+(?:automatic\s+|static\s+)?([A-Za-z_][\w$]*)([\s\S]*?)\bendmodule\b/g;
+    let m;
+    while ((m = re.exec(t))) bodies.set(m[1], m[2]);
+  }
+  const names = [...bodies.keys()];
+  const kids = new Map(names.map(n => [n, []]));
+  const used = new Set();
+  for (const [owner, body] of bodies) {
+    for (const n of names) {
+      if (n === owner) continue;
+      const inst = new RegExp('(^|[^\\w$.])' + n.replace(/\$/g, '\\$') +
+        '\\s*(#\\s*\\(|[A-Za-z_][\\w$]*\\s*(\\[[^\\]]*\\]\\s*)?\\()');
+      if (inst.test(body)) { used.add(n); kids.get(owner).push(n); }
+    }
+  }
+  const size = (n, seen = new Set()) => {
+    if (seen.has(n)) return 0;
+    seen.add(n);
+    return 1 + kids.get(n).reduce((s, k) => s + size(k, seen), 0);
+  };
+  const isTb = n => /(^tb_|_tb$|^tb$|test)/i.test(n);
+  // A DUT that only a testbench instantiates is still a top: count instantiations made by
+  // non-testbench modules (fall back to all of them if that leaves nothing).
+  const usedByRtl = new Set();
+  for (const [owner, ks] of kids) if (!isTb(owner)) ks.forEach(k => usedByRtl.add(k));
+  let tops = names.filter(n => !usedByRtl.has(n));
+  if (!tops.length) tops = names.filter(n => !used.has(n));
+  // Default: the largest instantiation tree; testbenches last.
+  tops.sort((a, b) => (isTb(a) - isTb(b)) || (size(b) - size(a)) || a.localeCompare(b));
+  return { names, tops };
+}
+
+async function refresh() {
+  const list = $('files');
+  list.innerHTML = '';
+  const paths = [...files.keys()].sort();
+  let bytes = 0;
+  for (const p of paths) {
+    bytes += files.get(p).size;
+    const li = document.createElement('li'); li.textContent = p; list.appendChild(li);
+  }
+  $('clear').hidden = !paths.length;
+  $('summary').textContent = paths.length
+    ? `${paths.length} RTL file(s), ${(bytes / 1024).toFixed(1)} KB` : 'No files yet.';
+  const wrap = $('top-pick-wrap'), sel = $('top-pick');
+  sel.innerHTML = ''; wrap.hidden = true;
+  if (paths.length) {
+    const { names, tops } = await topCandidates();
+    if (!names.length) say('warn', 'No module declaration was found in these files.');
+    else hideMsg();
+    if (tops.length > 1) {
+      tops.forEach(n => { const o = document.createElement('option'); o.value = o.textContent = n; sel.appendChild(o); });
+      wrap.hidden = false;
+    }
+    if (tops.length && !names.includes($('top').value)) $('top').value = tops[0];
+    if (tops.length > 1) sel.value = $('top').value;
+  }
+  canRun();
+}
+$('top-pick').addEventListener('change', e => { $('top').value = e.target.value; canRun(); });
+$('top').addEventListener('input', canRun);
+document.querySelectorAll('input[name=part]').forEach(c => c.addEventListener('change', canRun));
+function parts() { return [...document.querySelectorAll('input[name=part]:checked')].map(c => c.value); }
+function canRun() {
+  $('run').disabled = busy || !files.size || !$('top').value.trim() || !parts().length;
+}
+
+function say(kind, text) { const m = $('msg'); m.className = kind; m.textContent = text; m.hidden = false; }
+function hideMsg() { $('msg').hidden = true; }
+
+function b64(buf) {
+  const bytes = new Uint8Array(buf); let s = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(s);
+}
+
+let busy = false, timer = null, t0 = 0;
+$('run').addEventListener('click', async () => {
+  busy = true; canRun(); hideMsg();
+  $('result').hidden = true; $('open').hidden = true; $('fulllog').hidden = true;
+  try {
+    const payload = { top: $('top').value.trim(), parts: parts(), files: [] };
+    for (const [path, f] of files) payload.files.push({ path, b64: b64(await f.arrayBuffer()) });
+    const r = await fetch('/run', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify(payload) });
+    const j = await r.json().catch(() => ({ error: `server answered ${r.status}` }));
+    if (!r.ok || j.error) throw new Error(j.error || `server answered ${r.status}`);
+    t0 = Date.now();
+    $('progress').hidden = false;
+    if (j.cached) say('info', 'These files were run before with the same top and parts; showing that result.');
+    poll(j.sha);
+  } catch (err) {
+    busy = false; canRun();
+    say('error', 'Could not start the run: ' + err.message);
+  }
+});
+
+async function poll(sha) {
+  clearTimeout(timer);
+  let s;
+  try {
+    const r = await fetch('/status/' + sha);
+    s = await r.json();
+  } catch (err) {
+    say('warn', 'Lost contact with the server; retrying.');
+    timer = setTimeout(() => poll(sha), 3000);
+    return;
+  }
+  const st = $('state');
+  st.textContent = s.state + (s.state === 'queued' && s.position ? ` (${s.position} ahead)` : '');
+  st.className = 'state ' + s.state;
+  $('elapsed').textContent = `${Math.round((Date.now() - t0) / 1000)} s`;
+  $('log').textContent = s.log_tail || '(no output yet)';
+  if (s.log_url) { $('fulllog').href = s.log_url; $('fulllog').hidden = false; }
+  if (s.state === 'done') {
+    busy = false; canRun();
+    const url = s.result || `/result/${sha}/`;
+    $('open').href = url; $('open').hidden = false;
+    $('result').src = url; $('result').hidden = false;
+    document.getElementById('main').classList.add('wide');
+    if (s.message) say('warn', s.message);
+  } else if (s.state === 'error') {
+    busy = false; canRun();
+    say('error', 'The run did not finish: ' + (s.message || 'unknown reason') + '.');
+  } else {
+    timer = setTimeout(() => poll(sha), 1500);
+  }
+}
+</script>
+</body>
+</html>

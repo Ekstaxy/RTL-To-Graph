@@ -1,0 +1,321 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "S1_uart_tx",
+ "tops": [
+  "uart_tx"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "uart_tx": {
+   "source": "teacher",
+   "canonical_instance": "uart_tx",
+   "file": "experiments/e3_perturb_benchmark/data/uart_tx/S1/uart_tx.sv",
+   "lines": [
+    1,
+    68
+   ],
+   "summary": "UART transmitter: one-hot 4-phase FSM (idle/start/data/stop) with a baud divider timer and bit counter shifting an 8-bit shift register onto tx_o.",
+   "blocks": [
+    {
+     "name": "tx_controller",
+     "kind": "CONTROLLER",
+     "description": "One-hot phase FSM sequencing start, data and stop bits; idle decode gives ready.",
+     "anchors": [
+      {
+       "id": "E10",
+       "name": "ph",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.7,
+       "struct_score": 99.1,
+       "trace": "control_backward",
+       "why": "One-hot phase register: idle, start bit, data bits, stop bit; drives tx_o and ready.",
+       "lines": [
+        18,
+        41,
+        46
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "grab",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 21.5,
+       "struct_score": 30.3,
+       "trace": "control_backward",
+       "why": "Load enable: idle and valid loads sr and clears bit counter.",
+       "lines": [
+        25,
+        56
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "roll",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 20.0,
+       "struct_score": 24.5,
+       "trace": "control_backward",
+       "why": "Shift enable: data phase baud tick shifts sr and bumps nb.",
+       "lines": [
+        26,
+        59
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "busy_o",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 51.3,
+       "struct_score": 37.8,
+       "trace": "control_backward",
+       "why": "Level busy indication whenever FSM is not idle.",
+       "lines": [
+        10,
+        66
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E14",
+       "name": "quiet",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "baud_and_bit_counters",
+     "kind": "COUNTER_TIMER",
+     "description": "Baud divider timer producing bit ticks and 3-bit data bit counter.",
+     "anchors": [
+      {
+       "id": "E13",
+       "name": "tmr",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 57.9,
+       "struct_score": 62.0,
+       "trace": "control_backward",
+       "why": "Baud divider counting to CLK_DIV-1 while not idle; produces wrap bit tick.",
+       "lines": [
+        31,
+        33
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "nb",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 58.4,
+       "struct_score": 63.9,
+       "trace": "control_backward",
+       "why": "Bit counter incremented per shifted bit; all-ones ends data phase.",
+       "lines": [
+        46,
+        58,
+        61
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "wrap",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 20.2,
+       "struct_score": 25.4,
+       "trace": "control_backward",
+       "why": "Baud tick when timer reaches CLK_DIV-1; advances phases and shifts.",
+       "lines": [
+        27,
+        44
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "tx_shifter",
+     "kind": "SERIALIZER",
+     "description": "Shift register serializing the byte LSB first onto tx_o.",
+     "anchors": [
+      {
+       "id": "E8",
+       "name": "sr",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 93.9,
+       "struct_score": 84.6,
+       "trace": "data_backward",
+       "why": "Shift register loaded with tx_data, shifted right per bit; LSB drives tx_o.",
+       "lines": [
+        57,
+        60,
+        67
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "tx_o",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 91.6,
+       "struct_score": 78.7,
+       "trace": "data_backward",
+       "why": "Serial line output: low start bit, sr LSB data, high stop/idle.",
+       "lines": [
+        9,
+        67
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E9",
+       "name": "sr_shadow",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "byte_input",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Valid/ready byte input accepted while idle.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "tx_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 94.2,
+       "struct_score": 85.3,
+       "trace": "interface",
+       "why": "Byte request; starts frame when FSM idle.",
+       "lines": [
+        6,
+        25,
+        42
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "tx_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 90.4,
+       "struct_score": 75.7,
+       "trace": "interface",
+       "why": "Ready when FSM is idle, accepting a new byte.",
+       "lines": [
+        7,
+        65
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "tx_data",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 95.0,
+       "struct_score": 87.4,
+       "trace": "interface",
+       "why": "Byte payload loaded into the shift register.",
+       "lines": [
+        8,
+        57
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E14",
+       "name": "quiet",
+       "kind": "wire"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_n",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "tx_byte_in",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "tx_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "tx_ready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "tx_data",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "serial_out",
+     "protocol": "SERIAL",
+     "direction": "OUT",
+     "member_ids": [
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "tx_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "busy_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

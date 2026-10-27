@@ -1,0 +1,1959 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "biriscv_biriscv_csr",
+ "tops": [
+  "biriscv_csr"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "biriscv_csr_regfile": {
+   "source": "teacher",
+   "canonical_instance": "biriscv_csr.u_csrfile",
+   "file": "data/rtl/biriscv/src/core/biriscv_csr_regfile.v",
+   "lines": [
+    25,
+    627
+   ],
+   "summary": "RISC-V machine-mode CSR file: CSR registers updated by a priority chain (interrupt, eret, exception, CSR write), with masked interrupt logic, cycle counter, read mux and trap branch generation.",
+   "blocks": [
+    {
+     "name": "trap_controller",
+     "kind": "CONTROLLER",
+     "description": "Prioritizes interrupt, eret, exception and CSR write updates; manages privilege.",
+     "anchors": [
+      {
+       "id": "E7",
+       "name": "exception_i",
+       "role": "COMMAND",
+       "importance": "critical",
+       "score": 87.9,
+       "struct_score": 69.1,
+       "trace": "interface",
+       "why": "Exception/interrupt/eret/fence code selecting which CSR update and branch happen.",
+       "lines": [
+        46,
+        265,
+        319
+       ]
+      },
+      {
+       "id": "E75",
+       "name": "is_exception_w",
+       "role": "DECODE",
+       "importance": "major",
+       "score": 50.7,
+       "struct_score": 35.3,
+       "trace": "control_backward",
+       "why": "Decoded exception class steering trap state save and mtvec branch.",
+       "lines": [
+        234,
+        383,
+        603
+       ]
+      },
+      {
+       "id": "E27",
+       "name": "csr_mpriv_q",
+       "role": "FSM_STATE",
+       "importance": "minor",
+       "score": 41.8,
+       "struct_score": 94.5,
+       "trace": "control_backward",
+       "why": "Current privilege level, changed on traps and returns, drives priv_o.",
+       "lines": [
+        86,
+        200,
+        521
+       ]
+      },
+      {
+       "id": "E49",
+       "name": "irq_priv_q",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 19.5,
+       "struct_score": 22.2,
+       "trace": "control_backward",
+       "why": "Latched target privilege of pending interrupt; selects machine or supervisor trap handling.",
+       "lines": [
+        136,
+        268,
+        578
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "exception_pc_i",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 38.3,
+       "struct_score": 85.7,
+       "trace": "interface",
+       "why": "PC of trapping instruction saved into mepc, also fence return target.",
+       "lines": [
+        47,
+        281,
+        612
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E76",
+       "name": "exception_s_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E60",
+       "name": "csr_mpriv_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E9",
+       "name": "exception_addr_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E17",
+       "name": "priv_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "machine_csrs",
+     "kind": "REGISTER_BANK",
+     "description": "Machine CSRs mstatus, mepc, mcause, mtval, mtvec, mscratch with next-state logic.",
+     "anchors": [
+      {
+       "id": "E23",
+       "name": "csr_sr_q",
+       "role": "CONFIG_REG",
+       "importance": "critical",
+       "score": 79.7,
+       "struct_score": 39.6,
+       "trace": "data_backward",
+       "why": "mstatus register: interrupt enable, previous enable/privilege; masks interrupts, drives status_o.",
+       "lines": [
+        82,
+        131,
+        201
+       ]
+      },
+      {
+       "id": "E21",
+       "name": "csr_mepc_q",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 50.8,
+       "struct_score": 35.6,
+       "trace": "data_backward",
+       "why": "Saved trap PC; target for MRET branch.",
+       "lines": [
+        80,
+        514,
+        587
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "csr_mcause_q",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 22.1,
+       "struct_score": 33.1,
+       "trace": "data_backward",
+       "why": "Trap cause register written on interrupt or exception.",
+       "lines": [
+        81,
+        171,
+        516
+       ]
+      },
+      {
+       "id": "E31",
+       "name": "csr_mtval_q",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 21.2,
+       "struct_score": 29.5,
+       "trace": "data_backward",
+       "why": "Trap value register holding faulting address or PC.",
+       "lines": [
+        90,
+        517
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "csr_mtvec_q",
+       "role": "CONFIG_REG",
+       "importance": "major",
+       "score": 49.6,
+       "struct_score": 30.9,
+       "trace": "data_backward",
+       "why": "Trap vector base; branch target on interrupt or machine exception.",
+       "lines": [
+        83,
+        578,
+        606
+       ]
+      },
+      {
+       "id": "E30",
+       "name": "csr_mscratch_q",
+       "role": "CONFIG_REG",
+       "importance": "minor",
+       "score": 20.1,
+       "struct_score": 24.9,
+       "trace": "data_backward",
+       "why": "Software scratch CSR, read and written via CSR port.",
+       "lines": [
+        89,
+        168,
+        523
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E53",
+       "name": "csr_mepc_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E54",
+       "name": "csr_mcause_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E55",
+       "name": "csr_mtval_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E56",
+       "name": "csr_sr_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E57",
+       "name": "csr_mtvec_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E62",
+       "name": "csr_mscratch_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E18",
+       "name": "status_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E34",
+       "name": "csr_medeleg_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E65",
+       "name": "csr_medeleg_r",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "supervisor_csrs",
+     "kind": "REGISTER_BANK",
+     "description": "Supervisor CSRs and delegation, disabled when SUPPORT_SUPER is 0.",
+     "anchors": [
+      {
+       "id": "E37",
+       "name": "csr_stvec_q",
+       "role": "CONFIG_REG",
+       "importance": "minor",
+       "score": 21.6,
+       "struct_score": 30.9,
+       "trace": "data_backward",
+       "why": "Supervisor trap vector, representative supervisor CSR, disabled by parameter.",
+       "lines": [
+        98,
+        531,
+        600
+       ]
+      },
+      {
+       "id": "E35",
+       "name": "csr_mideleg_q",
+       "role": "CONFIG_REG",
+       "importance": "minor",
+       "score": 22.5,
+       "struct_score": 34.6,
+       "trace": "data_backward",
+       "why": "Interrupt delegation to supervisor; disabled when SUPPORT_SUPER is 0.",
+       "lines": [
+        94,
+        453,
+        527
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E36",
+       "name": "csr_sepc_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E38",
+       "name": "csr_scause_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E39",
+       "name": "csr_stval_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E40",
+       "name": "csr_satp_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E41",
+       "name": "csr_sscratch_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E66",
+       "name": "csr_mideleg_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E69",
+       "name": "csr_sepc_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E70",
+       "name": "csr_stvec_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E71",
+       "name": "csr_scause_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E72",
+       "name": "csr_stval_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E73",
+       "name": "csr_satp_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E74",
+       "name": "csr_sscratch_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E19",
+       "name": "satp_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E47",
+       "name": "s_enabled_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E48",
+       "name": "s_interrupts_r",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "interrupt_logic",
+     "kind": "DATAPATH",
+     "description": "Pending/enable registers, masking and buffered external/timer interrupt capture.",
+     "anchors": [
+      {
+       "id": "E25",
+       "name": "csr_mip_q",
+       "role": "CONFIG_REG",
+       "importance": "major",
+       "score": 50.6,
+       "struct_score": 34.8,
+       "trace": "data_backward",
+       "why": "Interrupt pending register set by external, timer and compare interrupts.",
+       "lines": [
+        84,
+        120,
+        519
+       ]
+      },
+      {
+       "id": "E26",
+       "name": "csr_mie_q",
+       "role": "CONFIG_REG",
+       "importance": "major",
+       "score": 49.8,
+       "struct_score": 31.7,
+       "trace": "data_backward",
+       "why": "Interrupt enable mask ANDed with pending to form interrupts.",
+       "lines": [
+        85,
+        130,
+        520
+       ]
+      },
+      {
+       "id": "E43",
+       "name": "irq_masked_r",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 19.3,
+       "struct_score": 21.7,
+       "trace": "data_backward",
+       "why": "Pending and enabled interrupts gated by mstatus MIE; drives interrupt_o.",
+       "lines": [
+        108,
+        131,
+        143
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "interrupt_o",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 54.6,
+       "struct_score": 50.2,
+       "trace": "control_backward",
+       "why": "Masked interrupt vector to pipeline; also selects interrupt cause.",
+       "lines": [
+        68,
+        143,
+        285
+       ]
+      },
+      {
+       "id": "E50",
+       "name": "csr_mip_upd_q",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.6,
+       "struct_score": 10.6,
+       "trace": "control_backward",
+       "why": "Flags in-progress MIP read so new pending bits are buffered.",
+       "lines": [
+        146,
+        152,
+        156
+       ]
+      },
+      {
+       "id": "E67",
+       "name": "csr_mip_next_q",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 19.7,
+       "struct_score": 23.2,
+       "trace": "data_backward",
+       "why": "Buffered interrupt pending bits merged into mip.",
+       "lines": [
+        223,
+        240,
+        537
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E42",
+       "name": "irq_pending_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E44",
+       "name": "irq_priv_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E45",
+       "name": "m_enabled_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E46",
+       "name": "m_interrupts_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E51",
+       "name": "buffer_mip_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E58",
+       "name": "csr_mip_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E59",
+       "name": "csr_mie_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E68",
+       "name": "csr_mip_next_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E3",
+       "name": "ext_intr_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "timer_intr_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "cycle_timer",
+     "kind": "COUNTER_TIMER",
+     "description": "64-bit cycle counter with mtimecmp compare timer interrupt.",
+     "anchors": [
+      {
+       "id": "E28",
+       "name": "csr_mcycle_q",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 55.8,
+       "struct_score": 54.3,
+       "trace": "control_backward",
+       "why": "Free-running cycle counter; compared with mtimecmp, readable as mcycle/mtime.",
+       "lines": [
+        87,
+        250,
+        459
+       ]
+      },
+      {
+       "id": "E29",
+       "name": "csr_mcycle_h_q",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 24.8,
+       "struct_score": 43.5,
+       "trace": "control_backward",
+       "why": "Upper cycle counter incremented on lower counter overflow.",
+       "lines": [
+        88,
+        541
+       ]
+      },
+      {
+       "id": "E32",
+       "name": "csr_mtimecmp_q",
+       "role": "CONFIG_REG",
+       "importance": "minor",
+       "score": 21.2,
+       "struct_score": 29.2,
+       "trace": "data_backward",
+       "why": "Timer compare value raising timer interrupt when mcycle matches.",
+       "lines": [
+        91,
+        459,
+        524
+       ]
+      },
+      {
+       "id": "E33",
+       "name": "csr_mtime_ie_q",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.9,
+       "struct_score": 16.0,
+       "trace": "control_backward",
+       "why": "Arms timer compare interrupt; set on mtimecmp write, cleared on match.",
+       "lines": [
+        92,
+        464,
+        525
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E61",
+       "name": "csr_mcycle_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E63",
+       "name": "csr_mtimecmp_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E64",
+       "name": "csr_mtime_ie_r",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "csr_access_port",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "CSR read mux and write address/data port.",
+     "anchors": [
+      {
+       "id": "E11",
+       "name": "csr_raddr_i",
+       "role": "INTERFACE_ADDR",
+       "importance": "minor",
+       "score": 26.7,
+       "struct_score": 50.4,
+       "trace": "interface",
+       "why": "CSR read address selecting register in read mux.",
+       "lines": [
+        52,
+        166
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "csr_rdata_o",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 92.5,
+       "struct_score": 81.0,
+       "trace": "data_backward",
+       "why": "CSR read data from masked read mux.",
+       "lines": [
+        53,
+        199
+       ]
+      },
+      {
+       "id": "E52",
+       "name": "rdata_r",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 20.5,
+       "struct_score": 26.4,
+       "trace": "data_backward",
+       "why": "CSR read mux result.",
+       "lines": [
+        161,
+        166,
+        199
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "csr_waddr_i",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 62.3,
+       "struct_score": 75.4,
+       "trace": "interface",
+       "why": "CSR write address selecting which CSR takes write data.",
+       "lines": [
+        56,
+        418
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "csr_wdata_i",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 69.7,
+       "struct_score": 94.2,
+       "trace": "interface",
+       "why": "CSR write data masked into the addressed CSR.",
+       "lines": [
+        57,
+        420
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E10",
+       "name": "csr_ren_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "cpu_id_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "misa_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "branch_gen",
+     "kind": "DATAPATH",
+     "description": "Generates pipeline redirect and target for traps, returns and fences.",
+     "anchors": [
+      {
+       "id": "E15",
+       "name": "csr_branch_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 85.4,
+       "struct_score": 60.3,
+       "trace": "control_backward",
+       "why": "Pipeline redirect request on trap, return or fence.",
+       "lines": [
+        59,
+        616
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "csr_target_o",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 56.3,
+       "struct_score": 56.3,
+       "trace": "data_backward",
+       "why": "Redirect target: mtvec, mepc, stvec, sepc or pc+4.",
+       "lines": [
+        60,
+        617
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E77",
+       "name": "branch_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E78",
+       "name": "branch_target_r",
+       "kind": "comb"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "interrupt_inputs",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "ext_intr_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "timer_intr_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "cpu_info",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E5",
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "cpu_id_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "misa_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "exception_in",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E7",
+      "E8",
+      "E9"
+     ],
+     "members": [
+      {
+       "id": "E7",
+       "name": "exception_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "exception_pc_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "exception_addr_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "csr_read_port",
+     "protocol": "MEMORY_BUS",
+     "direction": "OUT",
+     "member_ids": [
+      "E10",
+      "E11",
+      "E12"
+     ],
+     "members": [
+      {
+       "id": "E10",
+       "name": "csr_ren_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "csr_raddr_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E12",
+       "name": "csr_rdata_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "csr_write_port",
+     "protocol": "MEMORY_BUS",
+     "direction": "IN",
+     "member_ids": [
+      "E13",
+      "E14"
+     ],
+     "members": [
+      {
+       "id": "E13",
+       "name": "csr_waddr_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E14",
+       "name": "csr_wdata_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "branch_out",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E15",
+      "E16"
+     ],
+     "members": [
+      {
+       "id": "E15",
+       "name": "csr_branch_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "csr_target_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "csr_state_out",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E17",
+      "E18",
+      "E19",
+      "E20"
+     ],
+     "members": [
+      {
+       "id": "E17",
+       "name": "priv_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "status_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "satp_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "interrupt_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "biriscv_csr": {
+   "source": "teacher",
+   "canonical_instance": "biriscv_csr",
+   "file": "data/rtl/biriscv/src/core/biriscv_csr.v",
+   "lines": [
+    26,
+    337
+   ],
+   "summary": "RISC-V CSR execution unit: decodes CSR/system opcodes, reads a CSR register file child, computes set/clear write data and exceptions into E1 pipeline registers, and registers trap branches, interrupts and MMU flushes.",
+   "blocks": [
+    {
+     "name": "csr_opcode_decoder",
+     "kind": "DECODER",
+     "description": "Decodes CSR/system opcodes, operand select and access-fault detection.",
+     "anchors": [
+      {
+       "id": "E4",
+       "name": "opcode_valid_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 94.0,
+       "struct_score": 84.7,
+       "trace": "interface",
+       "why": "Issue valid qualifying all opcode decodes and E1 register updates.",
+       "lines": [
+        42,
+        166,
+        211
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "opcode_opcode_i",
+       "role": "COMMAND",
+       "importance": "critical",
+       "score": 90.0,
+       "struct_score": 74.7,
+       "trace": "interface",
+       "why": "Instruction word decoded into CSR ops and CSR read address.",
+       "lines": [
+        43,
+        88,
+        167
+       ]
+      },
+      {
+       "id": "E54",
+       "name": "set_r",
+       "role": "DECODE",
+       "importance": "major",
+       "score": 46.4,
+       "struct_score": 18.0,
+       "trace": "control_backward",
+       "why": "Decoded CSR set-type op steering write data and E1 valid.",
+       "lines": [
+        110,
+        118,
+        243
+       ]
+      },
+      {
+       "id": "E55",
+       "name": "clr_r",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 18.4,
+       "struct_score": 18.0,
+       "trace": "control_backward",
+       "why": "Decoded CSR clear-type op steering write data.",
+       "lines": [
+        111,
+        119,
+        245
+       ]
+      },
+      {
+       "id": "E56",
+       "name": "csr_fault_r",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 45.6,
+       "struct_score": 14.8,
+       "trace": "control_backward",
+       "why": "CSR access fault for read-only write or privilege violation; forces illegal exception.",
+       "lines": [
+        112,
+        131,
+        217
+       ]
+      },
+      {
+       "id": "E57",
+       "name": "data_r",
+       "role": "MUX_SELECT",
+       "importance": "minor",
+       "score": 23.9,
+       "struct_score": 40.0,
+       "trace": "data_backward",
+       "why": "Operand mux selecting immediate index or register operand for CSR write.",
+       "lines": [
+        114,
+        125,
+        242
+       ]
+      },
+      {
+       "id": "E40",
+       "name": "csrrw_w",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 17.9,
+       "struct_score": 15.9,
+       "trace": "control_backward",
+       "why": "Decoded CSRRW instruction feeding set/clear and write decode.",
+       "lines": [
+        92,
+        118,
+        123
+       ]
+      },
+      {
+       "id": "E43",
+       "name": "csrrwi_w",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 17.9,
+       "struct_score": 15.8,
+       "trace": "control_backward",
+       "why": "Decoded CSRRWI immediate form selecting immediate operand.",
+       "lines": [
+        95,
+        125
+       ]
+      },
+      {
+       "id": "E38",
+       "name": "eret_w",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 16.4,
+       "struct_score": 9.6,
+       "trace": "control_backward",
+       "why": "Decoded xRET instruction checked for privilege fault.",
+       "lines": [
+        90,
+        201
+       ]
+      },
+      {
+       "id": "E71",
+       "name": "eret_fault_w",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.2,
+       "struct_score": 9.0,
+       "trace": "control_backward",
+       "why": "xRET above current privilege; forces illegal-instruction exception.",
+       "lines": [
+        201,
+        217,
+        226
+       ]
+      },
+      {
+       "id": "E58",
+       "name": "satp_update_w",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.8,
+       "struct_score": 11.6,
+       "trace": "control_backward",
+       "why": "SATP write detect triggering fence exception and TLB flush.",
+       "lines": [
+        134,
+        235,
+        283
+       ]
+      },
+      {
+       "id": "E48",
+       "name": "sfence_w",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 16.7,
+       "struct_score": 10.9,
+       "trace": "control_backward",
+       "why": "Decoded SFENCE causing TLB flush and fence exception.",
+       "lines": [
+        100,
+        235,
+        283
+       ]
+      },
+      {
+       "id": "E49",
+       "name": "ifence_w",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 16.7,
+       "struct_score": 10.9,
+       "trace": "control_backward",
+       "why": "Decoded FENCE.I driving ifence pulse and fence exception.",
+       "lines": [
+        101,
+        235,
+        294
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E36",
+       "name": "ecall_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E37",
+       "name": "ebreak_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E39",
+       "name": "eret_priv_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E41",
+       "name": "csrrs_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E42",
+       "name": "csrrc_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E44",
+       "name": "csrrsi_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E45",
+       "name": "csrrci_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E46",
+       "name": "wfi_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E47",
+       "name": "fence_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E51",
+       "name": "csr_priv_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E52",
+       "name": "csr_readonly_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E53",
+       "name": "csr_write_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E7",
+       "name": "opcode_invalid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "opcode_ra_idx_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "opcode_ra_operand_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "csr_register_file",
+     "kind": "REGISTER_BANK",
+     "description": "Child CSR file: read mux, writeback updates, trap branch and interrupt masking.",
+     "anchors": [
+      {
+       "id": "E61",
+       "name": "csr_rdata_w",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 46.6,
+       "struct_score": 18.8,
+       "trace": "data_backward",
+       "why": "CSR file read data feeding E1 result and set/clear computation.",
+       "lines": [
+        143,
+        168,
+        220
+       ]
+      },
+      {
+       "id": "E65",
+       "name": "status_reg_w",
+       "role": "CONFIG_REG",
+       "importance": "major",
+       "score": 46.4,
+       "struct_score": 17.9,
+       "trace": "data_backward",
+       "why": "Status CSR from file driving MMU privilege, SUM and MXR outputs.",
+       "lines": [
+        149,
+        185,
+        331
+       ]
+      },
+      {
+       "id": "E66",
+       "name": "satp_reg_w",
+       "role": "CONFIG_REG",
+       "importance": "minor",
+       "score": 17.5,
+       "struct_score": 14.2,
+       "trace": "data_backward",
+       "why": "SATP CSR value driving mmu_satp_o and branch privilege.",
+       "lines": [
+        150,
+        186,
+        332
+       ]
+      },
+      {
+       "id": "E50",
+       "name": "current_priv_w",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 15.8,
+       "struct_score": 7.5,
+       "trace": "data_backward",
+       "why": "Current privilege level from CSR file used in fault checks and MMU.",
+       "lines": [
+        106,
+        184,
+        201
+       ]
+      },
+      {
+       "id": "E64",
+       "name": "interrupt_w",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 19.0,
+       "struct_score": 20.3,
+       "trace": "control_backward",
+       "why": "Masked pending interrupts from CSR file feeding take_interrupt_q.",
+       "lines": [
+        148,
+        189,
+        270
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "csr_writeback_write_i",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 45.5,
+       "struct_score": 14.3,
+       "trace": "interface",
+       "why": "Writeback CSR write enable gating CSR file write address.",
+       "lines": [
+        51,
+        176
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "csr_writeback_wdata_i",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 32.0,
+       "struct_score": 69.7,
+       "trace": "interface",
+       "why": "Writeback CSR write data to the CSR file.",
+       "lines": [
+        53,
+        177
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "csr_writeback_exception_i",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 19.3,
+       "struct_score": 21.5,
+       "trace": "interface",
+       "why": "Writeback exception code driving CSR trap updates.",
+       "lines": [
+        54,
+        171
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "u_csrfile",
+       "module": "biriscv_csr_regfile"
+      }
+     ],
+     "members": [
+      {
+       "id": "E59",
+       "name": "timer_irq_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E60",
+       "name": "misa_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E62",
+       "name": "csr_branch_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E63",
+       "name": "csr_target_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E14",
+       "name": "csr_writeback_waddr_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E17",
+       "name": "csr_writeback_exception_pc_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "csr_writeback_exception_addr_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E19",
+       "name": "cpu_id_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "intr_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "e1_result_stage",
+     "kind": "PIPELINE_STAGE",
+     "description": "E1 registers holding CSR read result, write data, write valid and exception.",
+     "anchors": [
+      {
+       "id": "E68",
+       "name": "rd_result_e1_q",
+       "role": "PIPELINE_REG",
+       "importance": "critical",
+       "score": 79.7,
+       "struct_score": 39.4,
+       "trace": "data_backward",
+       "why": "E1 CSR read result or faulting opcode driven to csr_result_e1_value_o.",
+       "lines": [
+        196,
+        218,
+        256
+       ]
+      },
+      {
+       "id": "E70",
+       "name": "exception_e1_q",
+       "role": "PIPELINE_REG",
+       "importance": "critical",
+       "score": 76.4,
+       "struct_score": 25.9,
+       "trace": "control_backward",
+       "why": "E1 exception code: ecall, eret, breakpoint, illegal, fence flush.",
+       "lines": [
+        198,
+        224,
+        259
+       ]
+      },
+      {
+       "id": "E69",
+       "name": "csr_wdata_e1_q",
+       "role": "PIPELINE_REG",
+       "importance": "major",
+       "score": 50.7,
+       "struct_score": 35.4,
+       "trace": "data_backward",
+       "why": "E1 CSR write value from set/clear of read data and operand.",
+       "lines": [
+        197,
+        244,
+        258
+       ]
+      },
+      {
+       "id": "E67",
+       "name": "rd_valid_e1_q",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 44.5,
+       "struct_score": 10.2,
+       "trace": "control_backward",
+       "why": "E1 CSR write enable when CSR op has no access fault.",
+       "lines": [
+        195,
+        213,
+        257
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E22",
+       "name": "csr_result_e1_value_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "csr_result_e1_write_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E24",
+       "name": "csr_result_e1_wdata_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E25",
+       "name": "csr_result_e1_exception_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "branch_control",
+     "kind": "CONTROLLER",
+     "description": "Registers reset-vector or CSR trap branch request and target.",
+     "anchors": [
+      {
+       "id": "E75",
+       "name": "branch_q",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 76.2,
+       "struct_score": 25.1,
+       "trace": "control_backward",
+       "why": "Registered CSR branch request for reset vector or trap entry/return.",
+       "lines": [
+        301,
+        320,
+        324
+       ]
+      },
+      {
+       "id": "E76",
+       "name": "branch_target_q",
+       "role": "PIPELINE_REG",
+       "importance": "major",
+       "score": 49.1,
+       "struct_score": 28.9,
+       "trace": "data_backward",
+       "why": "Registered branch target: reset vector or CSR trap target.",
+       "lines": [
+        302,
+        314,
+        325
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E26",
+       "name": "branch_csr_request_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E27",
+       "name": "branch_csr_pc_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E28",
+       "name": "branch_csr_priv_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "reset_vector_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "interrupt_mmu_control",
+     "kind": "OTHER",
+     "description": "Registered interrupt take, TLB flush, ifence and MMU control outputs.",
+     "anchors": [
+      {
+       "id": "E72",
+       "name": "take_interrupt_q",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 43.0,
+       "struct_score": 4.0,
+       "trace": "control_backward",
+       "why": "Registered interrupt launch request from masked pending interrupts.",
+       "lines": [
+        264,
+        270,
+        272
+       ]
+      },
+      {
+       "id": "E73",
+       "name": "tlb_flush_q",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 15.2,
+       "struct_score": 5.0,
+       "trace": "control_backward",
+       "why": "Registered MMU TLB flush request driving mmu_flush_o.",
+       "lines": [
+        277,
+        283,
+        333
+       ]
+      },
+      {
+       "id": "E74",
+       "name": "ifence_q",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 15.0,
+       "struct_score": 3.9,
+       "trace": "control_backward",
+       "why": "Registered instruction fence request driving ifence_o.",
+       "lines": [
+        288,
+        294,
+        296
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E21",
+       "name": "interrupt_inhibit_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E29",
+       "name": "take_interrupt_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E30",
+       "name": "ifence_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E31",
+       "name": "mmu_priv_d_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E32",
+       "name": "mmu_sum_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E33",
+       "name": "mmu_mxr_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E34",
+       "name": "mmu_flush_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E35",
+       "name": "mmu_satp_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "opcode_issue",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "opcode_valid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "opcode_opcode_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "opcode_pc_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "opcode_invalid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "opcode_rd_idx_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "opcode_ra_idx_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "opcode_rb_idx_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "opcode_ra_operand_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E12",
+       "name": "opcode_rb_operand_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "csr_writeback",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18"
+     ],
+     "members": [
+      {
+       "id": "E13",
+       "name": "csr_writeback_write_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E14",
+       "name": "csr_writeback_waddr_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "csr_writeback_wdata_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E16",
+       "name": "csr_writeback_exception_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E17",
+       "name": "csr_writeback_exception_pc_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "csr_writeback_exception_addr_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "cpu_config_inputs",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E19",
+      "E20",
+      "E21"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "intr_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E19",
+       "name": "cpu_id_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E20",
+       "name": "reset_vector_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E21",
+       "name": "interrupt_inhibit_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "csr_result_e1",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E22",
+      "E23",
+      "E24",
+      "E25"
+     ],
+     "members": [
+      {
+       "id": "E22",
+       "name": "csr_result_e1_value_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "csr_result_e1_write_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E24",
+       "name": "csr_result_e1_wdata_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E25",
+       "name": "csr_result_e1_exception_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "branch_csr",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E26",
+      "E27",
+      "E28"
+     ],
+     "members": [
+      {
+       "id": "E26",
+       "name": "branch_csr_request_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E27",
+       "name": "branch_csr_pc_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E28",
+       "name": "branch_csr_priv_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "pipeline_control",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E29",
+      "E30"
+     ],
+     "members": [
+      {
+       "id": "E29",
+       "name": "take_interrupt_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E30",
+       "name": "ifence_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "mmu_control",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E31",
+      "E32",
+      "E33",
+      "E34",
+      "E35"
+     ],
+     "members": [
+      {
+       "id": "E31",
+       "name": "mmu_priv_d_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E32",
+       "name": "mmu_sum_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E33",
+       "name": "mmu_mxr_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E34",
+       "name": "mmu_flush_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E35",
+       "name": "mmu_satp_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

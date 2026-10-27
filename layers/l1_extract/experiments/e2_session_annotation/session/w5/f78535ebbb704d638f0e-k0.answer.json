@@ -1,0 +1,27 @@
+{
+ "module_summary": "SERV bit-serial memory interface helper that generates Wishbone byte selects, misalignment flag, and sign/zero-extends load data via a sticky sign-bit register.",
+ "anchors": [
+  {"id": "E9", "name": "i_bufreg2_q", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Serial load data from bufreg2; source of o_rd and sign bit.", "lines": [27, 40, 49]},
+  {"id": "E10", "name": "o_rd", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Serial rd write data: load bit or sign/zero extension.", "lines": [28, 40]},
+  {"id": "E11", "name": "o_wb_sel", "role": "ENABLE", "importance": "critical", "trace": "control_backward", "why": "Wishbone byte-lane select decoded from address LSBs and access size.", "lines": [30, 42, 45]},
+  {"id": "E13", "name": "dat_valid", "role": "MUX_SELECT", "importance": "major", "trace": "control_backward", "why": "Selects load data vs sign extension for o_rd; enables signbit capture.", "lines": [34, 40, 48]},
+  {"id": "E12", "name": "signbit", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Holds last valid data bit for sign extension of narrow loads.", "lines": [32, 49, 40]},
+  {"id": "E4", "name": "o_misalign", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Reports misaligned word/half access from address LSBs.", "lines": [19, 57]},
+  {"id": "E3", "name": "i_lsb", "role": "INTERFACE_ADDR", "importance": "major", "trace": "interface", "why": "Address low bits deciding byte lanes and misalignment.", "lines": [18, 42, 57]},
+  {"id": "E2", "name": "i_bytecnt", "role": "COUNTER", "importance": "minor", "trace": "interface", "why": "External byte counter input deciding when data bits are valid.", "lines": [17, 37]},
+  {"id": "E6", "name": "i_word", "role": "COMMAND", "importance": "minor", "trace": "forward", "why": "Word-size access command affecting byte selects and data validity.", "lines": [22, 36, 43]},
+  {"id": "E7", "name": "i_half", "role": "COMMAND", "importance": "minor", "trace": "forward", "why": "Halfword access command affecting byte selects and data validity.", "lines": [23, 38, 44]},
+  {"id": "E5", "name": "i_signed", "role": "COMMAND", "importance": "minor", "trace": "forward", "why": "Selects sign vs zero extension of loaded data.", "lines": [21, 40]}
+ ],
+ "groups": [
+  {"name": "Load data extension", "kind": "DATAPATH", "anchor_ids": ["E9", "E10", "E13", "E12", "E2", "E5"], "member_ids": ["E8"], "description": "Passes valid load bits to rd else sign/zero extension from signbit."},
+  {"name": "Byte select and alignment", "kind": "DECODER", "anchor_ids": ["E11", "E4", "E3", "E6", "E7"], "member_ids": [], "description": "Decodes address LSBs and size into wb_sel and misalignment flag."}
+ ],
+ "interfaces": [
+  {"name": "clock", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1"]},
+  {"name": "state", "protocol": "SIMPLE", "direction": "BIDIR", "member_ids": ["E2", "E3", "E4"]},
+  {"name": "control", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E5", "E6", "E7", "E8"]},
+  {"name": "data", "protocol": "STREAM", "direction": "BIDIR", "member_ids": ["E9", "E10"]},
+  {"name": "wishbone_sel", "protocol": "MEMORY_BUS", "direction": "OUT", "member_ids": ["E11"]}
+ ]
+}

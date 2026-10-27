@@ -1,0 +1,23 @@
+{
+  "module_summary": "64-bit 10GBASE-R 64b/66b encoder: per-lane control-code translation feeds a block-type mux keyed on xgmii_txc, registered into data, sync header and bad-block flag.",
+  "anchors": [
+    {"id": "E3", "name": "xgmii_txd", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "XGMII transmit data lanes; passed through or translated into control codes.", "lines": [152, 202]},
+    {"id": "E4", "name": "xgmii_txc", "role": "MUX_SELECT", "importance": "critical", "trace": "interface", "why": "Per-lane control mask selecting data block versus block-type format.", "lines": [150, 201, 262]},
+    {"id": "E8", "name": "encoded_ctrl", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Per-lane 7-bit control codes translated from XGMII control characters.", "lines": [154, 264]},
+    {"id": "E9", "name": "encode_err", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Per-lane invalid control character flags feeding bad-block detection.", "lines": [191, 265]},
+    {"id": "E10", "name": "encoded_tx_data_reg", "role": "PIPELINE_REG", "importance": "critical", "trace": "data_backward", "why": "Registered 64-bit encoded block payload output each cycle.", "lines": [139, 276]},
+    {"id": "E12", "name": "encoded_tx_hdr_reg", "role": "PIPELINE_REG", "importance": "major", "trace": "data_backward", "why": "Registered 2-bit sync header: data or control block.", "lines": [140, 277]},
+    {"id": "E14", "name": "tx_bad_block_reg", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Registered flag indicating input had no valid block encoding.", "lines": [142, 279]}
+  ],
+  "groups": [
+    {"name": "Control code translator", "kind": "DECODER", "anchor_ids": ["E8", "E9"], "member_ids": [], "description": "Maps each XGMII control character lane to 10GBASE-R 7-bit code."},
+    {"name": "Block formatter", "kind": "DATAPATH", "anchor_ids": ["E3", "E4"], "member_ids": ["E11", "E13", "E15"], "description": "Chooses block type from txc pattern and assembles 64-bit payload."},
+    {"name": "Output registers", "kind": "PIPELINE_STAGE", "anchor_ids": ["E10", "E12", "E14"], "member_ids": ["E5", "E6", "E7"], "description": "Register encoded data, header and bad-block status."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "xgmii_tx", "protocol": "STREAM", "direction": "IN", "member_ids": ["E3", "E4"]},
+    {"name": "encoded_tx", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E5", "E6"]},
+    {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E7"]}
+  ]
+}

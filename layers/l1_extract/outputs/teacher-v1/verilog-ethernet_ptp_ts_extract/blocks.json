@@ -1,0 +1,199 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-ethernet_ptp_ts_extract",
+ "tops": [
+  "ptp_ts_extract"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "ptp_ts_extract": {
+   "source": "teacher",
+   "canonical_instance": "ptp_ts_extract",
+   "file": "data/rtl/verilog-ethernet/rtl/ptp_ts_extract.v",
+   "lines": [
+    34,
+    73
+   ],
+   "summary": "Extracts a timestamp from AXI-stream tuser on the first beat of each frame, using a mid-frame flag register to qualify valid.",
+   "blocks": [
+    {
+     "name": "frame_tracker",
+     "kind": "CONTROLLER",
+     "description": "Tracks frame boundaries to find first beat of each frame",
+     "anchors": [
+      {
+       "id": "E8",
+       "name": "frame_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "critical",
+       "score": 83.5,
+       "struct_score": 53.1,
+       "trace": "control_backward",
+       "why": "Mid-frame flag set after non-last beat; suppresses timestamp valid until next frame start",
+       "lines": [
+        58,
+        61,
+        65
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "s_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 69.1,
+       "struct_score": 92.7,
+       "trace": "interface",
+       "why": "Input beat valid; qualifies output valid and frame_reg update",
+       "lines": [
+        47,
+        61,
+        64
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_tlast",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 37.1,
+       "struct_score": 82.7,
+       "trace": "interface",
+       "why": "End-of-frame marker clearing frame_reg",
+       "lines": [
+        48,
+        65
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "ts_extract",
+     "kind": "DATAPATH",
+     "description": "Shifts timestamp out of tuser and qualifies it with first-beat valid",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "m_axis_ts",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 99.0,
+       "struct_score": 97.6,
+       "trace": "data_backward",
+       "why": "Timestamp output: tuser shifted right by TS_OFFSET",
+       "lines": [
+        54,
+        60
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "m_axis_ts_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 97.7,
+       "struct_score": 94.2,
+       "trace": "control_backward",
+       "why": "Timestamp valid pulse on first beat of frame: tvalid and not frame_reg",
+       "lines": [
+        55,
+        61
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_tuser",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 70.8,
+       "struct_score": 96.9,
+       "trace": "interface",
+       "why": "Sideband carrying the timestamp field extracted to m_axis_ts",
+       "lines": [
+        49,
+        60
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axis",
+     "protocol": "STREAM",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axis_tvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_tuser",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axis_ts",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "m_axis_ts",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "m_axis_ts_valid",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

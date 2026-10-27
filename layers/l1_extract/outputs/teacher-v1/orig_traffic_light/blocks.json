@@ -1,0 +1,239 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "orig_traffic_light",
+ "tops": [
+  "verified_traffic_light"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "verified_traffic_light": {
+   "source": "teacher",
+   "canonical_instance": "verified_traffic_light",
+   "file": "data/rtl/RTLLM/Miscellaneous/Others/traffic_light/verified_traffic_light.v",
+   "lines": [
+    3,
+    101
+   ],
+   "summary": "Traffic light controller: a red/green/yellow FSM sets pre-lamp registers, a down-counter reloaded on lamp edges times each phase, and pass_request shortens green.",
+   "blocks": [
+    {
+     "name": "light_fsm",
+     "kind": "CONTROLLER",
+     "description": "Phase FSM producing pre-lamp red/yellow/green registers.",
+     "anchors": [
+      {
+       "id": "E9",
+       "name": "state",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.7,
+       "struct_score": 99.2,
+       "trace": "control_backward",
+       "why": "Idle/red/green/yellow sequencer; sets pre-lamp registers and advances when cnt reaches 3.",
+       "lines": [
+        32,
+        45,
+        46
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "p_green",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 25.1,
+       "struct_score": 44.5,
+       "trace": "control_backward",
+       "why": "Representative pre-lamp register set by FSM; feeds lamp and counter-reload edge detect.",
+       "lines": [
+        63,
+        78,
+        98
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E10",
+       "name": "p_red",
+       "kind": "reg"
+      },
+      {
+       "id": "E11",
+       "name": "p_yellow",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "phase_timer",
+     "kind": "COUNTER_TIMER",
+     "description": "Down-counter reloaded per phase, shortened by pass_request, exported as clock.",
+     "anchors": [
+      {
+       "id": "E8",
+       "name": "cnt",
+       "role": "COUNTER",
+       "importance": "critical",
+       "score": 94.0,
+       "struct_score": 84.8,
+       "trace": "control_backward",
+       "why": "Phase down-counter reloaded on lamp transitions, drives state changes and clock output.",
+       "lines": [
+        76,
+        84,
+        85
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "pass_request",
+       "role": "COMMAND",
+       "importance": "major",
+       "score": 52.6,
+       "struct_score": 42.8,
+       "trace": "interface",
+       "why": "Pedestrian request reloading cnt to 10 during long green.",
+       "lines": [
+        76
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E4",
+       "name": "clock",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "lamp_outputs",
+     "kind": "REGISTER_BANK",
+     "description": "Output lamp registers delayed one cycle from pre-lamp registers.",
+     "anchors": [
+      {
+       "id": "E5",
+       "name": "red",
+       "role": "STATUS",
+       "importance": "critical",
+       "score": 85.5,
+       "struct_score": 60.6,
+       "trace": "control_backward",
+       "why": "Registered red lamp output from p_red.",
+       "lines": [
+        82,
+        97
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "yellow",
+       "role": "STATUS",
+       "importance": "critical",
+       "score": 85.5,
+       "struct_score": 60.6,
+       "trace": "control_backward",
+       "why": "Registered yellow lamp output from p_yellow.",
+       "lines": [
+        80,
+        96
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "green",
+       "role": "STATUS",
+       "importance": "critical",
+       "score": 85.5,
+       "struct_score": 60.6,
+       "trace": "control_backward",
+       "why": "Registered green lamp output; also gates pass_request counter shortening.",
+       "lines": [
+        76,
+        98
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "rst_n",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "clk",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "request_in",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "pass_request",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "lamps_and_timer",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E4",
+      "E5",
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "clock",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "red",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "yellow",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "green",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

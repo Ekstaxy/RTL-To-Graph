@@ -1,0 +1,46 @@
+{
+  "module_summary": "GMII/MII-to-AXI-Stream receiver: a five-stage byte delay line (with MII nibble assembly) feeds a 3-state FSM that strips preamble and checks CRC32 FCS via an LFSR.",
+  "anchors": [
+    {"id": "E17", "name": "state_reg", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "IDLE/PAYLOAD/WAIT_LAST receive FSM driving AXI output and CRC control", "lines": [189, 248]},
+    {"id": "E3", "name": "gmii_rxd", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "GMII receive byte (or MII nibble) input into delay line", "lines": [306, 275]},
+    {"id": "E4", "name": "gmii_rx_dv", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Receive data valid; frames packet and signals end of frame", "lines": [213, 312]},
+    {"id": "E5", "name": "gmii_rx_er", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "Receive error input delayed to flag bad frames", "lines": [318]},
+    {"id": "E6", "name": "m_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "AXI-Stream output byte", "lines": [143]},
+    {"id": "E7", "name": "m_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "AXI-Stream valid during PAYLOAD", "lines": [144]},
+    {"id": "E8", "name": "m_axis_tlast", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Last byte marker at end of frame or error", "lines": [145]},
+    {"id": "E9", "name": "m_axis_tuser", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "Bad-frame flag plus optional timestamp", "lines": [146]},
+    {"id": "E27", "name": "gmii_rxd_d4", "role": "PIPELINE_REG", "importance": "major", "trace": "data_backward", "why": "Last delay-line stage; checked for SFD, fed to CRC and output", "lines": [194, 204, 162]},
+    {"id": "E23", "name": "gmii_rxd_d0", "role": "PIPELINE_REG", "importance": "minor", "trace": "data_backward", "why": "First delay stage, assembles MII nibbles; part of FCS compare window", "lines": [275, 220]},
+    {"id": "E32", "name": "gmii_rx_dv_d4", "role": "PIPELINE_REG", "importance": "minor", "trace": "control_backward", "why": "Delayed data valid aligned to d4 byte for start detection", "lines": [194, 207]},
+    {"id": "E37", "name": "gmii_rx_er_d4", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Delayed error aligned to output byte; aborts frame", "lines": [194, 207]},
+    {"id": "E21", "name": "mii_odd", "role": "CLOCK_GEN", "importance": "major", "trace": "control_backward", "why": "MII nibble phase toggle; gates FSM and delay-line shifts every other cycle", "lines": [185, 265, 277]},
+    {"id": "E22", "name": "in_frame", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Tracks frame presence after SFD; triggers start_packet", "lines": [267, 302]},
+    {"id": "E53", "name": "crc_state", "role": "STORAGE", "importance": "major", "trace": "data_backward", "why": "Running CRC32 state, reset in IDLE and updated in PAYLOAD", "lines": [326, 329, 163]},
+    {"id": "E54", "name": "crc_next", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "LFSR output compared to received FCS bytes", "lines": [220, 165]},
+    {"id": "E19", "name": "reset_crc", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Reinitialises CRC in IDLE", "lines": [192, 326]},
+    {"id": "E20", "name": "update_crc", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Advances CRC during PAYLOAD", "lines": [202, 328]},
+    {"id": "E11", "name": "clk_enable", "role": "ENABLE", "importance": "major", "trace": "interface", "why": "Clock enable holding FSM and delay line when low", "lines": [182, 263]},
+    {"id": "E12", "name": "mii_select", "role": "COMMAND", "importance": "major", "trace": "interface", "why": "Selects MII nibble mode versus GMII byte mode", "lines": [185, 264]},
+    {"id": "E13", "name": "cfg_rx_enable", "role": "CONFIG_REG", "importance": "minor", "trace": "interface", "why": "Enables acceptance of new frames in IDLE", "lines": [194]},
+    {"id": "E15", "name": "error_bad_frame", "role": "STATUS", "importance": "major", "trace": "interface", "why": "Pulse on errored or bad-FCS frame", "lines": [149]},
+    {"id": "E16", "name": "error_bad_fcs", "role": "STATUS", "importance": "major", "trace": "interface", "why": "Pulse on FCS mismatch", "lines": [150]},
+    {"id": "E14", "name": "start_packet", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "Start-of-frame pulse after SFD detection", "lines": [148]},
+    {"id": "E52", "name": "ptp_ts_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "PTP timestamp captured at frame start for tuser", "lines": [259, 146]}
+  ],
+  "groups": [
+    {"name": "Receive FSM", "kind": "CONTROLLER", "anchor_ids": ["E17", "E19", "E20", "E13"], "member_ids": ["E18"], "description": "Detects SFD, forwards payload, checks FCS and errors"},
+    {"name": "Input delay line", "kind": "PIPELINE_STAGE", "anchor_ids": ["E3", "E4", "E5", "E23", "E27", "E32", "E37"], "member_ids": ["E24", "E25", "E26", "E28", "E29", "E30", "E31", "E33", "E34", "E35", "E36"], "description": "Five-stage data/dv/er delay holding FCS window for comparison"},
+    {"name": "MII adapter", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E21", "E22", "E11", "E12"], "member_ids": [], "description": "Nibble phase and frame tracking for MII/GMII clock-enable operation"},
+    {"name": "CRC checker", "kind": "DATAPATH", "anchor_ids": ["E53", "E54"], "member_ids": ["I1"], "description": "8-bit LFSR CRC32 over payload bytes"},
+    {"name": "AXI stream output", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E6", "E7", "E8", "E9"], "member_ids": ["E38", "E39", "E40", "E41", "E42", "E43", "E44", "E45"], "description": "Registered AXI-Stream byte output with last and user"},
+    {"name": "Status and PTP", "kind": "OTHER", "anchor_ids": ["E15", "E16", "E14", "E52"], "member_ids": ["E46", "E47", "E48", "E49", "E50", "E51"], "description": "Error/start status pulses and timestamp capture"}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "gmii_rx", "protocol": "STREAM", "direction": "IN", "member_ids": ["E3", "E4", "E5"]},
+    {"name": "m_axis", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E6", "E7", "E8", "E9"]},
+    {"name": "ptp", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E10"]},
+    {"name": "control_config", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E11", "E12", "E13"]},
+    {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E14", "E15", "E16"]}
+  ]
+}

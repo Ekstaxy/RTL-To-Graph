@@ -1,0 +1,277 @@
+{
+  "module_summary": "Cache controller: receives CPU requests, checks cache via CAM, latches miss/hit path, and orchestrates memory refill or write-through via FSM.",
+  "anchors": [
+    {
+      "id": "E3",
+      "name": "cpu_req_valid",
+      "role": "HANDSHAKE_VALID",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "CPU request valid signal indicating access request.",
+      "lines": [54, 114, 149]
+    },
+    {
+      "id": "E4",
+      "name": "cpu_req_ready",
+      "role": "HANDSHAKE_READY",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Ready signal indicating controller can accept CPU request.",
+      "lines": [55, 149]
+    },
+    {
+      "id": "E5",
+      "name": "cpu_we",
+      "role": "COMMAND",
+      "importance": "critical",
+      "trace": "forward",
+      "why": "Write enable command distinguishing read vs write operations.",
+      "lines": [56, 132, 155]
+    },
+    {
+      "id": "E6",
+      "name": "cpu_addr",
+      "role": "INTERFACE_ADDR",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Address from CPU for cache lookup and memory access.",
+      "lines": [57, 130, 156]
+    },
+    {
+      "id": "E7",
+      "name": "cpu_wdata",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Write data from CPU latched for cache/memory operations.",
+      "lines": [58, 131]
+    },
+    {
+      "id": "E8",
+      "name": "cpu_resp_valid",
+      "role": "HANDSHAKE_VALID",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Response valid signal indicating data ready to return to CPU.",
+      "lines": [59, 151]
+    },
+    {
+      "id": "E9",
+      "name": "cpu_rdata",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Read data returned to CPU from cache or memory.",
+      "lines": [60, 150, 152]
+    },
+    {
+      "id": "E10",
+      "name": "stall_o",
+      "role": "STATUS",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Stall signal indicating controller busy, not ready for new requests.",
+      "lines": [61, 148]
+    },
+    {
+      "id": "E11",
+      "name": "mem_req",
+      "role": "HANDSHAKE_VALID",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Memory request signal indicating CPU request forwarded to memory.",
+      "lines": [62, 152, 154]
+    },
+    {
+      "id": "E12",
+      "name": "mem_we",
+      "role": "COMMAND",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Memory write enable command for read vs write operations.",
+      "lines": [63, 153]
+    },
+    {
+      "id": "E13",
+      "name": "mem_addr",
+      "role": "INTERFACE_ADDR",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Address sent to memory for read or write access.",
+      "lines": [64, 156]
+    },
+    {
+      "id": "E14",
+      "name": "mem_wdata",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Data sent to memory for write operations.",
+      "lines": [65, 155]
+    },
+    {
+      "id": "E15",
+      "name": "mem_ack",
+      "role": "HANDSHAKE_READY",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Memory acknowledge signal indicating data valid.",
+      "lines": [66, 96, 118, 120]
+    },
+    {
+      "id": "E16",
+      "name": "mem_rdata",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Data returned from memory on read operations.",
+      "lines": [67, 104, 142, 144]
+    },
+    {
+      "id": "E17",
+      "name": "mode",
+      "role": "FSM_STATE",
+      "importance": "critical",
+      "trace": "control_backward",
+      "why": "FSM state machine controlling cache operation sequence.",
+      "lines": [78, 88, 112, 114, 115]
+    },
+    {
+      "id": "E22",
+      "name": "found",
+      "role": "CONTROL_FLAG",
+      "importance": "critical",
+      "trace": "forward",
+      "why": "Cache hit indicator from CAM, gates hit vs miss path.",
+      "lines": [83, 94, 116, 143]
+    },
+    {
+      "id": "E18",
+      "name": "lat_a",
+      "role": "HOLDING_REG",
+      "importance": "major",
+      "trace": "data_backward",
+      "why": "Latches CPU address across multi-cycle cache operation.",
+      "lines": [79, 130, 102, 156]
+    },
+    {
+      "id": "E19",
+      "name": "lat_d",
+      "role": "HOLDING_REG",
+      "importance": "major",
+      "trace": "data_backward",
+      "why": "Latches CPU write data for memory or cache update.",
+      "lines": [80, 131, 140, 155]
+    },
+    {
+      "id": "E21",
+      "name": "lat_w",
+      "role": "HOLDING_REG",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Latches write flag, distinguishes read vs write path.",
+      "lines": [82, 132, 116, 155]
+    },
+    {
+      "id": "E20",
+      "name": "out_r",
+      "role": "HOLDING_REG",
+      "importance": "major",
+      "trace": "forward",
+      "why": "Result register holding response data for CPU.",
+      "lines": [81, 140, 142, 144, 152]
+    },
+    {
+      "id": "E23",
+      "name": "bank_q",
+      "role": "INTERFACE_DATA",
+      "importance": "major",
+      "trace": "data_backward",
+      "why": "Cache read data output on cache hit.",
+      "lines": [84, 109, 146]
+    }
+  ],
+  "groups": [
+    {
+      "name": "CPU Request Interface",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E3", "E4", "E5", "E6", "E7"],
+      "member_ids": [],
+      "description": "Valid, ready, and command/address/data signals from CPU."
+    },
+    {
+      "name": "CPU Response Interface",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E8", "E9", "E10"],
+      "member_ids": [],
+      "description": "Valid, data, and stall signals to CPU."
+    },
+    {
+      "name": "Memory Request Interface",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E11", "E12", "E13", "E14"],
+      "member_ids": [],
+      "description": "Request, command, address, and data signals to memory."
+    },
+    {
+      "name": "Memory Response Interface",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E15", "E16"],
+      "member_ids": [],
+      "description": "Acknowledge and read data from memory."
+    },
+    {
+      "name": "Control FSM",
+      "kind": "CONTROLLER",
+      "anchor_ids": ["E17", "E22"],
+      "member_ids": [],
+      "description": "State machine and cache hit flag controlling operation sequence."
+    },
+    {
+      "name": "Request Holding Registers",
+      "kind": "REGISTER_BANK",
+      "anchor_ids": ["E18", "E19", "E21"],
+      "member_ids": [],
+      "description": "Latched CPU address, write data, and write command."
+    },
+    {
+      "name": "Response Path",
+      "kind": "DATAPATH",
+      "anchor_ids": ["E20", "E23"],
+      "member_ids": ["I1"],
+      "description": "Result register and cache bank output holding response data."
+    }
+  ],
+  "interfaces": [
+    {
+      "name": "CPU Request",
+      "protocol": "VALID_READY",
+      "direction": "IN",
+      "member_ids": ["E3", "E4", "E5", "E6", "E7"]
+    },
+    {
+      "name": "CPU Response",
+      "protocol": "VALID_READY",
+      "direction": "OUT",
+      "member_ids": ["E8", "E9"]
+    },
+    {
+      "name": "CPU Status",
+      "protocol": "SIMPLE",
+      "direction": "OUT",
+      "member_ids": ["E10"]
+    },
+    {
+      "name": "Memory Request",
+      "protocol": "VALID_READY",
+      "direction": "OUT",
+      "member_ids": ["E11", "E12", "E13", "E14"]
+    },
+    {
+      "name": "Memory Response",
+      "protocol": "VALID_READY",
+      "direction": "IN",
+      "member_ids": ["E15", "E16"]
+    }
+  ]
+}

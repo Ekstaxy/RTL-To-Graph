@@ -1,0 +1,40 @@
+{
+ "module_summary": "AXI-stream frame joiner: a 3-state FSM emits an optional tag, then forwards one frame from each input port in turn via a port-select mux into a skid-buffered output.",
+ "anchors": [
+  {"id": "E15", "name": "state_reg", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "IDLE/WRITE_TAG/TRANSFER controller sequencing tag emission and per-port frame transfer.", "lines": [89, 132, 226]},
+  {"id": "E19", "name": "port_sel_reg", "role": "MUX_SELECT", "importance": "critical", "trace": "control_backward", "why": "Current input port; selects input data/valid/last and ready bit, increments on tlast.", "lines": [112, 192, 202]},
+  {"id": "E17", "name": "frame_ptr_reg", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Tag word counter shifting tag out word by word in WRITE_TAG.", "lines": [176, 179, 180]},
+  {"id": "E23", "name": "output_tuser_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Accumulates OR of input tuser across joined frames for final beat.", "lines": [96, 130, 234]},
+  {"id": "E13", "name": "tag", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Tag value prepended to the joined frame in WRITE_TAG.", "lines": [70, 154, 179]},
+  {"id": "E14", "name": "busy", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Level busy output: FSM not idle, via busy_reg.", "lines": [75, 110]},
+  {"id": "E3", "name": "s_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Concatenated input payloads, indexed by port_sel_reg.", "lines": [52, 112]},
+  {"id": "E4", "name": "s_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Per-port input valid; starts frame in IDLE, selected in TRANSFER.", "lines": [53, 113, 147]},
+  {"id": "E5", "name": "s_axis_tready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Per-port ready from s_axis_tready_reg, only selected port enabled.", "lines": [54, 108]},
+  {"id": "E8", "name": "m_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Joined output payload from output register.", "lines": [61, 264]},
+  {"id": "E9", "name": "m_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Output valid from output register.", "lines": [62, 265]},
+  {"id": "E10", "name": "m_axis_tready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Downstream ready controlling output/temp transfers.", "lines": [63, 270, 283]},
+  {"id": "E34", "name": "input_tvalid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "Valid of currently selected input port; gates transfers in TRANSFER.", "lines": [113, 194]},
+  {"id": "E35", "name": "input_tlast", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Selected port tlast: advances port_sel and ends frame on last port.", "lines": [114, 200]},
+  {"id": "E33", "name": "input_tdata", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Payload of selected input port forwarded to output.", "lines": [112, 197]},
+  {"id": "E27", "name": "m_axis_tdata_int", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Internal output beat: tag word or selected input data.", "lines": [154, 197, 307]},
+  {"id": "E29", "name": "m_axis_tready_int_reg", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "Internal ready gating FSM beat emission and output/temp storing.", "lines": [151, 194, 281]},
+  {"id": "E32", "name": "m_axis_tready_int_early", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Early internal ready used for next-cycle input ready.", "lines": [192, 270]},
+  {"id": "E42", "name": "temp_m_axis_tdata_reg", "role": "STORAGE", "importance": "major", "trace": "data_backward", "why": "Skid buffer payload held while output stalled.", "lines": [254, 311, 317]},
+  {"id": "E43", "name": "temp_m_axis_tvalid_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Skid buffer occupied flag gating early ready.", "lines": [255, 270, 303]},
+  {"id": "E47", "name": "store_axis_int_to_output", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Load enable: internal beat to output registers.", "lines": [286, 306]},
+  {"id": "E48", "name": "store_axis_int_to_temp", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Load enable: internal beat into skid registers.", "lines": [290, 316]},
+  {"id": "E49", "name": "store_axis_temp_to_output", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Load enable: skid registers to output registers.", "lines": [296, 310]}
+ ],
+ "groups": [
+  {"name": "Join controller", "kind": "CONTROLLER", "anchor_ids": ["E15", "E17", "E23", "E14", "E13"], "member_ids": ["E16", "E18", "E21", "E22", "E24"], "description": "FSM emitting tag words then sequencing input ports."},
+  {"name": "Input port mux", "kind": "DATAPATH", "anchor_ids": ["E19", "E3", "E4", "E5", "E33", "E34", "E35", "E27"], "member_ids": ["E20", "E25", "E26", "E36", "E28", "E30", "E31", "E6", "E7"], "description": "Selects the active input port's stream and ready bit."},
+  {"name": "Skid output register", "kind": "BUFFER", "anchor_ids": ["E8", "E9", "E10", "E29", "E32", "E42", "E43", "E47", "E48", "E49"], "member_ids": ["E37", "E38", "E39", "E40", "E41", "E44", "E45", "E46", "E11", "E12"], "description": "Output register plus temp skid register with transfer enables."}
+ ],
+ "interfaces": [
+  {"name": "clock/reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "s_axis", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7"]},
+  {"name": "m_axis", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E8", "E9", "E10", "E11", "E12"]},
+  {"name": "config", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E13"]},
+  {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E14"]}
+ ]
+}

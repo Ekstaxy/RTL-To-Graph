@@ -1,0 +1,34 @@
+{
+ "module_summary": "Bridges the PicoRV32 native memory interface to AXI4-lite by deriving per-channel valids from mem_valid/mem_wstrb, latching per-channel acknowledgements until transfer completion.",
+ "anchors": [
+  {"id": "E20", "name": "mem_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Native request valid; drives all AXI valids and ready signals", "lines": [2760, 2773, 2777]},
+  {"id": "E22", "name": "mem_ready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Native completion from AXI bvalid or rvalid", "lines": [2762, 2785, 2794]},
+  {"id": "E23", "name": "mem_addr", "role": "INTERFACE_ADDR", "importance": "critical", "trace": "interface", "why": "Native address forwarded to both AXI awaddr and araddr", "lines": [2763, 2774, 2778]},
+  {"id": "E25", "name": "mem_wstrb", "role": "COMMAND", "importance": "major", "trace": "forward", "why": "Write strobes choose write channels versus read channel", "lines": [2765, 2773, 2777]},
+  {"id": "E24", "name": "mem_wdata", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Native write data forwarded to AXI wdata", "lines": [2764, 2782]},
+  {"id": "E26", "name": "mem_rdata", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Native read data taken from AXI rdata", "lines": [2766, 2788]},
+  {"id": "E3", "name": "mem_axi_awvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "AXI write-address valid, suppressed after ack_awvalid", "lines": [2736, 2773, 2795]},
+  {"id": "E7", "name": "mem_axi_wvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "AXI write-data valid, suppressed after ack_wvalid", "lines": [2741, 2781, 2799]},
+  {"id": "E13", "name": "mem_axi_arvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "AXI read-address valid, suppressed after ack_arvalid", "lines": [2749, 2777, 2797]},
+  {"id": "E30", "name": "xfer_done", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Registered transfer completion clearing all channel ack flags", "lines": [2771, 2794, 2801]},
+  {"id": "E27", "name": "ack_awvalid", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Records write-address handshake done, blocks reissue of awvalid", "lines": [2768, 2773, 2796]},
+  {"id": "E29", "name": "ack_wvalid", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Records write-data handshake done, blocks reissue of wvalid", "lines": [2770, 2781, 2800]},
+  {"id": "E28", "name": "ack_arvalid", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Records read-address handshake done, blocks reissue of arvalid", "lines": [2769, 2777, 2798]},
+  {"id": "E11", "name": "mem_axi_bvalid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "AXI write response valid completing native write", "lines": [2746, 2785]},
+  {"id": "E17", "name": "mem_axi_rvalid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "AXI read data valid completing native read", "lines": [2754, 2785]}
+ ],
+ "groups": [
+  {"name": "Channel handshake tracking", "kind": "CONTROLLER", "anchor_ids": ["E30", "E27", "E29", "E28"], "member_ids": [], "description": "Ack flags per AXI channel cleared on transfer completion"},
+  {"name": "AXI request generation", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E3", "E7", "E13", "E25"], "member_ids": ["E5", "E6", "E9", "E10", "E15", "E16", "E12", "E18", "E21"], "description": "Derives AXI aw/w/ar requests and readies from native request"},
+  {"name": "Native memory port", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E20", "E22", "E23", "E24", "E26", "E11", "E17"], "member_ids": ["E19"], "description": "Native request, completion and data paths mapped onto AXI"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "axi_aw", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E3", "E4", "E5", "E6"]},
+  {"name": "axi_w", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E7", "E8", "E9", "E10"]},
+  {"name": "axi_b", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E11", "E12"]},
+  {"name": "axi_ar", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E13", "E14", "E15", "E16"]},
+  {"name": "axi_r", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E17", "E18", "E19"]},
+  {"name": "native_mem", "protocol": "MEMORY_BUS", "direction": "BIDIR", "member_ids": ["E20", "E21", "E22", "E23", "E24", "E25", "E26"]}
+ ]
+}

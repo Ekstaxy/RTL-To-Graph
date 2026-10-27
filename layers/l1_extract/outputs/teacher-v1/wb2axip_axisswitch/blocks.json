@@ -1,0 +1,885 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "wb2axip_axisswitch",
+ "tops": [
+  "axisswitch"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "skidbuffer": {
+   "source": "teacher",
+   "canonical_instance": "axisswitch.axilawskid",
+   "file": "data/rtl/wb2axip/rtl/skidbuffer.v",
+   "lines": [
+    81,
+    501
+   ],
+   "summary": "Valid/ready skid buffer: a one-entry side register captures incoming data when the output stalls, with optionally registered output valid/data.",
+   "blocks": [
+    {
+     "name": "Skid buffer",
+     "kind": "BUFFER",
+     "description": "One-entry overflow register and its full flag absorbing a downstream stall.",
+     "anchors": [
+      {
+       "id": "E10",
+       "name": "LOGIC.r_valid",
+       "role": "CONTROL_FLAG",
+       "importance": "critical",
+       "score": 87.4,
+       "struct_score": 67.3,
+       "trace": "control_backward",
+       "why": "Skid register full flag; deasserts o_ready and selects buffered data for output.",
+       "lines": [
+        137,
+        160,
+        212
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "LOGIC.r_data",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 93.8,
+       "struct_score": 84.4,
+       "trace": "data_backward",
+       "why": "One-entry skid buffer holding i_data captured while downstream is stalled.",
+       "lines": [
+        153,
+        213
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E9",
+       "name": "w_data",
+       "kind": "wire"
+      },
+      {
+       "id": "E12",
+       "name": "unused",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Input handshake",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Upstream valid/ready/data port accepted when skid register empty.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "i_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 97.4,
+       "struct_score": 93.3,
+       "trace": "interface",
+       "why": "Upstream valid; with o_ready accepts data into output or skid register.",
+       "lines": [
+        137,
+        198
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "o_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 95.9,
+       "struct_score": 89.6,
+       "trace": "interface",
+       "why": "Upstream ready, low while skid register holds data.",
+       "lines": [
+        160
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "i_data",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 65.2,
+       "struct_score": 82.9,
+       "trace": "interface",
+       "why": "Incoming payload written to r_data or forwarded to o_data.",
+       "lines": [
+        153,
+        215
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Output stage",
+     "kind": "PIPELINE_STAGE",
+     "description": "Optional output register muxing skid or input data onto downstream port.",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "o_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 98.7,
+       "struct_score": 96.8,
+       "trace": "interface",
+       "why": "Downstream valid, registered or combinational from i_valid or r_valid.",
+       "lines": [
+        172,
+        200
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "i_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 91.8,
+       "struct_score": 79.3,
+       "trace": "interface",
+       "why": "Downstream ready; stall causes capture into skid register, else drains it.",
+       "lines": [
+        137,
+        140,
+        209
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "o_data",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 95.3,
+       "struct_score": 88.3,
+       "trace": "data_backward",
+       "why": "Outgoing payload selected from r_data or i_data.",
+       "lines": [
+        213,
+        215
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "i_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "i_reset",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "input_stream",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "i_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "o_ready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "i_data",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "output_stream",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E6",
+      "E7",
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "o_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "i_ready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "o_data",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "axisswitch": {
+   "source": "teacher",
+   "canonical_instance": "axisswitch",
+   "file": "data/rtl/wb2axip/rtl/axisswitch.v",
+   "lines": [
+    39,
+    630
+   ],
+   "summary": "AXI-Stream N:1 switch: each input stream passes through a skid buffer, an AXI-lite programmed index selects which one is muxed to a registered output, switching only between packets.",
+   "blocks": [
+    {
+     "name": "AXI-lite control registers",
+     "kind": "REGISTER_BANK",
+     "description": "Skid-buffered AXI-lite slave writing and reading back the requested stream index r_index.",
+     "anchors": [
+      {
+       "id": "E40",
+       "name": "r_index",
+       "role": "CONFIG_REG",
+       "importance": "critical",
+       "score": 75.8,
+       "struct_score": 23.7,
+       "trace": "data_backward",
+       "why": "AXI-lite written register holding requested input stream index; read back over RDATA.",
+       "lines": [
+        240,
+        252,
+        343
+       ]
+      },
+      {
+       "id": "E31",
+       "name": "axil_write_ready",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 45.3,
+       "struct_score": 13.5,
+       "trace": "control_backward",
+       "why": "AXI-lite write accept: loads r_index and raises BVALID.",
+       "lines": [
+        168,
+        175,
+        239
+       ]
+      },
+      {
+       "id": "E36",
+       "name": "axil_read_ready",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 16.6,
+       "struct_score": 10.8,
+       "trace": "control_backward",
+       "why": "AXI-lite read accept: sets read valid for r_index readback.",
+       "lines": [
+        201,
+        208
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "S_AXI_BVALID",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 35.6,
+       "struct_score": 78.8,
+       "trace": "interface",
+       "why": "AXI-lite write response valid copied from axil_bvalid.",
+       "lines": [
+        169,
+        180
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "S_AXI_RVALID",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 33.8,
+       "struct_score": 74.2,
+       "trace": "interface",
+       "why": "AXI-lite read data valid copied from axil_read_valid.",
+       "lines": [
+        213,
+        249
+       ]
+      },
+      {
+       "id": "E38",
+       "name": "axil_read_data",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 21.7,
+       "struct_score": 31.1,
+       "trace": "data_backward",
+       "why": "Read data register holding r_index for AXI-lite readback.",
+       "lines": [
+        214,
+        252
+       ]
+      },
+      {
+       "id": "E41",
+       "name": "wskd_index",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 20.9,
+       "struct_score": 28.1,
+       "trace": "data_backward",
+       "why": "Byte-strobe merged write data used to update r_index.",
+       "lines": [
+        230,
+        240
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "S_AXI_WDATA",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 34.5,
+       "struct_score": 75.9,
+       "trace": "interface",
+       "why": "AXI-lite write data carrying the new stream index.",
+       "lines": [
+        164
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "axilawskid",
+       "module": "skidbuffer"
+      },
+      {
+       "id": "I2",
+       "instance": "axilwskid",
+       "module": "skidbuffer"
+      },
+      {
+       "id": "I3",
+       "instance": "axilarskid",
+       "module": "skidbuffer"
+      }
+     ],
+     "members": [
+      {
+       "id": "E35",
+       "name": "axil_bvalid",
+       "kind": "reg"
+      },
+      {
+       "id": "E39",
+       "name": "axil_read_valid",
+       "kind": "reg"
+      },
+      {
+       "id": "E49",
+       "name": "awskd_valid",
+       "kind": "wire"
+      },
+      {
+       "id": "E50",
+       "name": "wskd_valid",
+       "kind": "wire"
+      },
+      {
+       "id": "E51",
+       "name": "arskd_valid",
+       "kind": "wire"
+      },
+      {
+       "id": "E33",
+       "name": "wskd_data",
+       "kind": "wire"
+      },
+      {
+       "id": "E34",
+       "name": "wskd_strb",
+       "kind": "wire"
+      },
+      {
+       "id": "E20",
+       "name": "S_AXI_RDATA",
+       "kind": "port_out"
+      },
+      {
+       "id": "E32",
+       "name": "awskd_addr",
+       "kind": "wire"
+      },
+      {
+       "id": "E37",
+       "name": "arskd_addr",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Input stream skid buffers",
+     "kind": "BUFFER",
+     "description": "One skid buffer per input stream holding data until selected by the switch.",
+     "anchors": [
+      {
+       "id": "E22",
+       "name": "S_AXIS_TVALID",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 60.9,
+       "struct_score": 72.0,
+       "trace": "interface",
+       "why": "Per-stream input valid vector feeding the per-stream skid buffers.",
+       "lines": [
+        296
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "S_AXIS_TDATA",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 66.2,
+       "struct_score": 85.3,
+       "trace": "interface",
+       "why": "Concatenated input stream data sliced into per-stream skid buffers.",
+       "lines": [
+        297
+       ]
+      },
+      {
+       "id": "E45",
+       "name": "skd_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 23.8,
+       "struct_score": 40.0,
+       "trace": "data_backward",
+       "why": "Per-stream skid buffer output valids, gated by skd_switch_ready into M_AXIS_TVALID.",
+       "lines": [
+        299,
+        353
+       ]
+      },
+      {
+       "id": "E44",
+       "name": "skd_data",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 25.5,
+       "struct_score": 46.0,
+       "trace": "data_backward",
+       "why": "Per-stream skid buffer output data array, mux inputs for M_AXIS_TDATA.",
+       "lines": [
+        300,
+        367
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I4",
+       "instance": "genblk1[*].skdswitch",
+       "module": "skidbuffer"
+      }
+     ],
+     "members": [
+      {
+       "id": "E23",
+       "name": "S_AXIS_TREADY",
+       "kind": "port_out"
+      },
+      {
+       "id": "E25",
+       "name": "S_AXIS_TLAST",
+       "kind": "port_in"
+      },
+      {
+       "id": "E46",
+       "name": "skd_last",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Switch control",
+     "kind": "CONTROLLER",
+     "description": "Tracks packet boundaries and updates switch_index; generates one-hot ready for selected stream.",
+     "anchors": [
+      {
+       "id": "E43",
+       "name": "switch_index",
+       "role": "MUX_SELECT",
+       "importance": "critical",
+       "score": 83.0,
+       "struct_score": 51.4,
+       "trace": "control_backward",
+       "why": "Active stream select, updated from r_index only between packets; muxes skid data to output.",
+       "lines": [
+        343,
+        367,
+        368
+       ]
+      },
+      {
+       "id": "E47",
+       "name": "mid_packet",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 45.9,
+       "struct_score": 15.8,
+       "trace": "control_backward",
+       "why": "Indicates a packet is in progress; prevents switch_index change until TLAST.",
+       "lines": [
+        315,
+        331,
+        342
+       ]
+      },
+      {
+       "id": "E42",
+       "name": "skd_switch_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 50.9,
+       "struct_score": 36.3,
+       "trace": "control_backward",
+       "why": "One-hot ready to skid buffers; only selected stream drains, blocked on stall or pending switch.",
+       "lines": [
+        299,
+        312,
+        314
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E48",
+       "name": "r_mid_packet",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Output stream register",
+     "kind": "DATAPATH",
+     "description": "Registered output mux of selected stream data, last and valid with backpressure.",
+     "anchors": [
+      {
+       "id": "E26",
+       "name": "M_AXIS_TVALID",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 96.9,
+       "struct_score": 92.2,
+       "trace": "interface",
+       "why": "Registered output stream valid from selected skid buffer valid.",
+       "lines": [
+        353
+       ]
+      },
+      {
+       "id": "E28",
+       "name": "M_AXIS_TDATA",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 95.8,
+       "struct_score": 89.5,
+       "trace": "interface",
+       "why": "Registered output data muxed from skd_data by switch_index.",
+       "lines": [
+        367
+       ]
+      },
+      {
+       "id": "E29",
+       "name": "M_AXIS_TLAST",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 66.8,
+       "struct_score": 86.9,
+       "trace": "interface",
+       "why": "Output packet-end marker; drives mid_packet tracking.",
+       "lines": [
+        327,
+        331,
+        368
+       ]
+      },
+      {
+       "id": "E27",
+       "name": "M_AXIS_TREADY",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 55.9,
+       "struct_score": 54.6,
+       "trace": "interface",
+       "why": "Downstream ready; stalls output registers and blocks skid buffer reads.",
+       "lines": [
+        313,
+        352
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "S_AXI_ACLK",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "S_AXI_ARESETN",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "axil_write",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12",
+      "E13"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "S_AXI_AWVALID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "S_AXI_AWREADY",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "S_AXI_AWADDR",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "S_AXI_AWPROT",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "S_AXI_WVALID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "S_AXI_WREADY",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "S_AXI_WDATA",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "S_AXI_WSTRB",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "S_AXI_BVALID",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "S_AXI_BREADY",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "S_AXI_BRESP",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "axil_read",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20",
+      "E21"
+     ],
+     "members": [
+      {
+       "id": "E14",
+       "name": "S_AXI_ARVALID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "S_AXI_ARREADY",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "S_AXI_ARADDR",
+       "kind": "port_in"
+      },
+      {
+       "id": "E17",
+       "name": "S_AXI_ARPROT",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "S_AXI_RVALID",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "S_AXI_RREADY",
+       "kind": "port_in"
+      },
+      {
+       "id": "E20",
+       "name": "S_AXI_RDATA",
+       "kind": "port_out"
+      },
+      {
+       "id": "E21",
+       "name": "S_AXI_RRESP",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "s_axis_inputs",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E22",
+      "E23",
+      "E24",
+      "E25"
+     ],
+     "members": [
+      {
+       "id": "E22",
+       "name": "S_AXIS_TVALID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E23",
+       "name": "S_AXIS_TREADY",
+       "kind": "port_out"
+      },
+      {
+       "id": "E24",
+       "name": "S_AXIS_TDATA",
+       "kind": "port_in"
+      },
+      {
+       "id": "E25",
+       "name": "S_AXIS_TLAST",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axis_output",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E26",
+      "E27",
+      "E28",
+      "E29"
+     ],
+     "members": [
+      {
+       "id": "E26",
+       "name": "M_AXIS_TVALID",
+       "kind": "port_out"
+      },
+      {
+       "id": "E27",
+       "name": "M_AXIS_TREADY",
+       "kind": "port_in"
+      },
+      {
+       "id": "E28",
+       "name": "M_AXIS_TDATA",
+       "kind": "port_out"
+      },
+      {
+       "id": "E29",
+       "name": "M_AXIS_TLAST",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,33 @@
+{
+ "module_summary": "AXI-lite crossbar address decoder: a 2-state FSM compares the incoming address against per-master base/width regions, registers the selected master index or a decode error, and issues address, write-command and reply-command valids before acknowledging the slave.",
+ "anchors": [
+  {"id": "E18", "name": "state_reg", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "IDLE/DECODE controller: decodes address then waits for all outputs accepted", "lines": [242, 296]},
+  {"id": "E32", "name": "match", "role": "DECODE", "importance": "major", "trace": "control_backward", "why": "Address region match flag choosing successful decode versus decode error", "lines": [253, 258]},
+  {"id": "E22", "name": "m_select_reg", "role": "MUX_SELECT", "importance": "critical", "trace": "data_backward", "why": "Decoded master index driving m_select, m_wc_select and m_rc_select", "lines": [216, 219, 303]},
+  {"id": "E26", "name": "m_decerr_reg", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Decode error flag reported on write and reply command outputs", "lines": [220, 224, 304]},
+  {"id": "E3", "name": "s_axil_aaddr", "role": "INTERFACE_ADDR", "importance": "critical", "trace": "interface", "why": "Incoming address compared against master regions", "lines": [69, 251]},
+  {"id": "E4", "name": "s_axil_aprot", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Protection bits blocking access to secure masters", "lines": [70, 251]},
+  {"id": "E5", "name": "s_axil_avalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Address valid starting decode in IDLE", "lines": [71, 247]},
+  {"id": "E6", "name": "s_axil_aready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Address accept pulse once all command outputs complete", "lines": [72, 214, 247]},
+  {"id": "E7", "name": "m_select", "role": "MUX_SELECT", "importance": "major", "trace": "interface", "why": "Selected master port index output", "lines": [77, 216]},
+  {"id": "E8", "name": "m_axil_avalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Address valid to selected master", "lines": [78, 217]},
+  {"id": "E9", "name": "m_axil_aready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Selected master accepts address", "lines": [79, 237]},
+  {"id": "E12", "name": "m_wc_valid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Write command valid, enabled by WC_OUTPUT", "lines": [86, 221]},
+  {"id": "E16", "name": "m_rc_valid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Reply command valid carrying select and decerr", "lines": [94, 225]},
+  {"id": "E17", "name": "m_rc_ready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Reply command accepted", "lines": [95, 240]},
+  {"id": "E13", "name": "m_wc_ready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Write command accepted", "lines": [87, 239]}
+ ],
+ "groups": [
+  {"name": "Decode controller", "kind": "CONTROLLER", "anchor_ids": ["E18"], "member_ids": ["E19", "E20", "E21", "E24", "E25", "E28", "E29", "E30", "E31"], "description": "FSM sequencing decode and completion of address/command handshakes"},
+  {"name": "Address decoder", "kind": "DECODER", "anchor_ids": ["E32", "E22", "E26"], "member_ids": ["E23", "E27"], "description": "Region match logic producing master select and decode error"},
+  {"name": "Slave address input", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E3", "E4", "E5", "E6"], "member_ids": [], "description": "Incoming AXI-lite address channel"},
+  {"name": "Command outputs", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E7", "E8", "E9", "E12", "E13", "E16", "E17"], "member_ids": ["E10", "E11", "E14", "E15"], "description": "Address, write-command and reply-command output handshakes"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "s_axil_a", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6"]},
+  {"name": "m_axil_a", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E7", "E8", "E9"]},
+  {"name": "write_command", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E10", "E11", "E12", "E13"]},
+  {"name": "reply_command", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E14", "E15", "E16", "E17"]}
+ ]
+}

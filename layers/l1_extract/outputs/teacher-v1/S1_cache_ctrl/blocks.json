@@ -1,0 +1,599 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "S1_cache_ctrl",
+ "tops": [
+  "cache_ctrl"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "cache_ctrl": {
+   "source": "teacher",
+   "canonical_instance": "cache_ctrl",
+   "file": "experiments/e3_perturb_benchmark/data/cache_ctrl/S1/cache_ctrl.sv",
+   "lines": [
+    1,
+    108
+   ],
+   "summary": "Direct-mapped write-through cache controller: 5-state FSM latches CPU request, compares tag/valid arrays, fills misses and forwards writes over a req/ack memory bus.",
+   "blocks": [
+    {
+     "name": "cache_fsm",
+     "kind": "CONTROLLER",
+     "description": "State machine sequencing probe, miss fill, write-through and response.",
+     "anchors": [
+      {
+       "id": "E18",
+       "name": "cur",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.5,
+       "struct_score": 98.7,
+       "trace": "control_backward",
+       "why": "Controller state: idle, probe, write-through, miss fill, respond; decodes all handshakes.",
+       "lines": [
+        32,
+        63,
+        69
+       ]
+      },
+      {
+       "id": "E35",
+       "name": "fill_go",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 18.1,
+       "struct_score": 16.5,
+       "trace": "control_backward",
+       "why": "Refill enable writing tag, data, valid on memory ack in fill state.",
+       "lines": [
+        51,
+        83,
+        93
+       ]
+      },
+      {
+       "id": "E36",
+       "name": "wr_go",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 17.7,
+       "struct_score": 14.8,
+       "trace": "control_backward",
+       "why": "Write-hit update enable for data array on write-through ack.",
+       "lines": [
+        52,
+        86,
+        96
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "stall_o",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 20.2,
+       "struct_score": 25.1,
+       "trace": "control_backward",
+       "why": "Level stall while FSM is probing or waiting on memory.",
+       "lines": [
+        15,
+        103
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E30",
+       "name": "at_home",
+       "kind": "wire"
+      },
+      {
+       "id": "E31",
+       "name": "at_probe",
+       "kind": "wire"
+      },
+      {
+       "id": "E32",
+       "name": "at_push",
+       "kind": "wire"
+      },
+      {
+       "id": "E33",
+       "name": "at_pull",
+       "kind": "wire"
+      },
+      {
+       "id": "E34",
+       "name": "at_ack",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "tag_data_arrays",
+     "kind": "MEMORY",
+     "description": "Tag, valid and data arrays with index and hit compare.",
+     "anchors": [
+      {
+       "id": "E20",
+       "name": "words",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 97.1,
+       "struct_score": 92.8,
+       "trace": "data_backward",
+       "why": "Data array of LINES words; filled from memory or updated on write hit.",
+       "lines": [
+        43,
+        95,
+        97
+       ]
+      },
+      {
+       "id": "E19",
+       "name": "keys",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 67.3,
+       "struct_score": 88.2,
+       "trace": "data_backward",
+       "why": "Tag array written on fill, compared against request tag.",
+       "lines": [
+        42,
+        93
+       ]
+      },
+      {
+       "id": "E21",
+       "name": "vld",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 58.8,
+       "struct_score": 65.4,
+       "trace": "data_backward",
+       "why": "Per-line valid bits set on fill, qualify hit.",
+       "lines": [
+        44,
+        84
+       ]
+      },
+      {
+       "id": "E29",
+       "name": "match",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 47.6,
+       "struct_score": 22.9,
+       "trace": "control_backward",
+       "why": "Hit flag: valid and tag equal; steers probe transition and write update.",
+       "lines": [
+        44,
+        70,
+        88
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "sel",
+       "role": "INDEX",
+       "importance": "minor",
+       "score": 23.5,
+       "struct_score": 38.5,
+       "trace": "data_backward",
+       "why": "Line index from latched address selecting tag, data, valid entries.",
+       "lines": [
+        40,
+        84
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E26",
+       "name": "key",
+       "kind": "wire"
+      },
+      {
+       "id": "E27",
+       "name": "k_rd",
+       "kind": "wire"
+      },
+      {
+       "id": "E28",
+       "name": "w_rd",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "request_latch",
+     "kind": "REGISTER_BANK",
+     "description": "Latched address, write data, write flag and response buffer.",
+     "anchors": [
+      {
+       "id": "E24",
+       "name": "lat_a",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 54.8,
+       "struct_score": 50.5,
+       "trace": "data_backward",
+       "why": "Latched request address held across the operation; drives index, tag, mem_addr.",
+       "lines": [
+        38,
+        64,
+        107
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "lat_d",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 26.4,
+       "struct_score": 49.3,
+       "trace": "data_backward",
+       "why": "Latched write data for write-through and cache update.",
+       "lines": [
+        65,
+        97,
+        106
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "lat_w",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 17.8,
+       "struct_score": 15.4,
+       "trace": "control_backward",
+       "why": "Latched write command choosing write-through path in probe.",
+       "lines": [
+        66,
+        69
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E17",
+       "name": "obuf",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "cpu_port",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "CPU request/response handshake with address and data.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "cpu_req_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 91.2,
+       "struct_score": 77.8,
+       "trace": "interface",
+       "why": "CPU request; accepted in idle, latches address/data.",
+       "lines": [
+        8,
+        62
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "cpu_req_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 84.6,
+       "struct_score": 57.3,
+       "trace": "control_backward",
+       "why": "Ready while FSM idle.",
+       "lines": [
+        9,
+        101
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "cpu_we",
+       "role": "COMMAND",
+       "importance": "major",
+       "score": 47.9,
+       "struct_score": 24.1,
+       "trace": "interface",
+       "why": "Read/write command latched with request.",
+       "lines": [
+        10,
+        66
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "cpu_addr",
+       "role": "INTERFACE_ADDR",
+       "importance": "critical",
+       "score": 87.5,
+       "struct_score": 67.7,
+       "trace": "interface",
+       "why": "Request address latched into holding register.",
+       "lines": [
+        11,
+        64
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "cpu_wdata",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 36.5,
+       "struct_score": 81.1,
+       "trace": "interface",
+       "why": "CPU write data latched for write-through.",
+       "lines": [
+        12,
+        65
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "cpu_resp_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 89.8,
+       "struct_score": 74.4,
+       "trace": "control_backward",
+       "why": "One-cycle response pulse in ACK state with read data.",
+       "lines": [
+        13,
+        102
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "cpu_rdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 93.5,
+       "struct_score": 83.5,
+       "trace": "data_backward",
+       "why": "Response data from output buffer: hit word, fill data or write data.",
+       "lines": [
+        14,
+        100
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E17",
+       "name": "obuf",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "mem_port",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Memory bus request/ack for refill reads and write-through.",
+     "anchors": [
+      {
+       "id": "E11",
+       "name": "mem_req",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 63.0,
+       "struct_score": 77.2,
+       "trace": "control_backward",
+       "why": "Memory request in fill or write-through states.",
+       "lines": [
+        16,
+        105
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "mem_we",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 25.6,
+       "struct_score": 46.4,
+       "trace": "control_backward",
+       "why": "Memory write enable asserted in write-through state.",
+       "lines": [
+        17,
+        104
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "mem_ack",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 58.0,
+       "struct_score": 62.2,
+       "trace": "interface",
+       "why": "Memory acknowledge completing fill or write-through.",
+       "lines": [
+        20,
+        51,
+        73
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "mem_rdata",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 66.5,
+       "struct_score": 86.0,
+       "trace": "interface",
+       "why": "Refill data written into data array and output buffer.",
+       "lines": [
+        21,
+        85,
+        95
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E13",
+       "name": "mem_addr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "mem_wdata",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_n",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "cpu_request",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "cpu_req_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "cpu_req_ready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "cpu_we",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "cpu_addr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "cpu_wdata",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "cpu_response",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E8",
+       "name": "cpu_resp_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "cpu_rdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "stall_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "memory_bus",
+     "protocol": "MEMORY_BUS",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15",
+      "E16"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "mem_req",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "mem_we",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "mem_addr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "mem_wdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "mem_ack",
+       "kind": "port_in"
+      },
+      {
+       "id": "E16",
+       "name": "mem_rdata",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

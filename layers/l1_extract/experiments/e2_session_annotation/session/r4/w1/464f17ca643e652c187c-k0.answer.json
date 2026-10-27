@@ -1,0 +1,36 @@
+{
+ "module_summary": "AXI-Stream crossbar switch: per-input register slices decode tdest into a latched output select, per-output arbiters grant one input per frame and mux its stream into an output register slice.",
+ "anchors": [
+  {"id": "E29", "name": "s_ifaces[*].select_reg", "role": "MUX_SELECT", "importance": "critical", "trace": "control_backward", "why": "Per-input decoded destination port steering valid and ready routing for the frame", "lines": [212, 261, 271]},
+  {"id": "E33", "name": "s_ifaces[*].select_valid_reg", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Route decoded for current frame; held until tlast, gates forwarded valid", "lines": [214, 223, 271]},
+  {"id": "E31", "name": "s_ifaces[*].drop_reg", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Drops frames with unmatched tdest by forcing ready and masking valid", "lines": [213, 271, 272]},
+  {"id": "E25", "name": "int_s_axis_tdest", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Registered input tdest decoded into output port select", "lines": [236, 244, 357]},
+  {"id": "E27", "name": "int_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Input-to-output valid matrix feeding arbiter requests and output mux", "lines": [271, 351, 364]},
+  {"id": "E28", "name": "int_axis_tready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Output-to-input ready matrix returned to granted input", "lines": [272, 361]},
+  {"id": "E35", "name": "m_ifaces[*].request", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "Arbiter request vector from inputs targeting this output", "lines": [315, 331, 364]},
+  {"id": "E36", "name": "m_ifaces[*].acknowledge", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Releases arbiter grant at end of granted frame", "lines": [316, 332, 365]},
+  {"id": "E39", "name": "m_ifaces[*].grant_encoded", "role": "ARBITRATION", "importance": "critical", "trace": "control_backward", "why": "Encoded grant selecting which input stream is muxed to this output", "lines": [319, 349, 361]},
+  {"id": "E38", "name": "m_ifaces[*].grant_valid", "role": "ARBITRATION", "importance": "minor", "trace": "control_backward", "why": "Arbiter grant valid gating mux valid and ready", "lines": [318, 351, 361]},
+  {"id": "E40", "name": "m_ifaces[*].m_axis_tdata_mux", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Selected input data driving output register slice", "lines": [339, 349, 386]},
+  {"id": "E42", "name": "m_ifaces[*].m_axis_tvalid_mux", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "Selected valid into output register slice", "lines": [341, 351, 388]},
+  {"id": "E44", "name": "m_ifaces[*].m_axis_tlast_mux", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Selected tlast used to acknowledge arbiter at frame end", "lines": [343, 352, 365]},
+  {"id": "E3", "name": "s_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Input stream data into per-input register slices", "lines": [94, 292]},
+  {"id": "E5", "name": "s_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Input stream valids", "lines": [96, 294]},
+  {"id": "E6", "name": "s_axis_tready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Input stream readies from register slices", "lines": [97, 295]},
+  {"id": "E9", "name": "s_axis_tdest", "role": "INTERFACE_ADDR", "importance": "major", "trace": "interface", "why": "Destination routing field of input streams", "lines": [100, 298]},
+  {"id": "E11", "name": "m_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Output stream data from output register slices", "lines": [106, 395]},
+  {"id": "E13", "name": "m_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "data_backward", "why": "Output stream valids", "lines": [108, 397]},
+  {"id": "E14", "name": "m_axis_tready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Output stream readies into output register slices", "lines": [109, 398]}
+ ],
+ "groups": [
+  {"name": "Input decode and register", "kind": "DECODER", "anchor_ids": ["E29", "E33", "E31", "E25"], "member_ids": ["I1", "E19", "E20", "E21", "E22", "E23", "E24", "E26", "E30", "E32", "E34"], "description": "Per-input register slice and tdest decode latching output select or drop"},
+  {"name": "Crossbar routing", "kind": "OTHER", "anchor_ids": ["E27", "E28"], "member_ids": [], "description": "Valid/ready matrices connecting inputs to output arbiters"},
+  {"name": "Output arbiter", "kind": "ARBITER", "anchor_ids": ["E35", "E36", "E39", "E38"], "member_ids": ["I2", "E37"], "description": "Per-output round-robin arbiter granting one input per frame"},
+  {"name": "Output mux and register", "kind": "DATAPATH", "anchor_ids": ["E40", "E42", "E44"], "member_ids": ["I3", "E41", "E43", "E45", "E46", "E47"], "description": "Grant-selected stream mux into per-output register slice"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "s_axis", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10"]},
+  {"name": "m_axis", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E11", "E12", "E13", "E14", "E15", "E16", "E17", "E18"]}
+ ]
+}

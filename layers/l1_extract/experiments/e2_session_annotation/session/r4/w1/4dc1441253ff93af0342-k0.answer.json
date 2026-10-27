@@ -1,0 +1,27 @@
+{
+ "module_summary": "Destination side of a gray-coded CDC FIFO: keeps a gray read pointer, synchronizes the remote write pointer, and derives valid from an empty comparison.",
+ "anchors": [
+  {"id": "E9", "name": "rptr_q", "role": "FIFO_PTR", "importance": "critical", "trace": "control_backward", "why": "Gray-coded read pointer register, advanced on valid&ready, exported to source domain", "lines": [634, 637]},
+  {"id": "E5", "name": "dst_valid_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Not-empty indication from pointer comparison; gates read pointer increment", "lines": [634, 655]},
+  {"id": "E4", "name": "dst_ready_i", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Destination read acceptance; with valid advances read pointer", "lines": [614, 634]},
+  {"id": "E6", "name": "dst_ridx_o", "role": "INTERFACE_ADDR", "importance": "major", "trace": "interface", "why": "Binary read index into FIFO storage", "lines": [616, 636]},
+  {"id": "E8", "name": "async_rptr_o", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Gray read pointer sent across clock domain", "lines": [618, 637]},
+  {"id": "E7", "name": "async_wptr_i", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Gray write pointer from source domain, fed into synchronizers", "lines": [617, 645]},
+  {"id": "E13", "name": "wptr", "role": "FIFO_PTR", "importance": "major", "trace": "data_backward", "why": "Synchronized gray write pointer used for the empty check", "lines": [646, 649]},
+  {"id": "E11", "name": "rptr_bin", "role": "FIFO_PTR", "importance": "minor", "trace": "data_backward", "why": "Binary read pointer, incremented and compared for empty", "lines": [631, 636, 655]},
+  {"id": "E14", "name": "wptr_bin", "role": "FIFO_PTR", "importance": "minor", "trace": "data_backward", "why": "Binary synchronized write pointer used in empty comparison", "lines": [649, 655]},
+  {"id": "E12", "name": "rptr_next", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Incremented binary read pointer before gray encoding", "lines": [631, 633]}
+ ],
+ "groups": [
+  {"name": "Read pointer logic", "kind": "COUNTER_TIMER", "anchor_ids": ["E9", "E11", "E12"], "member_ids": ["E10", "I1", "I2"], "description": "Gray read pointer with gray-binary conversions and increment on handshake"},
+  {"name": "Write pointer synchronizer", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E13", "E14", "E7"], "member_ids": ["I3"], "description": "Synchronizes remote gray write pointer and converts to binary"},
+  {"name": "Empty detection and handshake", "kind": "CONTROLLER", "anchor_ids": ["E5", "E4"], "member_ids": [], "description": "Compares pointers for empty, drives dst_valid_o"},
+  {"name": "Pointer outputs", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E6", "E8"], "member_ids": [], "description": "Exports read index and async gray read pointer"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2", "E3"]},
+  {"name": "dst_handshake", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E4", "E5"]},
+  {"name": "read_index", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E6"]},
+  {"name": "async_pointers", "protocol": "OTHER", "direction": "BIDIR", "member_ids": ["E7", "E8"]}
+ ]
+}

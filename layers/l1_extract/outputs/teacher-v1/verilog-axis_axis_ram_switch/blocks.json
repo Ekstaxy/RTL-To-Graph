@@ -1,0 +1,2676 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-axis_axis_ram_switch",
+ "tops": [
+  "axis_ram_switch"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "priority_encoder": {
+   "source": "heuristic",
+   "canonical_instance": "axis_ram_switch.genblk1.ram_write_arb_inst.priority_encoder_inst",
+   "file": "data/rtl/verilog-axis/rtl/priority_encoder.v",
+   "lines": [
+    34,
+    90
+   ],
+   "summary": "priority_encoder (heuristic)",
+   "blocks": [
+    {
+     "name": "storage",
+     "kind": "BUFFER",
+     "description": "storage",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "stage_valid",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 69.3,
+       "struct_score": 93.1,
+       "trace": "data_backward",
+       "why": "memory array",
+       "lines": []
+      },
+      {
+       "id": "E7",
+       "name": "stage_enc",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 69.8,
+       "struct_score": 94.6,
+       "trace": "data_backward",
+       "why": "memory array",
+       "lines": []
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E2",
+     "name": "output_valid",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 96.6,
+     "struct_score": 91.5,
+     "trace": "interface",
+     "why": "valid port",
+     "lines": []
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "input",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E1"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "input_unencoded",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "output",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E2",
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E2",
+       "name": "output_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E3",
+       "name": "output_encoded",
+       "kind": "port_out"
+      },
+      {
+       "id": "E4",
+       "name": "output_unencoded",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "arbiter": {
+   "source": "teacher",
+   "canonical_instance": "axis_ram_switch.genblk1.ram_write_arb_inst",
+   "file": "data/rtl/verilog-axis/rtl/arbiter.v",
+   "lines": [
+    34,
+    157
+   ],
+   "summary": "Parameterized arbiter: two priority encoders (plain and round-robin-masked) pick a requester; registered one-hot grant, valid and encoded index, with optional blocking until acknowledge.",
+   "blocks": [
+    {
+     "name": "Priority encoders",
+     "kind": "ARBITER",
+     "description": "Plain and masked priority encoders selecting winning requester",
+     "anchors": [
+      {
+       "id": "E14",
+       "name": "request_valid",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 50.3,
+       "struct_score": 33.7,
+       "trace": "control_backward",
+       "why": "any request present; gates new grant computation",
+       "lines": [
+        66,
+        76,
+        114
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "request_index",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 18.7,
+       "struct_score": 19.3,
+       "trace": "data_backward",
+       "why": "priority-encoded winner index loaded into grant_encoded",
+       "lines": [
+        67,
+        77,
+        128
+       ]
+      },
+      {
+       "id": "E19",
+       "name": "masked_request_valid",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 22.3,
+       "struct_score": 33.7,
+       "trace": "control_backward",
+       "why": "masked request present; selects masked encoder result in round-robin mode",
+       "lines": [
+        83,
+        93,
+        116
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "priority_encoder_inst",
+       "module": "priority_encoder"
+      },
+      {
+       "id": "I2",
+       "instance": "priority_encoder_masked",
+       "module": "priority_encoder"
+      }
+     ],
+     "members": [
+      {
+       "id": "E16",
+       "name": "request_mask",
+       "kind": "wire"
+      },
+      {
+       "id": "E20",
+       "name": "masked_request_index",
+       "kind": "wire"
+      },
+      {
+       "id": "E21",
+       "name": "masked_request_mask",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Round-robin mask",
+     "kind": "ARBITER",
+     "description": "Masks requests at or below last winner for round-robin fairness",
+     "anchors": [
+      {
+       "id": "E17",
+       "name": "mask_reg",
+       "role": "ARBITRATION",
+       "importance": "minor",
+       "score": 37.6,
+       "struct_score": 83.8,
+       "trace": "control_backward",
+       "why": "round-robin mask of ports above last winner; disabled by default parameter",
+       "lines": [
+        81,
+        92,
+        147
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E18",
+       "name": "mask_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Grant registers",
+     "kind": "CONTROLLER",
+     "description": "Registered grant, valid and index; hold until ack/request drop when blocking",
+     "anchors": [
+      {
+       "id": "E5",
+       "name": "grant",
+       "role": "ARBITRATION",
+       "importance": "critical",
+       "score": 95.7,
+       "struct_score": 89.1,
+       "trace": "control_backward",
+       "why": "registered one-hot grant vector output",
+       "lines": [
+        53,
+        63
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "grant_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 69.7,
+       "struct_score": 94.3,
+       "trace": "control_backward",
+       "why": "indicates a grant is active; used for ack-blocking hold",
+       "lines": [
+        54,
+        62,
+        109
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "grant_encoded",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 57.1,
+       "struct_score": 58.9,
+       "trace": "data_backward",
+       "why": "binary index of granted port output",
+       "lines": [
+        55,
+        64
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "acknowledge",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 37.8,
+       "struct_score": 84.4,
+       "trace": "interface",
+       "why": "per-port ack releasing blocking grant; only active when ARB_BLOCK set",
+       "lines": [
+        51,
+        109
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E8",
+       "name": "grant_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E9",
+       "name": "grant_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E10",
+       "name": "grant_valid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E11",
+       "name": "grant_valid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E12",
+       "name": "grant_encoded_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E13",
+       "name": "grant_encoded_next",
+       "kind": "comb"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E3",
+     "name": "request",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 97.6,
+     "struct_score": 93.8,
+     "trace": "interface",
+     "why": "per-port request vector fed to both priority encoders",
+     "lines": [
+      50,
+      75,
+      92
+     ]
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock/reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "request/acknowledge",
+     "protocol": "REQ_ACK",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "request",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "acknowledge",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "grant",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E5",
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "grant",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "grant_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "grant_encoded",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "axis_adapter": {
+   "source": "teacher",
+   "canonical_instance": "axis_ram_switch.s_ifaces[0].adapter_inst",
+   "file": "data/rtl/verilog-axis/rtl/axis_adapter.v",
+   "lines": [
+    34,
+    325
+   ],
+   "summary": "AXI-stream width upsizer (8 to 32 bit): a segment counter packs input beats into an output register lane by lane, with a one-beat input skid buffer while the output is stalled.",
+   "blocks": [
+    {
+     "name": "Input AXI-stream and skid buffer",
+     "kind": "BUFFER",
+     "description": "Input handshake with single-beat skid buffer for stalled output.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "s_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 91.5,
+       "struct_score": 78.4,
+       "trace": "interface",
+       "why": "Narrow input beat written into the selected output segment or skid buffer.",
+       "lines": [
+        70,
+        182,
+        211
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 94.3,
+       "struct_score": 85.5,
+       "trace": "interface",
+       "why": "Input valid; advances segment counter or loads skid buffer.",
+       "lines": [
+        72,
+        200,
+        209
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 93.3,
+       "struct_score": 83.1,
+       "trace": "control_backward",
+       "why": "Input ready, asserted while the skid buffer is empty.",
+       "lines": [
+        73,
+        162,
+        209
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_tlast",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 59.5,
+       "struct_score": 67.6,
+       "trace": "interface",
+       "why": "End-of-packet sideband forcing early output of partial word.",
+       "lines": [
+        74,
+        202,
+        214
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "s_axis_tuser",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 30.7,
+       "struct_score": 64.7,
+       "trace": "interface",
+       "why": "Input user sideband captured into output register.",
+       "lines": [
+        77,
+        188,
+        217
+       ]
+      },
+      {
+       "id": "E21",
+       "name": "upsize.s_axis_tdata_reg",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 57.4,
+       "struct_score": 60.1,
+       "trace": "data_backward",
+       "why": "Skid buffer holding one input beat while output is stalled.",
+       "lines": [
+        146,
+        179,
+        211
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "upsize.s_axis_tvalid_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 53.2,
+       "struct_score": 44.8,
+       "trace": "control_backward",
+       "why": "Skid buffer full flag: selects buffer as source, deasserts tready.",
+       "lines": [
+        148,
+        162,
+        190
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E4",
+       "name": "s_axis_tkeep",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_axis_tid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_axis_tdest",
+       "kind": "port_in"
+      },
+      {
+       "id": "E19",
+       "name": "s_axis_tkeep_int",
+       "kind": "wire"
+      },
+      {
+       "id": "E22",
+       "name": "upsize.s_axis_tkeep_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E24",
+       "name": "upsize.s_axis_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E25",
+       "name": "upsize.s_axis_tid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E26",
+       "name": "upsize.s_axis_tdest_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E27",
+       "name": "upsize.s_axis_tuser_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Segment packer",
+     "kind": "DATAPATH",
+     "description": "Counter-driven lane writes building the wide output word.",
+     "anchors": [
+      {
+       "id": "E20",
+       "name": "upsize.seg_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 57.1,
+       "struct_score": 59.1,
+       "trace": "control_backward",
+       "why": "Segment counter selecting output lane; wraps at SEG_COUNT-1 or tlast.",
+       "lines": [
+        144,
+        178,
+        198
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E28",
+       "name": "upsize.m_axis_tdata_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E29",
+       "name": "upsize.m_axis_tkeep_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Output AXI-stream register",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Registered wide output with valid cleared on ready.",
+     "anchors": [
+      {
+       "id": "E11",
+       "name": "m_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 93.7,
+       "struct_score": 84.1,
+       "trace": "data_backward",
+       "why": "Wide output word assembled in m_axis_tdata_reg.",
+       "lines": [
+        82,
+        164
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "m_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 89.9,
+       "struct_score": 74.4,
+       "trace": "control_backward",
+       "why": "Output valid, set when last segment or tlast packed.",
+       "lines": [
+        84,
+        166
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "m_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 93.0,
+       "struct_score": 82.4,
+       "trace": "interface",
+       "why": "Output ready; gates all output register and skid updates.",
+       "lines": [
+        85,
+        173,
+        175
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "m_axis_tlast",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 57.3,
+       "struct_score": 59.9,
+       "trace": "data_backward",
+       "why": "Output end-of-packet from m_axis_tlast_reg.",
+       "lines": [
+        86,
+        167
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "m_axis_tkeep",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 60.4,
+       "struct_score": 70.6,
+       "trace": "data_backward",
+       "why": "Output byte-valid mask built per segment for partial words.",
+       "lines": [
+        83,
+        165
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "m_axis_tuser",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 29.3,
+       "struct_score": 59.9,
+       "trace": "data_backward",
+       "why": "Output user sideband from m_axis_tuser_reg.",
+       "lines": [
+        89,
+        170
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E16",
+       "name": "m_axis_tid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "m_axis_tdest",
+       "kind": "port_out"
+      },
+      {
+       "id": "E30",
+       "name": "upsize.m_axis_tvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E31",
+       "name": "upsize.m_axis_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E32",
+       "name": "upsize.m_axis_tid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E33",
+       "name": "upsize.m_axis_tdest_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E34",
+       "name": "upsize.m_axis_tuser_reg",
+       "kind": "reg"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axis",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axis_tdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_tkeep",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_tvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_tready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_axis_tid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_axis_tdest",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "s_axis_tuser",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axis",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "m_axis_tdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "m_axis_tkeep",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "m_axis_tvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "m_axis_tready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "m_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "m_axis_tid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "m_axis_tdest",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "m_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "axis_ram_switch": {
+   "source": "teacher",
+   "canonical_instance": "axis_ram_switch",
+   "file": "data/rtl/verilog-axis/rtl/axis_ram_switch.v",
+   "lines": [
+    34,
+    1149
+   ],
+   "summary": "Shared-RAM AXI-stream switch: per-input adapters route frames by tdest into per-port virtual FIFOs in one arbitrated RAM, logging frames in command tables; per-output arbiters fetch commands, read RAM into small output FIFOs and adapters.",
+   "blocks": [
+    {
+     "name": "shared_ram",
+     "kind": "MEMORY",
+     "description": "Shared RAM with round-robin write and read port arbiters and read pipeline.",
+     "anchors": [
+      {
+       "id": "E22",
+       "name": "mem",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 85.6,
+       "struct_score": 60.9,
+       "trace": "data_backward",
+       "why": "Shared packet RAM partitioned into per-input virtual FIFOs.",
+       "lines": [
+        259,
+        315,
+        360
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "mem_read_data_reg",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 23.3,
+       "struct_score": 38.0,
+       "trace": "data_backward",
+       "why": "RAM read data output pipeline stages.",
+       "lines": [
+        260,
+        355,
+        360
+       ]
+      },
+      {
+       "id": "E34",
+       "name": "ram_wr_sel",
+       "role": "ARBITRATION",
+       "importance": "major",
+       "score": 44.3,
+       "struct_score": 9.3,
+       "trace": "control_backward",
+       "why": "Encoded write-arbiter grant selecting which input port writes the RAM.",
+       "lines": [
+        277,
+        300,
+        315
+       ]
+      },
+      {
+       "id": "E35",
+       "name": "ram_wr_en",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 14.3,
+       "struct_score": 1.2,
+       "trace": "control_backward",
+       "why": "RAM write enable from write arbiter grant valid.",
+       "lines": [
+        278,
+        299,
+        314
+       ]
+      },
+      {
+       "id": "E36",
+       "name": "ram_rd_sel",
+       "role": "ARBITRATION",
+       "importance": "major",
+       "score": 45.2,
+       "struct_score": 12.8,
+       "trace": "control_backward",
+       "why": "Encoded read-arbiter grant selecting which output port reads the RAM.",
+       "lines": [
+        280,
+        336,
+        360
+       ]
+      },
+      {
+       "id": "E37",
+       "name": "ram_rd_en",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 14.4,
+       "struct_score": 1.6,
+       "trace": "control_backward",
+       "why": "RAM read enable from read arbiter grant valid.",
+       "lines": [
+        281,
+        335,
+        359
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "genblk1.ram_write_arb_inst",
+       "module": "arbiter"
+      },
+      {
+       "id": "I2",
+       "instance": "genblk2.ram_read_arb_inst",
+       "module": "arbiter"
+      }
+     ],
+     "members": [
+      {
+       "id": "E24",
+       "name": "mem_read_data_valid_reg",
+       "kind": "mem"
+      },
+      {
+       "id": "E25",
+       "name": "port_ram_wr_data",
+       "kind": "wire"
+      },
+      {
+       "id": "E26",
+       "name": "port_ram_wr_addr",
+       "kind": "wire"
+      },
+      {
+       "id": "E27",
+       "name": "port_ram_wr_en",
+       "kind": "wire"
+      },
+      {
+       "id": "E28",
+       "name": "port_ram_wr_ack",
+       "kind": "wire"
+      },
+      {
+       "id": "E29",
+       "name": "port_ram_rd_addr",
+       "kind": "wire"
+      },
+      {
+       "id": "E30",
+       "name": "port_ram_rd_en",
+       "kind": "wire"
+      },
+      {
+       "id": "E31",
+       "name": "port_ram_rd_ack",
+       "kind": "wire"
+      },
+      {
+       "id": "E32",
+       "name": "port_ram_rd_data",
+       "kind": "wire"
+      },
+      {
+       "id": "E33",
+       "name": "port_ram_rd_data_valid",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "input_routing",
+     "kind": "DECODER",
+     "description": "Per-input width adapter and tdest decode to output port select or drop.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "s_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 81.1,
+       "struct_score": 44.7,
+       "trace": "interface",
+       "why": "Concatenated input stream data into per-port width adapters.",
+       "lines": [
+        115,
+        422
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 79.7,
+       "struct_score": 39.5,
+       "trace": "interface",
+       "why": "Per-input stream valid bits.",
+       "lines": [
+        117,
+        424
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 76.6,
+       "struct_score": 26.7,
+       "trace": "interface",
+       "why": "Per-input ready from input adapters.",
+       "lines": [
+        118,
+        425
+       ]
+      },
+      {
+       "id": "E58",
+       "name": "s_ifaces[*].select_reg",
+       "role": "MUX_SELECT",
+       "importance": "major",
+       "score": 45.3,
+       "struct_score": 13.5,
+       "trace": "control_backward",
+       "why": "Destination output port decoded from tdest per input frame.",
+       "lines": [
+        442,
+        491,
+        646
+       ]
+      },
+      {
+       "id": "E62",
+       "name": "s_ifaces[*].select_valid_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.5,
+       "struct_score": 18.4,
+       "trace": "control_backward",
+       "why": "Route decision valid for current frame; gates input ready and writes.",
+       "lines": [
+        444,
+        453,
+        603
+       ]
+      },
+      {
+       "id": "E60",
+       "name": "s_ifaces[*].drop_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.4,
+       "struct_score": 17.8,
+       "trace": "control_backward",
+       "why": "Drops frames with unroutable tdest; forces input ready.",
+       "lines": [
+        443,
+        450,
+        603
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I3",
+       "instance": "s_ifaces[*].adapter_inst",
+       "module": "axis_adapter"
+      }
+     ],
+     "members": [
+      {
+       "id": "E50",
+       "name": "s_ifaces[*].port_axis_tdata",
+       "kind": "wire"
+      },
+      {
+       "id": "E51",
+       "name": "s_ifaces[*].port_axis_tkeep",
+       "kind": "wire"
+      },
+      {
+       "id": "E52",
+       "name": "s_ifaces[*].port_axis_tvalid",
+       "kind": "wire"
+      },
+      {
+       "id": "E53",
+       "name": "s_ifaces[*].port_axis_tready",
+       "kind": "wire"
+      },
+      {
+       "id": "E54",
+       "name": "s_ifaces[*].port_axis_tlast",
+       "kind": "wire"
+      },
+      {
+       "id": "E55",
+       "name": "s_ifaces[*].port_axis_tid",
+       "kind": "wire"
+      },
+      {
+       "id": "E56",
+       "name": "s_ifaces[*].port_axis_tdest",
+       "kind": "wire"
+      },
+      {
+       "id": "E57",
+       "name": "s_ifaces[*].port_axis_tuser",
+       "kind": "wire"
+      },
+      {
+       "id": "E59",
+       "name": "s_ifaces[*].select_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E61",
+       "name": "s_ifaces[*].drop_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E63",
+       "name": "s_ifaces[*].select_valid_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "input_virtual_fifo",
+     "kind": "BUFFER",
+     "description": "Per-input virtual FIFO pointers, frame drop/overflow, and RAM write requests.",
+     "anchors": [
+      {
+       "id": "E72",
+       "name": "s_ifaces[*].wr_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 48.7,
+       "struct_score": 27.2,
+       "trace": "control_backward",
+       "why": "Committed write pointer of the input virtual FIFO, advanced on good frame end.",
+       "lines": [
+        536,
+        545,
+        748
+       ]
+      },
+      {
+       "id": "E74",
+       "name": "s_ifaces[*].wr_ptr_cur_reg",
+       "role": "FIFO_PTR",
+       "importance": "minor",
+       "score": 21.3,
+       "struct_score": 29.6,
+       "trace": "control_backward",
+       "why": "Speculative write pointer within current frame; RAM write address source.",
+       "lines": [
+        537,
+        684,
+        689
+       ]
+      },
+      {
+       "id": "E76",
+       "name": "s_ifaces[*].rd_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 46.9,
+       "struct_score": 20.1,
+       "trace": "control_backward",
+       "why": "Virtual FIFO read pointer freed when output commits a frame.",
+       "lines": [
+        538,
+        543,
+        750
+       ]
+      },
+      {
+       "id": "E80",
+       "name": "s_ifaces[*].full",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.7,
+       "struct_score": 11.0,
+       "trace": "control_backward",
+       "why": "Virtual FIFO full from pointer compare; causes frame drop.",
+       "lines": [
+        543,
+        673
+       ]
+      },
+      {
+       "id": "E83",
+       "name": "s_ifaces[*].drop_frame_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.0,
+       "struct_score": 16.2,
+       "trace": "control_backward",
+       "why": "Dropping current frame due to overflow until tlast.",
+       "lines": [
+        549,
+        673,
+        754
+       ]
+      },
+      {
+       "id": "E95",
+       "name": "s_ifaces[*].ram_wr_en_reg",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 16.1,
+       "struct_score": 8.3,
+       "trace": "control_backward",
+       "why": "Per-input RAM write request held until arbiter ack.",
+       "lines": [
+        556,
+        607,
+        641
+       ]
+      },
+      {
+       "id": "E85",
+       "name": "s_ifaces[*].overflow_reg",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 14.4,
+       "struct_score": 1.5,
+       "trace": "control_backward",
+       "why": "Per-input overflow pulse driving status_overflow.",
+       "lines": [
+        550,
+        623
+       ]
+      },
+      {
+       "id": "E19",
+       "name": "status_overflow",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 15.9,
+       "struct_score": 7.7,
+       "trace": "interface",
+       "why": "Per-input overflow status output.",
+       "lines": [
+        139,
+        623
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E73",
+       "name": "s_ifaces[*].wr_ptr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E75",
+       "name": "s_ifaces[*].wr_ptr_cur_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E77",
+       "name": "s_ifaces[*].rd_ptr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E78",
+       "name": "s_ifaces[*].len_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E79",
+       "name": "s_ifaces[*].len_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E81",
+       "name": "s_ifaces[*].empty",
+       "kind": "wire"
+      },
+      {
+       "id": "E82",
+       "name": "s_ifaces[*].full_wr",
+       "kind": "wire"
+      },
+      {
+       "id": "E84",
+       "name": "s_ifaces[*].drop_frame_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E86",
+       "name": "s_ifaces[*].overflow_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E87",
+       "name": "s_ifaces[*].bad_frame_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E88",
+       "name": "s_ifaces[*].bad_frame_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E89",
+       "name": "s_ifaces[*].good_frame_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E90",
+       "name": "s_ifaces[*].good_frame_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E91",
+       "name": "s_ifaces[*].ram_wr_data_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E92",
+       "name": "s_ifaces[*].ram_wr_data_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E93",
+       "name": "s_ifaces[*].ram_wr_addr_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E94",
+       "name": "s_ifaces[*].ram_wr_addr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E96",
+       "name": "s_ifaces[*].ram_wr_en_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E97",
+       "name": "s_ifaces[*].ram_wr_ack",
+       "kind": "wire"
+      },
+      {
+       "id": "E20",
+       "name": "status_bad_frame",
+       "kind": "port_out"
+      },
+      {
+       "id": "E21",
+       "name": "status_good_frame",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "command_table",
+     "kind": "REGISTER_BANK",
+     "description": "Per-input frame command table issuing read commands and retiring committed frames.",
+     "anchors": [
+      {
+       "id": "E100",
+       "name": "s_ifaces[*].cmd_table_addr_start",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 55.7,
+       "struct_score": 53.8,
+       "trace": "data_backward",
+       "why": "Per-input command table storing frame start address for output readers.",
+       "lines": [
+        561,
+        722,
+        778
+       ]
+      },
+      {
+       "id": "E98",
+       "name": "s_ifaces[*].cmd_table_active",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 21.9,
+       "struct_score": 32.1,
+       "trace": "control_backward",
+       "why": "Valid bits of command table entries gating command issue and clean-up.",
+       "lines": [
+        559,
+        720,
+        776
+       ]
+      },
+      {
+       "id": "E108",
+       "name": "s_ifaces[*].cmd_table_start_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 56.9,
+       "struct_score": 58.2,
+       "trace": "control_backward",
+       "why": "Command table write pointer, advanced when a good frame is stored.",
+       "lines": [
+        570,
+        603,
+        775
+       ]
+      },
+      {
+       "id": "E118",
+       "name": "s_ifaces[*].cmd_table_read_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "minor",
+       "score": 23.0,
+       "struct_score": 36.5,
+       "trace": "control_backward",
+       "why": "Command table pointer of next frame command to issue.",
+       "lines": [
+        580,
+        720,
+        789
+       ]
+      },
+      {
+       "id": "E122",
+       "name": "s_ifaces[*].cmd_table_finish_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "minor",
+       "score": 19.4,
+       "struct_score": 22.1,
+       "trace": "control_backward",
+       "why": "Command table retire pointer, frees RAM space after commit.",
+       "lines": [
+        584,
+        740,
+        797
+       ]
+      },
+      {
+       "id": "E138",
+       "name": "s_ifaces[*].cmd_valid_reg",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 50.1,
+       "struct_score": 33.0,
+       "trace": "forward",
+       "why": "One-hot command valid toward the selected output port.",
+       "lines": [
+        594,
+        619,
+        720
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E99",
+       "name": "s_ifaces[*].cmd_table_commit",
+       "kind": "reg"
+      },
+      {
+       "id": "E101",
+       "name": "s_ifaces[*].cmd_table_addr_end",
+       "kind": "mem"
+      },
+      {
+       "id": "E102",
+       "name": "s_ifaces[*].cmd_table_len",
+       "kind": "mem"
+      },
+      {
+       "id": "E103",
+       "name": "s_ifaces[*].cmd_table_select",
+       "kind": "mem"
+      },
+      {
+       "id": "E104",
+       "name": "s_ifaces[*].cmd_table_tkeep",
+       "kind": "mem"
+      },
+      {
+       "id": "E105",
+       "name": "s_ifaces[*].cmd_table_tid",
+       "kind": "mem"
+      },
+      {
+       "id": "E106",
+       "name": "s_ifaces[*].cmd_table_tdest",
+       "kind": "mem"
+      },
+      {
+       "id": "E107",
+       "name": "s_ifaces[*].cmd_table_tuser",
+       "kind": "mem"
+      },
+      {
+       "id": "E109",
+       "name": "s_ifaces[*].cmd_table_start_addr_start",
+       "kind": "comb"
+      },
+      {
+       "id": "E110",
+       "name": "s_ifaces[*].cmd_table_start_addr_end",
+       "kind": "comb"
+      },
+      {
+       "id": "E111",
+       "name": "s_ifaces[*].cmd_table_start_len",
+       "kind": "comb"
+      },
+      {
+       "id": "E112",
+       "name": "s_ifaces[*].cmd_table_start_select",
+       "kind": "comb"
+      },
+      {
+       "id": "E113",
+       "name": "s_ifaces[*].cmd_table_start_tkeep",
+       "kind": "comb"
+      },
+      {
+       "id": "E114",
+       "name": "s_ifaces[*].cmd_table_start_tid",
+       "kind": "comb"
+      },
+      {
+       "id": "E115",
+       "name": "s_ifaces[*].cmd_table_start_tdest",
+       "kind": "comb"
+      },
+      {
+       "id": "E116",
+       "name": "s_ifaces[*].cmd_table_start_tuser",
+       "kind": "comb"
+      },
+      {
+       "id": "E117",
+       "name": "s_ifaces[*].cmd_table_start_en",
+       "kind": "comb"
+      },
+      {
+       "id": "E119",
+       "name": "s_ifaces[*].cmd_table_read_en",
+       "kind": "comb"
+      },
+      {
+       "id": "E120",
+       "name": "s_ifaces[*].cmd_table_commit_ptr",
+       "kind": "comb"
+      },
+      {
+       "id": "E121",
+       "name": "s_ifaces[*].cmd_table_commit_en",
+       "kind": "comb"
+      },
+      {
+       "id": "E123",
+       "name": "s_ifaces[*].cmd_table_finish_en",
+       "kind": "comb"
+      },
+      {
+       "id": "E124",
+       "name": "s_ifaces[*].cmd_addr_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E125",
+       "name": "s_ifaces[*].cmd_addr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E126",
+       "name": "s_ifaces[*].cmd_len_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E127",
+       "name": "s_ifaces[*].cmd_len_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E128",
+       "name": "s_ifaces[*].cmd_id_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E129",
+       "name": "s_ifaces[*].cmd_id_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E130",
+       "name": "s_ifaces[*].cmd_tkeep_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E131",
+       "name": "s_ifaces[*].cmd_tkeep_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E132",
+       "name": "s_ifaces[*].cmd_tid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E133",
+       "name": "s_ifaces[*].cmd_tid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E134",
+       "name": "s_ifaces[*].cmd_tdest_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E135",
+       "name": "s_ifaces[*].cmd_tdest_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E136",
+       "name": "s_ifaces[*].cmd_tuser_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E137",
+       "name": "s_ifaces[*].cmd_tuser_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E139",
+       "name": "s_ifaces[*].cmd_valid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E140",
+       "name": "s_ifaces[*].cmd_status_ready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E141",
+       "name": "s_ifaces[*].cmd_status_ready_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E142",
+       "name": "s_ifaces[*].port_cmd_ready",
+       "kind": "wire"
+      },
+      {
+       "id": "E38",
+       "name": "int_cmd_addr",
+       "kind": "wire"
+      },
+      {
+       "id": "E39",
+       "name": "int_cmd_len",
+       "kind": "wire"
+      },
+      {
+       "id": "E40",
+       "name": "int_cmd_id",
+       "kind": "wire"
+      },
+      {
+       "id": "E41",
+       "name": "int_cmd_tkeep",
+       "kind": "wire"
+      },
+      {
+       "id": "E42",
+       "name": "int_cmd_tid",
+       "kind": "wire"
+      },
+      {
+       "id": "E43",
+       "name": "int_cmd_tdest",
+       "kind": "wire"
+      },
+      {
+       "id": "E44",
+       "name": "int_cmd_tuser",
+       "kind": "wire"
+      },
+      {
+       "id": "E45",
+       "name": "int_cmd_valid",
+       "kind": "wire"
+      },
+      {
+       "id": "E46",
+       "name": "int_cmd_ready",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "status_arbiter",
+     "kind": "ARBITER",
+     "description": "Per-input arbiter collecting completion status from outputs.",
+     "anchors": [
+      {
+       "id": "E68",
+       "name": "s_ifaces[*].grant_encoded",
+       "role": "ARBITRATION",
+       "importance": "minor",
+       "score": 19.3,
+       "struct_score": 21.5,
+       "trace": "control_backward",
+       "why": "Selects which output's completion status this input commits.",
+       "lines": [
+        505,
+        525
+       ]
+      },
+      {
+       "id": "E70",
+       "name": "s_ifaces[*].cmd_status_valid_mux",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 16.4,
+       "struct_score": 9.8,
+       "trace": "forward",
+       "why": "Arbitrated completion status triggering command commit.",
+       "lines": [
+        526,
+        733
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I4",
+       "instance": "s_ifaces[*].cmd_status_arb_inst",
+       "module": "arbiter"
+      }
+     ],
+     "members": [
+      {
+       "id": "E64",
+       "name": "s_ifaces[*].request",
+       "kind": "wire"
+      },
+      {
+       "id": "E65",
+       "name": "s_ifaces[*].acknowledge",
+       "kind": "wire"
+      },
+      {
+       "id": "E66",
+       "name": "s_ifaces[*].grant",
+       "kind": "wire"
+      },
+      {
+       "id": "E67",
+       "name": "s_ifaces[*].grant_valid",
+       "kind": "wire"
+      },
+      {
+       "id": "E69",
+       "name": "s_ifaces[*].cmd_status_id_mux",
+       "kind": "wire"
+      },
+      {
+       "id": "E71",
+       "name": "s_ifaces[*].cmd_status_ready_mux",
+       "kind": "wire"
+      },
+      {
+       "id": "E47",
+       "name": "int_cmd_status_id",
+       "kind": "wire"
+      },
+      {
+       "id": "E48",
+       "name": "int_cmd_status_valid",
+       "kind": "wire"
+      },
+      {
+       "id": "E49",
+       "name": "int_cmd_status_ready",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "output_cmd_arbiter",
+     "kind": "ARBITER",
+     "description": "Per-output arbiter choosing which input's frame command to serve.",
+     "anchors": [
+      {
+       "id": "E147",
+       "name": "m_ifaces[*].grant_encoded",
+       "role": "ARBITRATION",
+       "importance": "major",
+       "score": 56.2,
+       "struct_score": 55.8,
+       "trace": "control_backward",
+       "why": "Output command arbiter selection of source input port.",
+       "lines": [
+        827,
+        858,
+        1002
+       ]
+      },
+      {
+       "id": "E155",
+       "name": "m_ifaces[*].cmd_valid_mux",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 18.1,
+       "struct_score": 16.7,
+       "trace": "forward",
+       "why": "Arbitrated command valid accepted by output reader.",
+       "lines": [
+        854,
+        868,
+        992
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I5",
+       "instance": "m_ifaces[*].cmd_arb_inst",
+       "module": "arbiter"
+      }
+     ],
+     "members": [
+      {
+       "id": "E143",
+       "name": "m_ifaces[*].request",
+       "kind": "wire"
+      },
+      {
+       "id": "E144",
+       "name": "m_ifaces[*].acknowledge",
+       "kind": "wire"
+      },
+      {
+       "id": "E145",
+       "name": "m_ifaces[*].grant",
+       "kind": "wire"
+      },
+      {
+       "id": "E146",
+       "name": "m_ifaces[*].grant_valid",
+       "kind": "wire"
+      },
+      {
+       "id": "E148",
+       "name": "m_ifaces[*].cmd_addr_mux",
+       "kind": "comb"
+      },
+      {
+       "id": "E149",
+       "name": "m_ifaces[*].cmd_len_mux",
+       "kind": "comb"
+      },
+      {
+       "id": "E150",
+       "name": "m_ifaces[*].cmd_id_mux",
+       "kind": "comb"
+      },
+      {
+       "id": "E151",
+       "name": "m_ifaces[*].cmd_tkeep_mux",
+       "kind": "comb"
+      },
+      {
+       "id": "E152",
+       "name": "m_ifaces[*].cmd_tid_mux",
+       "kind": "comb"
+      },
+      {
+       "id": "E153",
+       "name": "m_ifaces[*].cmd_tdest_mux",
+       "kind": "comb"
+      },
+      {
+       "id": "E154",
+       "name": "m_ifaces[*].cmd_tuser_mux",
+       "kind": "comb"
+      },
+      {
+       "id": "E156",
+       "name": "m_ifaces[*].cmd_ready_mux",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "output_reader",
+     "kind": "CONTROLLER",
+     "description": "Per-output command processor issuing RAM reads and reporting completion.",
+     "anchors": [
+      {
+       "id": "E195",
+       "name": "m_ifaces[*].cmd_valid_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.1,
+       "struct_score": 16.6,
+       "trace": "control_backward",
+       "why": "Output reader busy with a command; gates reads and command accept.",
+       "lines": [
+        905,
+        947,
+        1006
+       ]
+      },
+      {
+       "id": "E157",
+       "name": "m_ifaces[*].rd_ptr_reg",
+       "role": "INDEX",
+       "importance": "minor",
+       "score": 15.4,
+       "struct_score": 5.7,
+       "trace": "control_backward",
+       "why": "Output reader RAM address for current frame.",
+       "lines": [
+        878,
+        1008,
+        1012
+       ]
+      },
+      {
+       "id": "E159",
+       "name": "m_ifaces[*].len_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 50.1,
+       "struct_score": 32.7,
+       "trace": "control_backward",
+       "why": "Remaining word count of frame being read; zero ends frame.",
+       "lines": [
+        880,
+        1009,
+        1023
+       ]
+      },
+      {
+       "id": "E190",
+       "name": "m_ifaces[*].ram_rd_en_reg",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 16.2,
+       "struct_score": 9.0,
+       "trace": "control_backward",
+       "why": "Per-output RAM read request held until read arbiter ack.",
+       "lines": [
+        900,
+        942,
+        1006
+       ]
+      },
+      {
+       "id": "E199",
+       "name": "m_ifaces[*].cmd_status_valid_reg",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 19.9,
+       "struct_score": 23.9,
+       "trace": "forward",
+       "why": "Completion status back to source input to commit frame.",
+       "lines": [
+        908,
+        950
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E158",
+       "name": "m_ifaces[*].rd_ptr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E160",
+       "name": "m_ifaces[*].len_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E161",
+       "name": "m_ifaces[*].src_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E162",
+       "name": "m_ifaces[*].src_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E163",
+       "name": "m_ifaces[*].id_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E164",
+       "name": "m_ifaces[*].id_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E165",
+       "name": "m_ifaces[*].last_cycle_tkeep_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E166",
+       "name": "m_ifaces[*].last_cycle_tkeep_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E167",
+       "name": "m_ifaces[*].tid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E168",
+       "name": "m_ifaces[*].tid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E169",
+       "name": "m_ifaces[*].tdest_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E170",
+       "name": "m_ifaces[*].tdest_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E171",
+       "name": "m_ifaces[*].tuser_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E172",
+       "name": "m_ifaces[*].tuser_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E188",
+       "name": "m_ifaces[*].ram_rd_addr_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E189",
+       "name": "m_ifaces[*].ram_rd_addr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E191",
+       "name": "m_ifaces[*].ram_rd_en_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E192",
+       "name": "m_ifaces[*].ram_rd_ack",
+       "kind": "wire"
+      },
+      {
+       "id": "E193",
+       "name": "m_ifaces[*].ram_rd_data",
+       "kind": "wire"
+      },
+      {
+       "id": "E194",
+       "name": "m_ifaces[*].ram_rd_data_valid",
+       "kind": "wire"
+      },
+      {
+       "id": "E196",
+       "name": "m_ifaces[*].cmd_valid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E197",
+       "name": "m_ifaces[*].cmd_status_id_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E198",
+       "name": "m_ifaces[*].cmd_status_id_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E200",
+       "name": "m_ifaces[*].cmd_status_valid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E201",
+       "name": "m_ifaces[*].port_cmd_status_ready",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "output_fifo",
+     "kind": "BUFFER",
+     "description": "Per-output small data/control FIFO, output register and width adapter.",
+     "anchors": [
+      {
+       "id": "E202",
+       "name": "m_ifaces[*].out_fifo_tdata",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 57.6,
+       "struct_score": 60.9,
+       "trace": "data_backward",
+       "why": "32-entry output data FIFO absorbing RAM read latency.",
+       "lines": [
+        916,
+        1040,
+        1081
+       ]
+      },
+      {
+       "id": "E218",
+       "name": "m_ifaces[*].out_fifo_rd_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "minor",
+       "score": 25.8,
+       "struct_score": 47.1,
+       "trace": "control_backward",
+       "why": "Output FIFO read pointer feeding output register.",
+       "lines": [
+        938,
+        1038,
+        1094
+       ]
+      },
+      {
+       "id": "E211",
+       "name": "m_ifaces[*].out_fifo_ctrl_wr_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "minor",
+       "score": 26.8,
+       "struct_score": 50.6,
+       "trace": "control_backward",
+       "why": "Output control FIFO write pointer limiting outstanding reads.",
+       "lines": [
+        931,
+        1006,
+        1085
+       ]
+      },
+      {
+       "id": "E208",
+       "name": "m_ifaces[*].out_fifo_data_wr_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "minor",
+       "score": 19.9,
+       "struct_score": 24.0,
+       "trace": "control_backward",
+       "why": "Output data FIFO write pointer advanced on RAM read data.",
+       "lines": [
+        928,
+        1080
+       ]
+      },
+      {
+       "id": "E177",
+       "name": "m_ifaces[*].out_axis_tvalid_reg",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 19.4,
+       "struct_score": 22.1,
+       "trace": "forward",
+       "why": "Output register valid into output width adapter.",
+       "lines": [
+        892,
+        1038,
+        1129
+       ]
+      },
+      {
+       "id": "E173",
+       "name": "m_ifaces[*].out_axis_tdata_reg",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 16.7,
+       "struct_score": 11.1,
+       "trace": "data_backward",
+       "why": "Output register data into output width adapter.",
+       "lines": [
+        890,
+        1063,
+        1127
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "m_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 82.6,
+       "struct_score": 50.0,
+       "trace": "interface",
+       "why": "Per-output stream data from output adapters.",
+       "lines": [
+        127,
+        1136
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "m_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 81.1,
+       "struct_score": 44.7,
+       "trace": "interface",
+       "why": "Per-output stream valid bits.",
+       "lines": [
+        129,
+        1138
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "m_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 75.4,
+       "struct_score": 22.1,
+       "trace": "interface",
+       "why": "Per-output downstream ready into output adapters.",
+       "lines": [
+        130,
+        1139
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I6",
+       "instance": "m_ifaces[*].adapter_inst",
+       "module": "axis_adapter"
+      }
+     ],
+     "members": [
+      {
+       "id": "E203",
+       "name": "m_ifaces[*].out_fifo_tkeep",
+       "kind": "mem"
+      },
+      {
+       "id": "E204",
+       "name": "m_ifaces[*].out_fifo_tlast",
+       "kind": "mem"
+      },
+      {
+       "id": "E205",
+       "name": "m_ifaces[*].out_fifo_tid",
+       "kind": "mem"
+      },
+      {
+       "id": "E206",
+       "name": "m_ifaces[*].out_fifo_tdest",
+       "kind": "mem"
+      },
+      {
+       "id": "E207",
+       "name": "m_ifaces[*].out_fifo_tuser",
+       "kind": "mem"
+      },
+      {
+       "id": "E209",
+       "name": "m_ifaces[*].out_fifo_data_wr_tdata",
+       "kind": "comb"
+      },
+      {
+       "id": "E210",
+       "name": "m_ifaces[*].out_fifo_data_wr_en",
+       "kind": "comb"
+      },
+      {
+       "id": "E212",
+       "name": "m_ifaces[*].out_fifo_ctrl_wr_tkeep",
+       "kind": "comb"
+      },
+      {
+       "id": "E213",
+       "name": "m_ifaces[*].out_fifo_ctrl_wr_tlast",
+       "kind": "comb"
+      },
+      {
+       "id": "E214",
+       "name": "m_ifaces[*].out_fifo_ctrl_wr_tid",
+       "kind": "comb"
+      },
+      {
+       "id": "E215",
+       "name": "m_ifaces[*].out_fifo_ctrl_wr_tdest",
+       "kind": "comb"
+      },
+      {
+       "id": "E216",
+       "name": "m_ifaces[*].out_fifo_ctrl_wr_tuser",
+       "kind": "comb"
+      },
+      {
+       "id": "E217",
+       "name": "m_ifaces[*].out_fifo_ctrl_wr_en",
+       "kind": "comb"
+      },
+      {
+       "id": "E219",
+       "name": "m_ifaces[*].out_fifo_rd_en",
+       "kind": "comb"
+      },
+      {
+       "id": "E174",
+       "name": "m_ifaces[*].out_axis_tdata_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E175",
+       "name": "m_ifaces[*].out_axis_tkeep_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E176",
+       "name": "m_ifaces[*].out_axis_tkeep_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E178",
+       "name": "m_ifaces[*].out_axis_tvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E179",
+       "name": "m_ifaces[*].out_axis_tready",
+       "kind": "wire"
+      },
+      {
+       "id": "E180",
+       "name": "m_ifaces[*].out_axis_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E181",
+       "name": "m_ifaces[*].out_axis_tlast_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E182",
+       "name": "m_ifaces[*].out_axis_tid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E183",
+       "name": "m_ifaces[*].out_axis_tid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E184",
+       "name": "m_ifaces[*].out_axis_tdest_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E185",
+       "name": "m_ifaces[*].out_axis_tdest_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E186",
+       "name": "m_ifaces[*].out_axis_tuser_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E187",
+       "name": "m_ifaces[*].out_axis_tuser_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E12",
+       "name": "m_axis_tkeep",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "m_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "m_axis_tid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "m_axis_tdest",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "m_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clk_rst",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axis",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axis_tdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_tkeep",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_tvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_tready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_axis_tid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_axis_tdest",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "s_axis_tuser",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axis",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "m_axis_tdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "m_axis_tkeep",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "m_axis_tvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "m_axis_tready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "m_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "m_axis_tid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "m_axis_tdest",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "m_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E19",
+      "E20",
+      "E21"
+     ],
+     "members": [
+      {
+       "id": "E19",
+       "name": "status_overflow",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "status_bad_frame",
+       "kind": "port_out"
+      },
+      {
+       "id": "E21",
+       "name": "status_good_frame",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,493 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "serv_serv_bufreg",
+ "tops": [
+  "serv_bufreg"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "serv_bufreg": {
+   "source": "teacher",
+   "canonical_instance": "serv_bufreg",
+   "file": "data/rtl/serv/rtl/serv_bufreg.v",
+   "lines": [
+    7,
+    101
+   ],
+   "summary": "SERV buffer register: a bit-serial adder sums gated rs1 and immediate into a 32-bit shift register that provides the data-bus address, shifts and serial output.",
+   "blocks": [
+    {
+     "name": "Serial adder",
+     "kind": "DATAPATH",
+     "description": "Bit-serial add of gated rs1 and immediate with carry flip-flop.",
+     "anchors": [
+      {
+       "id": "E22",
+       "name": "q",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 46.6,
+       "struct_score": 18.8,
+       "trace": "data_backward",
+       "why": "Serial adder sum of gated rs1, gated imm and carry, shifted into data.",
+       "lines": [
+        39,
+        52,
+        64
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "c_r",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 21.6,
+       "struct_score": 30.9,
+       "trace": "data_backward",
+       "why": "Carry flip-flop of the serial adder held between bit cycles.",
+       "lines": [
+        40,
+        52,
+        57
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "i_rs1_en",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 24.4,
+       "struct_score": 42.2,
+       "trace": "control_backward",
+       "why": "Gates rs1 operand into the serial adder.",
+       "lines": [
+        22,
+        52
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "i_imm_en",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 24.4,
+       "struct_score": 42.2,
+       "trace": "control_backward",
+       "why": "Gates immediate operand into the serial adder.",
+       "lines": [
+        23,
+        52
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "clr_lsb",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 19.9,
+       "struct_score": 24.1,
+       "trace": "control_backward",
+       "why": "Clears immediate LSB at cnt0 for jalr target alignment.",
+       "lines": [
+        42,
+        44,
+        52
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "i_rs1",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 88.6,
+       "struct_score": 71.2,
+       "trace": "interface",
+       "why": "Serial rs1 operand input to the adder.",
+       "lines": [
+        30,
+        52
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "i_imm",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 88.6,
+       "struct_score": 71.2,
+       "trace": "interface",
+       "why": "Serial immediate operand input to the adder.",
+       "lines": [
+        31,
+        52
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E21",
+       "name": "c",
+       "kind": "wire"
+      },
+      {
+       "id": "E2",
+       "name": "i_cnt0",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "i_clr_lsb",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Buffer shift register",
+     "kind": "BUFFER",
+     "description": "32-bit shift register loaded from adder or shifted with sign fill.",
+     "anchors": [
+      {
+       "id": "E24",
+       "name": "data",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 97.9,
+       "struct_score": 94.7,
+       "trace": "data_backward",
+       "why": "32-bit shift register holding computed address/rs1; feeds o_q, o_dbus_adr, o_ext_rs1.",
+       "lines": [
+        41,
+        64,
+        98
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "i_en",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 53.8,
+       "struct_score": 47.0,
+       "trace": "control_backward",
+       "why": "Shift enable for data register, carry update and o_q output gating.",
+       "lines": [
+        17,
+        57,
+        63
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "i_init",
+       "role": "MUX_SELECT",
+       "importance": "minor",
+       "score": 29.2,
+       "struct_score": 59.4,
+       "trace": "control_backward",
+       "why": "Selects loading adder sum vs sign-fill shift into data register.",
+       "lines": [
+        18,
+        64,
+        66
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "i_sh_signed",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 21.5,
+       "struct_score": 30.3,
+       "trace": "forward",
+       "why": "Selects arithmetic sign fill when shifting data register.",
+       "lines": [
+        28,
+        64
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E3",
+       "name": "i_cnt1",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "i_cnt_done",
+       "kind": "port_in"
+      },
+      {
+       "id": "E12",
+       "name": "i_shift_op",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "i_right_shift_op",
+       "kind": "port_in"
+      },
+      {
+       "id": "E14",
+       "name": "i_shamt",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Outputs",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Serial output, data bus address, address LSBs and extension rs1.",
+     "anchors": [
+      {
+       "id": "E18",
+       "name": "o_q",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 88.2,
+       "struct_score": 70.2,
+       "trace": "data_backward",
+       "why": "Serial output bit from data register gated by i_en.",
+       "lines": [
+        32,
+        70,
+        93
+       ]
+      },
+      {
+       "id": "E19",
+       "name": "o_dbus_adr",
+       "role": "INTERFACE_ADDR",
+       "importance": "critical",
+       "score": 90.2,
+       "struct_score": 75.3,
+       "trace": "data_backward",
+       "why": "Word-aligned data bus address taken from data register.",
+       "lines": [
+        34,
+        98
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "o_lsb",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 56.7,
+       "struct_score": 57.7,
+       "trace": "data_backward",
+       "why": "Address low bits for byte-lane selection, zero for MDU ops.",
+       "lines": [
+        20,
+        69,
+        92
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "o_ext_rs1",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 38.9,
+       "struct_score": 87.1,
+       "trace": "data_backward",
+       "why": "Full parallel data register exported to extension units.",
+       "lines": [
+        36,
+        99
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E7",
+       "name": "i_mdu_op",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "i_clk",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "state",
+     "protocol": "SIMPLE",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E2",
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E2",
+       "name": "i_cnt0",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "i_cnt1",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "i_cnt_done",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "i_en",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "i_init",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "i_mdu_op",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "o_lsb",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "control",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E9",
+      "E10",
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15"
+     ],
+     "members": [
+      {
+       "id": "E9",
+       "name": "i_rs1_en",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "i_imm_en",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "i_clr_lsb",
+       "kind": "port_in"
+      },
+      {
+       "id": "E12",
+       "name": "i_shift_op",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "i_right_shift_op",
+       "kind": "port_in"
+      },
+      {
+       "id": "E14",
+       "name": "i_shamt",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "i_sh_signed",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "data",
+     "protocol": "STREAM",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E16",
+      "E17",
+      "E18"
+     ],
+     "members": [
+      {
+       "id": "E16",
+       "name": "i_rs1",
+       "kind": "port_in"
+      },
+      {
+       "id": "E17",
+       "name": "i_imm",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "o_q",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "dbus_address",
+     "protocol": "MEMORY_BUS",
+     "direction": "OUT",
+     "member_ids": [
+      "E19"
+     ],
+     "members": [
+      {
+       "id": "E19",
+       "name": "o_dbus_adr",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "extension",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E20"
+     ],
+     "members": [
+      {
+       "id": "E20",
+       "name": "o_ext_rs1",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

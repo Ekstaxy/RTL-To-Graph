@@ -1,0 +1,36 @@
+{
+ "module_summary": "AXI-stream 1:N frame demultiplexer: at frame start latches select/drop, steers the valid bit to the selected output (or drops the frame) through a registered output stage with skid buffer, releasing at tlast.",
+ "anchors": [
+  {"id": "E28", "name": "frame_reg", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "2-state idle/in-frame controller; select/drop latched only when idle", "lines": [118, 153, 189]},
+  {"id": "E22", "name": "select_reg", "role": "MUX_SELECT", "importance": "critical", "trace": "control_backward", "why": "latched output index for current frame, steers valid to one output", "lines": [116, 137, 187]},
+  {"id": "E25", "name": "drop_reg", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "frame drop flag; suppresses output valid and forces input ready", "lines": [117, 139, 188]},
+  {"id": "E21", "name": "select", "role": "COMMAND", "importance": "major", "trace": "interface", "why": "requested output port captured at frame start", "lines": [94, 164, 165]},
+  {"id": "E20", "name": "drop", "role": "COMMAND", "importance": "minor", "trace": "interface", "why": "request to discard the starting frame", "lines": [93, 165]},
+  {"id": "E19", "name": "enable", "role": "ENABLE", "importance": "major", "trace": "interface", "why": "gates s_axis_tready, pausing the input", "lines": [92, 133]},
+  {"id": "E5", "name": "s_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "input beat valid; frame start/end detection and output valid", "lines": [70, 145, 179]},
+  {"id": "E6", "name": "s_axis_tready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "registered input ready ANDed with enable", "lines": [71, 133]},
+  {"id": "E3", "name": "s_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "input payload passed to internal datapath", "lines": [68, 177]},
+  {"id": "E13", "name": "m_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "per-output valid vector from output register", "lines": [82, 224, 231]},
+  {"id": "E14", "name": "m_axis_tready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "per-output ready controlling output/skid transfers", "lines": [83, 231, 244]},
+  {"id": "E11", "name": "m_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "output data register replicated to all outputs", "lines": [80, 222]},
+  {"id": "E35", "name": "m_axis_tvalid_int", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "one-hot internal valid shifted by select_ctl, zero when dropping", "lines": [125, 179, 246]},
+  {"id": "E36", "name": "m_axis_tready_int_reg", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "internal registered ready from output stage to input logic", "lines": [126, 242, 263]},
+  {"id": "E50", "name": "temp_m_axis_tdata_reg", "role": "STORAGE", "importance": "major", "trace": "data_backward", "why": "skid register holding beat while outputs stall", "lines": [209, 275, 284]},
+  {"id": "E52", "name": "temp_m_axis_tvalid_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "skid occupancy per output; gates internal ready and temp-to-output", "lines": [211, 231, 255]},
+  {"id": "E58", "name": "store_axis_int_to_output", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "loads internal beat into output registers", "lines": [218, 247, 267]},
+  {"id": "E59", "name": "store_axis_int_to_temp", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "loads internal beat into skid registers", "lines": [219, 251, 283]},
+  {"id": "E60", "name": "store_axis_temp_to_output", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "moves skid contents to output registers", "lines": [220, 257, 274]}
+ ],
+ "groups": [
+  {"name": "Frame routing control", "kind": "CONTROLLER", "anchor_ids": ["E28", "E22", "E25", "E21", "E20", "E19", "E6"], "member_ids": ["E23", "E24", "E26", "E27", "E29", "E30", "E31", "E32"], "description": "Latches select/drop at frame start, holds until tlast, drives input ready"},
+  {"name": "Valid steering", "kind": "DATAPATH", "anchor_ids": ["E35", "E5", "E3"], "member_ids": ["E33", "E34", "E37", "E38", "E39", "E40"], "description": "Shifts beat valid to selected output; data passes through unchanged"},
+  {"name": "Output register stage", "kind": "PIPELINE_STAGE", "anchor_ids": ["E11", "E13", "E14", "E36", "E58"], "member_ids": ["E41", "E42", "E43", "E44", "E45", "E46", "E47", "E48", "E49"], "description": "Registered outputs replicated to all ports with per-port valid"},
+  {"name": "Skid buffer", "kind": "BUFFER", "anchor_ids": ["E50", "E52", "E59", "E60"], "member_ids": ["E51", "E53", "E54", "E55", "E56", "E57"], "description": "Temp registers absorb a beat when outputs stall"}
+ ],
+ "interfaces": [
+  {"name": "clock/reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "AXI-stream input", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10"]},
+  {"name": "AXI-stream outputs", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E11", "E12", "E13", "E14", "E15", "E16", "E17", "E18"]},
+  {"name": "control", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E19", "E20", "E21"]}
+ ]
+}

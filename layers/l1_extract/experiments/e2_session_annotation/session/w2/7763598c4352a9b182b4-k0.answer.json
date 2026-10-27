@@ -1,0 +1,22 @@
+{
+  "module_summary": "Sequential 16-bit unsigned shift-and-add multiplier: latches operands, then over 16 counted cycles conditionally accumulates shifted multiplier into a 32-bit product register, pulsing done.",
+  "anchors": [
+    {"id": "E12", "name": "i", "role": "COUNTER", "importance": "critical", "trace": "control_backward", "why": "Shift/step counter sequencing operand load, 16 accumulate steps and done generation."},
+    {"id": "E10", "name": "yout_r", "role": "DATAPATH_MAJOR", "importance": "critical", "trace": "data_backward", "why": "32-bit product accumulator adding breg shifted by i-1 when areg bit set; drives yout."},
+    {"id": "E3", "name": "start", "role": "COMMAND", "importance": "critical", "trace": "forward", "why": "Starts/holds the multiplication; enables counter and accumulation, clears counter when low."},
+    {"id": "E7", "name": "done", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "One-cycle completion pulse from done_r when counter reaches 16, product valid."},
+    {"id": "E8", "name": "areg", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Latched multiplicand; bit areg[i-1] gates each accumulate step."},
+    {"id": "E9", "name": "breg", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Latched multiplier shifted and added into the product accumulator."},
+    {"id": "E4", "name": "ain", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Multiplicand input loaded into areg at step zero."},
+    {"id": "E5", "name": "bin", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Multiplier input loaded into breg at step zero."}
+  ],
+  "groups": [
+    {"name": "step_control", "kind": "CONTROLLER", "anchor_ids": ["E12", "E3", "E7"], "member_ids": ["E11"], "description": "Step counter driven by start, generating the done pulse via done_r."},
+    {"name": "shift_add_datapath", "kind": "DATAPATH", "anchor_ids": ["E10", "E8", "E9", "E4", "E5"], "member_ids": ["E6"], "description": "Operand registers and shift-accumulate product register output as yout."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "operand_in", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E3", "E4", "E5"]},
+    {"name": "product_out", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E6", "E7"]}
+  ]
+}

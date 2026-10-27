@@ -1,0 +1,30 @@
+{
+  "module_summary": "Synchronous FIFO built on a circular memory array with write/read address pointers, an occupancy counter deriving full, and a registered empty flag.",
+  "anchors": [
+    {"id": "E12", "name": "mem", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "FIFO memory array written at wr_addr, read asynchronously at rd_addr.", "lines": [69, 128, 182]},
+    {"id": "E3", "name": "i_wr", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Write request; qualified by not-full to push i_data.", "lines": [40, 72]},
+    {"id": "E4", "name": "i_data", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Write data payload stored into mem.", "lines": [41, 128]},
+    {"id": "E7", "name": "i_rd", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Read request from consumer; qualified by not-empty to pop.", "lines": [46, 73]},
+    {"id": "E8", "name": "o_data", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Read data output taken from mem at rd_addr.", "lines": [47, 182]},
+    {"id": "E13", "name": "wr_addr", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "Write pointer, increments on accepted write, addresses mem.", "lines": [70, 121, 128]},
+    {"id": "E14", "name": "rd_addr", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "Read pointer, increments on accepted read, addresses mem.", "lines": [70, 146, 182]},
+    {"id": "E6", "name": "o_fill", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "Occupancy count, +1 on write, -1 on read; MSB gives full.", "lines": [43, 90, 91]},
+    {"id": "E5", "name": "o_full", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Full indication from fill MSB; blocks writes.", "lines": [42, 111]},
+    {"id": "E9", "name": "o_empty", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Empty indication from r_empty; blocks reads.", "lines": [48, 161]},
+    {"id": "E15", "name": "w_wr", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Qualified write enable: advances wr_addr, writes mem, updates fill.", "lines": [72, 120, 127]},
+    {"id": "E16", "name": "w_rd", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Qualified read enable: advances rd_addr, updates fill and empty.", "lines": [73, 145]},
+    {"id": "E10", "name": "r_empty", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Registered empty flag updated from fill on read/write.", "lines": [67, 156, 161]}
+  ],
+  "groups": [
+    {"name": "fifo_memory", "kind": "MEMORY", "anchor_ids": ["E12"], "member_ids": [], "description": "Circular data array holding queued words."},
+    {"name": "write_side", "kind": "CONTROLLER", "anchor_ids": ["E15", "E13"], "member_ids": ["E3", "E4"], "description": "Qualifies write requests and advances the write pointer into mem."},
+    {"name": "read_side", "kind": "CONTROLLER", "anchor_ids": ["E16", "E14"], "member_ids": ["E7", "E8"], "description": "Qualifies read requests and advances the read pointer driving o_data."},
+    {"name": "occupancy_flags", "kind": "COUNTER_TIMER", "anchor_ids": ["E6", "E5", "E9", "E10"], "member_ids": ["E11"], "description": "Fill counter and derived full/empty flags."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "write_port", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5"]},
+    {"name": "read_port", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E7", "E8", "E9"]},
+    {"name": "fill_level", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E6"]}
+  ]
+}

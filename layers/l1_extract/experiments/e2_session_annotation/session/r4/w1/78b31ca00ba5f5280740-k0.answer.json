@@ -1,0 +1,20 @@
+{
+ "module_summary": "8-to-16-bit width converter: a toggle flag alternates between buffering the first valid byte and concatenating it with the second into a registered 16-bit word with valid pulse.",
+ "anchors": [
+  {"id": "E8", "name": "flag", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Two-phase toggle selecting buffer-first-byte vs emit-word on each valid input.", "lines": [17, 25, 31]},
+  {"id": "E7", "name": "data_lock", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Holds first byte until second arrives; forms upper half of data_out.", "lines": [11, 18, 41]},
+  {"id": "E3", "name": "valid_in", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Input byte valid; toggles flag and enables capture/output.", "lines": [5, 24, 40]},
+  {"id": "E4", "name": "data_in", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "8-bit input byte stored or concatenated into output.", "lines": [6, 18, 41]},
+  {"id": "E5", "name": "valid_out", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "One-cycle pulse accompanying completed 16-bit word.", "lines": [8, 32]},
+  {"id": "E6", "name": "data_out", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Registered 16-bit word {data_lock, data_in}.", "lines": [9, 41]}
+ ],
+ "groups": [
+  {"name": "phase_control", "kind": "CONTROLLER", "anchor_ids": ["E8", "E5"], "member_ids": [], "description": "Toggle flag sequencing byte capture and output valid."},
+  {"name": "width_packer", "kind": "DATAPATH", "anchor_ids": ["E7", "E6", "E4", "E3"], "member_ids": [], "description": "Byte buffer and concatenation into 16-bit output register."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "byte_in", "protocol": "STREAM", "direction": "IN", "member_ids": ["E3", "E4"]},
+  {"name": "word_out", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E5", "E6"]}
+ ]
+}

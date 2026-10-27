@@ -1,0 +1,606 @@
+[
+ {
+  "module": "i2c_master",
+  "instance": "i2c_master_wbs_8.i2c_master_inst",
+  "state": "state_reg",
+  "next": "state_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "STATE_IDLE",
+    "value": "5'b0"
+   },
+   {
+    "name": "STATE_START_WAIT",
+    "value": "5'b11"
+   },
+   {
+    "name": "STATE_ADDRESS_1",
+    "value": "5'b101"
+   },
+   {
+    "name": "STATE_ACTIVE_WRITE",
+    "value": "5'b1"
+   },
+   {
+    "name": "STATE_WRITE_1",
+    "value": "5'b111"
+   },
+   {
+    "name": "STATE_ACTIVE_READ",
+    "value": "5'b10"
+   },
+   {
+    "name": "STATE_START",
+    "value": "5'b100"
+   },
+   {
+    "name": "STATE_READ",
+    "value": "5'b1010"
+   },
+   {
+    "name": "STATE_STOP",
+    "value": "5'b1011"
+   },
+   {
+    "name": "STATE_ADDRESS_2",
+    "value": "5'b110"
+   },
+   {
+    "name": "STATE_WRITE_2",
+    "value": "5'b1000"
+   },
+   {
+    "name": "STATE_WRITE_3",
+    "value": "5'b1001"
+   }
+  ],
+  "reset_state": "STATE_IDLE",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_START_WAIT",
+    "cond": "!(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && s_axis_cmd_ready & s_axis_cmd_valid && s_axis_cmd_read ^ (s_axis_cmd_write | s_axis_cmd_write_multiple) && bus_active"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_ADDRESS_1",
+    "cond": "!(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && s_axis_cmd_ready & s_axis_cmd_valid && s_axis_cmd_read ^ (s_axis_cmd_write | s_axis_cmd_write_multiple) && !bus_active"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_IDLE",
+    "cond": "!(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && s_axis_cmd_ready & s_axis_cmd_valid && !(s_axis_cmd_read ^ (s_axis_cmd_write | s_axis_cmd_write_multiple))"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_IDLE",
+    "cond": "!(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && !(s_axis_cmd_ready & s_axis_cmd_valid)"
+   },
+   {
+    "src": "STATE_ACTIVE_WRITE",
+    "dst": "STATE_ADDRESS_1",
+    "cond": "!(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && s_axis_cmd_ready & s_axis_cmd_valid && s_axis_cmd_read ^ (s_axis_cmd_write | s_axis_cmd_write_multiple) && ((s_axis_cmd_start || s_axis_cmd_address != addr_reg) || s_axis_cmd_read)"
+   },
+   {
+    "src": "STATE_ACTIVE_WRITE",
+    "dst": "STATE_WRITE_1",
+    "cond": "!(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && s_axis_cmd_ready & s_axis_cmd_valid && s_axis_cmd_read ^ (s_axis_cmd_write | s_axis_cmd_write_multiple) && !((s_axis_cmd_start || s_axis_cmd_address != addr_reg) || s_axis_cmd_read)"
+   },
+   {
+    "src": "STATE_ACTIVE_WRITE",
+    "dst": "STATE_IDLE",
+    "cond": "!(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && s_axis_cmd_ready & s_axis_cmd_valid && !(s_axis_cmd_read ^ (s_axis_cmd_write | s_axis_cmd_write_multiple)) && s_axis_cmd_stop && !(s_axis_cmd_read || s_axis_cmd_write || s_axis_cmd_write_multiple)"
+   },
+   {
+    "src": "STATE_ACTIVE_WRITE",
+    "dst": "STATE_ACTIVE_WRITE",
+    "cond": "!(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && s_axis_cmd_ready & s_axis_cmd_valid && !(s_axis_cmd_read ^ (s_axis_cmd_write | s_axis_cmd_write_multiple)) && !(s_axis_cmd_stop && !(s_axis_cmd_read || s_axis_cmd_write || s_axis_cmd_write_multiple))"
+   },
+   {
+    "src": "STATE_ACTIVE_WRITE",
+    "dst": "STATE_IDLE",
+    "cond": "!(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && !(s_axis_cmd_ready & s_axis_cmd_valid) && stop_on_idle & s_axis_cmd_ready & ~s_axis_cmd_valid"
+   },
+   {
+    "src": "STATE_ACTIVE_WRITE",
+    "dst": "STATE_ACTIVE_WRITE",
+    "cond": "!(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && !(s_axis_cmd_ready & s_axis_cmd_valid) && !(stop_on_idle & s_axis_cmd_ready & ~s_axis_cmd_valid)"
+   },
+   {
+    "src": "STATE_ACTIVE_READ",
+    "dst": "STATE_START",
+    "cond": "!(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && s_axis_cmd_ready & s_axis_cmd_valid && s_axis_cmd_read ^ (s_axis_cmd_write | s_axis_cmd_write_multiple) && ((s_axis_cmd_start || s_axis_cmd_address != addr_reg) || s_axis_cmd_write)"
+   },
+   {
+    "src": "STATE_ACTIVE_READ",
+    "dst": "STATE_READ",
+    "cond": "!(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && s_axis_cmd_ready & s_axis_cmd_valid && s_axis_cmd_read ^ (s_axis_cmd_write | s_axis_cmd_write_multiple) && !((s_axis_cmd_start || s_axis_cmd_address != addr_reg) || s_axis_cmd_write)"
+   },
+   {
+    "src": "STATE_ACTIVE_READ",
+    "dst": "STATE_STOP",
+    "cond": "!(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && s_axis_cmd_ready & s_axis_cmd_valid && !(s_axis_cmd_read ^ (s_axis_cmd_write | s_axis_cmd_write_multiple)) && s_axis_cmd_stop && !(s_axis_cmd_read || s_axis_cmd_write || s_axis_cmd_write_multiple)"
+   },
+   {
+    "src": "STATE_ACTIVE_READ",
+    "dst": "STATE_ACTIVE_READ",
+    "cond": "!(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && s_axis_cmd_ready & s_axis_cmd_valid && !(s_axis_cmd_read ^ (s_axis_cmd_write | s_axis_cmd_write_multiple)) && !(s_axis_cmd_stop && !(s_axis_cmd_read || s_axis_cmd_write || s_axis_cmd_write_multiple))"
+   },
+   {
+    "src": "STATE_ACTIVE_READ",
+    "dst": "STATE_STOP",
+    "cond": "!(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && !(s_axis_cmd_ready & s_axis_cmd_valid) && stop_on_idle & s_axis_cmd_ready & ~s_axis_cmd_valid"
+   },
+   {
+    "src": "STATE_ACTIVE_READ",
+    "dst": "STATE_ACTIVE_READ",
+    "cond": "!(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && !(s_axis_cmd_ready & s_axis_cmd_valid) && !(stop_on_idle & s_axis_cmd_ready & ~s_axis_cmd_valid)"
+   },
+   {
+    "src": "STATE_START_WAIT",
+    "dst": "STATE_START_WAIT",
+    "cond": "!(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && bus_active"
+   },
+   {
+    "src": "STATE_START_WAIT",
+    "dst": "STATE_ADDRESS_1",
+    "cond": "!(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && !bus_active"
+   },
+   {
+    "src": "STATE_START",
+    "dst": "STATE_ADDRESS_1",
+    "cond": "!(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE)"
+   },
+   {
+    "src": "STATE_ADDRESS_1",
+    "dst": "STATE_ADDRESS_1",
+    "cond": "!(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && bit_count_reg > 1"
+   },
+   {
+    "src": "STATE_ADDRESS_1",
+    "dst": "STATE_ADDRESS_1",
+    "cond": "!(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && !(bit_count_reg > 1) && bit_count_reg > 0"
+   },
+   {
+    "src": "STATE_ADDRESS_1",
+    "dst": "STATE_ADDRESS_2",
+    "cond": "!(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && !(bit_count_reg > 1) && !(bit_count_reg > 0)"
+   },
+   {
+    "src": "STATE_ADDRESS_2",
+    "dst": "STATE_READ",
+    "cond": "!(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && mode_read_reg"
+   },
+   {
+    "src": "STATE_ADDRESS_2",
+    "dst": "STATE_WRITE_1",
+    "cond": "!(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && !mode_read_reg"
+   },
+   {
+    "src": "STATE_WRITE_1",
+    "dst": "STATE_WRITE_2",
+    "cond": "!(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && s_axis_data_tready & s_axis_data_tvalid"
+   },
+   {
+    "src": "STATE_WRITE_1",
+    "dst": "STATE_WRITE_1",
+    "cond": "!(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && !(s_axis_data_tready & s_axis_data_tvalid)"
+   },
+   {
+    "src": "STATE_WRITE_2",
+    "dst": "STATE_WRITE_2",
+    "cond": "!(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && bit_count_reg > 0"
+   },
+   {
+    "src": "STATE_WRITE_2",
+    "dst": "STATE_WRITE_3",
+    "cond": "!(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && !(bit_count_reg > 0)"
+   },
+   {
+    "src": "STATE_WRITE_3",
+    "dst": "STATE_WRITE_1",
+    "cond": "!(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && mode_write_multiple_reg && !last_reg"
+   },
+   {
+    "src": "STATE_WRITE_3",
+    "dst": "STATE_IDLE",
+    "cond": "!(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && !(mode_write_multiple_reg && !last_reg) && mode_stop_reg"
+   },
+   {
+    "src": "STATE_WRITE_3",
+    "dst": "STATE_ACTIVE_WRITE",
+    "cond": "!(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && !(mode_write_multiple_reg && !last_reg) && !mode_stop_reg"
+   },
+   {
+    "src": "STATE_READ",
+    "dst": "STATE_READ",
+    "cond": "!(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && bit_count_reg > 0"
+   },
+   {
+    "src": "STATE_READ",
+    "dst": "STATE_STOP",
+    "cond": "!(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && !(bit_count_reg > 0) && mode_stop_reg"
+   },
+   {
+    "src": "STATE_READ",
+    "dst": "STATE_ACTIVE_READ",
+    "cond": "!(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && !(bit_count_reg > 0) && !mode_stop_reg"
+   },
+   {
+    "src": "STATE_STOP",
+    "dst": "STATE_IDLE",
+    "cond": "!(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE)"
+   }
+  ],
+  "outputs": [],
+  "warnings": [],
+  "semantic_check": "consistent-subset"
+ },
+ {
+  "module": "i2c_master",
+  "instance": "i2c_master_wbs_8.i2c_master_inst",
+  "state": "phy_state_reg",
+  "next": "phy_state_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "PHY_STATE_IDLE",
+    "value": "5'b0"
+   },
+   {
+    "name": "PHY_STATE_START_1",
+    "value": "5'b100"
+   },
+   {
+    "name": "PHY_STATE_ACTIVE",
+    "value": "5'b1"
+   },
+   {
+    "name": "PHY_STATE_REPEATED_START_1",
+    "value": "5'b10"
+   },
+   {
+    "name": "PHY_STATE_WRITE_BIT_1",
+    "value": "5'b110"
+   },
+   {
+    "name": "PHY_STATE_READ_BIT_1",
+    "value": "5'b1001"
+   },
+   {
+    "name": "PHY_STATE_STOP_1",
+    "value": "5'b1101"
+   },
+   {
+    "name": "PHY_STATE_REPEATED_START_2",
+    "value": "5'b11"
+   },
+   {
+    "name": "PHY_STATE_START_2",
+    "value": "5'b101"
+   },
+   {
+    "name": "PHY_STATE_WRITE_BIT_2",
+    "value": "5'b111"
+   },
+   {
+    "name": "PHY_STATE_WRITE_BIT_3",
+    "value": "5'b1000"
+   },
+   {
+    "name": "PHY_STATE_READ_BIT_2",
+    "value": "5'b1010"
+   },
+   {
+    "name": "PHY_STATE_READ_BIT_3",
+    "value": "5'b1011"
+   },
+   {
+    "name": "PHY_STATE_READ_BIT_4",
+    "value": "5'b1100"
+   },
+   {
+    "name": "PHY_STATE_STOP_2",
+    "value": "5'b1110"
+   },
+   {
+    "name": "PHY_STATE_STOP_3",
+    "value": "5'b1111"
+   }
+  ],
+  "reset_state": "PHY_STATE_IDLE",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "PHY_STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "*",
+    "dst": "PHY_STATE_IDLE",
+    "cond": "phy_release_bus"
+   },
+   {
+    "src": "PHY_STATE_IDLE",
+    "dst": "PHY_STATE_START_1",
+    "cond": "!phy_release_bus && !delay_scl_reg && !delay_sda_reg && !(delay_reg > 0) && phy_start_bit"
+   },
+   {
+    "src": "PHY_STATE_IDLE",
+    "dst": "PHY_STATE_IDLE",
+    "cond": "!phy_release_bus && !delay_scl_reg && !delay_sda_reg && !(delay_reg > 0) && !phy_start_bit"
+   },
+   {
+    "src": "PHY_STATE_ACTIVE",
+    "dst": "PHY_STATE_REPEATED_START_1",
+    "cond": "!phy_release_bus && !delay_scl_reg && !delay_sda_reg && !(delay_reg > 0) && phy_start_bit"
+   },
+   {
+    "src": "PHY_STATE_ACTIVE",
+    "dst": "PHY_STATE_WRITE_BIT_1",
+    "cond": "!phy_release_bus && !delay_scl_reg && !delay_sda_reg && !(delay_reg > 0) && !phy_start_bit && phy_write_bit"
+   },
+   {
+    "src": "PHY_STATE_ACTIVE",
+    "dst": "PHY_STATE_READ_BIT_1",
+    "cond": "!phy_release_bus && !delay_scl_reg && !delay_sda_reg && !(delay_reg > 0) && !phy_start_bit && !phy_write_bit && phy_read_bit"
+   },
+   {
+    "src": "PHY_STATE_ACTIVE",
+    "dst": "PHY_STATE_STOP_1",
+    "cond": "!phy_release_bus && !delay_scl_reg && !delay_sda_reg && !(delay_reg > 0) && !phy_start_bit && !phy_write_bit && !phy_read_bit && phy_stop_bit"
+   },
+   {
+    "src": "PHY_STATE_ACTIVE",
+    "dst": "PHY_STATE_ACTIVE",
+    "cond": "!phy_release_bus && !delay_scl_reg && !delay_sda_reg && !(delay_reg > 0) && !phy_start_bit && !phy_write_bit && !phy_read_bit && !phy_stop_bit"
+   },
+   {
+    "src": "PHY_STATE_REPEATED_START_1",
+    "dst": "PHY_STATE_REPEATED_START_2",
+    "cond": "!phy_release_bus && !delay_scl_reg && !delay_sda_reg && !(delay_reg > 0)"
+   },
+   {
+    "src": "PHY_STATE_REPEATED_START_2",
+    "dst": "PHY_STATE_START_1",
+    "cond": "!phy_release_bus && !delay_scl_reg && !delay_sda_reg && !(delay_reg > 0)"
+   },
+   {
+    "src": "PHY_STATE_START_1",
+    "dst": "PHY_STATE_START_2",
+    "cond": "!phy_release_bus && !delay_scl_reg && !delay_sda_reg && !(delay_reg > 0)"
+   },
+   {
+    "src": "PHY_STATE_START_2",
+    "dst": "PHY_STATE_ACTIVE",
+    "cond": "!phy_release_bus && !delay_scl_reg && !delay_sda_reg && !(delay_reg > 0)"
+   },
+   {
+    "src": "PHY_STATE_WRITE_BIT_1",
+    "dst": "PHY_STATE_WRITE_BIT_2",
+    "cond": "!phy_release_bus && !delay_scl_reg && !delay_sda_reg && !(delay_reg > 0)"
+   },
+   {
+    "src": "PHY_STATE_WRITE_BIT_2",
+    "dst": "PHY_STATE_WRITE_BIT_3",
+    "cond": "!phy_release_bus && !delay_scl_reg && !delay_sda_reg && !(delay_reg > 0)"
+   },
+   {
+    "src": "PHY_STATE_WRITE_BIT_3",
+    "dst": "PHY_STATE_ACTIVE",
+    "cond": "!phy_release_bus && !delay_scl_reg && !delay_sda_reg && !(delay_reg > 0)"
+   },
+   {
+    "src": "PHY_STATE_READ_BIT_1",
+    "dst": "PHY_STATE_READ_BIT_2",
+    "cond": "!phy_release_bus && !delay_scl_reg && !delay_sda_reg && !(delay_reg > 0)"
+   },
+   {
+    "src": "PHY_STATE_READ_BIT_2",
+    "dst": "PHY_STATE_READ_BIT_3",
+    "cond": "!phy_release_bus && !delay_scl_reg && !delay_sda_reg && !(delay_reg > 0)"
+   },
+   {
+    "src": "PHY_STATE_READ_BIT_3",
+    "dst": "PHY_STATE_READ_BIT_4",
+    "cond": "!phy_release_bus && !delay_scl_reg && !delay_sda_reg && !(delay_reg > 0)"
+   },
+   {
+    "src": "PHY_STATE_READ_BIT_4",
+    "dst": "PHY_STATE_ACTIVE",
+    "cond": "!phy_release_bus && !delay_scl_reg && !delay_sda_reg && !(delay_reg > 0)"
+   },
+   {
+    "src": "PHY_STATE_STOP_1",
+    "dst": "PHY_STATE_STOP_2",
+    "cond": "!phy_release_bus && !delay_scl_reg && !delay_sda_reg && !(delay_reg > 0)"
+   },
+   {
+    "src": "PHY_STATE_STOP_2",
+    "dst": "PHY_STATE_STOP_3",
+    "cond": "!phy_release_bus && !delay_scl_reg && !delay_sda_reg && !(delay_reg > 0)"
+   },
+   {
+    "src": "PHY_STATE_STOP_3",
+    "dst": "PHY_STATE_IDLE",
+    "cond": "!phy_release_bus && !delay_scl_reg && !delay_sda_reg && !(delay_reg > 0)"
+   }
+  ],
+  "outputs": [],
+  "warnings": [],
+  "semantic_check": "consistent-subset"
+ },
+ {
+  "module": "i2c_master",
+  "instance": "i2c_master_wbs_8.i2c_master_inst",
+  "state": "bit_count_reg",
+  "next": null,
+  "style": "semantic",
+  "states": [
+   {
+    "name": "S_0",
+    "value": "0"
+   },
+   {
+    "name": "S_7",
+    "value": "7"
+   },
+   {
+    "name": "S_8",
+    "value": "8"
+   },
+   {
+    "name": "S_9",
+    "value": "9"
+   },
+   {
+    "name": "S_10",
+    "value": "10"
+   },
+   {
+    "name": "S_11",
+    "value": "11"
+   },
+   {
+    "name": "PHY_STATE_READ_BIT_4",
+    "value": "12"
+   },
+   {
+    "name": "PHY_STATE_STOP_1",
+    "value": "13"
+   },
+   {
+    "name": "PHY_STATE_STOP_2",
+    "value": "14"
+   },
+   {
+    "name": "PHY_STATE_STOP_3",
+    "value": "15"
+   }
+  ],
+  "reset_state": "S_0",
+  "transitions": [
+   {
+    "src": "S_0",
+    "dst": "S_0",
+    "cond": "(!mode_read_reg && !s_axis_cmd_ready_reg) || (!bus_active_reg && s_axis_cmd_ready_reg && s_axis_data_tready_reg) || (bus_active_reg && s_axis_cmd_ready_reg && !s_axis_data_tready_reg) || (mode_read_reg && !bus_active_reg && !s_axis_data_tready_reg)"
+   },
+   {
+    "src": "S_0",
+    "dst": "PHY_STATE_STOP_3",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "S_0",
+    "dst": "S_8",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "S_7",
+    "dst": "S_7",
+    "cond": "(!s_axis_data_tready_reg) || (mode_read_reg && bus_active_reg) || (!mode_read_reg && s_axis_cmd_ready_reg) || (!mode_read_reg && !bus_active_reg)"
+   },
+   {
+    "src": "S_7",
+    "dst": "S_6",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "S_7",
+    "dst": "S_8",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "S_8",
+    "dst": "S_8",
+    "cond": "(bus_active_reg) || (s_axis_data_tready_reg) || (mode_read_reg && s_axis_cmd_ready_reg)"
+   },
+   {
+    "src": "S_8",
+    "dst": "S_7",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "S_9",
+    "dst": "S_9",
+    "cond": "(!s_axis_data_tready_reg) || (s_axis_cmd_ready_reg) || (mode_read_reg) || (!bus_active_reg)"
+   },
+   {
+    "src": "S_9",
+    "dst": "S_8",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "S_10",
+    "dst": "S_10",
+    "cond": "(mode_read_reg) || (!s_axis_cmd_ready_reg) || (s_axis_data_tready_reg) || (bus_active_reg)"
+   },
+   {
+    "src": "S_10",
+    "dst": "S_8",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "S_11",
+    "dst": "S_11",
+    "cond": "(s_axis_data_tready_reg) || (mode_read_reg && s_axis_cmd_ready_reg) || (!mode_read_reg && !bus_active_reg) || (bus_active_reg && !s_axis_cmd_ready_reg)"
+   },
+   {
+    "src": "S_11",
+    "dst": "S_10",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "S_11",
+    "dst": "S_8",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "PHY_STATE_READ_BIT_4",
+    "dst": "PHY_STATE_READ_BIT_4",
+    "cond": "(!s_axis_data_tready_reg) || (s_axis_cmd_ready_reg) || (!mode_read_reg) || (bus_active_reg)"
+   },
+   {
+    "src": "PHY_STATE_READ_BIT_4",
+    "dst": "S_8",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "PHY_STATE_STOP_1",
+    "dst": "PHY_STATE_STOP_1",
+    "cond": "(!bus_active_reg) || (s_axis_cmd_ready_reg) || (s_axis_data_tready_reg) || (mode_read_reg)"
+   },
+   {
+    "src": "PHY_STATE_STOP_1",
+    "dst": "PHY_STATE_READ_BIT_4",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "PHY_STATE_STOP_2",
+    "dst": "PHY_STATE_STOP_2",
+    "cond": "(!bus_active_reg) || (!s_axis_cmd_ready_reg) || (s_axis_data_tready_reg) || (!mode_read_reg)"
+   },
+   {
+    "src": "PHY_STATE_STOP_2",
+    "dst": "S_8",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "PHY_STATE_STOP_3",
+    "dst": "PHY_STATE_STOP_3",
+    "cond": "1"
+   }
+  ],
+  "outputs": [],
+  "warnings": [
+   "extracted by execution (coding style not recognized syntactically)"
+  ],
+  "semantic_check": "semantic-only"
+ }
+]

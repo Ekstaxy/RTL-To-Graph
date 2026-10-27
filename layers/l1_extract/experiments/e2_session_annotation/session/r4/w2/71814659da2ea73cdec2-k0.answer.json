@@ -1,0 +1,25 @@
+{
+ "module_summary": "Dynamic stream fork: masks a child cc_stream_fork's outputs with a handshaked selection mask, auto-acknowledging unselected outputs and gating input on sel_valid_i.",
+ "anchors": [
+  {"id": "E4", "name": "valid_i", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Input stream valid, forwarded to the fork only while the selection is valid.", "lines": [35, 75]},
+  {"id": "E5", "name": "ready_o", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Input stream ready, driven by fork input ready when sel_valid_i is set.", "lines": [37, 76]},
+  {"id": "E9", "name": "valid_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Per-output valid, passing fork valid only for outputs selected in sel_i.", "lines": [45, 60]},
+  {"id": "E10", "name": "ready_i", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Per-output ready, forwarded to the fork for selected outputs.", "lines": [47, 61]},
+  {"id": "E6", "name": "sel_i", "role": "MUX_SELECT", "importance": "major", "trace": "interface", "why": "Output selection mask deciding which outputs see the handshake.", "lines": [39, 59]},
+  {"id": "E7", "name": "sel_valid_i", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "forward", "why": "Selection mask valid; gates input and output handshakes.", "lines": [41, 58, 74]},
+  {"id": "E8", "name": "sel_ready_o", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "Selection mask ready, consumed together with the input transfer.", "lines": [43, 77]},
+  {"id": "E14", "name": "int_oup_ready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Ready to fork outputs; forced high for unselected outputs.", "lines": [61, 63, 90]},
+  {"id": "E11", "name": "int_inp_valid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "Gated input valid into the child fork.", "lines": [75, 87]}
+ ],
+ "groups": [
+  {"name": "input_gating", "kind": "CONTROLLER", "anchor_ids": ["E4", "E5", "E7", "E8", "E11"], "member_ids": ["E12"], "description": "Gates input valid/ready and selection handshake on sel_valid_i."},
+  {"name": "output_masking", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E9", "E10", "E6", "E14"], "member_ids": ["E13"], "description": "Per-output masking of fork valid/ready by sel_i; unselected outputs auto-ready."},
+  {"name": "fork_core", "kind": "CONTROLLER", "anchor_ids": [], "member_ids": ["I1"], "description": "Child stream fork with input and per-output FSMs."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2", "E3"]},
+  {"name": "stream_in", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E4", "E5"]},
+  {"name": "select", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E6", "E7", "E8"]},
+  {"name": "stream_out", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E9", "E10"]}
+ ]
+}

@@ -1,0 +1,49 @@
+{
+ "module_summary": "AXI4-to-AXI-lite bridge: skid-buffered AXI bursts are split into single-beat AXI-lite transactions by per-channel beat counters and address generators, with ID/length FIFOs and return counters merging responses back into bursts.",
+ "anchors": [
+  {"id": "E3", "name": "S_AXI_AWVALID", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "AXI4 write burst request valid entering the AW skid buffer", "lines": [273]},
+  {"id": "E23", "name": "S_AXI_ARVALID", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "AXI4 read burst request valid entering the AR skid buffer", "lines": [608]},
+  {"id": "E62", "name": "axi_awlen", "role": "COUNTER", "importance": "critical", "trace": "control_backward", "why": "Remaining write beats; splits burst into AXI-lite writes and ends AWVALID", "lines": [372, 374, 338]},
+  {"id": "E87", "name": "axi_arlen", "role": "COUNTER", "importance": "critical", "trace": "control_backward", "why": "Remaining read beats; splits burst into AXI-lite reads and ends ARVALID", "lines": [678, 680, 639]},
+  {"id": "E61", "name": "axi_awaddr", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Current write beat address, advanced by burst address calculator, drives M_AXI_AWADDR", "lines": [357, 362, 495]},
+  {"id": "E86", "name": "axi_araddr", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Current read beat address, advanced by burst address calculator, drives M_AXI_ARADDR", "lines": [648, 654, 784]},
+  {"id": "E42", "name": "M_AXI_AWVALID", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "AXI-lite write address valid held across all beats of a burst", "lines": [341, 494, 346]},
+  {"id": "E53", "name": "M_AXI_ARVALID", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "AXI-lite read address valid held across all beats of a burst", "lines": [783, 683]},
+  {"id": "E60", "name": "s_axi_wready", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Write-data phase open from AW accept until WLAST; gates W pass-through", "lines": [400, 402, 409]},
+  {"id": "E16", "name": "S_AXI_WDATA", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Write beat data passed through skid buffers to M_AXI_WDATA", "lines": [293]},
+  {"id": "E72", "name": "bcounts", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Outstanding AXI-lite write responses of current burst; decides single BVALID per burst", "lines": [438, 440, 461]},
+  {"id": "E85", "name": "rcounts", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Remaining read beats of current burst; determines RLAST and RID update", "lines": [743, 745, 767]},
+  {"id": "E19", "name": "S_AXI_BVALID", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "One merged write response per AXI burst", "lines": [504, 450]},
+  {"id": "E34", "name": "S_AXI_RVALID", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "AXI4 read data beat valid returned from AXI-lite reads", "lines": [789, 708]},
+  {"id": "E37", "name": "S_AXI_RDATA", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Read beat data registered from AXI-lite read response", "lines": [790]},
+  {"id": "E99", "name": "skids_awready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Accepts new write burst when previous done, FIFO not full and W phase closed", "lines": [346, 336, 355]},
+  {"id": "E118", "name": "skids_arready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Accepts new read burst when previous issued and ID FIFO not full", "lines": [683, 637, 646]},
+  {"id": "E77", "name": "read_from_wrfifo", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Pops next write burst ID/length into response counter", "lines": [412, 436, 446]},
+  {"id": "E97", "name": "read_from_rdfifo", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Pops next read burst ID/length into return counter", "lines": [687, 742, 752]},
+  {"id": "E68", "name": "wfifo_full", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Write ID FIFO full; stalls write burst acceptance", "lines": [348, 424]},
+  {"id": "E80", "name": "rfifo_full", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Read ID FIFO full; stalls read burst acceptance", "lines": [685, 701]},
+  {"id": "E69", "name": "wfifo_empty", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "No pending write bursts; gates B response acceptance", "lines": [412, 501]},
+  {"id": "E75", "name": "axi_bresp", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Accumulated worst-case write response across burst beats", "lines": [476, 483, 503]},
+  {"id": "E73", "name": "axi_bid", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Write response ID driven to S_AXI_BID", "lines": [451, 502]},
+  {"id": "E92", "name": "s_axi_rid", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Read response ID per burst driven to S_AXI_RID", "lines": [778, 793]},
+  {"id": "E95", "name": "s_axi_rlast", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Marks final beat of reconstructed read burst", "lines": [763, 768, 792]},
+  {"id": "E63", "name": "axi_blen", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Write burst length latched for address wrap calculation", "lines": [358, 386]},
+  {"id": "E88", "name": "axi_rlen", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Read burst length latched for address wrap calculation", "lines": [651, 666]},
+  {"id": "E124", "name": "skidm_rvalid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "Buffered AXI-lite read response valid driving read return", "lines": [716, 687, 744]},
+  {"id": "E114", "name": "skidm_bvalid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "Buffered AXI-lite write response valid driving response merging", "lines": [460, 439, 413]},
+  {"id": "E115", "name": "skidm_bready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Accepts AXI-lite write responses while a burst is pending", "lines": [501, 460]}
+ ],
+ "groups": [
+  {"name": "Write burst splitter", "kind": "CONTROLLER", "anchor_ids": ["E3", "E62", "E61", "E42", "E60", "E16", "E99", "E63"], "member_ids": ["I1", "I2", "I3", "I5", "E59", "E64", "E65", "E66", "E98", "E100", "E101", "E102", "E103", "E104", "E105", "E106", "E107", "E108", "E109", "E110", "E111", "E112", "E113", "E40", "E44", "E45", "E46"], "description": "Converts AXI4 write bursts into per-beat AXI-lite AW/W transactions"},
+  {"name": "Write response merger", "kind": "CONTROLLER", "anchor_ids": ["E72", "E19", "E77", "E68", "E69", "E75", "E73", "E114", "E115"], "member_ids": ["I4", "I6", "E67", "E70", "E71", "E74", "E76", "E116", "E21", "E22"], "description": "ID/length FIFO and counter collapse per-beat B responses into one burst response"},
+  {"name": "Read burst splitter", "kind": "CONTROLLER", "anchor_ids": ["E23", "E87", "E86", "E53", "E118", "E88"], "member_ids": ["I7", "I9", "E78", "E89", "E90", "E91", "E117", "E119", "E120", "E121", "E122", "E123", "E51"], "description": "Converts AXI4 read bursts into per-beat AXI-lite AR transactions"},
+  {"name": "Read return path", "kind": "CONTROLLER", "anchor_ids": ["E85", "E34", "E37", "E97", "E80", "E92", "E95", "E124"], "member_ids": ["I8", "I10", "E79", "E81", "E82", "E83", "E84", "E93", "E94", "E96", "E125", "E126", "E127"], "description": "Rebuilds AXI4 read bursts with RID and RLAST from AXI-lite read responses"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "s_axi_write", "protocol": "MEMORY_BUS", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12", "E13", "E14", "E15", "E16", "E17", "E18", "E19", "E20", "E21", "E22"]},
+  {"name": "s_axi_read", "protocol": "MEMORY_BUS", "direction": "OUT", "member_ids": ["E23", "E24", "E25", "E26", "E27", "E28", "E29", "E30", "E31", "E32", "E33", "E34", "E35", "E36", "E37", "E38", "E39"]},
+  {"name": "m_axil_write", "protocol": "MEMORY_BUS", "direction": "OUT", "member_ids": ["E40", "E41", "E42", "E43", "E44", "E45", "E46", "E47", "E48", "E49", "E50"]},
+  {"name": "m_axil_read", "protocol": "MEMORY_BUS", "direction": "IN", "member_ids": ["E51", "E52", "E53", "E54", "E55", "E56", "E57", "E58"]}
+ ]
+}

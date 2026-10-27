@@ -1,0 +1,39 @@
+{
+  "module_summary": "10G Ethernet MAC+PHY receive path: a 10GBASE-R PHY RX interface descrambles and block-syncs SERDES data into encoded 64b/66b blocks, which a BASE-R decoder frames into AXI-Stream packets.",
+  "anchors": [
+    {"id": "E8", "name": "serdes_rx_data", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Raw 64-bit SERDES receive data into the PHY RX interface.", "lines": [67, 133]},
+    {"id": "E9", "name": "serdes_rx_hdr", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "64b/66b sync header from SERDES.", "lines": [68, 134]},
+    {"id": "E10", "name": "serdes_rx_bitslip", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Bitslip request to SERDES from block-sync logic.", "lines": [69, 135]},
+    {"id": "E11", "name": "serdes_rx_reset_req", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Watchdog SERDES reset request output.", "lines": [70, 136]},
+    {"id": "E23", "name": "encoded_rx_data", "role": "DATAPATH_MAJOR", "importance": "critical", "trace": "data_backward", "why": "Descrambled encoded block data linking PHY interface to BASE-R decoder.", "lines": [114, 131, 156]},
+    {"id": "E24", "name": "encoded_rx_hdr", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Encoded block header passed from PHY interface to decoder.", "lines": [115, 132, 157]},
+    {"id": "E3", "name": "m_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Decoded AXI-Stream packet data output.", "lines": [58, 158]},
+    {"id": "E5", "name": "m_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "AXI-Stream valid for received packet words.", "lines": [60, 160]},
+    {"id": "E6", "name": "m_axis_tlast", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Marks final word of received frame.", "lines": [61, 161]},
+    {"id": "E4", "name": "m_axis_tkeep", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Byte-valid mask of output word.", "lines": [59, 159]},
+    {"id": "E7", "name": "m_axis_tuser", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Error/timestamp sideband of output stream.", "lines": [62, 162]},
+    {"id": "E18", "name": "rx_block_lock", "role": "STATUS", "importance": "major", "trace": "data_backward", "why": "Block synchronization lock indication from PHY interface.", "lines": [85, 138]},
+    {"id": "E20", "name": "rx_status", "role": "STATUS", "importance": "major", "trace": "data_backward", "why": "Overall receive link status from PHY interface.", "lines": [87, 140]},
+    {"id": "E19", "name": "rx_high_ber", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "High bit-error-rate indication.", "lines": [86, 139]},
+    {"id": "E14", "name": "rx_error_count", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "PHY receive error count output.", "lines": [81, 137]},
+    {"id": "E15", "name": "rx_error_bad_frame", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "Bad frame error pulse from decoder.", "lines": [82, 165]},
+    {"id": "E16", "name": "rx_error_bad_fcs", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "CRC/FCS mismatch error from decoder.", "lines": [83, 166]},
+    {"id": "E17", "name": "rx_bad_block", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "Invalid 64b/66b block indication from decoder.", "lines": [84, 167]},
+    {"id": "E13", "name": "rx_start_packet", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "Start-of-packet lane indication from decoder.", "lines": [80, 164]},
+    {"id": "E21", "name": "cfg_rx_enable", "role": "CONFIG_REG", "importance": "minor", "trace": "interface", "why": "Configuration input enabling the receive decoder.", "lines": [92, 168]},
+    {"id": "E22", "name": "cfg_rx_prbs31_enable", "role": "CONFIG_REG", "importance": "minor", "trace": "interface", "why": "Configuration enabling PRBS31 checking in PHY interface.", "lines": [93, 141]},
+    {"id": "E12", "name": "ptp_ts", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "PTP timestamp input attached to received frames.", "lines": [75, 163]}
+  ],
+  "groups": [
+    {"name": "phy_rx_interface", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E8", "E9", "E10", "E11", "E18", "E20", "E19", "E14", "E22"], "member_ids": ["I1"], "description": "SERDES RX: descrambler, block sync, BER monitor, watchdog, PRBS check."},
+    {"name": "baser_decoder", "kind": "DATAPATH", "anchor_ids": ["E23", "E24", "E3", "E5", "E6", "E4", "E7", "E15", "E16", "E17", "E13", "E21", "E12"], "member_ids": ["I2"], "description": "64b/66b block decoder framing packets onto AXI-Stream with CRC check."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "axis_out", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E3", "E4", "E5", "E6", "E7"]},
+    {"name": "serdes_rx", "protocol": "STREAM", "direction": "IN", "member_ids": ["E8", "E9", "E10", "E11"]},
+    {"name": "ptp", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E12"]},
+    {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E13", "E14", "E15", "E16", "E17", "E18", "E19", "E20"]},
+    {"name": "config", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E21", "E22"]}
+  ]
+}

@@ -1,0 +1,695 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "wb2axip_axisgfsm",
+ "tops": [
+  "axisgfsm"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "axisgfsm": {
+   "source": "teacher",
+   "canonical_instance": "axisgfsm",
+   "file": "data/rtl/wb2axip/rtl/axisgfsm.v",
+   "lines": [
+    76,
+    1238
+   ],
+   "summary": "Scatter-gather DMA sequencer: an 8-state FSM reads table entries through a prefetch interface and writes source, destination, length and control words to a DMA controller over AXI-lite.",
+   "blocks": [
+    {
+     "name": "Scatter-gather FSM",
+     "kind": "CONTROLLER",
+     "description": "Table-walk state machine with last/int flags and DMA completion/termination logic.",
+     "anchors": [
+      {
+       "id": "E30",
+       "name": "sgstate",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.9,
+       "struct_score": 99.8,
+       "trace": "control_backward",
+       "why": "Scatter-gather FSM stepping through table words, DMA start and wait states.",
+       "lines": [
+        205,
+        292
+       ]
+      },
+      {
+       "id": "E28",
+       "name": "tbl_last",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 52.6,
+       "struct_score": 42.9,
+       "trace": "control_backward",
+       "why": "Last-entry flag decoded from table word; ends walk after DMA.",
+       "lines": [
+        260,
+        347
+       ]
+      },
+      {
+       "id": "E29",
+       "name": "tbl_int_enable",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.4,
+       "struct_score": 17.8,
+       "trace": "control_backward",
+       "why": "Per-entry interrupt enable gating o_int on DMA completion.",
+       "lines": [
+        228,
+        389
+       ]
+      },
+      {
+       "id": "E38",
+       "name": "dma_op_complete",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 49.4,
+       "struct_score": 30.3,
+       "trace": "control_backward",
+       "why": "DMA transfer finished; lets WAIT state proceed to next entry or idle.",
+       "lines": [
+        249,
+        436
+       ]
+      },
+      {
+       "id": "E39",
+       "name": "dma_terminate",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 49.4,
+       "struct_score": 30.3,
+       "trace": "control_backward",
+       "why": "Ends the walk after DMA: last entry, abort, error or illegal fetch.",
+       "lines": [
+        260,
+        440
+       ]
+      },
+      {
+       "id": "E35",
+       "name": "dma_starting",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 21.2,
+       "struct_score": 29.3,
+       "trace": "control_backward",
+       "why": "Covers the cycle after DMA start write before busy is visible.",
+       "lines": [
+        249,
+        517
+       ]
+      },
+      {
+       "id": "E36",
+       "name": "dma_aborting",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 21.1,
+       "struct_score": 28.9,
+       "trace": "control_backward",
+       "why": "Abort in progress during WAIT; forces terminate when DMA stops.",
+       "lines": [
+        260,
+        534
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Control and status",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Start/abort commands, table address, busy/done/int/err status outputs.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "i_start",
+       "role": "COMMAND",
+       "importance": "critical",
+       "score": 78.3,
+       "struct_score": 33.7,
+       "trace": "forward",
+       "why": "Starts table walk from IDLE, setting new pc and busy.",
+       "lines": [
+        297
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "i_abort",
+       "role": "COMMAND",
+       "importance": "major",
+       "score": 55.2,
+       "struct_score": 52.1,
+       "trace": "forward",
+       "why": "Abort request; writes abort key to DMA or returns FSM to idle.",
+       "lines": [
+        470,
+        533
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "i_tbl_addr",
+       "role": "INTERFACE_ADDR",
+       "importance": "minor",
+       "score": 30.7,
+       "struct_score": 64.9,
+       "trace": "interface",
+       "why": "Starting table address loaded into the prefetch pc while idle.",
+       "lines": [
+        296
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "o_busy",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 59.4,
+       "struct_score": 67.3,
+       "trace": "control_backward",
+       "why": "Level busy indication while walking the table; gates prefetch ready.",
+       "lines": [
+        216,
+        304
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "o_done",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 25.7,
+       "struct_score": 46.7,
+       "trace": "control_backward",
+       "why": "Completion pulse when table walk ends, aborts or errors.",
+       "lines": [
+        408,
+        445
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "o_int",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 50.1,
+       "struct_score": 32.9,
+       "trace": "control_backward",
+       "why": "Interrupt on DMA complete with last/int-enable entry or illegal fetch.",
+       "lines": [
+        227,
+        229
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "o_err",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 25.4,
+       "struct_score": 45.6,
+       "trace": "control_backward",
+       "why": "Error flag on DMA error, abort or illegal prefetch.",
+       "lines": [
+        446,
+        466
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "o_tbl_addr",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 38.9,
+       "struct_score": 87.2,
+       "trace": "data_backward",
+       "why": "Current table entry address, advanced by TBL_SIZE after control word.",
+       "lines": [
+        320,
+        431
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Prefetch interface",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Drives prefetch pc/restart and accepts table words with valid/ready.",
+     "anchors": [
+      {
+       "id": "E13",
+       "name": "o_new_pc",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 71.2,
+       "struct_score": 97.9,
+       "trace": "control_backward",
+       "why": "Pulse telling prefetch to restart at o_pf_pc on start, skip or jump.",
+       "lines": [
+        299,
+        359
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "o_pf_clear_cache",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 36.8,
+       "struct_score": 81.9,
+       "trace": "control_backward",
+       "why": "Clears prefetch cache when idle, done or aborted.",
+       "lines": [
+        307,
+        442
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "o_pf_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 96.1,
+       "struct_score": 90.3,
+       "trace": "control_backward",
+       "why": "State-decoded ready accepting table words when DMA write channel is free.",
+       "lines": [
+        207,
+        325
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "o_pf_pc",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 59.8,
+       "struct_score": 68.8,
+       "trace": "data_backward",
+       "why": "Prefetch program counter driven from r_pf_pc for table fetches.",
+       "lines": [
+        520
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "i_pf_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 96.2,
+       "struct_score": 90.4,
+       "trace": "interface",
+       "why": "Prefetch word valid; advances FSM through table entry words.",
+       "lines": [
+        313,
+        325
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "i_pf_insn",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 97.1,
+       "struct_score": 92.6,
+       "trace": "interface",
+       "why": "Table entry word forwarded as DMA register data; top bits decode last/skip/jump.",
+       "lines": [
+        317,
+        343
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E37",
+       "name": "r_pf_pc",
+       "kind": "reg"
+      },
+      {
+       "id": "E19",
+       "name": "i_pf_pc",
+       "kind": "port_in"
+      },
+      {
+       "id": "E20",
+       "name": "i_pf_illegal",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "DMA register writer",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "AXI-lite writes of DMA src/dst/len/control and status bit decode.",
+     "anchors": [
+      {
+       "id": "E21",
+       "name": "o_dmac_wvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 99.5,
+       "struct_score": 98.7,
+       "trace": "control_backward",
+       "why": "AXI-lite write valid to DMA controller registers.",
+       "lines": [
+        286,
+        315
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "i_dmac_wready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 37.3,
+       "struct_score": 83.1,
+       "trace": "interface",
+       "why": "DMA write ready; clears wvalid and frees next table word.",
+       "lines": [
+        207,
+        284
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "o_dmac_waddr",
+       "role": "INTERFACE_ADDR",
+       "importance": "minor",
+       "score": 34.1,
+       "struct_score": 75.0,
+       "trace": "control_backward",
+       "why": "DMA register address selected per FSM state (src, dst, len, control).",
+       "lines": [
+        316,
+        422
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "o_dmac_wdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 98.5,
+       "struct_score": 96.2,
+       "trace": "data_backward",
+       "why": "DMA register write data: table words, control word or abort key.",
+       "lines": [
+        317,
+        423
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "o_dmac_wstrb",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 32.6,
+       "struct_score": 71.1,
+       "trace": "control_backward",
+       "why": "Write strobe; byte-3-only strobe marks abort-key write.",
+       "lines": [
+        287,
+        473
+       ]
+      },
+      {
+       "id": "E26",
+       "name": "i_dmac_rdata",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 40.8,
+       "struct_score": 92.0,
+       "trace": "interface",
+       "why": "DMA status readback decoded into busy, done, abort, error bits.",
+       "lines": [
+        239,
+        242
+       ]
+      },
+      {
+       "id": "E34",
+       "name": "dma_busy",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 21.5,
+       "struct_score": 30.3,
+       "trace": "data_backward",
+       "why": "DMA busy status bit; blocks op complete and abort return.",
+       "lines": [
+        242,
+        249
+       ]
+      },
+      {
+       "id": "E31",
+       "name": "dma_err",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 19.6,
+       "struct_score": 22.7,
+       "trace": "data_backward",
+       "why": "DMA error status bit; forces terminate and sets o_err.",
+       "lines": [
+        239,
+        262
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E32",
+       "name": "dma_abort",
+       "kind": "comb"
+      },
+      {
+       "id": "E33",
+       "name": "dma_done",
+       "kind": "comb"
+      },
+      {
+       "id": "E27",
+       "name": "i_dma_complete",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock/reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "S_AXI_ACLK",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "S_AXI_ARESETN",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "control",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "i_start",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "i_abort",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "i_tbl_addr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "i_qos",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "i_prot",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "o_busy",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "o_done",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "o_int",
+       "kind": "port_out"
+      },
+      {
+       "id": "E11",
+       "name": "o_err",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "o_tbl_addr",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "prefetch",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20"
+     ],
+     "members": [
+      {
+       "id": "E13",
+       "name": "o_new_pc",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "o_pf_clear_cache",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "o_pf_ready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "o_pf_pc",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "i_pf_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "i_pf_insn",
+       "kind": "port_in"
+      },
+      {
+       "id": "E19",
+       "name": "i_pf_pc",
+       "kind": "port_in"
+      },
+      {
+       "id": "E20",
+       "name": "i_pf_illegal",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "dmac AXI-lite control",
+     "protocol": "MEMORY_BUS",
+     "direction": "OUT",
+     "member_ids": [
+      "E21",
+      "E22",
+      "E23",
+      "E24",
+      "E25",
+      "E26",
+      "E27"
+     ],
+     "members": [
+      {
+       "id": "E21",
+       "name": "o_dmac_wvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E22",
+       "name": "i_dmac_wready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E23",
+       "name": "o_dmac_waddr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E24",
+       "name": "o_dmac_wdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E25",
+       "name": "o_dmac_wstrb",
+       "kind": "port_out"
+      },
+      {
+       "id": "E26",
+       "name": "i_dmac_rdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E27",
+       "name": "i_dma_complete",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

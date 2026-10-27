@@ -1,0 +1,335 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "common_cells_cc_passthrough_stream_fifo",
+ "tops": [
+  "cc_passthrough_stream_fifo"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "cc_passthrough_stream_fifo": {
+   "source": "teacher",
+   "canonical_instance": "cc_passthrough_stream_fifo",
+   "file": "data/rtl/common_cells/src/cc_passthrough_stream_fifo.sv",
+   "lines": [
+    15,
+    118
+   ],
+   "summary": "Circular-buffer stream FIFO with wrap-bit read/write pointers, register-array storage and valid/ready handshakes on both sides, allowing same-cycle read/write when full.",
+   "blocks": [
+    {
+     "name": "FIFO storage",
+     "kind": "BUFFER",
+     "description": "Register array holding Depth entries, loaded on accepted pushes",
+     "anchors": [
+      {
+       "id": "E16",
+       "name": "data_q",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 96.1,
+       "struct_score": 90.1,
+       "trace": "data_backward",
+       "why": "Depth-entry data array written at write pointer, read at read pointer",
+       "lines": [
+        56,
+        61,
+        116
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "load_data",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 20.2,
+       "struct_score": 25.2,
+       "trace": "control_backward",
+       "why": "Storage load enable asserted on accepted push",
+       "lines": [
+        59,
+        97,
+        116
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E15",
+       "name": "data_d",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Pointer and flag logic",
+     "kind": "CONTROLLER",
+     "description": "Wrap-bit pointers compute full/empty, advance on handshakes, cleared by flush",
+     "anchors": [
+      {
+       "id": "E14",
+       "name": "write_ptr_q",
+       "role": "FIFO_PTR",
+       "importance": "critical",
+       "score": 93.4,
+       "struct_score": 83.3,
+       "trace": "control_backward",
+       "why": "Write pointer with wrap bit; selects write slot and drives full detection",
+       "lines": [
+        98,
+        100,
+        114
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "read_ptr_q",
+       "role": "FIFO_PTR",
+       "importance": "critical",
+       "score": 93.0,
+       "struct_score": 82.3,
+       "trace": "control_backward",
+       "why": "Read pointer with wrap bit; selects output entry and drives empty detection",
+       "lines": [
+        61,
+        81,
+        113
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "ready_o",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 97.3,
+       "struct_score": 93.1,
+       "trace": "control_backward",
+       "why": "Not-full indication from pointer comparison, accepts input pushes",
+       "lines": [
+        39,
+        92,
+        96
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "valid_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 98.2,
+       "struct_score": 95.5,
+       "trace": "control_backward",
+       "why": "Not-empty indication from pointer comparison, offers head data",
+       "lines": [
+        43,
+        78,
+        80
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "flush_i",
+       "role": "COMMAND",
+       "importance": "major",
+       "score": 59.5,
+       "struct_score": 67.8,
+       "trace": "forward",
+       "why": "Flush command clearing both pointers and deasserting handshakes",
+       "lines": [
+        33,
+        71
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E11",
+       "name": "read_ptr_d",
+       "kind": "comb"
+      },
+      {
+       "id": "E13",
+       "name": "write_ptr_d",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Push interface",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Input stream valid and data accepted when ready_o high",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "valid_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 94.8,
+       "struct_score": 86.8,
+       "trace": "interface",
+       "why": "Input push valid; with ready_o triggers write and pointer increment",
+       "lines": [
+        37,
+        96
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "data_i",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 88.8,
+       "struct_score": 71.6,
+       "trace": "interface",
+       "why": "Pushed data written into storage at write pointer slot",
+       "lines": [
+        35,
+        98
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Pop interface",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Output stream head data popped when ready_i and valid_o",
+     "anchors": [
+      {
+       "id": "E10",
+       "name": "ready_i",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 90.6,
+       "struct_score": 76.2,
+       "trace": "interface",
+       "why": "Downstream pop request; with valid_o advances read pointer",
+       "lines": [
+        45,
+        80
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "data_o",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 91.5,
+       "struct_score": 78.5,
+       "trace": "data_backward",
+       "why": "Head-of-FIFO data read from storage at read pointer",
+       "lines": [
+        41,
+        61
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2",
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_ni",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "clr_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "control",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "flush_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "push",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E5",
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "data_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "valid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "ready_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "pop",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E8",
+       "name": "data_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "valid_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "ready_i",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

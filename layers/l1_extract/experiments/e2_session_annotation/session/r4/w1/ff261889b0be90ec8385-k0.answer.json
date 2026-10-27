@@ -1,0 +1,30 @@
+{
+  "module_summary": "Pipelined RISC-V multiplier: decodes MUL/MULH variants, registers sign-extended 33-bit operands, multiplies, selects high/low half and pipelines result over 2-3 stages under hold.",
+  "anchors": [
+    {"id": "E3", "name": "opcode_valid_i", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Issue valid; with mult_inst_w loads E1 operand registers", "lines": [31, 110]},
+    {"id": "E4", "name": "opcode_opcode_i", "role": "COMMAND", "importance": "critical", "trace": "interface", "why": "Instruction word decoded for MUL variant and operand signedness", "lines": [32, 73, 81]},
+    {"id": "E10", "name": "opcode_ra_operand_i", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Source operand A, sign/zero extended into operand_a_r", "lines": [38, 82, 86]},
+    {"id": "E11", "name": "opcode_rb_operand_i", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Source operand B, sign/zero extended into operand_b_r", "lines": [39, 94, 96]},
+    {"id": "E12", "name": "hold_i", "role": "CONTROL_FLAG", "importance": "major", "trace": "interface", "why": "Pipeline stall freezing operand and result registers", "lines": [40, 108, 133]},
+    {"id": "E13", "name": "writeback_value_o", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Multiply result from stage 2 or 3 register", "lines": [43, 142]},
+    {"id": "E23", "name": "mult_inst_w", "role": "DECODE", "importance": "major", "trace": "control_backward", "why": "Decoded any-multiply instruction flag enabling operand capture", "lines": [73, 110]},
+    {"id": "E16", "name": "operand_a_e1_q", "role": "PIPELINE_REG", "importance": "major", "trace": "data_backward", "why": "Stage-1 33-bit operand A register feeding multiplier", "lines": [61, 112, 123]},
+    {"id": "E17", "name": "operand_b_e1_q", "role": "PIPELINE_REG", "importance": "minor", "trace": "data_backward", "why": "Stage-1 33-bit operand B register feeding multiplier", "lines": [62, 113, 123]},
+    {"id": "E18", "name": "mulhi_sel_e1_q", "role": "MUX_SELECT", "importance": "major", "trace": "control_backward", "why": "Selects high or low 32 bits of product", "lines": [63, 114, 127]},
+    {"id": "E19", "name": "mult_result_w", "role": "DATAPATH_MAJOR", "importance": "critical", "trace": "data_backward", "why": "65-bit product of stage-1 operands", "lines": [68, 123, 127]},
+    {"id": "E14", "name": "result_e2_q", "role": "PIPELINE_REG", "importance": "major", "trace": "data_backward", "why": "Stage-2 result register, default writeback source", "lines": [58, 134, 142]},
+    {"id": "E15", "name": "result_e3_q", "role": "PIPELINE_REG", "importance": "minor", "trace": "data_backward", "why": "Optional stage-3 result register when MULT_STAGES is 3", "lines": [59, 140, 142]}
+  ],
+  "groups": [
+    {"name": "Decode and operand prep", "kind": "DECODER", "anchor_ids": ["E4", "E23", "E10", "E11"], "member_ids": ["E20", "E21"], "description": "Decodes multiply variant and sign-extends operands"},
+    {"name": "Stage 1 operand registers", "kind": "PIPELINE_STAGE", "anchor_ids": ["E3", "E12", "E16", "E17", "E18"], "member_ids": [], "description": "Captures operands and high/low select under hold"},
+    {"name": "Multiplier", "kind": "DATAPATH", "anchor_ids": ["E19"], "member_ids": ["E22"], "description": "33x33 signed multiply and half select"},
+    {"name": "Result pipeline", "kind": "PIPELINE_STAGE", "anchor_ids": ["E14", "E15", "E13"], "member_ids": [], "description": "Result registers to writeback output"}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "opcode_issue", "protocol": "OTHER", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11"]},
+    {"name": "pipeline_control", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E12"]},
+    {"name": "writeback", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E13"]}
+  ]
+}

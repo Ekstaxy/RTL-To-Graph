@@ -1,0 +1,667 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-ethernet_axis_tap",
+ "tops": [
+  "axis_tap"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "axis_tap": {
+   "source": "teacher",
+   "canonical_instance": "axis_tap",
+   "file": "data/rtl/verilog-ethernet/lib/axis/rtl/axis_tap.v",
+   "lines": [
+    34,
+    330
+   ],
+   "summary": "AXI-stream tap: a 4-state FSM copies observed tap beats into a skid-buffered output, and on output backpressure truncates the frame with a tlast beat marked bad in tuser.",
+   "blocks": [
+    {
+     "name": "Tap controller",
+     "kind": "CONTROLLER",
+     "description": "FSM forwarding tapped beats, truncating and waiting for frame end.",
+     "anchors": [
+      {
+       "id": "E32",
+       "name": "state_reg",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.4,
+       "struct_score": 98.5,
+       "trace": "control_backward",
+       "why": "IDLE/TRANSFER/TRUNCATE/WAIT controller selecting copy, truncate or drop.",
+       "lines": [
+        112,
+        135,
+        216
+       ]
+      },
+      {
+       "id": "E34",
+       "name": "frame_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.7,
+       "struct_score": 14.9,
+       "trace": "control_backward",
+       "why": "In-frame flag deciding WAIT versus IDLE after truncation.",
+       "lines": [
+        114,
+        121,
+        217
+       ]
+      },
+      {
+       "id": "E19",
+       "name": "store_last_word",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 16.5,
+       "struct_score": 10.4,
+       "trace": "control_backward",
+       "why": "Captures sideband of beat where truncation begins.",
+       "lines": [
+        89,
+        176,
+        219
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "last_word_user_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 16.4,
+       "struct_score": 9.6,
+       "trace": "data_backward",
+       "why": "Held tuser of truncated beat, merged with bad-frame value.",
+       "lines": [
+        93,
+        191,
+        222
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "m_axis_tdata_int",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 18.6,
+       "struct_score": 18.8,
+       "trace": "data_backward",
+       "why": "FSM-selected beat data: tapped data or zero truncation beat.",
+       "lines": [
+        96,
+        140,
+        299
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E33",
+       "name": "state_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E35",
+       "name": "frame_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E20",
+       "name": "last_word_id_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E21",
+       "name": "last_word_dest_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E24",
+       "name": "m_axis_tkeep_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E25",
+       "name": "m_axis_tvalid_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E27",
+       "name": "m_axis_tlast_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E28",
+       "name": "m_axis_tid_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E29",
+       "name": "m_axis_tdest_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E30",
+       "name": "m_axis_tuser_int",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Tap input",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Passive monitor of the tapped stream handshake.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "tap_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 86.2,
+       "struct_score": 63.1,
+       "trace": "interface",
+       "why": "Observed stream data copied to output when output ready.",
+       "lines": [
+        66,
+        140,
+        163
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "tap_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 94.3,
+       "struct_score": 85.5,
+       "trace": "interface",
+       "why": "Tapped valid; with tap ready marks a transferred beat.",
+       "lines": [
+        68,
+        131,
+        137
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "tap_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 90.1,
+       "struct_score": 74.9,
+       "trace": "interface",
+       "why": "Tapped ready observed to detect beat transfers.",
+       "lines": [
+        69,
+        131,
+        137
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "tap_axis_tlast",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 55.8,
+       "struct_score": 54.2,
+       "trace": "interface",
+       "why": "Tapped end-of-frame ending TRANSFER/WAIT and tracking frame state.",
+       "lines": [
+        70,
+        132,
+        170
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "tap_axis_tuser",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 27.8,
+       "struct_score": 54.4,
+       "trace": "interface",
+       "why": "Tapped user sideband passed or captured on truncation.",
+       "lines": [
+        73,
+        146,
+        222
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E4",
+       "name": "tap_axis_tkeep",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "tap_axis_tid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "tap_axis_tdest",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Output skid buffer",
+     "kind": "BUFFER",
+     "description": "Output and temp registers forming a registered skid buffer.",
+     "anchors": [
+      {
+       "id": "E26",
+       "name": "m_axis_tready_int_reg",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 55.3,
+       "struct_score": 52.7,
+       "trace": "control_backward",
+       "why": "Internal ready of output skid stage; failure mid-frame triggers truncation.",
+       "lines": [
+        99,
+        162,
+        294
+       ]
+      },
+      {
+       "id": "E44",
+       "name": "temp_m_axis_tdata_reg",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 53.8,
+       "struct_score": 47.3,
+       "trace": "data_backward",
+       "why": "Skid temp register holding a beat while output stalled.",
+       "lines": [
+        240,
+        306,
+        315
+       ]
+      },
+      {
+       "id": "E46",
+       "name": "temp_m_axis_tvalid_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 20.3,
+       "struct_score": 25.8,
+       "trace": "control_backward",
+       "why": "Temp register occupied flag affecting internal ready.",
+       "lines": [
+        242,
+        262,
+        286
+       ]
+      },
+      {
+       "id": "E52",
+       "name": "store_axis_int_to_output",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 17.5,
+       "struct_score": 14.2,
+       "trace": "control_backward",
+       "why": "Loads output registers directly from internal datapath.",
+       "lines": [
+        249,
+        278,
+        298
+       ]
+      },
+      {
+       "id": "E53",
+       "name": "store_axis_int_to_temp",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 17.5,
+       "struct_score": 14.2,
+       "trace": "control_backward",
+       "why": "Loads temp registers when output stalled.",
+       "lines": [
+        250,
+        282,
+        314
+       ]
+      },
+      {
+       "id": "E54",
+       "name": "store_axis_temp_to_output",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 17.3,
+       "struct_score": 13.4,
+       "trace": "control_backward",
+       "why": "Moves temp registers into output registers.",
+       "lines": [
+        251,
+        288,
+        305
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E31",
+       "name": "m_axis_tready_int_early",
+       "kind": "wire"
+      },
+      {
+       "id": "E36",
+       "name": "m_axis_tdata_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E37",
+       "name": "m_axis_tkeep_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E38",
+       "name": "m_axis_tvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E39",
+       "name": "m_axis_tvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E40",
+       "name": "m_axis_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E41",
+       "name": "m_axis_tid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E42",
+       "name": "m_axis_tdest_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E43",
+       "name": "m_axis_tuser_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E45",
+       "name": "temp_m_axis_tkeep_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E47",
+       "name": "temp_m_axis_tvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E48",
+       "name": "temp_m_axis_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E49",
+       "name": "temp_m_axis_tid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E50",
+       "name": "temp_m_axis_tdest_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E51",
+       "name": "temp_m_axis_tuser_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Output AXI-stream",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Registered output stream ports.",
+     "anchors": [
+      {
+       "id": "E11",
+       "name": "m_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 87.3,
+       "struct_score": 67.0,
+       "trace": "data_backward",
+       "why": "Output copy data from m_axis_tdata_reg.",
+       "lines": [
+        78,
+        253
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "m_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 87.0,
+       "struct_score": 65.9,
+       "trace": "control_backward",
+       "why": "Output valid from m_axis_tvalid_reg.",
+       "lines": [
+        80,
+        255
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "m_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 87.4,
+       "struct_score": 67.2,
+       "trace": "interface",
+       "why": "Output ready steering output/temp register transfers.",
+       "lines": [
+        81,
+        262,
+        275
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "m_axis_tlast",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 54.3,
+       "struct_score": 48.8,
+       "trace": "data_backward",
+       "why": "Output end-of-frame, forced on truncation beat.",
+       "lines": [
+        82,
+        256
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "m_axis_tuser",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 54.3,
+       "struct_score": 48.8,
+       "trace": "data_backward",
+       "why": "Output user sideband carrying bad-frame marker on truncation.",
+       "lines": [
+        85,
+        259
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E12",
+       "name": "m_axis_tkeep",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "m_axis_tid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "m_axis_tdest",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "tap_axis",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "tap_axis_tdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "tap_axis_tkeep",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "tap_axis_tvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "tap_axis_tready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "tap_axis_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "tap_axis_tid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "tap_axis_tdest",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "tap_axis_tuser",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axis",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "m_axis_tdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "m_axis_tkeep",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "m_axis_tvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "m_axis_tready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "m_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "m_axis_tid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "m_axis_tdest",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "m_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

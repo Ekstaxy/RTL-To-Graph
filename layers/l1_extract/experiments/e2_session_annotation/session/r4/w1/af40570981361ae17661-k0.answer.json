@@ -1,0 +1,47 @@
+{
+ "module_summary": "64-bit AXI-stream to XGMII transmit MAC: an FSM emits preamble, payload, padding and CRC32 FCS (from parallel LFSR instances), then enforces IFG with deficit idle counting and lane swapping.",
+ "anchors": [
+  {"id": "E19", "name": "state_reg", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "TX FSM: idle, payload, pad, FCS1/2, error, IFG", "lines": [329, 533]},
+  {"id": "E3", "name": "s_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Input frame data, masked by tkeep into staging register", "lines": [232]},
+  {"id": "E5", "name": "s_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Input valid starting frames; absence mid-frame signals underflow", "lines": [344, 375, 378]},
+  {"id": "E6", "name": "s_axis_tready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Input ready driven by FSM ready register", "lines": [177, 344]},
+  {"id": "E7", "name": "s_axis_tlast", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "End-of-frame marker moving FSM toward pad/FCS", "lines": [326, 375]},
+  {"id": "E9", "name": "xgmii_txd", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "XGMII transmit data output from lane-aligned register", "lines": [179]},
+  {"id": "E10", "name": "xgmii_txc", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "XGMII control lane flags paired with txd", "lines": [180]},
+  {"id": "E28", "name": "s_tdata_reg", "role": "PIPELINE_REG", "importance": "major", "trace": "data_backward", "why": "Staged input word fed to CRC and XGMII output", "lines": [341, 369, 545]},
+  {"id": "E30", "name": "s_empty_reg", "role": "MUX_SELECT", "importance": "major", "trace": "control_backward", "why": "Empty-byte count selecting FCS/terminate placement in final cycles", "lines": [238, 440, 546]},
+  {"id": "E57", "name": "crc_state_reg", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "CRC32 state per byte width, inverted to form frame FCS", "lines": [204, 609, 613]},
+  {"id": "E22", "name": "update_crc", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Enables CRC state accumulation during payload/pad/FCS", "lines": [360, 608]},
+  {"id": "E32", "name": "fcs_output_txd_0", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Final data word with appended FCS and terminate code", "lines": [240, 434]},
+  {"id": "E62", "name": "xgmii_txd_next", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Next XGMII word muxed by state: idle, preamble, payload, FCS, error", "lines": [346, 369, 623]},
+  {"id": "E23", "name": "swap_lanes_reg", "role": "MUX_SELECT", "importance": "major", "trace": "control_backward", "why": "Selects 32-bit lane-swapped output to start frames on lane 4", "lines": [619, 620, 565]},
+  {"id": "E25", "name": "swap_txd", "role": "PIPELINE_REG", "importance": "minor", "trace": "data_backward", "why": "Delayed upper half word used when lanes are swapped", "lines": [616, 620]},
+  {"id": "E45", "name": "ifg_count_reg", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Inter-frame gap countdown keeping FSM in IFG state", "lines": [498, 499, 542]},
+  {"id": "E47", "name": "deficit_idle_count_reg", "role": "COUNTER", "importance": "minor", "trace": "control_backward", "why": "Deficit idle count carried into next IFG computation", "lines": [439, 543]},
+  {"id": "E43", "name": "frame_min_count_reg", "role": "COUNTER", "importance": "minor", "trace": "control_backward", "why": "Remaining bytes to minimum frame length, drives padding", "lines": [363, 380, 417]},
+  {"id": "E39", "name": "frame_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "In-frame flag used to drop remainder and hold IFG", "lines": [505, 538]},
+  {"id": "E41", "name": "frame_error_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Frame error flag routing pad exit to error termination", "lines": [423, 539]},
+  {"id": "E37", "name": "frame_start_reg", "role": "ENABLE", "importance": "minor", "trace": "forward", "why": "Start-of-frame pulse capturing PTP timestamp and start_packet", "lines": [564, 537]},
+  {"id": "E16", "name": "cfg_tx_enable", "role": "COMMAND", "importance": "minor", "trace": "interface", "why": "Transmit enable gating input ready in idle", "lines": [335]},
+  {"id": "E17", "name": "start_packet", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "Start-of-packet indication with lane position", "lines": [186]},
+  {"id": "E18", "name": "error_underflow", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "Underflow error when input valid drops mid-frame", "lines": [187]},
+  {"id": "E51", "name": "m_axis_ptp_ts_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Captured PTP TX timestamp (disabled by default PTP_TS_ENABLE=0)", "lines": [568, 577]},
+  {"id": "E14", "name": "m_axis_ptp_ts_valid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "PTP timestamp valid output, parameter-gated", "lines": [184]}
+ ],
+ "groups": [
+  {"name": "TX FSM", "kind": "CONTROLLER", "anchor_ids": ["E19", "E39", "E41", "E37", "E16"], "member_ids": ["E20", "E38", "E40", "E42", "E49", "E50", "E66", "E67"], "description": "Sequences preamble, payload, padding, FCS, error and IFG states"},
+  {"name": "Input staging", "kind": "PIPELINE_STAGE", "anchor_ids": ["E28", "E30"], "member_ids": ["E27", "E29", "E31"], "description": "Masked input word and empty-byte count register"},
+  {"name": "CRC generator", "kind": "DATAPATH", "anchor_ids": ["E57", "E22", "E32"], "member_ids": ["I1", "E58", "E21", "E33", "E34", "E35", "E36"], "description": "Parallel LFSR CRC32 instances and FCS insertion muxing"},
+  {"name": "XGMII output and lane swap", "kind": "DATAPATH", "anchor_ids": ["E62", "E23", "E25", "E9", "E10"], "member_ids": ["E24", "E26", "E61", "E63", "E64"], "description": "Output word mux and optional 32-bit lane shift"},
+  {"name": "IFG and padding counters", "kind": "COUNTER_TIMER", "anchor_ids": ["E45", "E47", "E43"], "member_ids": ["E44", "E46", "E48"], "description": "Inter-frame gap with deficit idle count and min-length padding"},
+  {"name": "PTP timestamp", "kind": "OTHER", "anchor_ids": ["E51", "E14"], "member_ids": ["E52", "E53", "E54", "E55", "E56", "E59", "E60", "E12", "E13"], "description": "Parameter-gated PTP TX timestamp capture at frame start"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "s_axis", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8"]},
+  {"name": "xgmii_tx", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E9", "E10"]},
+  {"name": "ptp", "protocol": "OTHER", "direction": "OUT", "member_ids": ["E11", "E12", "E13", "E14"]},
+  {"name": "config", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E15", "E16"]},
+  {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E17", "E18"]}
+ ]
+}

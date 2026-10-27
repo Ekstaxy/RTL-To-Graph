@@ -1,0 +1,608 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "common_cells_cc_fall_through_register",
+ "tops": [
+  "cc_fall_through_register"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "cc_fifo": {
+   "source": "teacher",
+   "canonical_instance": "cc_fall_through_register.i_fifo",
+   "file": "data/rtl/common_cells/src/cc_fifo.sv",
+   "lines": [
+    16,
+    138
+   ],
+   "summary": "Synchronous circular-buffer FIFO with read/write pointers and an occupancy counter, optional fall-through bypass, clock-gated memory update, and flush/clear of pointers.",
+   "blocks": [
+    {
+     "name": "FIFO storage",
+     "kind": "BUFFER",
+     "description": "Entry array with gated write of pushed data.",
+     "anchors": [
+      {
+       "id": "E20",
+       "name": "mem_q",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 88.8,
+       "struct_score": 71.8,
+       "trace": "data_backward",
+       "why": "FIFO entry array written at write pointer, read at read pointer.",
+       "lines": [
+        53,
+        72,
+        126
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "gate_clock",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 17.7,
+       "struct_score": 15.2,
+       "trace": "control_backward",
+       "why": "Memory update enable, ungated only on accepted push.",
+       "lines": [
+        46,
+        81,
+        126
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E19",
+       "name": "mem_n",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Pointer and count control",
+     "kind": "CONTROLLER",
+     "description": "Wrapping pointers and occupancy counter with flush/clear.",
+     "anchors": [
+      {
+       "id": "E14",
+       "name": "read_pointer_q",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 58.1,
+       "struct_score": 62.6,
+       "trace": "control_backward",
+       "why": "Read pointer selecting head entry for data_o.",
+       "lines": [
+        48,
+        72,
+        122
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "write_pointer_q",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 57.2,
+       "struct_score": 59.2,
+       "trace": "control_backward",
+       "why": "Write pointer selecting entry to store pushed data.",
+       "lines": [
+        48,
+        79,
+        123
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "status_cnt_q",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 60.8,
+       "struct_score": 71.8,
+       "trace": "control_backward",
+       "why": "Occupancy count producing full, empty and usage.",
+       "lines": [
+        51,
+        61,
+        62
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "flush_i",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 23.1,
+       "struct_score": 37.0,
+       "trace": "forward",
+       "why": "Flush request clearing pointers and count.",
+       "lines": [
+        28,
+        121
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E13",
+       "name": "read_pointer_n",
+       "kind": "comb"
+      },
+      {
+       "id": "E15",
+       "name": "write_pointer_n",
+       "kind": "comb"
+      },
+      {
+       "id": "E17",
+       "name": "status_cnt_n",
+       "kind": "comb"
+      },
+      {
+       "id": "E21",
+       "name": "clr_or_flush",
+       "kind": "wire"
+      },
+      {
+       "id": "E3",
+       "name": "clr_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Status flags",
+     "kind": "OTHER",
+     "description": "Full, empty and usage derived from occupancy count.",
+     "anchors": [
+      {
+       "id": "E5",
+       "name": "full_o",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 56.6,
+       "struct_score": 57.4,
+       "trace": "control_backward",
+       "why": "Full flag blocking pushes, from occupancy count.",
+       "lines": [
+        31,
+        61,
+        77
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "empty_o",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 55.3,
+       "struct_score": 52.4,
+       "trace": "control_backward",
+       "why": "Empty flag blocking pops, fall-through aware.",
+       "lines": [
+        32,
+        62,
+        92
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "usage_o",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 22.1,
+       "struct_score": 33.1,
+       "trace": "control_backward",
+       "why": "Fill level output from status counter.",
+       "lines": [
+        33,
+        55
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E8",
+     "name": "data_i",
+     "role": "INTERFACE_DATA",
+     "importance": "critical",
+     "score": 90.2,
+     "struct_score": 75.4,
+     "trace": "interface",
+     "why": "Pushed data written into mem or bypassed in fall-through.",
+     "lines": [
+      35,
+      79,
+      110
+     ]
+    },
+    {
+     "id": "E9",
+     "name": "push_i",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 96.8,
+     "struct_score": 91.8,
+     "trace": "interface",
+     "why": "Push request writing data when not full.",
+     "lines": [
+      36,
+      77
+     ]
+    },
+    {
+     "id": "E10",
+     "name": "data_o",
+     "role": "INTERFACE_DATA",
+     "importance": "critical",
+     "score": 92.4,
+     "struct_score": 80.8,
+     "trace": "data_backward",
+     "why": "Head data output from mem_q or fall-through input.",
+     "lines": [
+      38,
+      72,
+      110
+     ]
+    },
+    {
+     "id": "E11",
+     "name": "pop_i",
+     "role": "HANDSHAKE_READY",
+     "importance": "critical",
+     "score": 89.8,
+     "struct_score": 74.3,
+     "trace": "interface",
+     "why": "Pop request advancing read pointer when not empty.",
+     "lines": [
+      39,
+      92
+     ]
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2",
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_ni",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "clr_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "control",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "flush_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E5",
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "full_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "empty_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "usage_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "push",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E8",
+      "E9"
+     ],
+     "members": [
+      {
+       "id": "E8",
+       "name": "data_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "push_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "pop",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E10",
+      "E11"
+     ],
+     "members": [
+      {
+       "id": "E10",
+       "name": "data_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E11",
+       "name": "pop_i",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  },
+  "cc_fall_through_register": {
+   "source": "teacher",
+   "canonical_instance": "cc_fall_through_register",
+   "file": "data/rtl/common_cells/src/cc_fall_through_register.sv",
+   "lines": [
+    16,
+    56
+   ],
+   "summary": "Fall-through register: wraps a depth-1 fall-through FIFO so input passes combinationally when empty, with ready from not-full and valid from not-empty.",
+   "blocks": [
+    {
+     "name": "Fall-through FIFO slot",
+     "kind": "BUFFER",
+     "description": "Depth-1 fall-through FIFO buffering one element between handshakes.",
+     "anchors": [
+      {
+       "id": "E4",
+       "name": "valid_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 94.8,
+       "struct_score": 86.9,
+       "trace": "interface",
+       "why": "Input valid; pushes into the FIFO when not full.",
+       "lines": [
+        48
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "ready_o",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 64.5,
+       "struct_score": 81.2,
+       "trace": "control_backward",
+       "why": "Input ready, asserted when the FIFO slot is free.",
+       "lines": [
+        53
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "data_i",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 91.4,
+       "struct_score": 78.4,
+       "trace": "interface",
+       "why": "Input payload written into the FIFO slot.",
+       "lines": [
+        47
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "valid_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 96.0,
+       "struct_score": 89.9,
+       "trace": "control_backward",
+       "why": "Output valid, asserted when the FIFO holds or passes data.",
+       "lines": [
+        54
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "ready_i",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 62.7,
+       "struct_score": 76.6,
+       "trace": "interface",
+       "why": "Output ready; pops the FIFO when not empty.",
+       "lines": [
+        50
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "data_o",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 92.3,
+       "struct_score": 80.5,
+       "trace": "data_backward",
+       "why": "Output payload from FIFO, falling through when empty.",
+       "lines": [
+        49
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "fifo_full",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 24.1,
+       "struct_score": 40.9,
+       "trace": "control_backward",
+       "why": "FIFO full; blocks push and deasserts ready_o.",
+       "lines": [
+        44,
+        48,
+        53
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "fifo_empty",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 24.1,
+       "struct_score": 40.9,
+       "trace": "control_backward",
+       "why": "FIFO empty; blocks pop and deasserts valid_o.",
+       "lines": [
+        45,
+        50,
+        54
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "i_fifo",
+       "module": "cc_fifo"
+      }
+     ],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2",
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_ni",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "clr_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "input_stream",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E4",
+      "E5",
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "valid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "ready_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "data_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "output_stream",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E7",
+      "E8",
+      "E9"
+     ],
+     "members": [
+      {
+       "id": "E7",
+       "name": "valid_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E8",
+       "name": "ready_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "data_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

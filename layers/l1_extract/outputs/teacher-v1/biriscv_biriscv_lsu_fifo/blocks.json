@@ -1,0 +1,261 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "biriscv_biriscv_lsu_fifo",
+ "tops": [
+  "biriscv_lsu_fifo"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "biriscv_lsu_fifo": {
+   "source": "teacher",
+   "canonical_instance": "biriscv_lsu_fifo",
+   "file": "data/rtl/biriscv/src/core/biriscv_lsu.v",
+   "lines": [
+    422,
+    511
+   ],
+   "summary": "Small synchronous FIFO: a 4-entry register array with read/write pointers and an occupancy counter deriving valid (not empty) and accept (not full).",
+   "blocks": [
+    {
+     "name": "fifo_storage",
+     "kind": "BUFFER",
+     "description": "Register array holding queued entries.",
+     "anchors": [
+      {
+       "id": "E9",
+       "name": "ram_q",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 98.4,
+       "struct_score": 95.9,
+       "trace": "data_backward",
+       "why": "4-entry data array written at wr_ptr_q on push, read at rd_ptr_q.",
+       "lines": [
+        456,
+        483,
+        507
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "data_in_i",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 66.5,
+       "struct_score": 86.0,
+       "trace": "interface",
+       "why": "Write data stored into ram_q on push.",
+       "lines": [
+        438,
+        483
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "data_out_o",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 68.3,
+       "struct_score": 90.8,
+       "trace": "interface",
+       "why": "Head-of-FIFO data read from ram_q at rd_ptr_q.",
+       "lines": [
+        443,
+        507
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "fifo_control",
+     "kind": "CONTROLLER",
+     "description": "Pointers and occupancy counter producing full/empty handshakes.",
+     "anchors": [
+      {
+       "id": "E11",
+       "name": "wr_ptr_q",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 58.4,
+       "struct_score": 63.7,
+       "trace": "control_backward",
+       "why": "Write pointer addressing ram_q; increments on accepted push.",
+       "lines": [
+        483,
+        484
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "rd_ptr_q",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 58.7,
+       "struct_score": 64.8,
+       "trace": "control_backward",
+       "why": "Read pointer selecting data_out_o; increments on valid pop.",
+       "lines": [
+        489,
+        507
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "count_q",
+       "role": "FIFO_PTR",
+       "importance": "critical",
+       "score": 89.3,
+       "struct_score": 73.0,
+       "trace": "control_backward",
+       "why": "Occupancy count; drives valid_o (non-empty) and accept_o (non-full).",
+       "lines": [
+        493,
+        496,
+        503
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "push_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 95.9,
+       "struct_score": 89.7,
+       "trace": "interface",
+       "why": "Push request; with accept_o writes data and advances write pointer.",
+       "lines": [
+        481,
+        492
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "accept_o",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 96.2,
+       "struct_score": 90.4,
+       "trace": "interface",
+       "why": "Not-full indication accepting pushes.",
+       "lines": [
+        481,
+        504
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "valid_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 97.6,
+       "struct_score": 94.0,
+       "trace": "interface",
+       "why": "Not-empty indication; output data valid.",
+       "lines": [
+        488,
+        503
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "pop_i",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 90.9,
+       "struct_score": 76.9,
+       "trace": "interface",
+       "why": "Pop request from consumer; advances read pointer.",
+       "lines": [
+        488,
+        489
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "push_port",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "data_in_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "push_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "accept_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "pop_port",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E6",
+      "E8",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "data_out_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E8",
+       "name": "valid_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "pop_i",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,277 @@
+[
+ {
+  "module": "ip_eth_rx_64",
+  "instance": "ip_eth_rx_64",
+  "state": "state_reg",
+  "next": "state_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "STATE_IDLE",
+    "value": "3'b0"
+   },
+   {
+    "name": "STATE_READ_HEADER",
+    "value": "3'b1"
+   },
+   {
+    "name": "STATE_WAIT_LAST",
+    "value": "3'b100"
+   },
+   {
+    "name": "STATE_READ_PAYLOAD",
+    "value": "3'b10"
+   },
+   {
+    "name": "STATE_READ_PAYLOAD_LAST",
+    "value": "3'b11"
+   }
+  ],
+  "reset_state": "STATE_IDLE",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_READ_HEADER",
+    "cond": "s_eth_hdr_ready && s_eth_hdr_valid"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_IDLE",
+    "cond": "!(s_eth_hdr_ready && s_eth_hdr_valid)"
+   },
+   {
+    "src": "STATE_READ_HEADER",
+    "dst": "STATE_READ_HEADER",
+    "cond": "s_eth_payload_axis_tvalid"
+   },
+   {
+    "src": "STATE_READ_HEADER",
+    "dst": "STATE_WAIT_LAST",
+    "cond": "s_eth_payload_axis_tvalid && hdr_ptr_reg == 6'h10 && (m_ip_version_reg != 4'd4 || m_ip_ihl_reg != 4'd5)"
+   },
+   {
+    "src": "STATE_READ_HEADER",
+    "dst": "STATE_READ_PAYLOAD",
+    "cond": "s_eth_payload_axis_tvalid && hdr_ptr_reg == 6'h10 && !(m_ip_version_reg != 4'd4 || m_ip_ihl_reg != 4'd5)"
+   },
+   {
+    "src": "STATE_READ_HEADER",
+    "dst": "STATE_IDLE",
+    "cond": "s_eth_payload_axis_tvalid && shift_eth_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_READ_HEADER",
+    "dst": "STATE_READ_HEADER",
+    "cond": "!s_eth_payload_axis_tvalid"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD",
+    "dst": "STATE_IDLE",
+    "cond": "m_ip_payload_axis_tready_int_reg && shift_eth_payload_axis_tvalid && word_count_reg <= 8 && shift_eth_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD",
+    "dst": "STATE_READ_PAYLOAD_LAST",
+    "cond": "m_ip_payload_axis_tready_int_reg && shift_eth_payload_axis_tvalid && word_count_reg <= 8 && !shift_eth_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD",
+    "dst": "STATE_IDLE",
+    "cond": "m_ip_payload_axis_tready_int_reg && shift_eth_payload_axis_tvalid && !(word_count_reg <= 8) && shift_eth_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD",
+    "dst": "STATE_READ_PAYLOAD",
+    "cond": "m_ip_payload_axis_tready_int_reg && shift_eth_payload_axis_tvalid && !(word_count_reg <= 8) && !shift_eth_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD",
+    "dst": "STATE_READ_PAYLOAD",
+    "cond": "!(m_ip_payload_axis_tready_int_reg && shift_eth_payload_axis_tvalid)"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD",
+    "dst": "STATE_IDLE",
+    "cond": "check_hdr_reg && hdr_sum_temp != 19'h0ffff && hdr_sum_temp != 19'h1fffe && shift_eth_payload_axis_tlast && shift_eth_payload_axis_tvalid"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD",
+    "dst": "STATE_WAIT_LAST",
+    "cond": "check_hdr_reg && hdr_sum_temp != 19'h0ffff && hdr_sum_temp != 19'h1fffe && !(shift_eth_payload_axis_tlast && shift_eth_payload_axis_tvalid)"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD_LAST",
+    "dst": "STATE_IDLE",
+    "cond": "m_ip_payload_axis_tready_int_reg && shift_eth_payload_axis_tvalid && shift_eth_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD_LAST",
+    "dst": "STATE_READ_PAYLOAD_LAST",
+    "cond": "m_ip_payload_axis_tready_int_reg && shift_eth_payload_axis_tvalid && !shift_eth_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD_LAST",
+    "dst": "STATE_READ_PAYLOAD_LAST",
+    "cond": "!(m_ip_payload_axis_tready_int_reg && shift_eth_payload_axis_tvalid)"
+   },
+   {
+    "src": "STATE_WAIT_LAST",
+    "dst": "STATE_IDLE",
+    "cond": "shift_eth_payload_axis_tvalid && shift_eth_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_WAIT_LAST",
+    "dst": "STATE_WAIT_LAST",
+    "cond": "shift_eth_payload_axis_tvalid && !shift_eth_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_WAIT_LAST",
+    "dst": "STATE_WAIT_LAST",
+    "cond": "!shift_eth_payload_axis_tvalid"
+   }
+  ],
+  "outputs": [
+   {
+    "signal": "store_last_word",
+    "kind": "moore",
+    "port": false
+   }
+  ],
+  "warnings": [],
+  "semantic_check": "consistent-subset"
+ },
+ {
+  "module": "ip_eth_rx_64",
+  "instance": "ip_eth_rx_64",
+  "state": "hdr_ptr_reg",
+  "next": null,
+  "style": "semantic",
+  "states": [
+   {
+    "name": "STATE_IDLE",
+    "value": "0"
+   },
+   {
+    "name": "S_8",
+    "value": "8"
+   },
+   {
+    "name": "S_16",
+    "value": "16"
+   },
+   {
+    "name": "S_24",
+    "value": "24"
+   },
+   {
+    "name": "S_32",
+    "value": "32"
+   },
+   {
+    "name": "S_40",
+    "value": "40"
+   },
+   {
+    "name": "S_48",
+    "value": "48"
+   },
+   {
+    "name": "S_56",
+    "value": "56"
+   }
+  ],
+  "reset_state": "STATE_IDLE",
+  "transitions": [
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "S_8",
+    "dst": "S_8",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "S_8",
+    "dst": "STATE_IDLE",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "S_16",
+    "dst": "STATE_IDLE",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "S_16",
+    "dst": "S_16",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "S_24",
+    "dst": "S_24",
+    "cond": "!s_eth_payload_axis_tvalid"
+   },
+   {
+    "src": "S_24",
+    "dst": "STATE_IDLE",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "S_32",
+    "dst": "S_32",
+    "cond": "!s_eth_payload_axis_tvalid"
+   },
+   {
+    "src": "S_32",
+    "dst": "STATE_IDLE",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "S_40",
+    "dst": "S_40",
+    "cond": "!s_eth_payload_axis_tvalid"
+   },
+   {
+    "src": "S_40",
+    "dst": "STATE_IDLE",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "S_40",
+    "dst": "S_48",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "S_48",
+    "dst": "S_48",
+    "cond": "s_eth_payload_axis_tvalid"
+   },
+   {
+    "src": "S_48",
+    "dst": "STATE_IDLE",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "S_56",
+    "dst": "S_56",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "S_56",
+    "dst": "STATE_IDLE",
+    "cond": "<datapath condition>"
+   }
+  ],
+  "outputs": [],
+  "warnings": [
+   "extracted by execution (coding style not recognized syntactically)"
+  ],
+  "semantic_check": "semantic-only"
+ }
+]

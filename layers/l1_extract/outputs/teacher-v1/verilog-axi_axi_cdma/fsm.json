@@ -1,0 +1,122 @@
+[
+ {
+  "module": "axi_cdma",
+  "instance": "axi_cdma",
+  "state": "read_state_reg",
+  "next": "read_state_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "READ_STATE_IDLE",
+    "value": "2'b0"
+   },
+   {
+    "name": "READ_STATE_START",
+    "value": "2'b1"
+   },
+   {
+    "name": "READ_STATE_REQ",
+    "value": "2'b10"
+   }
+  ],
+  "reset_state": "READ_STATE_IDLE",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "READ_STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "READ_STATE_IDLE",
+    "dst": "READ_STATE_START",
+    "cond": "s_axis_desc_ready && s_axis_desc_valid"
+   },
+   {
+    "src": "READ_STATE_IDLE",
+    "dst": "READ_STATE_IDLE",
+    "cond": "!(s_axis_desc_ready && s_axis_desc_valid)"
+   },
+   {
+    "src": "READ_STATE_START",
+    "dst": "READ_STATE_REQ",
+    "cond": "!axi_cmd_valid_reg && active_count_av_reg"
+   },
+   {
+    "src": "READ_STATE_START",
+    "dst": "READ_STATE_START",
+    "cond": "!(!axi_cmd_valid_reg && active_count_av_reg)"
+   },
+   {
+    "src": "READ_STATE_REQ",
+    "dst": "READ_STATE_REQ",
+    "cond": "!m_axi_arvalid && axi_word_count_next > 0"
+   },
+   {
+    "src": "READ_STATE_REQ",
+    "dst": "READ_STATE_START",
+    "cond": "!m_axi_arvalid && !(axi_word_count_next > 0) && op_word_count_next > 0"
+   },
+   {
+    "src": "READ_STATE_REQ",
+    "dst": "READ_STATE_IDLE",
+    "cond": "!m_axi_arvalid && !(axi_word_count_next > 0) && !(op_word_count_next > 0)"
+   },
+   {
+    "src": "READ_STATE_REQ",
+    "dst": "READ_STATE_REQ",
+    "cond": "m_axi_arvalid"
+   }
+  ],
+  "outputs": [],
+  "warnings": [],
+  "semantic_check": "consistent-subset"
+ },
+ {
+  "module": "axi_cdma",
+  "instance": "axi_cdma",
+  "state": "axi_state_reg",
+  "next": "axi_state_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "AXI_STATE_IDLE",
+    "value": "1'b0"
+   },
+   {
+    "name": "AXI_STATE_WRITE",
+    "value": "1'b1"
+   }
+  ],
+  "reset_state": "AXI_STATE_IDLE",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "AXI_STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "AXI_STATE_IDLE",
+    "dst": "AXI_STATE_WRITE",
+    "cond": "!m_axi_awvalid && axi_cmd_valid_reg"
+   },
+   {
+    "src": "AXI_STATE_WRITE",
+    "dst": "AXI_STATE_IDLE",
+    "cond": "(m_axi_rready && m_axi_rvalid || !input_active_reg) && output_last_cycle_reg"
+   },
+   {
+    "src": "AXI_STATE_WRITE",
+    "dst": "AXI_STATE_WRITE",
+    "cond": "(m_axi_rready && m_axi_rvalid || !input_active_reg) && !output_last_cycle_reg"
+   },
+   {
+    "src": "AXI_STATE_WRITE",
+    "dst": "AXI_STATE_WRITE",
+    "cond": "!(m_axi_rready && m_axi_rvalid || !input_active_reg)"
+   }
+  ],
+  "outputs": [],
+  "warnings": [],
+  "semantic_check": "consistent"
+ }
+]

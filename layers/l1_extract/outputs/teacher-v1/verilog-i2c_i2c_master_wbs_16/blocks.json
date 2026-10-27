@@ -1,0 +1,2678 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-i2c_i2c_master_wbs_16",
+ "tops": [
+  "i2c_master_wbs_16"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "axis_fifo": {
+   "source": "teacher",
+   "canonical_instance": "i2c_master_wbs_16.genblk1.cmd_fifo_inst",
+   "file": "data/rtl/verilog-i2c/rtl/axis_fifo.v",
+   "lines": [
+    32,
+    290
+   ],
+   "summary": "AXI-Stream FIFO: packs sideband fields into a word written to a memory via MSB-wrapped pointers, read through a skid output pipeline; optional frame-mode drop logic.",
+   "blocks": [
+    {
+     "name": "Write side",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Packs AXIS input fields, writes mem at write pointer when ready and valid.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "s_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 89.3,
+       "struct_score": 73.0,
+       "trace": "interface",
+       "why": "Input stream data packed into FIFO word.",
+       "lines": [
+        84,
+        181
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 92.4,
+       "struct_score": 80.8,
+       "trace": "interface",
+       "why": "Input valid; with tready triggers memory write.",
+       "lines": [
+        86,
+        210
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 94.3,
+       "struct_score": 85.5,
+       "trace": "control_backward",
+       "why": "Input ready derived from full (or frame-mode flags).",
+       "lines": [
+        87,
+        178,
+        210
+       ]
+      },
+      {
+       "id": "E30",
+       "name": "s_axis",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 18.0,
+       "struct_score": 16.3,
+       "trace": "data_backward",
+       "why": "Packed input word {user,last,data} written to mem.",
+       "lines": [
+        160,
+        181,
+        214
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "wr_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 60.4,
+       "struct_score": 70.6,
+       "trace": "control_backward",
+       "why": "Committed write pointer; addresses mem writes, compared for full/empty.",
+       "lines": [
+        152,
+        214,
+        215
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_tlast",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 31.6,
+       "struct_score": 68.1,
+       "trace": "interface",
+       "why": "Frame end marker packed into word; ends frames in frame mode.",
+       "lines": [
+        88,
+        183,
+        220
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "s_axis_tuser",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 29.7,
+       "struct_score": 61.3,
+       "trace": "interface",
+       "why": "User sideband packed into word; bad-frame marker.",
+       "lines": [
+        91,
+        186,
+        231
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E4",
+       "name": "s_axis_tkeep",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_axis_tid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_axis_tdest",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "FIFO memory",
+     "kind": "MEMORY",
+     "description": "Packed word storage array.",
+     "anchors": [
+      {
+       "id": "E27",
+       "name": "mem",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 95.0,
+       "struct_score": 87.5,
+       "trace": "data_backward",
+       "why": "FIFO memory of packed AXIS words, written at wr_ptr, read at rd_ptr.",
+       "lines": [
+        156,
+        214,
+        276
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Full/empty logic",
+     "kind": "CONTROLLER",
+     "description": "Pointer comparisons giving full and empty flags and status.",
+     "anchors": [
+      {
+       "id": "E33",
+       "name": "full",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 46.6,
+       "struct_score": 18.9,
+       "trace": "control_backward",
+       "why": "Pointer-compare full flag deasserting s_axis_tready.",
+       "lines": [
+        166,
+        178,
+        201
+       ]
+      },
+      {
+       "id": "E35",
+       "name": "empty",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 46.3,
+       "struct_score": 17.5,
+       "trace": "control_backward",
+       "why": "Pointer-equal empty flag gating reads and rd_ptr increment.",
+       "lines": [
+        169,
+        202,
+        277
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E22",
+       "name": "status_full",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "status_empty",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "Output pipeline",
+     "kind": "PIPELINE_STAGE",
+     "description": "Reads mem at read pointer into bubble-collapsing output stages.",
+     "anchors": [
+      {
+       "id": "E26",
+       "name": "rd_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 57.4,
+       "struct_score": 60.2,
+       "trace": "control_backward",
+       "why": "Read pointer addressing mem, incremented when not empty.",
+       "lines": [
+        154,
+        276,
+        280
+       ]
+      },
+      {
+       "id": "E31",
+       "name": "m_axis_pipe_reg",
+       "role": "PIPELINE_REG",
+       "importance": "major",
+       "score": 66.2,
+       "struct_score": 85.4,
+       "trace": "data_backward",
+       "why": "Output pipeline stages carrying words from mem to m_axis.",
+       "lines": [
+        162,
+        268,
+        276
+       ]
+      },
+      {
+       "id": "E32",
+       "name": "m_axis_tvalid_pipe_reg",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 21.1,
+       "struct_score": 28.8,
+       "trace": "control_backward",
+       "why": "Per-stage valid bits of output pipeline, bubble collapse.",
+       "lines": [
+        163,
+        267,
+        279
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "m_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 90.3,
+       "struct_score": 75.6,
+       "trace": "data_backward",
+       "why": "Output data from last output pipeline stage.",
+       "lines": [
+        96,
+        191
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "m_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 88.9,
+       "struct_score": 71.9,
+       "trace": "control_backward",
+       "why": "Output valid from last valid pipeline bit.",
+       "lines": [
+        98,
+        189
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "m_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 83.9,
+       "struct_score": 54.7,
+       "trace": "interface",
+       "why": "Output ready advances the output pipeline and memory read.",
+       "lines": [
+        99,
+        259,
+        273
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E12",
+       "name": "m_axis_tkeep",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "m_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "m_axis_tid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "m_axis_tdest",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "m_axis_tuser",
+       "kind": "port_out"
+      },
+      {
+       "id": "E28",
+       "name": "mem_read_data_reg",
+       "kind": "wire"
+      },
+      {
+       "id": "E29",
+       "name": "mem_read_data_valid_reg",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Frame drop control",
+     "kind": "CONTROLLER",
+     "description": "Frame-mode speculative pointer, drop and frame status pulses.",
+     "anchors": [
+      {
+       "id": "E25",
+       "name": "wr_ptr_cur_reg",
+       "role": "FIFO_PTR",
+       "importance": "minor",
+       "score": 31.3,
+       "struct_score": 66.9,
+       "trace": "control_backward",
+       "why": "Frame-mode speculative write pointer (FRAME_FIFO disabled).",
+       "lines": [
+        153,
+        227,
+        228
+       ]
+      },
+      {
+       "id": "E34",
+       "name": "full_cur",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 21.3,
+       "struct_score": 29.6,
+       "trace": "control_backward",
+       "why": "Frame-mode full check against speculative pointer.",
+       "lines": [
+        167,
+        216
+       ]
+      },
+      {
+       "id": "E36",
+       "name": "full_wr",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 21.3,
+       "struct_score": 29.6,
+       "trace": "control_backward",
+       "why": "Frame larger than FIFO overflow condition.",
+       "lines": [
+        171,
+        216
+       ]
+      },
+      {
+       "id": "E37",
+       "name": "drop_frame_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 23.4,
+       "struct_score": 38.3,
+       "trace": "control_backward",
+       "why": "Dropping current frame flag in frame mode.",
+       "lines": [
+        173,
+        216,
+        219
+       ]
+      },
+      {
+       "id": "E38",
+       "name": "overflow_reg",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 16.6,
+       "struct_score": 10.4,
+       "trace": "control_backward",
+       "why": "Pulse on dropped frame, drives status_overflow.",
+       "lines": [
+        174,
+        198,
+        224
+       ]
+      },
+      {
+       "id": "E39",
+       "name": "bad_frame_reg",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 16.7,
+       "struct_score": 10.9,
+       "trace": "control_backward",
+       "why": "Pulse on bad frame discarded, drives status_bad_frame.",
+       "lines": [
+        175,
+        199,
+        234
+       ]
+      },
+      {
+       "id": "E40",
+       "name": "good_frame_reg",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 16.7,
+       "struct_score": 10.9,
+       "trace": "control_backward",
+       "why": "Pulse on good frame committed, drives status_good_frame.",
+       "lines": [
+        176,
+        200,
+        238
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E19",
+       "name": "status_overflow",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "status_bad_frame",
+       "kind": "port_out"
+      },
+      {
+       "id": "E21",
+       "name": "status_good_frame",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axis",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axis_tdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_tkeep",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_tvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_tready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_axis_tid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_axis_tdest",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "s_axis_tuser",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axis",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "m_axis_tdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "m_axis_tkeep",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "m_axis_tvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "m_axis_tready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "m_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "m_axis_tid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "m_axis_tdest",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "m_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E19",
+      "E20",
+      "E21",
+      "E22",
+      "E23"
+     ],
+     "members": [
+      {
+       "id": "E19",
+       "name": "status_overflow",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "status_bad_frame",
+       "kind": "port_out"
+      },
+      {
+       "id": "E21",
+       "name": "status_good_frame",
+       "kind": "port_out"
+      },
+      {
+       "id": "E22",
+       "name": "status_full",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "status_empty",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "i2c_master": {
+   "source": "teacher",
+   "canonical_instance": "i2c_master_wbs_16.i2c_master_inst",
+   "file": "data/rtl/verilog-i2c/rtl/i2c_master.v",
+   "lines": [
+    32,
+    897
+   ],
+   "summary": "I2C master: a byte-level command FSM consumes AXI-stream commands and data, driving a bit-level PHY FSM that generates start/stop/bit timing on SCL/SDA with a prescale delay counter.",
+   "blocks": [
+    {
+     "name": "Command FSM",
+     "kind": "CONTROLLER",
+     "description": "Decodes commands, latches address and mode, sequences address/data bytes.",
+     "anchors": [
+      {
+       "id": "E31",
+       "name": "state_reg",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.5,
+       "struct_score": 98.8,
+       "trace": "control_backward",
+       "why": "Byte-level command FSM: address, write, read, stop sequencing; issues phy bit commands.",
+       "lines": [
+        199,
+        329,
+        830
+       ]
+      },
+      {
+       "id": "E49",
+       "name": "mode_read_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 16.8,
+       "struct_score": 11.3,
+       "trace": "data_backward",
+       "why": "Latched read mode; sent as R/W bit and selects read vs write path.",
+       "lines": [
+        235,
+        496,
+        508
+       ]
+      },
+      {
+       "id": "E51",
+       "name": "mode_write_multiple_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 16.0,
+       "struct_score": 8.3,
+       "trace": "data_backward",
+       "why": "Latched write-multiple mode, loops write until last byte.",
+       "lines": [
+        236,
+        552
+       ]
+      },
+      {
+       "id": "E53",
+       "name": "mode_stop_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 16.7,
+       "struct_score": 10.9,
+       "trace": "data_backward",
+       "why": "Latched stop request, issues stop after current transfer.",
+       "lines": [
+        237,
+        555,
+        578
+       ]
+      },
+      {
+       "id": "E47",
+       "name": "last_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 16.0,
+       "struct_score": 8.0,
+       "trace": "data_backward",
+       "why": "Holds tlast of current write byte, ending write-multiple bursts.",
+       "lines": [
+        233,
+        525,
+        552
+       ]
+      },
+      {
+       "id": "E43",
+       "name": "addr_reg",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 47.4,
+       "struct_score": 22.1,
+       "trace": "data_backward",
+       "why": "Holds current slave address; shifted out bit by bit and compared to new commands.",
+       "lines": [
+        231,
+        376,
+        491
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_cmd_read",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 21.7,
+       "struct_score": 31.4,
+       "trace": "forward",
+       "why": "Read command bit selecting read mode in command FSM.",
+       "lines": [
+        41,
+        336,
+        339
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_cmd_write",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 21.7,
+       "struct_score": 31.4,
+       "trace": "forward",
+       "why": "Write command bit; triggers repeated start from active-read state.",
+       "lines": [
+        42,
+        423
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_cmd_write_multiple",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 21.7,
+       "struct_score": 31.4,
+       "trace": "forward",
+       "why": "Write-multiple command, latched into mode_write_multiple_next.",
+       "lines": [
+        43,
+        340
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "s_axis_cmd_stop",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 18.9,
+       "struct_score": 19.8,
+       "trace": "forward",
+       "why": "Stop command bit; issues stop condition or sets mode_stop.",
+       "lines": [
+        44,
+        341,
+        390
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_cmd_start",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 19.8,
+       "struct_score": 23.4,
+       "trace": "forward",
+       "why": "Forces a repeated start condition.",
+       "lines": [
+        40,
+        376
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E32",
+       "name": "state_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E44",
+       "name": "addr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E48",
+       "name": "last_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E50",
+       "name": "mode_read_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E52",
+       "name": "mode_write_multiple_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E54",
+       "name": "mode_stop_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "PHY FSM",
+     "kind": "CONTROLLER",
+     "description": "Generates SCL/SDA waveforms per bit command with clock stretching waits.",
+     "anchors": [
+      {
+       "id": "E33",
+       "name": "phy_state_reg",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.7,
+       "struct_score": 99.2,
+       "trace": "control_backward",
+       "why": "Bit-level PHY FSM generating start, stop, write and read bit waveforms on SCL/SDA.",
+       "lines": [
+        219,
+        634,
+        831
+       ]
+      },
+      {
+       "id": "E37",
+       "name": "phy_write_bit",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.0,
+       "struct_score": 12.1,
+       "trace": "forward",
+       "why": "Command from byte FSM to PHY FSM to transmit one bit.",
+       "lines": [
+        223,
+        653
+       ]
+      },
+      {
+       "id": "E35",
+       "name": "phy_start_bit",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.8,
+       "struct_score": 11.4,
+       "trace": "forward",
+       "why": "Requests PHY to generate start or repeated start.",
+       "lines": [
+        221,
+        639,
+        649
+       ]
+      },
+      {
+       "id": "E36",
+       "name": "phy_stop_bit",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.8,
+       "struct_score": 11.5,
+       "trace": "forward",
+       "why": "Requests PHY to generate stop condition.",
+       "lines": [
+        222,
+        661
+       ]
+      },
+      {
+       "id": "E38",
+       "name": "phy_read_bit",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.0,
+       "struct_score": 8.3,
+       "trace": "forward",
+       "why": "Requests PHY to sample one bit from SDA.",
+       "lines": [
+        224,
+        657
+       ]
+      },
+      {
+       "id": "E57",
+       "name": "delay_scl_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.8,
+       "struct_score": 19.6,
+       "trace": "control_backward",
+       "why": "Waits for SCL to go high, supporting clock stretching; stalls PHY FSM.",
+       "lines": [
+        240,
+        621,
+        623
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E34",
+       "name": "phy_state_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E39",
+       "name": "phy_release_bus",
+       "kind": "comb"
+      },
+      {
+       "id": "E59",
+       "name": "delay_sda_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E58",
+       "name": "delay_scl_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E60",
+       "name": "delay_sda_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E75",
+       "name": "scl_o_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E76",
+       "name": "scl_o_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E77",
+       "name": "sda_o_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E78",
+       "name": "sda_o_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Bit timing",
+     "kind": "COUNTER_TIMER",
+     "description": "Prescale delay timer and bit counter for byte serialization.",
+     "anchors": [
+      {
+       "id": "E55",
+       "name": "delay_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 56.3,
+       "struct_score": 56.1,
+       "trace": "control_backward",
+       "why": "Prescale delay timer stalling PHY FSM between SCL/SDA edges.",
+       "lines": [
+        239,
+        629,
+        631
+       ]
+      },
+      {
+       "id": "E61",
+       "name": "bit_count_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 54.4,
+       "struct_score": 49.1,
+       "trace": "control_backward",
+       "why": "Counts address/data bits remaining; indexes addr_reg and data_reg.",
+       "lines": [
+        243,
+        487,
+        540
+       ]
+      },
+      {
+       "id": "E29",
+       "name": "prescale",
+       "role": "CONFIG_REG",
+       "importance": "major",
+       "score": 48.9,
+       "struct_score": 27.9,
+       "trace": "interface",
+       "why": "Configures quarter-bit delay loaded into delay counter.",
+       "lines": [
+        79,
+        641
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E56",
+       "name": "delay_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E62",
+       "name": "bit_count_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Shift datapath",
+     "kind": "SERIALIZER",
+     "description": "Serializes write bytes onto SDA and deserializes read bits.",
+     "anchors": [
+      {
+       "id": "E45",
+       "name": "data_reg",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 53.5,
+       "struct_score": 46.1,
+       "trace": "data_backward",
+       "why": "Byte shift register: serializes write data and assembles read data bits.",
+       "lines": [
+        232,
+        540,
+        568
+       ]
+      },
+      {
+       "id": "E40",
+       "name": "phy_tx_data",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 15.5,
+       "struct_score": 6.0,
+       "trace": "data_backward",
+       "why": "Serial bit to transmit, selected from addr_reg, data_reg or ack.",
+       "lines": [
+        227,
+        540,
+        654
+       ]
+      },
+      {
+       "id": "E41",
+       "name": "phy_rx_data_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 16.4,
+       "struct_score": 9.9,
+       "trace": "data_backward",
+       "why": "Sampled SDA bit, shifted into data_reg or used as ack.",
+       "lines": [
+        229,
+        506,
+        568
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E46",
+       "name": "data_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E42",
+       "name": "phy_rx_data_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E74",
+       "name": "sda_i_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E73",
+       "name": "scl_i_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Host AXI-stream interface",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Command, write data and read data streams with registered handshakes.",
+     "anchors": [
+      {
+       "id": "E9",
+       "name": "s_axis_cmd_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 90.1,
+       "struct_score": 75.1,
+       "trace": "interface",
+       "why": "Command stream valid; accepted with cmd_ready in idle/active states.",
+       "lines": [
+        45,
+        334
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "s_axis_cmd_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 90.1,
+       "struct_score": 74.9,
+       "trace": "control_backward",
+       "why": "Command stream ready, registered from FSM state.",
+       "lines": [
+        46,
+        267,
+        334
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "s_axis_cmd_address",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 55.5,
+       "struct_score": 53.2,
+       "trace": "interface",
+       "why": "7-bit slave address of command, latched into addr_reg and compared for repeated start.",
+       "lines": [
+        39,
+        338,
+        376
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "s_axis_data_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 82.8,
+       "struct_score": 50.8,
+       "trace": "interface",
+       "why": "Write data byte input loaded into data_reg for transmission.",
+       "lines": [
+        48,
+        524
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "s_axis_data_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 57.9,
+       "struct_score": 61.9,
+       "trace": "interface",
+       "why": "Write data stream valid, gates loading data_reg in STATE_WRITE_1.",
+       "lines": [
+        49,
+        522
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "s_axis_data_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 30.0,
+       "struct_score": 62.3,
+       "trace": "control_backward",
+       "why": "Write data stream ready, registered from FSM.",
+       "lines": [
+        50,
+        269,
+        522
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "m_axis_data_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 83.8,
+       "struct_score": 54.5,
+       "trace": "data_backward",
+       "why": "Read data byte output assembled from received bits.",
+       "lines": [
+        53,
+        271
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "m_axis_data_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 59.8,
+       "struct_score": 69.0,
+       "trace": "control_backward",
+       "why": "Read data valid, set when a byte is received, cleared by tready.",
+       "lines": [
+        54,
+        272,
+        410
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "m_axis_data_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 21.3,
+       "struct_score": 29.7,
+       "trace": "interface",
+       "why": "Read data stream ready clearing tvalid.",
+       "lines": [
+        55,
+        318
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E63",
+       "name": "s_axis_cmd_ready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E64",
+       "name": "s_axis_cmd_ready_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E65",
+       "name": "s_axis_data_tready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E66",
+       "name": "s_axis_data_tready_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E67",
+       "name": "m_axis_data_tdata_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E68",
+       "name": "m_axis_data_tdata_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E69",
+       "name": "m_axis_data_tvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E70",
+       "name": "m_axis_data_tvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E71",
+       "name": "m_axis_data_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E72",
+       "name": "m_axis_data_tlast_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E14",
+       "name": "s_axis_data_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "m_axis_data_tlast",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "I2C pins",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Open-drain SCL/SDA outputs and synchronized inputs.",
+     "anchors": [
+      {
+       "id": "E20",
+       "name": "scl_o",
+       "role": "CLOCK_GEN",
+       "importance": "major",
+       "score": 48.5,
+       "struct_score": 26.6,
+       "trace": "data_backward",
+       "why": "Generated I2C SCL output driven by PHY FSM.",
+       "lines": [
+        62,
+        275
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "sda_o",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 51.1,
+       "struct_score": 36.8,
+       "trace": "data_backward",
+       "why": "I2C SDA output carrying address/data bits and start/stop.",
+       "lines": [
+        65,
+        277
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "sda_i",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 21.8,
+       "struct_score": 31.5,
+       "trace": "interface",
+       "why": "SDA input synchronized into sda_i_reg for bit sampling and bus monitoring.",
+       "lines": [
+        64,
+        858
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E19",
+       "name": "scl_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E21",
+       "name": "scl_t",
+       "kind": "port_out"
+      },
+      {
+       "id": "E24",
+       "name": "sda_t",
+       "kind": "port_out"
+      },
+      {
+       "id": "E73",
+       "name": "scl_i_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E74",
+       "name": "sda_i_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E75",
+       "name": "scl_o_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E77",
+       "name": "sda_o_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Bus monitor and status",
+     "kind": "OTHER",
+     "description": "Detects start/stop on bus and reports busy, bus_active, bus_control, missed_ack.",
+     "anchors": [
+      {
+       "id": "E27",
+       "name": "bus_active",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 47.9,
+       "struct_score": 23.9,
+       "trace": "control_backward",
+       "why": "Bus busy indication from start/stop detection; makes FSM wait in START_WAIT.",
+       "lines": [
+        73,
+        281,
+        469
+       ]
+      },
+      {
+       "id": "E91",
+       "name": "start_bit",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 15.2,
+       "struct_score": 4.9,
+       "trace": "control_backward",
+       "why": "Detected start condition on bus, sets bus_active_reg.",
+       "lines": [
+        290,
+        868
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "busy",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 16.7,
+       "struct_score": 10.9,
+       "trace": "control_backward",
+       "why": "Module busy status decoded from both FSM states.",
+       "lines": [
+        71,
+        280
+       ]
+      },
+      {
+       "id": "E26",
+       "name": "bus_control",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 16.7,
+       "struct_score": 10.9,
+       "trace": "control_backward",
+       "why": "Indicates this master controls the bus.",
+       "lines": [
+        72,
+        282
+       ]
+      },
+      {
+       "id": "E28",
+       "name": "missed_ack",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 16.7,
+       "struct_score": 10.9,
+       "trace": "control_backward",
+       "why": "Strobe when slave ack missing.",
+       "lines": [
+        74,
+        283
+       ]
+      },
+      {
+       "id": "E30",
+       "name": "stop_on_idle",
+       "role": "CONFIG_REG",
+       "importance": "minor",
+       "score": 18.5,
+       "struct_score": 18.4,
+       "trace": "interface",
+       "why": "Configuration: auto-issue stop when no command pending.",
+       "lines": [
+        80,
+        399
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E92",
+       "name": "stop_bit",
+       "kind": "wire"
+      },
+      {
+       "id": "E79",
+       "name": "last_scl_i_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E80",
+       "name": "last_sda_i_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E87",
+       "name": "scl_posedge",
+       "kind": "wire"
+      },
+      {
+       "id": "E88",
+       "name": "scl_negedge",
+       "kind": "wire"
+      },
+      {
+       "id": "E89",
+       "name": "sda_posedge",
+       "kind": "wire"
+      },
+      {
+       "id": "E90",
+       "name": "sda_negedge",
+       "kind": "wire"
+      },
+      {
+       "id": "E81",
+       "name": "busy_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E82",
+       "name": "bus_active_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E83",
+       "name": "bus_control_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E84",
+       "name": "bus_control_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E85",
+       "name": "missed_ack_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E86",
+       "name": "missed_ack_next",
+       "kind": "comb"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axis_cmd",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axis_cmd_address",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_cmd_start",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_cmd_read",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_cmd_write",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_cmd_write_multiple",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_axis_cmd_stop",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_axis_cmd_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "s_axis_cmd_ready",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "s_axis_data",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E11",
+      "E12",
+      "E13",
+      "E14"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "s_axis_data_tdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E12",
+       "name": "s_axis_data_tvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "s_axis_data_tready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "s_axis_data_tlast",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axis_data",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E15",
+      "E16",
+      "E17",
+      "E18"
+     ],
+     "members": [
+      {
+       "id": "E15",
+       "name": "m_axis_data_tdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "m_axis_data_tvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "m_axis_data_tready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "m_axis_data_tlast",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "i2c",
+     "protocol": "SERIAL",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E19",
+      "E20",
+      "E21",
+      "E22",
+      "E23",
+      "E24"
+     ],
+     "members": [
+      {
+       "id": "E19",
+       "name": "scl_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E20",
+       "name": "scl_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E21",
+       "name": "scl_t",
+       "kind": "port_out"
+      },
+      {
+       "id": "E22",
+       "name": "sda_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E23",
+       "name": "sda_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E24",
+       "name": "sda_t",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E25",
+      "E26",
+      "E27",
+      "E28"
+     ],
+     "members": [
+      {
+       "id": "E25",
+       "name": "busy",
+       "kind": "port_out"
+      },
+      {
+       "id": "E26",
+       "name": "bus_control",
+       "kind": "port_out"
+      },
+      {
+       "id": "E27",
+       "name": "bus_active",
+       "kind": "port_out"
+      },
+      {
+       "id": "E28",
+       "name": "missed_ack",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "config",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E29",
+      "E30"
+     ],
+     "members": [
+      {
+       "id": "E29",
+       "name": "prescale",
+       "kind": "port_in"
+      },
+      {
+       "id": "E30",
+       "name": "stop_on_idle",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  },
+  "i2c_master_wbs_16": {
+   "source": "teacher",
+   "canonical_instance": "i2c_master_wbs_16",
+   "file": "data/rtl/verilog-i2c/rtl/i2c_master_wbs_16.v",
+   "lines": [
+    32,
+    673
+   ],
+   "summary": "Wishbone-slave I2C master: a 4-register 16-bit bank (status, command, data, prescale) pushes commands and write bytes into AXI-stream FIFOs feeding an i2c_master core and pops read bytes from a read FIFO.",
+   "blocks": [
+    {
+     "name": "wishbone_register_access",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Decodes Wishbone cycles to register reads/writes and registers ack and read data.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "wbs_adr_i",
+       "role": "INTERFACE_ADDR",
+       "importance": "critical",
+       "score": 86.8,
+       "struct_score": 65.3,
+       "trace": "interface",
+       "why": "Wishbone register address selecting status, command, data or prescale register.",
+       "lines": [
+        50,
+        475,
+        538
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "wbs_stb_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 93.9,
+       "struct_score": 84.6,
+       "trace": "interface",
+       "why": "Wishbone strobe with cyc starts a register read or write cycle.",
+       "lines": [
+        55,
+        471
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "wbs_ack_o",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 79.3,
+       "struct_score": 37.7,
+       "trace": "control_backward",
+       "why": "Registered Wishbone acknowledge, also suppresses duplicate FIFO pushes.",
+       "lines": [
+        56,
+        282
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "wbs_dat_i",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 93.9,
+       "struct_score": 84.7,
+       "trace": "interface",
+       "why": "Write data loading command bits, data byte, prescale and clear flags.",
+       "lines": [
+        51,
+        495,
+        511
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "wbs_dat_o",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 86.8,
+       "struct_score": 65.3,
+       "trace": "data_backward",
+       "why": "Registered read data muxed from status, command, read FIFO or prescale.",
+       "lines": [
+        52,
+        281
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "wbs_we_i",
+       "role": "COMMAND",
+       "importance": "major",
+       "score": 53.3,
+       "struct_score": 45.2,
+       "trace": "interface",
+       "why": "Selects register write versus read cycle.",
+       "lines": [
+        53,
+        473
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "wbs_cyc_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 37.9,
+       "struct_score": 84.6,
+       "trace": "interface",
+       "why": "Wishbone cycle qualifier combined with strobe.",
+       "lines": [
+        57,
+        471
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E17",
+       "name": "wbs_dat_o_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E18",
+       "name": "wbs_dat_o_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E19",
+       "name": "wbs_ack_o_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E20",
+       "name": "wbs_ack_o_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "command_register",
+     "kind": "REGISTER_BANK",
+     "description": "Command address and opcode bits pushed as one word into command FIFO.",
+     "anchors": [
+      {
+       "id": "E21",
+       "name": "cmd_address_reg",
+       "role": "CONFIG_REG",
+       "importance": "major",
+       "score": 46.1,
+       "struct_score": 16.8,
+       "trace": "data_backward",
+       "why": "Software-written I2C target address pushed with command bits into command FIFO.",
+       "lines": [
+        258,
+        335,
+        596
+       ]
+      },
+      {
+       "id": "E33",
+       "name": "cmd_valid_reg",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 51.4,
+       "struct_score": 38.4,
+       "trace": "control_backward",
+       "why": "Pushes command word into command FIFO after command register write.",
+       "lines": [
+        264,
+        337,
+        602
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "cmd_read_reg",
+       "role": "CONFIG_REG",
+       "importance": "minor",
+       "score": 16.5,
+       "struct_score": 10.1,
+       "trace": "data_backward",
+       "why": "Representative command bit (start/read/write/write_multiple/stop) written by software.",
+       "lines": [
+        260,
+        335,
+        598
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E22",
+       "name": "cmd_address_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E23",
+       "name": "cmd_start_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E24",
+       "name": "cmd_start_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E26",
+       "name": "cmd_read_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E27",
+       "name": "cmd_write_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E28",
+       "name": "cmd_write_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E29",
+       "name": "cmd_write_multiple_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E30",
+       "name": "cmd_write_multiple_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E31",
+       "name": "cmd_stop_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E32",
+       "name": "cmd_stop_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E34",
+       "name": "cmd_valid_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "command_fifo",
+     "kind": "BUFFER",
+     "description": "Queues I2C commands for the i2c_master core.",
+     "anchors": [
+      {
+       "id": "E35",
+       "name": "cmd_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 17.5,
+       "struct_score": 14.3,
+       "trace": "control_backward",
+       "why": "Command FIFO ready; low indicates full and flags overflow.",
+       "lines": [
+        265,
+        338,
+        456
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "genblk1.cmd_fifo_inst",
+       "module": "axis_fifo"
+      }
+     ],
+     "members": [
+      {
+       "id": "E52",
+       "name": "cmd_address_int",
+       "kind": "wire"
+      },
+      {
+       "id": "E53",
+       "name": "cmd_start_int",
+       "kind": "wire"
+      },
+      {
+       "id": "E54",
+       "name": "cmd_read_int",
+       "kind": "wire"
+      },
+      {
+       "id": "E55",
+       "name": "cmd_write_int",
+       "kind": "wire"
+      },
+      {
+       "id": "E56",
+       "name": "cmd_write_multiple_int",
+       "kind": "wire"
+      },
+      {
+       "id": "E57",
+       "name": "cmd_stop_int",
+       "kind": "wire"
+      },
+      {
+       "id": "E59",
+       "name": "cmd_ready_int",
+       "kind": "wire"
+      },
+      {
+       "id": "E72",
+       "name": "cmd_fifo_empty",
+       "kind": "wire"
+      },
+      {
+       "id": "E73",
+       "name": "cmd_fifo_full",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "write_data_fifo",
+     "kind": "BUFFER",
+     "description": "Queues write bytes with last flag for the I2C core.",
+     "anchors": [
+      {
+       "id": "E36",
+       "name": "data_in_reg",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 45.8,
+       "struct_score": 15.4,
+       "trace": "data_backward",
+       "why": "Write byte from data register pushed into write FIFO.",
+       "lines": [
+        267,
+        379,
+        604
+       ]
+      },
+      {
+       "id": "E38",
+       "name": "data_in_valid_reg",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 49.8,
+       "struct_score": 31.8,
+       "trace": "control_backward",
+       "why": "Pushes write byte into write data FIFO.",
+       "lines": [
+        268,
+        381,
+        605
+       ]
+      },
+      {
+       "id": "E41",
+       "name": "data_in_last_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 16.1,
+       "struct_score": 8.3,
+       "trace": "data_backward",
+       "why": "Last-byte flag for block write, pushed as tlast into write FIFO.",
+       "lines": [
+        270,
+        383,
+        606
+       ]
+      },
+      {
+       "id": "E40",
+       "name": "data_in_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 17.5,
+       "struct_score": 14.3,
+       "trace": "control_backward",
+       "why": "Write FIFO ready; low sets write overflow.",
+       "lines": [
+        269,
+        382,
+        522
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I2",
+       "instance": "genblk2.write_fifo_inst",
+       "module": "axis_fifo"
+      }
+     ],
+     "members": [
+      {
+       "id": "E37",
+       "name": "data_in_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E39",
+       "name": "data_in_valid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E42",
+       "name": "data_in_last_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E60",
+       "name": "data_in_int",
+       "kind": "wire"
+      },
+      {
+       "id": "E61",
+       "name": "data_in_valid_int",
+       "kind": "wire"
+      },
+      {
+       "id": "E62",
+       "name": "data_in_ready_int",
+       "kind": "wire"
+      },
+      {
+       "id": "E63",
+       "name": "data_in_last_int",
+       "kind": "wire"
+      },
+      {
+       "id": "E74",
+       "name": "write_fifo_empty",
+       "kind": "wire"
+      },
+      {
+       "id": "E75",
+       "name": "write_fifo_full",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "read_data_fifo",
+     "kind": "BUFFER",
+     "description": "Buffers received I2C bytes popped by data register reads.",
+     "anchors": [
+      {
+       "id": "E43",
+       "name": "data_out",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 45.8,
+       "struct_score": 15.4,
+       "trace": "data_backward",
+       "why": "Read FIFO output byte returned on data register reads.",
+       "lines": [
+        272,
+        428,
+        573
+       ]
+      },
+      {
+       "id": "E44",
+       "name": "data_out_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 20.4,
+       "struct_score": 25.9,
+       "trace": "control_backward",
+       "why": "Read FIFO has data; reported in data register and gates pop.",
+       "lines": [
+        273,
+        430,
+        574
+       ]
+      },
+      {
+       "id": "E45",
+       "name": "data_out_ready_reg",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 17.1,
+       "struct_score": 12.6,
+       "trace": "control_backward",
+       "why": "Pops read FIFO on data register read.",
+       "lines": [
+        274,
+        431,
+        608
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I3",
+       "instance": "genblk3.read_fifo_inst",
+       "module": "axis_fifo"
+      }
+     ],
+     "members": [
+      {
+       "id": "E46",
+       "name": "data_out_ready_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E47",
+       "name": "data_out_last",
+       "kind": "wire"
+      },
+      {
+       "id": "E64",
+       "name": "data_out_int",
+       "kind": "wire"
+      },
+      {
+       "id": "E65",
+       "name": "data_out_valid_int",
+       "kind": "wire"
+      },
+      {
+       "id": "E66",
+       "name": "data_out_ready_int",
+       "kind": "wire"
+      },
+      {
+       "id": "E67",
+       "name": "data_out_last_int",
+       "kind": "wire"
+      },
+      {
+       "id": "E76",
+       "name": "read_fifo_empty",
+       "kind": "wire"
+      },
+      {
+       "id": "E77",
+       "name": "read_fifo_full",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "status_config",
+     "kind": "REGISTER_BANK",
+     "description": "Prescale configuration and sticky status/overflow flags.",
+     "anchors": [
+      {
+       "id": "E48",
+       "name": "prescale_reg",
+       "role": "CONFIG_REG",
+       "importance": "major",
+       "score": 47.6,
+       "struct_score": 22.7,
+       "trace": "data_backward",
+       "why": "Programmable SCL prescale fed to i2c_master timing.",
+       "lines": [
+        277,
+        610,
+        669
+       ]
+      },
+      {
+       "id": "E50",
+       "name": "missed_ack_reg",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 15.4,
+       "struct_score": 5.7,
+       "trace": "control_backward",
+       "why": "Sticky missed-ACK status bit, write 1 to clear.",
+       "lines": [
+        279,
+        544,
+        612
+       ]
+      },
+      {
+       "id": "E78",
+       "name": "cmd_fifo_overflow_reg",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 15.8,
+       "struct_score": 7.2,
+       "trace": "control_backward",
+       "why": "Sticky command FIFO overflow status bit.",
+       "lines": [
+        315,
+        551,
+        614
+       ]
+      },
+      {
+       "id": "E80",
+       "name": "write_fifo_overflow_reg",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 15.4,
+       "struct_score": 5.7,
+       "trace": "control_backward",
+       "why": "Sticky write FIFO overflow status bit.",
+       "lines": [
+        316,
+        554,
+        615
+       ]
+      },
+      {
+       "id": "E68",
+       "name": "busy_int",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 14.5,
+       "struct_score": 2.1,
+       "trace": "control_backward",
+       "why": "i2c_master busy reported in status register bit 0.",
+       "lines": [
+        303,
+        541,
+        663
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E49",
+       "name": "prescale_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E51",
+       "name": "missed_ack_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E79",
+       "name": "cmd_fifo_overflow_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E81",
+       "name": "write_fifo_overflow_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E69",
+       "name": "bus_control_int",
+       "kind": "wire"
+      },
+      {
+       "id": "E70",
+       "name": "bus_active_int",
+       "kind": "wire"
+      },
+      {
+       "id": "E71",
+       "name": "missed_ack_int",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "i2c_core",
+     "kind": "CONTROLLER",
+     "description": "i2c_master engine executing queued commands on SCL/SDA.",
+     "anchors": [
+      {
+       "id": "E58",
+       "name": "cmd_valid_int",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 19.0,
+       "struct_score": 20.3,
+       "trace": "control_backward",
+       "why": "Command FIFO output valid into i2c_master command interface.",
+       "lines": [
+        290,
+        346,
+        641
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I4",
+       "instance": "i2c_master_inst",
+       "module": "i2c_master"
+      }
+     ],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "wishbone_slave",
+     "protocol": "MEMORY_BUS",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "wbs_adr_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "wbs_dat_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "wbs_dat_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "wbs_we_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "wbs_sel_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "wbs_stb_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "wbs_ack_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "wbs_cyc_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "i2c",
+     "protocol": "SERIAL",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15",
+      "E16"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "i2c_scl_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E12",
+       "name": "i2c_scl_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "i2c_scl_t",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "i2c_sda_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "i2c_sda_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "i2c_sda_t",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

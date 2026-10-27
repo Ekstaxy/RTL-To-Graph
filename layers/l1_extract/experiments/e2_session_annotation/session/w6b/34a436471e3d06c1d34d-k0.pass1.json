@@ -1,0 +1,24 @@
+{
+ "module_summary": "Traffic-light controller: a one-hot phase FSM advances stop/go/warn when a child phase down-timer reaches 3; phase bits pass through two register stages to the lamp outputs, which the timer watches to reload.",
+ "anchors": [
+  {"id": "E8", "name": "lamp_sel", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "One-hot phase register (off/stop/go/warn) advanced on timer expiry.", "lines": [54, 77, 94]},
+  {"id": "E13", "name": "remain", "role": "COUNTER", "importance": "critical", "trace": "data_backward", "why": "Remaining phase time from the child down-counter; decoded into expiry and exported.", "lines": [56, 59, 72]},
+  {"id": "E14", "name": "expired", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Phase-timeout flag gating every FSM phase transition.", "lines": [59, 79, 83]},
+  {"id": "E5", "name": "red", "role": "STATUS", "importance": "critical", "trace": "data_backward", "why": "Registered red lamp output, also fed back to the timer.", "lines": [44, 68, 102]},
+  {"id": "E6", "name": "yellow", "role": "STATUS", "importance": "critical", "trace": "data_backward", "why": "Registered yellow lamp output, also fed back to the timer.", "lines": [45, 67, 102]},
+  {"id": "E7", "name": "green", "role": "STATUS", "importance": "critical", "trace": "data_backward", "why": "Registered green lamp output, also fed back to the timer.", "lines": [46, 66, 102]},
+  {"id": "E3", "name": "pass_request", "role": "COMMAND", "importance": "major", "trace": "interface", "why": "Pedestrian request input shortening the green phase in the timer.", "lines": [42, 65]},
+  {"id": "E12", "name": "ahead_g", "role": "PIPELINE_REG", "importance": "minor", "trace": "data_backward", "why": "Stage register of phase bits before lamp outputs; timer uses it for edge detect.", "lines": [55, 69, 95]},
+  {"id": "E4", "name": "clock", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "Countdown display output, copy of remain.", "lines": [43, 104]}
+ ],
+ "groups": [
+  {"name": "phase_fsm", "kind": "CONTROLLER", "anchor_ids": ["E8", "E14"], "member_ids": ["E9"], "description": "One-hot phase register and next-state logic driven by timer expiry."},
+  {"name": "phase_timer", "kind": "COUNTER_TIMER", "anchor_ids": ["E13", "E3", "E4"], "member_ids": ["I1"], "description": "tl_timer child down-counter reloaded per phase, shortened by pedestrian request."},
+  {"name": "lamp_outputs", "kind": "PIPELINE_STAGE", "anchor_ids": ["E5", "E6", "E7", "E12"], "member_ids": ["E10", "E11"], "description": "Two register stages carrying phase bits to the red/yellow/green outputs."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "pedestrian", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E3"]},
+  {"name": "lights", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E4", "E5", "E6", "E7"]}
+ ]
+}

@@ -1,0 +1,43 @@
+{
+ "module_summary": "1G Ethernet MAC wrapper: AXI-Stream TX feeds an axis_gmii_tx instance and an axis_gmii_rx instance produces AXI-Stream RX from GMII, with MAC control/pause logic generate-disabled here.",
+ "anchors": [
+  {"id": "E5", "name": "tx_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "TX payload byte from AXI-Stream, forwarded to transmitter instance", "lines": [59, 604]},
+  {"id": "E6", "name": "tx_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "TX AXI-Stream valid, passed to axis_gmii_tx input", "lines": [60, 605]},
+  {"id": "E7", "name": "tx_axis_tready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "TX ready backpressure returned from transmitter", "lines": [61, 606]},
+  {"id": "E8", "name": "tx_axis_tlast", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "End-of-frame marker for TX stream", "lines": [62, 607]},
+  {"id": "E10", "name": "rx_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Received payload byte output from axis_gmii_rx", "lines": [68, 610]},
+  {"id": "E11", "name": "rx_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "RX AXI-Stream valid from receiver", "lines": [69, 611]},
+  {"id": "E12", "name": "rx_axis_tlast", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "End-of-frame marker of received stream", "lines": [70, 612]},
+  {"id": "E13", "name": "rx_axis_tuser", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "RX tuser carries bad-frame flag per frame", "lines": [71, 613]},
+  {"id": "E14", "name": "gmii_rxd", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "GMII receive data bus into receiver instance", "lines": [76, 214]},
+  {"id": "E15", "name": "gmii_rx_dv", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "GMII receive data valid qualifying gmii_rxd", "lines": [77, 215]},
+  {"id": "E17", "name": "gmii_txd", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "GMII transmit data bus from transmitter instance", "lines": [79, 249]},
+  {"id": "E18", "name": "gmii_tx_en", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "GMII transmit enable framing gmii_txd", "lines": [80, 250]},
+  {"id": "E40", "name": "rx_mii_select", "role": "MUX_SELECT", "importance": "minor", "trace": "forward", "why": "Selects MII nibble vs GMII byte mode in receiver", "lines": [122, 223]},
+  {"id": "E41", "name": "tx_mii_select", "role": "MUX_SELECT", "importance": "minor", "trace": "forward", "why": "Selects MII nibble vs GMII byte mode in transmitter", "lines": [123, 257]},
+  {"id": "E38", "name": "rx_clk_enable", "role": "ENABLE", "importance": "minor", "trace": "forward", "why": "Clock enable for receiver datapath", "lines": [120, 222]},
+  {"id": "E39", "name": "tx_clk_enable", "role": "ENABLE", "importance": "minor", "trace": "forward", "why": "Clock enable for transmitter datapath", "lines": [121, 256]},
+  {"id": "E65", "name": "cfg_ifg", "role": "CONFIG_REG", "importance": "minor", "trace": "forward", "why": "Configured inter-frame gap length for transmitter", "lines": [155, 258]},
+  {"id": "E66", "name": "cfg_tx_enable", "role": "ENABLE", "importance": "minor", "trace": "forward", "why": "Enables frame transmission in axis_gmii_tx", "lines": [156, 259]},
+  {"id": "E67", "name": "cfg_rx_enable", "role": "ENABLE", "importance": "minor", "trace": "forward", "why": "Enables frame reception in axis_gmii_rx", "lines": [157, 224]},
+  {"id": "E43", "name": "tx_error_underflow", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "Transmitter underflow error indication", "lines": [129, 261]},
+  {"id": "E45", "name": "rx_error_bad_frame", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "Receiver bad frame error indication", "lines": [131, 226]},
+  {"id": "E46", "name": "rx_error_bad_fcs", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "Receiver CRC/FCS mismatch indication", "lines": [132, 227]}
+ ],
+ "groups": [
+  {"name": "TX path", "kind": "SERIALIZER", "anchor_ids": ["E5", "E6", "E7", "E8", "E17", "E18", "E41", "E39", "E65", "E66", "E43"], "member_ids": ["I2", "E99", "E100", "E101", "E102", "E103", "E9", "E19", "E42"], "description": "axis_gmii_tx converts AXI-Stream frames to GMII with preamble, padding, FCS, IFG"},
+  {"name": "RX path", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E10", "E11", "E12", "E13", "E14", "E15", "E40", "E38", "E67", "E45", "E46"], "member_ids": ["I1", "E104", "E105", "E106", "E107", "E16", "E44"], "description": "axis_gmii_rx strips preamble/FCS from GMII and outputs AXI-Stream with error flags"}
+ ],
+ "interfaces": [
+  {"name": "clock/reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2", "E3", "E4"]},
+  {"name": "tx_axis", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E5", "E6", "E7", "E8", "E9"]},
+  {"name": "rx_axis", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E10", "E11", "E12", "E13"]},
+  {"name": "gmii_rx", "protocol": "STREAM", "direction": "IN", "member_ids": ["E14", "E15", "E16"]},
+  {"name": "gmii_tx", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E17", "E18", "E19"]},
+  {"name": "ptp", "protocol": "SIMPLE", "direction": "BIDIR", "member_ids": ["E20", "E21", "E22", "E23", "E24"]},
+  {"name": "flow control (LFC/PFC/pause)", "protocol": "REQ_ACK", "direction": "BIDIR", "member_ids": ["E25", "E26", "E27", "E28", "E29", "E30", "E31", "E32", "E33", "E34", "E35", "E36", "E37"]},
+  {"name": "control", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E38", "E39", "E40", "E41"]},
+  {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E42", "E43", "E44", "E45", "E46", "E47", "E48", "E49", "E50", "E51", "E52", "E53", "E54", "E55", "E56", "E57", "E58", "E59", "E60", "E61", "E62", "E63", "E64"]},
+  {"name": "configuration", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E65", "E66", "E67", "E68", "E69", "E70", "E71", "E72", "E73", "E74", "E75", "E76", "E77", "E78", "E79", "E80", "E81", "E82", "E83", "E84", "E85", "E86", "E87", "E88", "E89", "E90", "E91", "E92", "E93", "E94", "E95", "E96", "E97", "E98"]}
+ ]
+}

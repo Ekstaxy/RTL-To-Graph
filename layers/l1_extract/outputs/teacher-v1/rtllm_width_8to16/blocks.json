@@ -1,0 +1,195 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "rtllm_width_8to16",
+ "tops": [
+  "verified_width_8to16"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "verified_width_8to16": {
+   "source": "teacher",
+   "canonical_instance": "verified_width_8to16",
+   "file": "data/rtl/RTLLM/Miscellaneous/Others/width_8to16/verified_width_8to16.v",
+   "lines": [
+    2,
+    44
+   ],
+   "summary": "8-to-16-bit width converter: a toggle flag alternates between buffering the first valid byte and concatenating it with the second into a registered 16-bit word with valid pulse.",
+   "blocks": [
+    {
+     "name": "phase_control",
+     "kind": "CONTROLLER",
+     "description": "Toggle flag sequencing byte capture and output valid.",
+     "anchors": [
+      {
+       "id": "E8",
+       "name": "flag",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.6,
+       "struct_score": 98.9,
+       "trace": "control_backward",
+       "why": "Two-phase toggle selecting buffer-first-byte vs emit-word on each valid input.",
+       "lines": [
+        17,
+        25,
+        31
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "valid_out",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 98.3,
+       "struct_score": 95.7,
+       "trace": "control_backward",
+       "why": "One-cycle pulse accompanying completed 16-bit word.",
+       "lines": [
+        8,
+        32
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "width_packer",
+     "kind": "DATAPATH",
+     "description": "Byte buffer and concatenation into 16-bit output register.",
+     "anchors": [
+      {
+       "id": "E7",
+       "name": "data_lock",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 58.5,
+       "struct_score": 64.2,
+       "trace": "data_backward",
+       "why": "Holds first byte until second arrives; forms upper half of data_out.",
+       "lines": [
+        11,
+        18,
+        41
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "data_out",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 99.3,
+       "struct_score": 98.3,
+       "trace": "data_backward",
+       "why": "Registered 16-bit word {data_lock, data_in}.",
+       "lines": [
+        9,
+        41
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "data_in",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 97.5,
+       "struct_score": 93.6,
+       "trace": "interface",
+       "why": "8-bit input byte stored or concatenated into output.",
+       "lines": [
+        6,
+        18,
+        41
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "valid_in",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 98.6,
+       "struct_score": 96.5,
+       "trace": "interface",
+       "why": "Input byte valid; toggles flag and enables capture/output.",
+       "lines": [
+        5,
+        24,
+        40
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_n",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "byte_in",
+     "protocol": "STREAM",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "valid_in",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "data_in",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "word_out",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E5",
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "valid_out",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "data_out",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

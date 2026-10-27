@@ -1,0 +1,46 @@
+{
+ "module_summary": "DarkRISCV memory-mapped I/O block: address-decoded bus writes set LED/OPORT/timer registers and IRQ acks, reads are muxed into a registered read-data register with a wait-state ack, and a programmable timer raises toggle-based IRQs alongside a UART instance.",
+ "anchors": [
+  {"id": "E8", "name": "XADDR", "role": "INTERFACE_ADDR", "importance": "critical", "trace": "interface", "why": "Bus address decoded to select IO registers and UART.", "lines": [47, 115, 165]},
+  {"id": "E9", "name": "XATAI", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Bus write data loaded into LED, OPORT, timer and IRQ-ack registers.", "lines": [48, 129, 132]},
+  {"id": "E10", "name": "XATAO", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Bus read data driven from read mux register.", "lines": [49, 186]},
+  {"id": "E4", "name": "XDREQ", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Bus request qualifying reads and writes.", "lines": [43, 113, 163]},
+  {"id": "E11", "name": "XDACK", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Bus ack: immediate on write, after wait-state on read.", "lines": [50, 187]},
+  {"id": "E5", "name": "XWR", "role": "COMMAND", "importance": "major", "trace": "interface", "why": "Write command enabling register updates and UART write.", "lines": [44, 113, 208]},
+  {"id": "E6", "name": "XRD", "role": "COMMAND", "importance": "minor", "trace": "interface", "why": "Read command loading read mux register and starting wait-state.", "lines": [45, 105, 163]},
+  {"id": "E26", "name": "IOMUXFF", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Registered read-data mux of board ID, UART, LED, timer, ports.", "lines": [85, 173, 186]},
+  {"id": "E33", "name": "DTACK", "role": "COUNTER", "importance": "minor", "trace": "control_backward", "why": "Read wait-state counter generating delayed ack.", "lines": [101, 105, 187]},
+  {"id": "E23", "name": "TIMERFF", "role": "CONFIG_REG", "importance": "major", "trace": "control_backward", "why": "Software-programmable timer reload value; enables timer.", "lines": [81, 132, 148]},
+  {"id": "E32", "name": "TIMER", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Timer down-counter reloaded from TIMERFF; zero raises IRQ.", "lines": [99, 150, 152]},
+  {"id": "E25", "name": "TIMEUSFF", "role": "COUNTER", "importance": "minor", "trace": "control_backward", "why": "Microsecond prescale down-counter.", "lines": [83, 159, 160]},
+  {"id": "E24", "name": "TIMEUS", "role": "COUNTER", "importance": "minor", "trace": "control_backward", "why": "Microsecond uptime counter readable over bus.", "lines": [82, 160, 176]},
+  {"id": "E21", "name": "IREQ", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Toggle IRQ request bits set by timer expiry.", "lines": [78, 154, 189]},
+  {"id": "E22", "name": "IACK", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Toggle IRQ ack bits written by software to clear IRQs.", "lines": [79, 119, 189]},
+  {"id": "E27", "name": "BOARD_IRQ", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Pending IRQ vector IREQ xor IACK, readable and ORed to XIRQ.", "lines": [87, 189, 191]},
+  {"id": "E12", "name": "XIRQ", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Interrupt request to CPU when any IRQ pending.", "lines": [51, 191]},
+  {"id": "E20", "name": "LEDFF", "role": "CONFIG_REG", "importance": "major", "trace": "interface", "why": "Software-written LED register driving LED output.", "lines": [76, 129, 194]},
+  {"id": "E19", "name": "OPORTFF", "role": "CONFIG_REG", "importance": "major", "trace": "interface", "why": "Software-written general-purpose output port register.", "lines": [75, 134, 196]},
+  {"id": "E31", "name": "UDATA", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "UART read data into read mux.", "lines": [94, 173, 216]},
+  {"id": "E16", "name": "IPORT", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "General-purpose input port readable via mux.", "lines": [68, 177]},
+  {"id": "E15", "name": "LED", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "LED output from LEDFF.", "lines": [67, 194]},
+  {"id": "E17", "name": "OPORT", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "General-purpose output from OPORTFF.", "lines": [69, 196]},
+  {"id": "E13", "name": "RXD", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "UART receive line into uart0.", "lines": [53, 221]},
+  {"id": "E14", "name": "TXD", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "UART transmit line from uart0.", "lines": [54, 222]},
+  {"id": "E18", "name": "DEBUG", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "Debug probe of bus request/strobes/ack.", "lines": [70, 262]}
+ ],
+ "groups": [
+  {"name": "bus_interface", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E8", "E9", "E10", "E4", "E11", "E5", "E6", "E26", "E33"], "member_ids": ["E7", "E3", "E28", "E29", "E30"], "description": "Address decode, read mux register and wait-state acknowledge."},
+  {"name": "timer", "kind": "COUNTER_TIMER", "anchor_ids": ["E23", "E32", "E25", "E24"], "member_ids": [], "description": "Programmable periodic timer and microsecond counter."},
+  {"name": "irq_controller", "kind": "CONTROLLER", "anchor_ids": ["E21", "E22", "E27", "E12"], "member_ids": [], "description": "Toggle req/ack interrupt bits producing XIRQ."},
+  {"name": "gpio_registers", "kind": "REGISTER_BANK", "anchor_ids": ["E20", "E19", "E16", "E15", "E17"], "member_ids": [], "description": "LED and general-purpose output registers plus input port."},
+  {"name": "uart", "kind": "SERIALIZER", "anchor_ids": ["E31", "E13", "E14"], "member_ids": ["I1", "E34"], "description": "darkuart instance mapped at address window 1."}
+ ],
+ "interfaces": [
+  {"name": "clk_rst", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "cpu_bus", "protocol": "MEMORY_BUS", "direction": "BIDIR", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11"]},
+  {"name": "irq", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E12"]},
+  {"name": "uart", "protocol": "SERIAL", "direction": "BIDIR", "member_ids": ["E13", "E14"]},
+  {"name": "gpio", "protocol": "SIMPLE", "direction": "BIDIR", "member_ids": ["E15", "E16", "E17"]},
+  {"name": "debug", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E18"]}
+ ]
+}

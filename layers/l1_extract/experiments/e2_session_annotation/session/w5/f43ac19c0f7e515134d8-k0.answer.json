@@ -1,0 +1,322 @@
+{
+ "module_summary": "Bit-serial RISC-V ALU: a serial adder with registered carry, sign-aware compare with registered result, and boolean unit, OR-muxed onto rd by one-hot select.",
+ "anchors": [
+  {
+   "id": "E14",
+   "name": "result_add",
+   "role": "DATAPATH_MAJOR",
+   "importance": "critical",
+   "trace": "data_backward",
+   "why": "Serial add/sub result bit from rs1 + op_b + carry; feeds rd mux and equality compare.",
+   "lines": [
+    45,
+    75
+   ]
+  },
+  {
+   "id": "E24",
+   "name": "result_bool",
+   "role": "DATAPATH_MAJOR",
+   "importance": "major",
+   "trace": "data_backward",
+   "why": "Boolean xor/or/and result selected by i_bool_op, muxed onto rd.",
+   "lines": [
+    65,
+    77
+   ]
+  },
+  {
+   "id": "E15",
+   "name": "result_slt",
+   "role": "DATAPATH_MAJOR",
+   "importance": "minor",
+   "trace": "data_backward",
+   "why": "Set-less-than result: registered compare output on first bit, zeros elsewhere.",
+   "lines": [
+    67,
+    76
+   ]
+  },
+  {
+   "id": "E22",
+   "name": "result_lt",
+   "role": "DATAPATH_MAJOR",
+   "importance": "minor",
+   "trace": "data_backward",
+   "why": "Signed/unsigned less-than computed from sign-extended operands and adder carry.",
+   "lines": [
+    47,
+    51
+   ]
+  },
+  {
+   "id": "E23",
+   "name": "result_eq",
+   "role": "DATAPATH_MAJOR",
+   "importance": "minor",
+   "trace": "data_backward",
+   "why": "Running equality: zero sum bit AND previous compare state.",
+   "lines": [
+    49,
+    51
+   ]
+  },
+  {
+   "id": "E18",
+   "name": "add_cy_r",
+   "role": "HOLDING_REG",
+   "importance": "major",
+   "trace": "data_backward",
+   "why": "Carry register held between serial bit cycles; preset to i_sub for subtraction.",
+   "lines": [
+    45,
+    81
+   ]
+  },
+  {
+   "id": "E16",
+   "name": "cmp_r",
+   "role": "HOLDING_REG",
+   "importance": "major",
+   "trace": "data_backward",
+   "why": "Registered compare result carried across bits; used for eq chaining and slt.",
+   "lines": [
+    49,
+    84
+   ]
+  },
+  {
+   "id": "E10",
+   "name": "i_rs1",
+   "role": "INTERFACE_DATA",
+   "importance": "critical",
+   "trace": "interface",
+   "why": "Serial rs1 operand bit into adder, boolean unit and compare.",
+   "lines": [
+    26,
+    45
+   ]
+  },
+  {
+   "id": "E11",
+   "name": "i_op_b",
+   "role": "INTERFACE_DATA",
+   "importance": "critical",
+   "trace": "interface",
+   "why": "Serial operand B bit, inverted for subtraction.",
+   "lines": [
+    27,
+    43
+   ]
+  },
+  {
+   "id": "E13",
+   "name": "o_rd",
+   "role": "INTERFACE_DATA",
+   "importance": "critical",
+   "trace": "interface",
+   "why": "Serial rd result: OR of i_buf and selected ALU results.",
+   "lines": [
+    29,
+    74
+   ]
+  },
+  {
+   "id": "E12",
+   "name": "i_buf",
+   "role": "INTERFACE_DATA",
+   "importance": "minor",
+   "trace": "interface",
+   "why": "Shift/buffer register bit ORed directly into rd output.",
+   "lines": [
+    28,
+    74
+   ]
+  },
+  {
+   "id": "E4",
+   "name": "o_cmp",
+   "role": "STATUS",
+   "importance": "major",
+   "trace": "control_backward",
+   "why": "Comparison result output (eq or lt) for branches; also latched into cmp_r.",
+   "lines": [
+    51,
+    84
+   ]
+  },
+  {
+   "id": "E9",
+   "name": "i_rd_sel",
+   "role": "MUX_SELECT",
+   "importance": "major",
+   "trace": "forward",
+   "why": "One-hot select of add, slt or bool result onto rd.",
+   "lines": [
+    75,
+    76,
+    77
+   ]
+  },
+  {
+   "id": "E2",
+   "name": "i_en",
+   "role": "ENABLE",
+   "importance": "major",
+   "trace": "forward",
+   "why": "Enables carry propagation and compare register update each serial cycle.",
+   "lines": [
+    81,
+    83
+   ]
+  },
+  {
+   "id": "E5",
+   "name": "i_sub",
+   "role": "COMMAND",
+   "importance": "major",
+   "trace": "forward",
+   "why": "Selects subtraction: inverts op_b and presets carry-in.",
+   "lines": [
+    43,
+    81
+   ]
+  },
+  {
+   "id": "E6",
+   "name": "i_bool_op",
+   "role": "COMMAND",
+   "importance": "minor",
+   "trace": "forward",
+   "why": "Selects xor/or/and/zero boolean operation.",
+   "lines": [
+    65
+   ]
+  },
+  {
+   "id": "E7",
+   "name": "i_cmp_eq",
+   "role": "MUX_SELECT",
+   "importance": "minor",
+   "trace": "forward",
+   "why": "Selects equality vs less-than as compare output.",
+   "lines": [
+    51
+   ]
+  },
+  {
+   "id": "E8",
+   "name": "i_cmp_sig",
+   "role": "COMMAND",
+   "importance": "minor",
+   "trace": "forward",
+   "why": "Selects signed comparison by enabling operand sign extension.",
+   "lines": [
+    40,
+    41
+   ]
+  }
+ ],
+ "groups": [
+  {
+   "name": "Serial adder",
+   "kind": "DATAPATH",
+   "anchor_ids": [
+    "E14",
+    "E18",
+    "E5",
+    "E10",
+    "E11"
+   ],
+   "member_ids": [
+    "E17",
+    "E21"
+   ],
+   "description": "Bit-serial add/sub with carry register preset by i_sub."
+  },
+  {
+   "name": "Comparator",
+   "kind": "DATAPATH",
+   "anchor_ids": [
+    "E4",
+    "E16",
+    "E22",
+    "E23",
+    "E7",
+    "E8",
+    "E15"
+   ],
+   "member_ids": [
+    "E19",
+    "E20",
+    "E3"
+   ],
+   "description": "Eq/lt compare with registered result chained across bits; slt result."
+  },
+  {
+   "name": "Boolean unit",
+   "kind": "DATAPATH",
+   "anchor_ids": [
+    "E24",
+    "E6"
+   ],
+   "member_ids": [],
+   "description": "Xor/or/and of rs1 and op_b selected by i_bool_op."
+  },
+  {
+   "name": "Result mux",
+   "kind": "DATAPATH",
+   "anchor_ids": [
+    "E13",
+    "E9",
+    "E12",
+    "E2"
+   ],
+   "member_ids": [],
+   "description": "One-hot OR mux of ALU results and buffer bit onto rd."
+  }
+ ],
+ "interfaces": [
+  {
+   "name": "clock",
+   "protocol": "CLOCK_RESET",
+   "direction": "IN",
+   "member_ids": [
+    "E1"
+   ]
+  },
+  {
+   "name": "state",
+   "protocol": "SIMPLE",
+   "direction": "BIDIR",
+   "member_ids": [
+    "E2",
+    "E3",
+    "E4"
+   ]
+  },
+  {
+   "name": "control",
+   "protocol": "SIMPLE",
+   "direction": "IN",
+   "member_ids": [
+    "E5",
+    "E6",
+    "E7",
+    "E8",
+    "E9"
+   ]
+  },
+  {
+   "name": "serial data",
+   "protocol": "STREAM",
+   "direction": "IN",
+   "member_ids": [
+    "E10",
+    "E11",
+    "E12",
+    "E13"
+   ]
+  }
+ ]
+}

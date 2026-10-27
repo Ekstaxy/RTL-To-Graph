@@ -1,0 +1,31 @@
+{
+ "module_summary": "Wishbone pipelined-to-classic bridge: passes request signals combinationally downstream, uses a returned flag to drop strobe and stall, and registers ack, error and read data back upstream.",
+ "anchors": [
+  {"id": "E24", "name": "returned", "role": "CONTROL_FLAG", "importance": "critical", "trace": "control_backward", "why": "Set on downstream ack/err; gates o_mstb and drives o_sstall.", "lines": [70, 77, 106]},
+  {"id": "E4", "name": "i_sstb", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Upstream pipelined strobe forwarded as o_mstb, clears returned.", "lines": [46, 77, 97]},
+  {"id": "E3", "name": "i_scyc", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Upstream bus cycle, forwarded to o_mcyc and qualifies ack/err.", "lines": [46, 76, 119]},
+  {"id": "E9", "name": "o_sstall", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "Upstream stall, asserted until downstream response returned.", "lines": [50, 106]},
+  {"id": "E10", "name": "o_sack", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Registered upstream ack from i_mack within cycle.", "lines": [50, 119]},
+  {"id": "E12", "name": "o_serr", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Registered upstream bus error from i_merr.", "lines": [52, 120]},
+  {"id": "E11", "name": "o_sdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Upstream read data captured from i_mdata on ack/err.", "lines": [51, 128]},
+  {"id": "E14", "name": "o_mstb", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Downstream classic strobe, i_sstb masked by returned.", "lines": [55, 77]},
+  {"id": "E13", "name": "o_mcyc", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Downstream cycle, copy of i_scyc.", "lines": [55, 76]},
+  {"id": "E19", "name": "i_mack", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Downstream ack; sets returned, produces o_sack and captures data.", "lines": [59, 99, 119]},
+  {"id": "E21", "name": "i_merr", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "Downstream error; sets returned and o_serr.", "lines": [61, 99, 120]},
+  {"id": "E20", "name": "i_mdata", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Downstream read data latched into o_sdata.", "lines": [60, 128]},
+  {"id": "E16", "name": "o_maddr", "role": "INTERFACE_ADDR", "importance": "major", "trace": "data_backward", "why": "Downstream address forwarded from i_saddr.", "lines": [56, 79]},
+  {"id": "E17", "name": "o_mdata", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Downstream write data forwarded from i_sdata.", "lines": [57, 80]},
+  {"id": "E15", "name": "o_mwe", "role": "COMMAND", "importance": "minor", "trace": "data_backward", "why": "Downstream write enable forwarded from i_swe.", "lines": [55, 78]},
+  {"id": "E22", "name": "o_mcti", "role": "STATUS", "importance": "minor", "trace": "none", "why": "Constant classic cycle type indicator.", "lines": [63, 84]}
+ ],
+ "groups": [
+  {"name": "Response tracking", "kind": "CONTROLLER", "anchor_ids": ["E24", "E9", "E10", "E12"], "member_ids": [], "description": "returned flag drives stall and strobe drop; registered ack/err upstream."},
+  {"name": "Request forwarding", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E14", "E13", "E16", "E17", "E15", "E22"], "member_ids": ["E18", "E23"], "description": "Combinational pass-through of pipelined request onto classic bus."},
+  {"name": "Read data return", "kind": "DATAPATH", "anchor_ids": ["E11", "E20"], "member_ids": [], "description": "Captures downstream read data on ack or error."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "wb_pipelined_slave", "protocol": "MEMORY_BUS", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12"]},
+  {"name": "wb_classic_master", "protocol": "MEMORY_BUS", "direction": "OUT", "member_ids": ["E13", "E14", "E15", "E16", "E17", "E18", "E19", "E20", "E21", "E22", "E23"]}
+ ]
+}

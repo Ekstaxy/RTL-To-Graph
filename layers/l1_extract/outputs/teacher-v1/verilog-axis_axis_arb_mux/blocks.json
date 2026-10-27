@@ -1,0 +1,1094 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-axis_axis_arb_mux",
+ "tops": [
+  "axis_arb_mux"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "priority_encoder": {
+   "source": "heuristic",
+   "canonical_instance": "axis_arb_mux.arb_inst.priority_encoder_inst",
+   "file": "data/rtl/verilog-axis/rtl/priority_encoder.v",
+   "lines": [
+    34,
+    90
+   ],
+   "summary": "priority_encoder (heuristic)",
+   "blocks": [
+    {
+     "name": "storage",
+     "kind": "BUFFER",
+     "description": "storage",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "stage_valid",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 69.3,
+       "struct_score": 93.1,
+       "trace": "data_backward",
+       "why": "memory array",
+       "lines": []
+      },
+      {
+       "id": "E7",
+       "name": "stage_enc",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 69.8,
+       "struct_score": 94.6,
+       "trace": "data_backward",
+       "why": "memory array",
+       "lines": []
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E2",
+     "name": "output_valid",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 96.6,
+     "struct_score": 91.5,
+     "trace": "interface",
+     "why": "valid port",
+     "lines": []
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "input",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E1"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "input_unencoded",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "output",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E2",
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E2",
+       "name": "output_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E3",
+       "name": "output_encoded",
+       "kind": "port_out"
+      },
+      {
+       "id": "E4",
+       "name": "output_unencoded",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "arbiter": {
+   "source": "teacher",
+   "canonical_instance": "axis_arb_mux.arb_inst",
+   "file": "data/rtl/verilog-axis/rtl/arbiter.v",
+   "lines": [
+    34,
+    157
+   ],
+   "summary": "Parameterized arbiter: two priority encoders (plain and round-robin-masked) pick a requester; registered one-hot grant, valid and encoded index, with optional blocking until acknowledge.",
+   "blocks": [
+    {
+     "name": "Priority encoders",
+     "kind": "ARBITER",
+     "description": "Plain and masked priority encoders selecting winning requester",
+     "anchors": [
+      {
+       "id": "E14",
+       "name": "request_valid",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 50.3,
+       "struct_score": 33.7,
+       "trace": "control_backward",
+       "why": "any request present; gates new grant computation",
+       "lines": [
+        66,
+        76,
+        114
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "request_index",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 18.7,
+       "struct_score": 19.3,
+       "trace": "data_backward",
+       "why": "priority-encoded winner index loaded into grant_encoded",
+       "lines": [
+        67,
+        77,
+        128
+       ]
+      },
+      {
+       "id": "E19",
+       "name": "masked_request_valid",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 22.3,
+       "struct_score": 33.7,
+       "trace": "control_backward",
+       "why": "masked request present; selects masked encoder result in round-robin mode",
+       "lines": [
+        83,
+        93,
+        116
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "priority_encoder_inst",
+       "module": "priority_encoder"
+      },
+      {
+       "id": "I2",
+       "instance": "priority_encoder_masked",
+       "module": "priority_encoder"
+      }
+     ],
+     "members": [
+      {
+       "id": "E16",
+       "name": "request_mask",
+       "kind": "wire"
+      },
+      {
+       "id": "E20",
+       "name": "masked_request_index",
+       "kind": "wire"
+      },
+      {
+       "id": "E21",
+       "name": "masked_request_mask",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Round-robin mask",
+     "kind": "ARBITER",
+     "description": "Masks requests at or below last winner for round-robin fairness",
+     "anchors": [
+      {
+       "id": "E17",
+       "name": "mask_reg",
+       "role": "ARBITRATION",
+       "importance": "minor",
+       "score": 37.6,
+       "struct_score": 83.8,
+       "trace": "control_backward",
+       "why": "round-robin mask of ports above last winner; disabled by default parameter",
+       "lines": [
+        81,
+        92,
+        147
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E18",
+       "name": "mask_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Grant registers",
+     "kind": "CONTROLLER",
+     "description": "Registered grant, valid and index; hold until ack/request drop when blocking",
+     "anchors": [
+      {
+       "id": "E5",
+       "name": "grant",
+       "role": "ARBITRATION",
+       "importance": "critical",
+       "score": 95.7,
+       "struct_score": 89.1,
+       "trace": "control_backward",
+       "why": "registered one-hot grant vector output",
+       "lines": [
+        53,
+        63
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "grant_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 69.7,
+       "struct_score": 94.3,
+       "trace": "control_backward",
+       "why": "indicates a grant is active; used for ack-blocking hold",
+       "lines": [
+        54,
+        62,
+        109
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "grant_encoded",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 57.1,
+       "struct_score": 58.9,
+       "trace": "data_backward",
+       "why": "binary index of granted port output",
+       "lines": [
+        55,
+        64
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "acknowledge",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 37.8,
+       "struct_score": 84.4,
+       "trace": "interface",
+       "why": "per-port ack releasing blocking grant; only active when ARB_BLOCK set",
+       "lines": [
+        51,
+        109
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E8",
+       "name": "grant_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E9",
+       "name": "grant_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E10",
+       "name": "grant_valid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E11",
+       "name": "grant_valid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E12",
+       "name": "grant_encoded_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E13",
+       "name": "grant_encoded_next",
+       "kind": "comb"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E3",
+     "name": "request",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 97.6,
+     "struct_score": 93.8,
+     "trace": "interface",
+     "why": "per-port request vector fed to both priority encoders",
+     "lines": [
+      50,
+      75,
+      92
+     ]
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock/reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "request/acknowledge",
+     "protocol": "REQ_ACK",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "request",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "acknowledge",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "grant",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E5",
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "grant",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "grant_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "grant_encoded",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "axis_arb_mux": {
+   "source": "teacher",
+   "canonical_instance": "axis_arb_mux",
+   "file": "data/rtl/verilog-axis/rtl/axis_arb_mux.v",
+   "lines": [
+    34,
+    308
+   ],
+   "summary": "AXI-Stream N:1 arbitrated mux: registered inputs feed an arbiter-selected mux whose output passes through a two-register skid buffer.",
+   "blocks": [
+    {
+     "name": "Input register stage",
+     "kind": "PIPELINE_STAGE",
+     "description": "Per-port registers capturing input beats while ready, hiding arbitration latency.",
+     "anchors": [
+      {
+       "id": "E24",
+       "name": "s_axis_tdata_reg",
+       "role": "PIPELINE_REG",
+       "importance": "major",
+       "score": 49.9,
+       "struct_score": 32.0,
+       "trace": "data_backward",
+       "why": "Input register stage hiding arbitration delay; source of muxed data.",
+       "lines": [
+        122,
+        144,
+        194
+       ]
+      },
+      {
+       "id": "E26",
+       "name": "s_axis_tvalid_reg",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 22.0,
+       "struct_score": 32.7,
+       "trace": "control_backward",
+       "why": "Registered input valids; drive ready, request and muxed valid.",
+       "lines": [
+        141,
+        146,
+        196
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E25",
+       "name": "s_axis_tkeep_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E27",
+       "name": "s_axis_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E28",
+       "name": "s_axis_tid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E29",
+       "name": "s_axis_tdest_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E30",
+       "name": "s_axis_tuser_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Arbiter",
+     "kind": "ARBITER",
+     "description": "Arbiter instance grants one input per packet, released on tlast acknowledge.",
+     "anchors": [
+      {
+       "id": "E21",
+       "name": "grant",
+       "role": "ARBITRATION",
+       "importance": "critical",
+       "score": 80.1,
+       "struct_score": 41.0,
+       "trace": "control_backward",
+       "why": "One-hot grant from arbiter; gates input ready, request and acknowledge.",
+       "lines": [
+        141,
+        171,
+        172
+       ]
+      },
+      {
+       "id": "E19",
+       "name": "request",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 20.9,
+       "struct_score": 27.9,
+       "trace": "control_backward",
+       "why": "Arbiter request vector from live or registered input valids.",
+       "lines": [
+        171
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "acknowledge",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 17.9,
+       "struct_score": 16.0,
+       "trace": "control_backward",
+       "why": "Releases grant at end of packet (tlast) when transfer accepted.",
+       "lines": [
+        172
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "grant_valid",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.0,
+       "struct_score": 8.2,
+       "trace": "control_backward",
+       "why": "Indicates a grant exists; qualifies internal output valid.",
+       "lines": [
+        178
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "arb_inst",
+       "module": "arbiter"
+      }
+     ],
+     "members": [
+      {
+       "id": "E23",
+       "name": "grant_encoded",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Input mux",
+     "kind": "DATAPATH",
+     "description": "Selects granted port's registered fields by grant_encoded into internal stream.",
+     "anchors": [
+      {
+       "id": "E23",
+       "name": "grant_encoded",
+       "role": "MUX_SELECT",
+       "importance": "major",
+       "score": 59.7,
+       "struct_score": 68.4,
+       "trace": "control_backward",
+       "why": "Encoded grant index selects which registered input drives the output mux.",
+       "lines": [
+        144,
+        146,
+        182
+       ]
+      },
+      {
+       "id": "E40",
+       "name": "current_s_tdata",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 16.5,
+       "struct_score": 10.1,
+       "trace": "data_backward",
+       "why": "Mux output: selected input's registered data.",
+       "lines": [
+        144,
+        176
+       ]
+      },
+      {
+       "id": "E33",
+       "name": "m_axis_tvalid_int",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 22.7,
+       "struct_score": 35.4,
+       "trace": "control_backward",
+       "why": "Internal valid into skid buffer, qualified by ready and grant_valid.",
+       "lines": [
+        178,
+        255
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E41",
+       "name": "current_s_tkeep",
+       "kind": "wire"
+      },
+      {
+       "id": "E42",
+       "name": "current_s_tvalid",
+       "kind": "wire"
+      },
+      {
+       "id": "E43",
+       "name": "current_s_tready",
+       "kind": "wire"
+      },
+      {
+       "id": "E44",
+       "name": "current_s_tlast",
+       "kind": "wire"
+      },
+      {
+       "id": "E45",
+       "name": "current_s_tid",
+       "kind": "wire"
+      },
+      {
+       "id": "E46",
+       "name": "current_s_tdest",
+       "kind": "wire"
+      },
+      {
+       "id": "E47",
+       "name": "current_s_tuser",
+       "kind": "wire"
+      },
+      {
+       "id": "E31",
+       "name": "m_axis_tdata_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E32",
+       "name": "m_axis_tkeep_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E35",
+       "name": "m_axis_tlast_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E36",
+       "name": "m_axis_tid_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E37",
+       "name": "m_axis_tdest_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E38",
+       "name": "m_axis_tuser_int",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Output skid buffer",
+     "kind": "BUFFER",
+     "description": "Output plus temp register pair giving full-throughput registered AXIS output.",
+     "anchors": [
+      {
+       "id": "E48",
+       "name": "m_axis_tdata_reg",
+       "role": "PIPELINE_REG",
+       "importance": "major",
+       "score": 47.6,
+       "struct_score": 22.8,
+       "trace": "data_backward",
+       "why": "Output register of skid buffer driving m_axis_tdata.",
+       "lines": [
+        210,
+        277,
+        284
+       ]
+      },
+      {
+       "id": "E56",
+       "name": "temp_m_axis_tdata_reg",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 52.3,
+       "struct_score": 41.5,
+       "trace": "data_backward",
+       "why": "Skid temp register holding data when output stalls.",
+       "lines": [
+        218,
+        284,
+        293
+       ]
+      },
+      {
+       "id": "E58",
+       "name": "temp_m_axis_tvalid_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 19.6,
+       "struct_score": 22.6,
+       "trace": "control_backward",
+       "why": "Skid temp occupancy; affects early ready and output refill.",
+       "lines": [
+        240,
+        264,
+        273
+       ]
+      },
+      {
+       "id": "E34",
+       "name": "m_axis_tready_int_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 50.3,
+       "struct_score": 33.6,
+       "trace": "control_backward",
+       "why": "Registered internal ready; gates input ready, ack and skid-buffer transfers.",
+       "lines": [
+        141,
+        251,
+        272
+       ]
+      },
+      {
+       "id": "E64",
+       "name": "store_axis_int_to_output",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 16.9,
+       "struct_score": 11.7,
+       "trace": "control_backward",
+       "why": "Loads output register from internal mux data.",
+       "lines": [
+        256,
+        276
+       ]
+      },
+      {
+       "id": "E65",
+       "name": "store_axis_int_to_temp",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 16.9,
+       "struct_score": 11.7,
+       "trace": "control_backward",
+       "why": "Loads temp skid register when output stalled.",
+       "lines": [
+        260,
+        292
+       ]
+      },
+      {
+       "id": "E66",
+       "name": "store_axis_temp_to_output",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 16.7,
+       "struct_score": 11.1,
+       "trace": "control_backward",
+       "why": "Moves temp register contents into output register.",
+       "lines": [
+        266,
+        283
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E49",
+       "name": "m_axis_tkeep_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E50",
+       "name": "m_axis_tvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E51",
+       "name": "m_axis_tvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E52",
+       "name": "m_axis_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E53",
+       "name": "m_axis_tid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E54",
+       "name": "m_axis_tdest_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E55",
+       "name": "m_axis_tuser_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E57",
+       "name": "temp_m_axis_tkeep_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E59",
+       "name": "temp_m_axis_tvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E60",
+       "name": "temp_m_axis_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E61",
+       "name": "temp_m_axis_tid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E62",
+       "name": "temp_m_axis_tdest_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E63",
+       "name": "temp_m_axis_tuser_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E39",
+       "name": "m_axis_tready_int_early",
+       "kind": "wire"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E3",
+     "name": "s_axis_tdata",
+     "role": "INTERFACE_DATA",
+     "importance": "critical",
+     "score": 89.1,
+     "struct_score": 72.4,
+     "trace": "interface",
+     "why": "Concatenated input stream payloads captured into input registers.",
+     "lines": [
+      194
+     ]
+    },
+    {
+     "id": "E5",
+     "name": "s_axis_tvalid",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 89.9,
+     "struct_score": 74.4,
+     "trace": "interface",
+     "why": "Per-input valid vector; raises arbitration requests and loads input registers.",
+     "lines": [
+      171,
+      196
+     ]
+    },
+    {
+     "id": "E6",
+     "name": "s_axis_tready",
+     "role": "HANDSHAKE_READY",
+     "importance": "critical",
+     "score": 93.5,
+     "struct_score": 83.6,
+     "trace": "control_backward",
+     "why": "Per-input ready from empty input reg or granted port with internal ready; enables input capture.",
+     "lines": [
+      141,
+      193
+     ]
+    },
+    {
+     "id": "E11",
+     "name": "m_axis_tdata",
+     "role": "INTERFACE_DATA",
+     "importance": "critical",
+     "score": 86.0,
+     "struct_score": 62.3,
+     "trace": "data_backward",
+     "why": "Muxed output payload driven from the output register.",
+     "lines": [
+      231
+     ]
+    },
+    {
+     "id": "E13",
+     "name": "m_axis_tvalid",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 85.7,
+     "struct_score": 61.3,
+     "trace": "data_backward",
+     "why": "Output valid driven by the output skid register valid.",
+     "lines": [
+      233
+     ]
+    },
+    {
+     "id": "E14",
+     "name": "m_axis_tready",
+     "role": "HANDSHAKE_READY",
+     "importance": "critical",
+     "score": 85.7,
+     "struct_score": 61.2,
+     "trace": "interface",
+     "why": "Downstream ready; steers skid buffer transfers and internal ready.",
+     "lines": [
+      240,
+      253,
+      262
+     ]
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock/reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axis",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axis_tdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_tkeep",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_tvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_tready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_axis_tid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_axis_tdest",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "s_axis_tuser",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axis",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "m_axis_tdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "m_axis_tkeep",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "m_axis_tvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "m_axis_tready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "m_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "m_axis_tid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "m_axis_tdest",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "m_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,50 @@
+{
+ "module_summary": "AXI read-channel width adapter: an FSM forwards or re-sizes AR bursts to the master side, then splits or merges R beats via address tracking and a data register, emitting through a skid-buffered output stage.",
+ "anchors": [
+  {"id": "E43", "name": "state_reg", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Adapter FSM: idle, data, data_read, data_split sequencing AR issue and R beat conversion.", "lines": [169, 260, 553]},
+  {"id": "E14", "name": "s_axi_arvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Slave AR request valid; accepted in idle to start a burst.", "lines": [81, 265]},
+  {"id": "E15", "name": "s_axi_arready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Slave AR ready, registered from FSM when no master AR pending.", "lines": [82, 207, 265]},
+  {"id": "E4", "name": "s_axi_araddr", "role": "INTERFACE_ADDR", "importance": "major", "trace": "interface", "why": "Slave read address, copied to m_axi_araddr_next and addr_next.", "lines": [71, 269, 329]},
+  {"id": "E6", "name": "s_axi_arsize", "role": "COMMAND", "importance": "minor", "trace": "forward", "why": "Burst size decides split, merge or pass-through conversion.", "lines": [73, 332, 466]},
+  {"id": "E5", "name": "s_axi_arlen", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Slave burst length, loaded into burst_next and used to compute master arlen.", "lines": [72, 330, 339]},
+  {"id": "E17", "name": "s_axi_rdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Slave read data output from output register.", "lines": [84, 612]},
+  {"id": "E21", "name": "s_axi_rvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Slave R valid from skid-buffer output stage.", "lines": [88, 616]},
+  {"id": "E22", "name": "s_axi_rready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Slave R ready; drives skid buffer transfers and rready_int_early.", "lines": [89, 619, 632]},
+  {"id": "E34", "name": "m_axi_arvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Master AR valid, set on new burst and held until arready.", "lines": [105, 220]},
+  {"id": "E35", "name": "m_axi_arready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Master AR ready clears m_axi_arvalid_next.", "lines": [106, 248]},
+  {"id": "E24", "name": "m_axi_araddr", "role": "INTERFACE_ADDR", "importance": "major", "trace": "data_backward", "why": "Master read address, from slave address or recomputed for split bursts.", "lines": [95, 210]},
+  {"id": "E25", "name": "m_axi_arlen", "role": "INTERFACE_DATA", "importance": "minor", "trace": "data_backward", "why": "Master burst length, recomputed when resizing bursts.", "lines": [96, 211]},
+  {"id": "E37", "name": "m_axi_rdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Master read data, shifted/split or merged into data_reg.", "lines": [108, 368, 502]},
+  {"id": "E41", "name": "m_axi_rvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Master R valid, gates beat acceptance in data states.", "lines": [112, 290]},
+  {"id": "E42", "name": "m_axi_rready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "Master R ready, registered from FSM and downstream readiness.", "lines": [113, 221, 290]},
+  {"id": "E47", "name": "addr_reg", "role": "INDEX", "importance": "major", "trace": "control_backward", "why": "Tracks current beat address; selects data segment and detects word boundaries.", "lines": [172, 368, 373]},
+  {"id": "E49", "name": "data_reg", "role": "STORAGE", "importance": "major", "trace": "data_backward", "why": "Holds wide master beat for splitting or accumulates narrow beats when merging.", "lines": [173, 420, 502]},
+  {"id": "E55", "name": "burst_reg", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Remaining slave-side beats; ends burst at zero.", "lines": [176, 398, 400]},
+  {"id": "E59", "name": "master_burst_reg", "role": "COUNTER", "importance": "minor", "trace": "control_backward", "why": "Remaining master-side beats; triggers new master burst at zero.", "lines": [178, 512, 520]},
+  {"id": "E57", "name": "burst_size_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Latched slave burst size for address increment.", "lines": [177, 373]},
+  {"id": "E61", "name": "master_burst_size_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Latched master burst size for boundary detection.", "lines": [179, 405, 513]},
+  {"id": "E45", "name": "id_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Latched AR ID returned on s_axi_rid_int.", "lines": [171, 253]},
+  {"id": "E51", "name": "resp_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Accumulated read response for merged/split beats.", "lines": [174, 421, 504]},
+  {"id": "E92", "name": "s_axi_rdata_int", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Converted read data feeding skid buffer output stage.", "lines": [199, 368, 663]},
+  {"id": "E96", "name": "s_axi_rvalid_int", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "Internal R valid from FSM into output skid buffer.", "lines": [203, 634]},
+  {"id": "E97", "name": "s_axi_rready_int_reg", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Internal ready from skid buffer back to FSM.", "lines": [204, 418, 630]},
+  {"id": "E107", "name": "temp_s_axi_rdata_reg", "role": "STORAGE", "importance": "minor", "trace": "data_backward", "why": "Skid buffer temp data register when output stalled.", "lines": [600, 677, 669]},
+  {"id": "E111", "name": "temp_s_axi_rvalid_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Skid buffer occupied flag gating ready_int_early.", "lines": [604, 619, 643]},
+  {"id": "E113", "name": "store_axi_r_int_to_output", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Load enable for output data registers from internal path.", "lines": [607, 635, 661]}
+ ],
+ "groups": [
+  {"name": "Adapter FSM", "kind": "CONTROLLER", "anchor_ids": ["E43", "E6"], "member_ids": ["E44"], "description": "Sequences AR forwarding and R beat split/merge conversion."},
+  {"name": "Burst tracking", "kind": "COUNTER_TIMER", "anchor_ids": ["E47", "E55", "E59", "E57", "E61"], "member_ids": ["E48", "E56", "E58", "E60", "E62"], "description": "Address and beat counters for slave and master bursts."},
+  {"name": "Width conversion datapath", "kind": "DATAPATH", "anchor_ids": ["E49", "E51", "E45", "E92"], "member_ids": ["E50", "E52", "E46", "E53", "E54", "E91", "E93", "E94", "E95"], "description": "Segments wide beats or merges narrow beats into slave data width."},
+  {"name": "AR channel forwarding", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E14", "E15", "E4", "E5", "E34", "E35", "E24", "E25"], "member_ids": ["E63", "E64", "E65", "E66", "E67", "E68", "E69", "E70", "E71", "E72", "E73", "E74", "E75", "E76", "E77", "E78", "E79", "E80", "E81", "E82", "E83", "E84", "E85", "E86", "E87", "E88"], "description": "Registered master AR outputs derived from slave AR request."},
+  {"name": "R output skid buffer", "kind": "BUFFER", "anchor_ids": ["E17", "E21", "E22", "E96", "E97", "E107", "E111", "E113"], "member_ids": ["E98", "E99", "E100", "E101", "E102", "E103", "E104", "E105", "E106", "E108", "E109", "E110", "E112", "E114", "E115"], "description": "Two-register skid buffer driving slave R channel with registered ready."},
+  {"name": "Master R input", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E37", "E41", "E42"], "member_ids": ["E89", "E90", "E36", "E38", "E39", "E40"], "description": "Accepts master read beats with registered rready."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "s_axi_ar", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12", "E13", "E14", "E15"]},
+  {"name": "s_axi_r", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E16", "E17", "E18", "E19", "E20", "E21", "E22"]},
+  {"name": "m_axi_ar", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E23", "E24", "E25", "E26", "E27", "E28", "E29", "E30", "E31", "E32", "E33", "E34", "E35"]},
+  {"name": "m_axi_r", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E36", "E37", "E38", "E39", "E40", "E41", "E42"]}
+ ]
+}

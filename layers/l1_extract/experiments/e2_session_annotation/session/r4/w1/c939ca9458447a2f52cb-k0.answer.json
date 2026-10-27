@@ -1,0 +1,21 @@
+{
+ "module_summary": "Single-stage valid/ready stream register: load-enabled flops capture valid and data when downstream is ready or the stage is empty, with synchronous clear.",
+ "anchors": [
+  {"id": "E7", "name": "valid_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Registered output valid; loaded from valid_i when ready_o, marks the stage full", "lines": [27, 33, 36]},
+  {"id": "E5", "name": "ready_o", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Upstream ready: asserted when downstream ready or register empty; enables valid flop", "lines": [24, 33, 34]},
+  {"id": "E9", "name": "data_o", "role": "PIPELINE_REG", "importance": "critical", "trace": "data_backward", "why": "Registered payload loaded from data_i when reg_ena; drives output data", "lines": [29, 37]},
+  {"id": "E4", "name": "valid_i", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Upstream valid; loaded into valid_o and qualifies data register enable", "lines": [23, 34, 36]},
+  {"id": "E8", "name": "ready_i", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Downstream ready; frees the stage and drives ready_o", "lines": [28, 33]},
+  {"id": "E6", "name": "data_i", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Input payload captured into data_o on accepted transfer", "lines": [25, 37]},
+  {"id": "E10", "name": "reg_ena", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Data register load enable: valid_i AND ready_o", "lines": [32, 34, 37]}
+ ],
+ "groups": [
+  {"name": "handshake_control", "kind": "CONTROLLER", "anchor_ids": ["E7", "E5", "E4", "E8", "E10"], "member_ids": [], "description": "Computes ready_o and load enable, tracks stage occupancy in valid_o"},
+  {"name": "data_stage", "kind": "PIPELINE_STAGE", "anchor_ids": ["E9", "E6"], "member_ids": ["E10"], "description": "Load-enabled data register between input and output streams"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2", "E3"]},
+  {"name": "stream_in", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E4", "E5", "E6"]},
+  {"name": "stream_out", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E7", "E8", "E9"]}
+ ]
+}

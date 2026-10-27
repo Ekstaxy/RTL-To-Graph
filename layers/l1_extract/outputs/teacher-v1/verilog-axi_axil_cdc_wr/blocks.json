@@ -1,0 +1,704 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-axi_axil_cdc_wr",
+ "tops": [
+  "axil_cdc_wr"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "axil_cdc_wr": {
+   "source": "teacher",
+   "canonical_instance": "axil_cdc_wr",
+   "file": "data/rtl/verilog-axi/rtl/axil_cdc_wr.v",
+   "lines": [
+    34,
+    230
+   ],
+   "summary": "AXI-lite write-channel clock-domain crossing: slave-side registers capture aw/w, two 2-state FSMs exchange a toggle flag via 2-flop synchronizers, master-side registers issue the write and return bresp.",
+   "blocks": [
+    {
+     "name": "Slave-side capture",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Captures aw/w channels, holds them, returns write response to slave.",
+     "anchors": [
+      {
+       "id": "E37",
+       "name": "s_axil_awvalid_reg",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 54.6,
+       "struct_score": 50.1,
+       "trace": "control_backward",
+       "why": "Captured aw valid; holds address slot full and gates awready.",
+       "lines": [
+        111,
+        131,
+        142
+       ]
+      },
+      {
+       "id": "E40",
+       "name": "s_axil_wvalid_reg",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 26.6,
+       "struct_score": 50.1,
+       "trace": "control_backward",
+       "why": "Captured w valid; holds data slot full and gates wready.",
+       "lines": [
+        112,
+        137,
+        142
+       ]
+      },
+      {
+       "id": "E35",
+       "name": "s_axil_awaddr_reg",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 48.9,
+       "struct_score": 27.9,
+       "trace": "data_backward",
+       "why": "Holds write address across the clock crossing.",
+       "lines": [
+        129,
+        198
+       ]
+      },
+      {
+       "id": "E38",
+       "name": "s_axil_wdata_reg",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 48.9,
+       "struct_score": 27.9,
+       "trace": "data_backward",
+       "why": "Holds write data across the clock crossing.",
+       "lines": [
+        135,
+        201
+       ]
+      },
+      {
+       "id": "E42",
+       "name": "s_axil_bvalid_reg",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 56.7,
+       "struct_score": 57.4,
+       "trace": "control_backward",
+       "why": "Slave-side write response valid; blocks new aw/w acceptance.",
+       "lines": [
+        114,
+        126,
+        152
+       ]
+      },
+      {
+       "id": "E41",
+       "name": "s_axil_bresp_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 16.9,
+       "struct_score": 12.0,
+       "trace": "data_backward",
+       "why": "Write response code copied from master domain.",
+       "lines": [
+        113,
+        151
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E36",
+       "name": "s_axil_awprot_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E39",
+       "name": "s_axil_wstrb_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E3",
+       "name": "s_axil_awaddr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axil_awprot",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axil_awvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_axil_awready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "s_axil_wdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_axil_wstrb",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_axil_wvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "s_axil_wready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E11",
+       "name": "s_axil_bresp",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "s_axil_bvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "s_axil_bready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Slave controller",
+     "kind": "CONTROLLER",
+     "description": "Slave-domain FSM raising request flag and waiting for completion.",
+     "anchors": [
+      {
+       "id": "E27",
+       "name": "s_state_reg",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 98.7,
+       "struct_score": 96.8,
+       "trace": "control_backward",
+       "why": "Slave-domain FSM: waits for aw+w, raises flag, awaits master done, returns response.",
+       "lines": [
+        140,
+        143,
+        149
+       ]
+      },
+      {
+       "id": "E28",
+       "name": "s_flag_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 46.1,
+       "struct_score": 16.6,
+       "trace": "forward",
+       "why": "Request flag from slave domain announcing captured write transaction.",
+       "lines": [
+        144,
+        180
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "CDC synchronizers",
+     "kind": "OTHER",
+     "description": "2-flop synchronizers carrying request and completion flags across domains.",
+     "anchors": [
+      {
+       "id": "E30",
+       "name": "s_flag_sync_reg_2",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 49.2,
+       "struct_score": 29.3,
+       "trace": "control_backward",
+       "why": "Synchronized request flag in master domain starting master FSM.",
+       "lines": [
+        181,
+        196,
+        214
+       ]
+      },
+      {
+       "id": "E34",
+       "name": "m_flag_sync_reg_2",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 48.0,
+       "struct_score": 24.3,
+       "trace": "control_backward",
+       "why": "Synchronized completion flag in slave domain advancing slave FSM.",
+       "lines": [
+        148,
+        156,
+        176
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E29",
+       "name": "s_flag_sync_reg_1",
+       "kind": "reg"
+      },
+      {
+       "id": "E33",
+       "name": "m_flag_sync_reg_1",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Master controller",
+     "kind": "CONTROLLER",
+     "description": "Master-domain FSM issuing write and raising completion flag.",
+     "anchors": [
+      {
+       "id": "E31",
+       "name": "m_state_reg",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.0,
+       "struct_score": 97.5,
+       "trace": "control_backward",
+       "why": "Master-domain FSM: issues write on synced flag, waits bvalid, signals completion.",
+       "lines": [
+        194,
+        197,
+        210
+       ]
+      },
+      {
+       "id": "E32",
+       "name": "m_flag_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 45.9,
+       "struct_score": 15.9,
+       "trace": "forward",
+       "why": "Completion flag from master domain after write response received.",
+       "lines": [
+        175,
+        209
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Master-side issue",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Drives aw/w on master bus and captures b response.",
+     "anchors": [
+      {
+       "id": "E45",
+       "name": "m_axil_awvalid_reg",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 51.4,
+       "struct_score": 38.2,
+       "trace": "control_backward",
+       "why": "Master-side aw valid, set on new transfer, cleared by awready.",
+       "lines": [
+        118,
+        186,
+        200
+       ]
+      },
+      {
+       "id": "E48",
+       "name": "m_axil_wvalid_reg",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 23.4,
+       "struct_score": 38.2,
+       "trace": "control_backward",
+       "why": "Master-side w valid, set on new transfer, cleared by wready.",
+       "lines": [
+        121,
+        187,
+        203
+       ]
+      },
+      {
+       "id": "E43",
+       "name": "m_axil_awaddr_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 21.0,
+       "struct_score": 28.4,
+       "trace": "data_backward",
+       "why": "Master-side address register driving m_axil_awaddr.",
+       "lines": [
+        116,
+        198
+       ]
+      },
+      {
+       "id": "E46",
+       "name": "m_axil_wdata_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 21.0,
+       "struct_score": 28.4,
+       "trace": "data_backward",
+       "why": "Master-side write data register driving m_axil_wdata.",
+       "lines": [
+        119,
+        201
+       ]
+      },
+      {
+       "id": "E50",
+       "name": "m_axil_bvalid_reg",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 53.6,
+       "struct_score": 46.5,
+       "trace": "control_backward",
+       "why": "Captured master bvalid; completes master FSM and drives bready.",
+       "lines": [
+        122,
+        191,
+        208
+       ]
+      },
+      {
+       "id": "E49",
+       "name": "m_axil_bresp_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 16.7,
+       "struct_score": 10.9,
+       "trace": "data_backward",
+       "why": "Captured response code returned to slave domain.",
+       "lines": [
+        151,
+        190
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E44",
+       "name": "m_axil_awprot_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E47",
+       "name": "m_axil_wstrb_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E16",
+       "name": "m_axil_awaddr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "m_axil_awprot",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "m_axil_awvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "m_axil_awready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E20",
+       "name": "m_axil_wdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E21",
+       "name": "m_axil_wstrb",
+       "kind": "port_out"
+      },
+      {
+       "id": "E22",
+       "name": "m_axil_wvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "m_axil_wready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E24",
+       "name": "m_axil_bresp",
+       "kind": "port_in"
+      },
+      {
+       "id": "E25",
+       "name": "m_axil_bvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E26",
+       "name": "m_axil_bready",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "slave_clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "s_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "s_rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "master_clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E14",
+      "E15"
+     ],
+     "members": [
+      {
+       "id": "E14",
+       "name": "m_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "m_rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axil_aw",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axil_awaddr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axil_awprot",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axil_awvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_axil_awready",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "s_axil_w",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E7",
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E7",
+       "name": "s_axil_wdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_axil_wstrb",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_axil_wvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "s_axil_wready",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "s_axil_b",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E11",
+      "E12",
+      "E13"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "s_axil_bresp",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "s_axil_bvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "s_axil_bready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axil_aw",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E16",
+      "E17",
+      "E18",
+      "E19"
+     ],
+     "members": [
+      {
+       "id": "E16",
+       "name": "m_axil_awaddr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "m_axil_awprot",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "m_axil_awvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "m_axil_awready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axil_w",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E20",
+      "E21",
+      "E22",
+      "E23"
+     ],
+     "members": [
+      {
+       "id": "E20",
+       "name": "m_axil_wdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E21",
+       "name": "m_axil_wstrb",
+       "kind": "port_out"
+      },
+      {
+       "id": "E22",
+       "name": "m_axil_wvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "m_axil_wready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axil_b",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E24",
+      "E25",
+      "E26"
+     ],
+     "members": [
+      {
+       "id": "E24",
+       "name": "m_axil_bresp",
+       "kind": "port_in"
+      },
+      {
+       "id": "E25",
+       "name": "m_axil_bvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E26",
+       "name": "m_axil_bready",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

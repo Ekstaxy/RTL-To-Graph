@@ -1,0 +1,74 @@
+[
+ {
+  "module": "biriscv_mmu",
+  "instance": "biriscv_mmu",
+  "state": "genblk1.state_q",
+  "next": null,
+  "style": "one-process",
+  "states": [
+   {
+    "name": "STATE_IDLE",
+    "value": "0"
+   },
+   {
+    "name": "STATE_LEVEL_FIRST",
+    "value": "1"
+   },
+   {
+    "name": "STATE_UPDATE",
+    "value": "3"
+   },
+   {
+    "name": "STATE_LEVEL_SECOND",
+    "value": "2"
+   }
+  ],
+  "reset_state": "STATE_IDLE",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "STATE_LEVEL_FIRST",
+    "cond": "state_q == STATE_IDLE && (itlb_miss_w || dtlb_miss_w)"
+   },
+   {
+    "src": "*",
+    "dst": "STATE_UPDATE",
+    "cond": "!(state_q == STATE_IDLE && (itlb_miss_w || dtlb_miss_w)) && state_q == STATE_LEVEL_FIRST && resp_valid_w && (resp_error_w || !resp_data_w[0])"
+   },
+   {
+    "src": "*",
+    "dst": "STATE_LEVEL_SECOND",
+    "cond": "!(state_q == STATE_IDLE && (itlb_miss_w || dtlb_miss_w)) && state_q == STATE_LEVEL_FIRST && resp_valid_w && !(resp_error_w || !resp_data_w[0]) && !(resp_data_w[1] || resp_data_w[2] || resp_data_w[3])"
+   },
+   {
+    "src": "*",
+    "dst": "STATE_UPDATE",
+    "cond": "!(state_q == STATE_IDLE && (itlb_miss_w || dtlb_miss_w)) && state_q == STATE_LEVEL_FIRST && resp_valid_w && !(resp_error_w || !resp_data_w[0]) && !(!(resp_data_w[1] || resp_data_w[2] || resp_data_w[3]))"
+   },
+   {
+    "src": "*",
+    "dst": "STATE_UPDATE",
+    "cond": "!(state_q == STATE_IDLE && (itlb_miss_w || dtlb_miss_w)) && !(state_q == STATE_LEVEL_FIRST && resp_valid_w) && state_q == STATE_LEVEL_SECOND && resp_valid_w && resp_data_w[0]"
+   },
+   {
+    "src": "*",
+    "dst": "STATE_UPDATE",
+    "cond": "!(state_q == STATE_IDLE && (itlb_miss_w || dtlb_miss_w)) && !(state_q == STATE_LEVEL_FIRST && resp_valid_w) && state_q == STATE_LEVEL_SECOND && resp_valid_w && !resp_data_w[0]"
+   },
+   {
+    "src": "STATE_UPDATE",
+    "dst": "STATE_IDLE",
+    "cond": "!(state_q == STATE_IDLE && (itlb_miss_w || dtlb_miss_w)) && !(state_q == STATE_LEVEL_FIRST && resp_valid_w) && !(state_q == STATE_LEVEL_SECOND && resp_valid_w)"
+   }
+  ],
+  "outputs": [
+   {
+    "signal": "idle_w",
+    "kind": "moore",
+    "port": false
+   }
+  ],
+  "warnings": [],
+  "semantic_check": "consistent-subset"
+ }
+]

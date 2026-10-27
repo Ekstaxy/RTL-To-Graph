@@ -1,0 +1,428 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "picorv32_simpleuart",
+ "tops": [
+  "simpleuart"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "simpleuart": {
+   "source": "teacher",
+   "canonical_instance": "simpleuart",
+   "file": "data/rtl/picorv32/picosoc/simpleuart.v",
+   "lines": [
+    20,
+    137
+   ],
+   "summary": "Simple UART with a programmable baud divider register, a counter-driven receive state machine shifting into a one-byte buffer, and a shift-register transmitter with bit counter.",
+   "blocks": [
+    {
+     "name": "Baud divider config",
+     "kind": "REGISTER_BANK",
+     "description": "Programmable divider register read back on reg_div_do",
+     "anchors": [
+      {
+       "id": "E13",
+       "name": "cfg_divider",
+       "role": "CONFIG_REG",
+       "importance": "critical",
+       "score": 86.2,
+       "struct_score": 63.1,
+       "trace": "data_backward",
+       "why": "Byte-writable baud divider compared by both RX and TX counters",
+       "lines": [
+        37,
+        59,
+        84
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "reg_div_we",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 26.0,
+       "struct_score": 48.0,
+       "trace": "interface",
+       "why": "Per-byte write enables for divider register",
+       "lines": [
+        27,
+        59,
+        110
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E6",
+       "name": "reg_div_di",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "reg_div_do",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "Receiver",
+     "kind": "SERIALIZER",
+     "description": "Start-bit detection and timed sampling into shift register",
+     "anchors": [
+      {
+       "id": "E14",
+       "name": "recv_state",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 98.9,
+       "struct_score": 97.2,
+       "trace": "control_backward",
+       "why": "Receive controller: idle, start-bit half wait, data bits, stop",
+       "lines": [
+        39,
+        77,
+        99
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "recv_divcnt",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 62.0,
+       "struct_score": 74.8,
+       "trace": "control_backward",
+       "why": "Receive baud counter timing bit sampling against divider",
+       "lines": [
+        40,
+        84,
+        97
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "recv_pattern",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 60.7,
+       "struct_score": 71.5,
+       "trace": "data_backward",
+       "why": "Receive shift register collecting serial bits LSB first",
+       "lines": [
+        41,
+        98
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "ser_rx",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 87.9,
+       "struct_score": 69.3,
+       "trace": "interface",
+       "why": "Serial receive line detected for start bit and shifted in",
+       "lines": [
+        25,
+        79,
+        98
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Receive buffer",
+     "kind": "BUFFER",
+     "description": "One-byte RX buffer with valid flag, read via data register",
+     "anchors": [
+      {
+       "id": "E17",
+       "name": "recv_buf_data",
+       "role": "HOLDING_REG",
+       "importance": "critical",
+       "score": 79.0,
+       "struct_score": 36.8,
+       "trace": "data_backward",
+       "why": "Received byte buffer read through reg_dat_do",
+       "lines": [
+        42,
+        53,
+        91
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "recv_buf_valid",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 49.3,
+       "struct_score": 29.8,
+       "trace": "control_backward",
+       "why": "Buffer full flag, set on byte receipt, cleared by read",
+       "lines": [
+        43,
+        53,
+        76
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "reg_dat_re",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 21.3,
+       "struct_score": 29.8,
+       "trace": "forward",
+       "why": "Data read command clearing receive buffer valid",
+       "lines": [
+        32,
+        75
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E11",
+       "name": "reg_dat_do",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "Transmitter",
+     "kind": "SERIALIZER",
+     "description": "Framed TX shift register clocked by divider counter",
+     "anchors": [
+      {
+       "id": "E19",
+       "name": "send_pattern",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 90.8,
+       "struct_score": 76.7,
+       "trace": "data_backward",
+       "why": "TX shift register with start/stop framing driving ser_tx",
+       "lines": [
+        45,
+        107,
+        126
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "send_bitcnt",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 59.2,
+       "struct_score": 66.5,
+       "trace": "control_backward",
+       "why": "Remaining TX bits; busy indication for wait and new writes",
+       "lines": [
+        46,
+        52,
+        132
+       ]
+      },
+      {
+       "id": "E21",
+       "name": "send_divcnt",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 61.3,
+       "struct_score": 72.9,
+       "trace": "control_backward",
+       "why": "TX baud counter timing bit shifts against divider",
+       "lines": [
+        47,
+        130
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "send_dummy",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 24.7,
+       "struct_score": 43.2,
+       "trace": "control_backward",
+       "why": "Pending idle-frame flag after reset or divider write",
+       "lines": [
+        48,
+        111,
+        119
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "ser_tx",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 88.3,
+       "struct_score": 70.4,
+       "trace": "data_backward",
+       "why": "Serial transmit line from TX shift register LSB",
+       "lines": [
+        24,
+        107
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "reg_dat_we",
+       "role": "COMMAND",
+       "importance": "major",
+       "score": 53.8,
+       "struct_score": 47.0,
+       "trace": "forward",
+       "why": "Data write command loading TX frame",
+       "lines": [
+        31,
+        52,
+        125
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "reg_dat_wait",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 61.5,
+       "struct_score": 73.6,
+       "trace": "control_backward",
+       "why": "Stalls data writes while transmitter busy",
+       "lines": [
+        35,
+        52
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E10",
+       "name": "reg_dat_di",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "resetn",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "serial",
+     "protocol": "SERIAL",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "ser_tx",
+       "kind": "port_out"
+      },
+      {
+       "id": "E4",
+       "name": "ser_rx",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "div_reg",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E5",
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "reg_div_we",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "reg_div_di",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "reg_div_do",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "dat_reg",
+     "protocol": "OTHER",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12"
+     ],
+     "members": [
+      {
+       "id": "E8",
+       "name": "reg_dat_we",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "reg_dat_re",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "reg_dat_di",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "reg_dat_do",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "reg_dat_wait",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

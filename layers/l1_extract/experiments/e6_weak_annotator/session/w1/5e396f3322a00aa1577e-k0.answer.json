@@ -1,0 +1,300 @@
+{
+  "module_summary": "UART receiver (8-bit) with oversampling/timing recovery using phase counter (ph) and token counter (tk), mid-bit sampling, and frame/parity error detection.",
+  "anchors": [
+    {
+      "id": "E11",
+      "name": "ph",
+      "role": "COUNTER",
+      "importance": "critical",
+      "trace": "control_backward",
+      "why": "Phase counter tracking bit position (0-10); controls receiver state and sample timing",
+      "lines": [25, 76, 80, 81]
+    },
+    {
+      "id": "E12",
+      "name": "tk",
+      "role": "COUNTER",
+      "importance": "critical",
+      "trace": "control_backward",
+      "why": "Token/timing counter for baud-rate synchronization and sample point timing",
+      "lines": [26, 62, 63, 68]
+    },
+    {
+      "id": "E13",
+      "name": "smp",
+      "role": "PIPELINE_REG",
+      "importance": "critical",
+      "trace": "data_backward",
+      "why": "Mid-bit sampled input register; captures rxd at sample point for bit detection",
+      "lines": [27, 55, 56, 90]
+    },
+    {
+      "id": "E14",
+      "name": "acc",
+      "role": "DATAPATH_MAJOR",
+      "importance": "critical",
+      "trace": "data_backward",
+      "why": "Accumulator shifting in sampled bits; builds received byte from serial input",
+      "lines": [28, 90, 92, 104]
+    },
+    {
+      "id": "E15",
+      "name": "latch_q",
+      "role": "HOLDING_REG",
+      "importance": "critical",
+      "trace": "data_backward",
+      "why": "Output latch holding received byte after frame completion",
+      "lines": [29, 98, 104]
+    },
+    {
+      "id": "E16",
+      "name": "vq",
+      "role": "HANDSHAKE_VALID",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Output valid flag; asserted when complete byte received, cleared by tready",
+      "lines": [30, 99, 105]
+    },
+    {
+      "id": "E6",
+      "name": "rxd",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Serial input data bit sampled into smp register",
+      "lines": [15, 56]
+    },
+    {
+      "id": "E3",
+      "name": "m_axis_tdata",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Output data port carrying received byte from latch_q",
+      "lines": [11, 48]
+    },
+    {
+      "id": "E4",
+      "name": "m_axis_tvalid",
+      "role": "HANDSHAKE_VALID",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Output valid handshake driven by vq register",
+      "lines": [12, 49]
+    },
+    {
+      "id": "E5",
+      "name": "m_axis_tready",
+      "role": "HANDSHAKE_READY",
+      "importance": "critical",
+      "trace": "forward",
+      "why": "Input ready signal; gates output valid and clears vq when data accepted",
+      "lines": [13, 105]
+    },
+    {
+      "id": "E10",
+      "name": "prescale",
+      "role": "CONFIG_REG",
+      "importance": "major",
+      "trace": "data_backward",
+      "why": "Baud rate prescaler input; configures timing reload values rl_long and rl_short",
+      "lines": [21, 45, 46]
+    },
+    {
+      "id": "E26",
+      "name": "step",
+      "role": "CONTROL_FLAG",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Timing step pulse when tk expired and ph active; gates state machine updates",
+      "lines": [41, 80, 89]
+    },
+    {
+      "id": "E21",
+      "name": "tk_live",
+      "role": "CONTROL_FLAG",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Token counter active flag; indicates timing in progress",
+      "lines": [36, 62, 63]
+    },
+    {
+      "id": "E22",
+      "name": "ph_live",
+      "role": "CONTROL_FLAG",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Phase counter active flag; indicates receiver actively processing bits",
+      "lines": [37, 64, 81]
+    },
+    {
+      "id": "E23",
+      "name": "hdr",
+      "role": "DECODE",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Header phase detector (ph > 9); classifies start/idle bits from data bits",
+      "lines": [38, 65, 81]
+    },
+    {
+      "id": "E24",
+      "name": "mid",
+      "role": "DECODE",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Mid-bit phase detector (ph > 1 and not hdr); gates accumulation during data phase",
+      "lines": [39, 67, 89]
+    },
+    {
+      "id": "E27",
+      "name": "park",
+      "role": "CONTROL_FLAG",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Parking state (no counters active); triggers receiver activation on start bit",
+      "lines": [42, 82, 108]
+    },
+    {
+      "id": "E28",
+      "name": "fin_ok",
+      "role": "CONTROL_FLAG",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Frame complete and valid; gates update of latch_q and vq on good reception",
+      "lines": [43, 104, 106]
+    },
+    {
+      "id": "E29",
+      "name": "fin_bad",
+      "role": "CONTROL_FLAG",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Frame complete with error; sets frame_error flag on bad stop bit",
+      "lines": [44, 107]
+    },
+    {
+      "id": "E17",
+      "name": "act",
+      "role": "STATUS",
+      "importance": "major",
+      "trace": "interface",
+      "why": "Busy/active flag output; indicates receiver is processing data",
+      "lines": [31, 102, 108]
+    },
+    {
+      "id": "E18",
+      "name": "e_ov",
+      "role": "STATUS",
+      "importance": "major",
+      "trace": "interface",
+      "why": "Overrun error flag; set when new frame completes while previous data not read",
+      "lines": [32, 100, 106]
+    },
+    {
+      "id": "E19",
+      "name": "e_fr",
+      "role": "STATUS",
+      "importance": "major",
+      "trace": "interface",
+      "why": "Frame error flag; set on invalid stop bit detection",
+      "lines": [33, 101, 107]
+    }
+  ],
+  "groups": [
+    {
+      "name": "Timing_Control",
+      "kind": "COUNTER_TIMER",
+      "anchor_ids": ["E11", "E12"],
+      "member_ids": [],
+      "description": "Phase and token counters driving sample points and state transitions"
+    },
+    {
+      "name": "Input_Sampler",
+      "kind": "PIPELINE_STAGE",
+      "anchor_ids": ["E13", "E6"],
+      "member_ids": [],
+      "description": "Mid-bit sampling pipeline capturing serial input at sample points"
+    },
+    {
+      "name": "Data_Accumulator",
+      "kind": "DATAPATH",
+      "anchor_ids": ["E14", "E15"],
+      "member_ids": [],
+      "description": "Shift accumulator and output latch for received byte"
+    },
+    {
+      "name": "Output_Interface",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E3", "E4", "E5", "E16"],
+      "member_ids": [],
+      "description": "AXI Stream output interface with valid/ready handshake"
+    },
+    {
+      "name": "Timing_Configuration",
+      "kind": "REGISTER_BANK",
+      "anchor_ids": ["E10"],
+      "member_ids": [],
+      "description": "Prescale input for baud-rate configuration"
+    },
+    {
+      "name": "Phase_Control",
+      "kind": "DECODER",
+      "anchor_ids": ["E23", "E24"],
+      "member_ids": ["E25"],
+      "description": "Phase decoders classifying header, mid, and tail bit positions"
+    },
+    {
+      "name": "State_Control",
+      "kind": "CONTROLLER",
+      "anchor_ids": ["E26", "E27", "E21", "E22"],
+      "member_ids": [],
+      "description": "State machine control flags: step pulse, park state, counter active indicators"
+    },
+    {
+      "name": "Frame_Detection",
+      "kind": "DECODER",
+      "anchor_ids": ["E28", "E29"],
+      "member_ids": [],
+      "description": "Frame completion detection with status (valid/error)"
+    },
+    {
+      "name": "Status_Output",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E17", "E18", "E19"],
+      "member_ids": [],
+      "description": "Status and error flag outputs (busy, overrun, frame_error)"
+    }
+  ],
+  "interfaces": [
+    {
+      "name": "Clock_Reset",
+      "protocol": "CLOCK_RESET",
+      "direction": "IN",
+      "member_ids": ["E1", "E2"]
+    },
+    {
+      "name": "Serial_Input",
+      "protocol": "STREAM",
+      "direction": "IN",
+      "member_ids": ["E6"]
+    },
+    {
+      "name": "Baud_Config",
+      "protocol": "SIMPLE",
+      "direction": "IN",
+      "member_ids": ["E10"]
+    },
+    {
+      "name": "Output_Data",
+      "protocol": "VALID_READY",
+      "direction": "OUT",
+      "member_ids": ["E3", "E4", "E5"]
+    },
+    {
+      "name": "Status_Flags",
+      "protocol": "SIMPLE",
+      "direction": "OUT",
+      "member_ids": ["E7", "E8", "E9"]
+    }
+  ]
+}

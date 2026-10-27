@@ -1,0 +1,28 @@
+stateDiagram-v2
+    [*] --> SG_IDLE
+    SG_IDLE --> SG_SRCHALF : i_start
+    SG_SRCHALF --> SG_SRCADDR : i_pf_valid && (!o_dmac_wvalid || i_dmac_wready)
+    SG_SRCADDR --> SG_DSTHALF : i_pf_valid && o_pf_ready
+    SG_SRCADDR --> SG_SRCHALF : i_pf_valid && o_pf_ready && i_pf_insn[31∶30] == 2'b10
+    SG_SRCADDR --> SG_SRCHALF : i_pf_valid && o_pf_ready && i_pf_insn[31∶30] == 2'b11
+    SG_DSTHALF --> SG_DSTADDR : i_pf_valid && (!o_dmac_wvalid || i_dmac_wready)
+    SG_DSTADDR --> SG_LENGTH : i_pf_valid && (!o_dmac_wvalid || i_dmac_wready)
+    SG_LENGTH --> SG_CONTROL : i_pf_valid && (!o_dmac_wvalid || i_dmac_wready)
+    SG_LENGTH --> SG_IDLE : i_pf_valid && (!o_dmac_wvalid || i_dmac_wready) && i_pf_insn <= 0 && tbl_last
+    SG_LENGTH --> SG_SRCADDR : i_pf_valid && (!o_dmac_wvalid || i_dmac_wready) && i_pf_insn <= 0 && !tbl_last
+    SG_CONTROL --> SG_WAIT : (!o_dmac_wvalid || i_dmac_wready)
+    SG_WAIT --> SG_IDLE : dma_op_complete && dma_terminate
+    SG_WAIT --> SG_SRCHALF : dma_op_complete && !dma_terminate
+    ANY_STATE --> SG_IDLE : i_pf_valid && i_pf_illegal && sgstate != SG_CONTROL && sgstate != SG_WAIT && !o_new_pc && !o_pf_clear_cache
+    ANY_STATE --> SG_IDLE : i_abort && (!o_dmac_wvalid || i_dmac_wready) && !dma_busy && (sgstate != SG_WAIT)
+    %% output o_busy (moore)
+    %% output o_dmac_waddr (moore)
+    %% output o_dmac_wdata (moore)
+    %% output o_dmac_wvalid (moore)
+    %% output o_done (moore)
+    %% output o_err (moore)
+    %% output o_int (mealy)
+    %% output o_new_pc (moore)
+    %% output o_pf_clear_cache (moore)
+    %% output o_pf_ready (mealy)
+    %% output o_tbl_addr (moore)

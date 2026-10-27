@@ -1,0 +1,1009 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "soc_top",
+ "tops": [
+  "soc_top"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "sync_fifo": {
+   "source": "teacher",
+   "canonical_instance": "soc_top.gen_ch[0].u_fifo",
+   "file": "examples/rtl/sync_fifo.sv",
+   "lines": [
+    2,
+    56
+   ],
+   "summary": "Synchronous valid/ready FIFO: 4-entry register-array storage with wrapping write/read pointers and an occupancy counter deriving full/empty handshakes.",
+   "blocks": [
+    {
+     "name": "FIFO storage",
+     "kind": "MEMORY",
+     "description": "Register array holding queued 8-bit words.",
+     "anchors": [
+      {
+       "id": "E11",
+       "name": "mem_q",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 97.4,
+       "struct_score": 93.3,
+       "trace": "data_backward",
+       "why": "4x8 entry array written at wptr on push, read at rptr for out_data.",
+       "lines": []
+      },
+      {
+       "id": "E6",
+       "name": "in_data",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 93.2,
+       "struct_score": 82.8,
+       "trace": "interface",
+       "why": "Write payload stored into mem_q on push.",
+       "lines": []
+      },
+      {
+       "id": "E9",
+       "name": "out_data",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 95.2,
+       "struct_score": 87.8,
+       "trace": "data_backward",
+       "why": "Read payload, mem_q entry addressed by rptr_q.",
+       "lines": []
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Pointer and occupancy control",
+     "kind": "BUFFER",
+     "description": "Write/read pointers and count updated by push/pop; flush resets; count gives full/empty.",
+     "anchors": [
+      {
+       "id": "E12",
+       "name": "wptr_q",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 57.4,
+       "struct_score": 60.0,
+       "trace": "control_backward",
+       "why": "Write pointer addressing mem_q, increments on push, cleared by flush.",
+       "lines": []
+      },
+      {
+       "id": "E13",
+       "name": "rptr_q",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 57.6,
+       "struct_score": 60.9,
+       "trace": "control_backward",
+       "why": "Read pointer selecting out_data, increments on pop, cleared by flush.",
+       "lines": []
+      },
+      {
+       "id": "E14",
+       "name": "count_q",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 62.4,
+       "struct_score": 75.7,
+       "trace": "control_backward",
+       "why": "Occupancy count driving full/empty handshakes and count_o.",
+       "lines": []
+      },
+      {
+       "id": "E3",
+       "name": "flush_i",
+       "role": "COMMAND",
+       "importance": "major",
+       "score": 54.7,
+       "struct_score": 50.4,
+       "trace": "forward",
+       "why": "Flush request clearing both pointers and count.",
+       "lines": []
+      },
+      {
+       "id": "E15",
+       "name": "do_push",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 21.6,
+       "struct_score": 30.8,
+       "trace": "control_backward",
+       "why": "Push enable: writes mem_q, advances wptr, increments count.",
+       "lines": []
+      },
+      {
+       "id": "E16",
+       "name": "do_pop",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 20.0,
+       "struct_score": 24.5,
+       "trace": "control_backward",
+       "why": "Pop enable: advances rptr, decrements count.",
+       "lines": []
+      },
+      {
+       "id": "E4",
+       "name": "in_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 93.3,
+       "struct_score": 83.1,
+       "trace": "interface",
+       "why": "Write-side valid; with in_ready forms push enable.",
+       "lines": []
+      },
+      {
+       "id": "E5",
+       "name": "in_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 93.7,
+       "struct_score": 84.1,
+       "trace": "control_backward",
+       "why": "Write-side ready, deasserted when count reaches DEPTH (full).",
+       "lines": []
+      },
+      {
+       "id": "E7",
+       "name": "out_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 96.6,
+       "struct_score": 91.4,
+       "trace": "control_backward",
+       "why": "Read-side valid, asserted when count nonzero (not empty).",
+       "lines": []
+      },
+      {
+       "id": "E8",
+       "name": "out_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 88.3,
+       "struct_score": 70.3,
+       "trace": "interface",
+       "why": "Read-side ready; with out_valid forms pop enable.",
+       "lines": []
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E10",
+       "name": "count_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_n",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "write_port",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E4",
+      "E5",
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "in_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "in_ready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "in_data",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "read_port",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E7",
+      "E8",
+      "E9"
+     ],
+     "members": [
+      {
+       "id": "E7",
+       "name": "out_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E8",
+       "name": "out_ready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "out_data",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "control_status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E3",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "flush_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "count_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "rr_arbiter": {
+   "source": "teacher",
+   "canonical_instance": "soc_top.u_arb",
+   "file": "examples/rtl/rr_arbiter.sv",
+   "lines": [
+    2,
+    44
+   ],
+   "summary": "Round-robin arbiter: a double-width masked priority trick picks a grant from a one-hot priority pointer, locks it until accept_i, then rotates priority.",
+   "blocks": [
+    {
+     "name": "priority_select",
+     "kind": "ARBITER",
+     "description": "Double-width priority search from round-robin pointer producing the grant register.",
+     "anchors": [
+      {
+       "id": "E7",
+       "name": "prio_q",
+       "role": "ARBITRATION",
+       "importance": "critical",
+       "score": 93.3,
+       "struct_score": 83.1,
+       "trace": "control_backward",
+       "why": "One-hot round-robin pointer, rotated past the granted requester on accept.",
+       "lines": [
+        19,
+        28,
+        36
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "dbl_gnt",
+       "role": "ARBITRATION",
+       "importance": "minor",
+       "score": 35.6,
+       "struct_score": 78.9,
+       "trace": "data_backward",
+       "why": "Combinational masked-priority grant, folded into gnt_d when unlocked.",
+       "lines": [
+        19,
+        23
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "gnt_o",
+       "role": "ARBITRATION",
+       "importance": "critical",
+       "score": 97.5,
+       "struct_score": 93.7,
+       "trace": "data_backward",
+       "why": "Registered one-hot grant vector output from gnt_q.",
+       "lines": [
+        42
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E11",
+       "name": "dbl_req",
+       "kind": "wire"
+      },
+      {
+       "id": "E9",
+       "name": "gnt_d",
+       "kind": "comb"
+      },
+      {
+       "id": "E8",
+       "name": "gnt_q",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "grant_lock",
+     "kind": "CONTROLLER",
+     "description": "Lock flag holding the grant until accept, then rotating priority.",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "gnt_valid_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 95.3,
+       "struct_score": 88.1,
+       "trace": "control_backward",
+       "why": "Grant valid output, mirrors locked_q while grant is held.",
+       "lines": [
+        43
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "accept_i",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 93.7,
+       "struct_score": 84.1,
+       "trace": "interface",
+       "why": "Acknowledge releasing the lock, rotating priority and clearing grant.",
+       "lines": [
+        34
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "req_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 98.2,
+       "struct_score": 95.4,
+       "trace": "interface",
+       "why": "Request vector feeding priority selection and lock trigger.",
+       "lines": [
+        18,
+        33
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E10",
+       "name": "locked_q",
+       "kind": "reg"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_n",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "request_grant",
+     "protocol": "REQ_ACK",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "req_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "gnt_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "accept_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "gnt_valid_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "uart_tx": {
+   "source": "teacher",
+   "canonical_instance": "soc_top.u_uart",
+   "file": "examples/rtl/uart_tx.sv",
+   "lines": [
+    2,
+    66
+   ],
+   "summary": "UART transmitter: 4-state FSM sends start bit, 8 LSB-first data bits from a shift register, and stop bit, paced by a baud-rate divider counter.",
+   "blocks": [
+    {
+     "name": "TX controller",
+     "kind": "CONTROLLER",
+     "description": "Frame FSM handling byte handshake and start/data/stop sequencing.",
+     "anchors": [
+      {
+       "id": "E8",
+       "name": "state_q",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.9,
+       "struct_score": 99.8,
+       "trace": "control_backward",
+       "why": "IDLE/START/DATA/STOP controller selecting tx_o level, loading and shifting data.",
+       "lines": []
+      },
+      {
+       "id": "E3",
+       "name": "tx_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 95.9,
+       "struct_score": 89.6,
+       "trace": "interface",
+       "why": "Byte valid input; in IDLE loads shift register and starts frame.",
+       "lines": []
+      },
+      {
+       "id": "E4",
+       "name": "tx_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 91.0,
+       "struct_score": 77.3,
+       "trace": "control_backward",
+       "why": "Ready to accept a byte, asserted in IDLE state.",
+       "lines": []
+      },
+      {
+       "id": "E7",
+       "name": "busy_o",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 52.4,
+       "struct_score": 42.2,
+       "trace": "control_backward",
+       "why": "Busy level, FSM not in IDLE.",
+       "lines": []
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E9",
+       "name": "state_d",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Shift serializer",
+     "kind": "SERIALIZER",
+     "description": "Shift register and bit counter serializing byte onto tx_o.",
+     "anchors": [
+      {
+       "id": "E13",
+       "name": "shift_q",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 94.1,
+       "struct_score": 85.1,
+       "trace": "data_backward",
+       "why": "Shift register loaded from tx_data, shifted right each data bit; LSB drives tx_o.",
+       "lines": []
+      },
+      {
+       "id": "E12",
+       "name": "bit_idx_q",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 58.6,
+       "struct_score": 64.5,
+       "trace": "control_backward",
+       "why": "Data bit counter; reaching 7 moves FSM to STOP.",
+       "lines": []
+      },
+      {
+       "id": "E5",
+       "name": "tx_data",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 94.2,
+       "struct_score": 85.4,
+       "trace": "interface",
+       "why": "Parallel byte payload loaded into shift_q.",
+       "lines": []
+      },
+      {
+       "id": "E6",
+       "name": "tx_o",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 93.0,
+       "struct_score": 82.2,
+       "trace": "data_backward",
+       "why": "Serial line output muxed by state: start 0, data bit, idle/stop 1.",
+       "lines": []
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Baud generator",
+     "kind": "COUNTER_TIMER",
+     "description": "Divider counter producing baud_tick each bit period.",
+     "anchors": [
+      {
+       "id": "E10",
+       "name": "baud_cnt_q",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 58.3,
+       "struct_score": 63.3,
+       "trace": "control_backward",
+       "why": "Baud divider counter, cleared in IDLE, wraps at CLK_DIV-1.",
+       "lines": []
+      },
+      {
+       "id": "E11",
+       "name": "baud_tick",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 22.9,
+       "struct_score": 36.1,
+       "trace": "control_backward",
+       "why": "Bit-period tick enabling FSM transitions, shifting and bit count.",
+       "lines": []
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_n",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "byte_in",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "tx_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "tx_ready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "tx_data",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "serial_out",
+     "protocol": "SERIAL",
+     "direction": "OUT",
+     "member_ids": [
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "tx_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E7",
+       "name": "busy_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "soc_top": {
+   "source": "teacher",
+   "canonical_instance": "soc_top",
+   "file": "examples/rtl/soc_top.sv",
+   "lines": [
+    3,
+    50
+   ],
+   "summary": "Multi-channel UART SoC: per-channel sync_fifo buffers feed a round-robin arbiter whose one-hot grant muxes the winning byte into a uart_tx serializer.",
+   "blocks": [
+    {
+     "name": "channel_fifos",
+     "kind": "BUFFER",
+     "description": "Per-channel sync_fifo buffers accepting channel bytes and popped on grant acceptance.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "ch_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 95.1,
+       "struct_score": 87.6,
+       "trace": "interface",
+       "why": "Per-channel input valid into each channel FIFO write port.",
+       "lines": []
+      },
+      {
+       "id": "E4",
+       "name": "ch_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 63.9,
+       "struct_score": 79.6,
+       "trace": "interface",
+       "why": "Per-channel FIFO not-full ready back to the channel producers.",
+       "lines": []
+      },
+      {
+       "id": "E5",
+       "name": "ch_data",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 98.1,
+       "struct_score": 95.2,
+       "trace": "interface",
+       "why": "Per-channel input bytes written into the channel FIFOs.",
+       "lines": []
+      },
+      {
+       "id": "E8",
+       "name": "fifo_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 55.6,
+       "struct_score": 53.8,
+       "trace": "forward",
+       "why": "FIFO non-empty flags acting as request vector into the arbiter.",
+       "lines": []
+      },
+      {
+       "id": "E10",
+       "name": "fifo_data",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 34.1,
+       "struct_score": 74.9,
+       "trace": "data_backward",
+       "why": "Head bytes of each channel FIFO, candidates for the grant mux.",
+       "lines": []
+      },
+      {
+       "id": "E9",
+       "name": "fifo_pop",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 49.4,
+       "struct_score": 30.0,
+       "trace": "control_backward",
+       "why": "Per-channel pop: grant ANDed with UART handshake, dequeues the winning FIFO.",
+       "lines": []
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "gen_ch[*].u_fifo",
+       "module": "sync_fifo"
+      }
+     ],
+     "members": []
+    },
+    {
+     "name": "round_robin_arbiter",
+     "kind": "ARBITER",
+     "description": "rr_arbiter grants one non-empty FIFO, locked until the UART accepts its byte.",
+     "anchors": [
+      {
+       "id": "E11",
+       "name": "gnt",
+       "role": "ARBITRATION",
+       "importance": "critical",
+       "score": 85.2,
+       "struct_score": 59.5,
+       "trace": "control_backward",
+       "why": "One-hot grant selecting which FIFO's byte goes to the UART and which pops.",
+       "lines": []
+      },
+      {
+       "id": "E12",
+       "name": "gnt_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 25.0,
+       "struct_score": 44.2,
+       "trace": "control_backward",
+       "why": "Arbiter grant-valid, copied directly onto tx_valid.",
+       "lines": []
+      }
+     ],
+     "instances": [
+      {
+       "id": "I2",
+       "instance": "u_arb",
+       "module": "rr_arbiter"
+      }
+     ],
+     "members": []
+    },
+    {
+     "name": "grant_mux",
+     "kind": "DATAPATH",
+     "description": "One-hot mux picking the granted FIFO head byte for transmission.",
+     "anchors": [
+      {
+       "id": "E15",
+       "name": "tx_byte",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 50.2,
+       "struct_score": 33.5,
+       "trace": "data_backward",
+       "why": "Byte selected by one-hot grant mux, sent as UART tx_data.",
+       "lines": []
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "uart_transmitter",
+     "kind": "SERIALIZER",
+     "description": "uart_tx serializes the selected byte onto the UART line, reporting ready/busy.",
+     "anchors": [
+      {
+       "id": "E14",
+       "name": "tx_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 57.3,
+       "struct_score": 59.8,
+       "trace": "forward",
+       "why": "Valid of granted byte into the UART; with tx_ready forms accept/pop.",
+       "lines": []
+      },
+      {
+       "id": "E13",
+       "name": "tx_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 50.5,
+       "struct_score": 34.7,
+       "trace": "forward",
+       "why": "UART ready; accepting a byte pops the granted FIFO and releases arbiter lock.",
+       "lines": []
+      },
+      {
+       "id": "E6",
+       "name": "uart_tx",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 90.0,
+       "struct_score": 74.8,
+       "trace": "data_backward",
+       "why": "Serial UART line output driven by the uart_tx child.",
+       "lines": []
+      },
+      {
+       "id": "E7",
+       "name": "uart_busy",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 23.1,
+       "struct_score": 37.1,
+       "trace": "data_backward",
+       "why": "Level busy indication from the UART transmitter.",
+       "lines": []
+      }
+     ],
+     "instances": [
+      {
+       "id": "I3",
+       "instance": "u_uart",
+       "module": "uart_tx"
+      }
+     ],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_n",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "channel_inputs",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "ch_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "ch_ready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "ch_data",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "uart_out",
+     "protocol": "SERIAL",
+     "direction": "OUT",
+     "member_ids": [
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "uart_tx",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E7",
+       "name": "uart_busy",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

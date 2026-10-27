@@ -1,0 +1,22 @@
+{
+ "module_summary": "MUX-based CDC synchronizer: clk_a registers data and enable, the enable passes a two-flop clk_b synchronizer, then gates loading data_reg into dataout.",
+ "anchors": [
+  {"id": "E8", "name": "data_reg", "role": "HOLDING_REG", "importance": "critical", "trace": "data_backward", "why": "clk_a-domain register holding data_in stable for capture by the clk_b output mux"},
+  {"id": "E11", "name": "en_clap_two", "role": "ENABLE", "importance": "critical", "trace": "control_backward", "why": "Second synchronizer flop; synchronized enable selecting data_reg into dataout"},
+  {"id": "E7", "name": "dataout", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "clk_b-domain output register, loads data_reg when synchronized enable is high, else holds"},
+  {"id": "E9", "name": "en_data_reg", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "clk_a-domain registered copy of data_en feeding the clk_b synchronizer chain"},
+  {"id": "E6", "name": "data_en", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Input qualifier marking data_in valid for transfer across domains"},
+  {"id": "E5", "name": "data_in", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "4-bit clk_a-domain data payload captured into data_reg"},
+  {"id": "E10", "name": "en_clap_one", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "First clk_b synchronizer flop for the enable, feeds en_clap_two"}
+ ],
+ "groups": [
+  {"name": "clk_a capture registers", "kind": "PIPELINE_STAGE", "anchor_ids": ["E8", "E9"], "member_ids": ["E5", "E6"], "description": "Registers data_in and data_en in the source clk_a domain"},
+  {"name": "enable synchronizer", "kind": "CONTROLLER", "anchor_ids": ["E11", "E10"], "member_ids": [], "description": "Two clk_b flip-flops synchronizing the registered enable"},
+  {"name": "output mux register", "kind": "DATAPATH", "anchor_ids": ["E7"], "member_ids": ["E8"], "description": "clk_b register choosing data_reg or hold value under synchronized enable"}
+ ],
+ "interfaces": [
+  {"name": "clocks_resets", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2", "E3", "E4"]},
+  {"name": "source_data", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E5", "E6"]},
+  {"name": "sync_data_out", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E7"]}
+ ]
+}

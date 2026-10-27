@@ -1,0 +1,26 @@
+{
+ "module_summary": "AXI-Stream broadcaster: an input skid buffer feeds NM per-output FIFOs written simultaneously only when none is full; each FIFO drives one master stream.",
+ "anchors": [
+  {"id": "E3", "name": "S_AXIS_TVALID", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Input stream valid into skid buffer.", "lines": [49, 85]},
+  {"id": "E4", "name": "S_AXIS_TREADY", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Input stream ready from skid buffer, backpressured by full FIFOs.", "lines": [50, 85]},
+  {"id": "E5", "name": "S_AXIS_TDATA", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Input stream payload captured by skid buffer.", "lines": [51, 86]},
+  {"id": "E6", "name": "M_AXIS_TVALID", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Per-output valid vector, asserted when that output FIFO is non-empty.", "lines": [118, 113]},
+  {"id": "E7", "name": "M_AXIS_TREADY", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Per-output ready vector; pops the corresponding FIFO.", "lines": [53, 113]},
+  {"id": "E8", "name": "M_AXIS_TDATA", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Concatenated output payloads read from each output FIFO.", "lines": [54, 114]},
+  {"id": "E11", "name": "axis_ready", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Broadcast write enable: skid valid and no FIFO full; writes all FIFOs.", "lines": [91, 110]},
+  {"id": "E9", "name": "fifo_full", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Per-FIFO full vector; any full bit blocks the broadcast.", "lines": [91, 111]},
+  {"id": "E12", "name": "skd_data", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Skid buffer output data written into every output FIFO.", "lines": [88, 110]},
+  {"id": "E10", "name": "skd_valid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "Skid buffer output valid qualifying the broadcast write.", "lines": [87, 91]},
+  {"id": "E14", "name": "OUTGOING_FIFOS[*].fifo_empty", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Per-output FIFO empty flag inverted into M_AXIS_TVALID.", "lines": [115, 118]}
+ ],
+ "groups": [
+  {"name": "input_skid_buffer", "kind": "BUFFER", "anchor_ids": ["E3", "E4", "E5", "E12", "E10"], "member_ids": ["I1"], "description": "Skid buffer registering the input stream so ready can depend on FIFO fullness."},
+  {"name": "broadcast_control", "kind": "CONTROLLER", "anchor_ids": ["E11", "E9"], "member_ids": [], "description": "Writes all output FIFOs together only when none is full."},
+  {"name": "output_fifos", "kind": "BUFFER", "anchor_ids": ["E6", "E7", "E8", "E14"], "member_ids": ["I2", "E13"], "description": "Per-master FIFOs each driving one output stream independently."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "s_axis", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5"]},
+  {"name": "m_axis", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E6", "E7", "E8"]}
+ ]
+}

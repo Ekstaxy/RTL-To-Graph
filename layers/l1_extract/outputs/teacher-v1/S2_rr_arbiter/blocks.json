@@ -1,0 +1,286 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "S2_rr_arbiter",
+ "tops": [
+  "rr_arbiter"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "rr_pick": {
+   "source": "heuristic",
+   "canonical_instance": "rr_arbiter.u_pick",
+   "file": "experiments/e3_perturb_benchmark/data/rr_arbiter/S2/rr_arbiter.sv",
+   "lines": [
+    1,
+    22
+   ],
+   "summary": "rr_pick (heuristic)",
+   "blocks": [],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "misc",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2",
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "ask",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "lead",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "win",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "rr_arbiter": {
+   "source": "teacher",
+   "canonical_instance": "rr_arbiter",
+   "file": "experiments/e3_perturb_benchmark/data/rr_arbiter/S2/rr_arbiter.sv",
+   "lines": [
+    24,
+    79
+   ],
+   "summary": "Round-robin arbiter: a picker sub-module selects the next requester from a rotating token; grant is registered and held until accepted, then token rotates.",
+   "blocks": [
+    {
+     "name": "rr_picker",
+     "kind": "ARBITER",
+     "description": "Rotating token and picker produce one-hot grant, latched into grant register.",
+     "anchors": [
+      {
+       "id": "E8",
+       "name": "token_r",
+       "role": "ARBITRATION",
+       "importance": "critical",
+       "score": 92.7,
+       "struct_score": 81.5,
+       "trace": "control_backward",
+       "why": "Round-robin priority pointer, rotated past last grant on release.",
+       "lines": [
+        43,
+        72,
+        74
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "sel_r",
+       "role": "ARBITRATION",
+       "importance": "critical",
+       "score": 95.3,
+       "struct_score": 88.2,
+       "trace": "control_backward",
+       "why": "Registered grant vector captured from picker while idle, cleared on release; drives gnt_o.",
+       "lines": [
+        64,
+        66,
+        77
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "cand",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 20.5,
+       "struct_score": 26.3,
+       "trace": "data_backward",
+       "why": "One-hot winner computed by picker, loaded into grant register.",
+       "lines": [
+        44,
+        66
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "u_pick",
+       "module": "rr_pick"
+      }
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "gnt_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "grant_controller",
+     "kind": "CONTROLLER",
+     "description": "Idle/granted state holds grant until accept, then releases and rotates.",
+     "anchors": [
+      {
+       "id": "E10",
+       "name": "busy_r",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.4,
+       "struct_score": 98.5,
+       "trace": "control_backward",
+       "why": "Two-state idle/granted controller; set on any request, cleared on accept; drives grant valid.",
+       "lines": [
+        54,
+        56,
+        78
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "release_now",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 52.2,
+       "struct_score": 41.4,
+       "trace": "control_backward",
+       "why": "Grant accepted this cycle: clears grant register and rotates token.",
+       "lines": [
+        48,
+        63,
+        73
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "any_ask",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 21.2,
+       "struct_score": 29.3,
+       "trace": "control_backward",
+       "why": "OR of requests; moves controller from idle to granted.",
+       "lines": [
+        47,
+        54
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E6",
+       "name": "gnt_valid_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E3",
+     "name": "req_i",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 97.2,
+     "struct_score": 92.8,
+     "trace": "interface",
+     "why": "Request vector from N clients into the picker.",
+     "lines": [
+      29,
+      42,
+      47
+     ]
+    },
+    {
+     "id": "E5",
+     "name": "accept_i",
+     "role": "HANDSHAKE_READY",
+     "importance": "critical",
+     "score": 91.8,
+     "struct_score": 79.4,
+     "trace": "interface",
+     "why": "Acceptance of current grant; releases arbiter and rotates token.",
+     "lines": [
+      31,
+      48,
+      55
+     ]
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_n",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "request_grant",
+     "protocol": "REQ_ACK",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "req_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "gnt_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "grant_accept",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E6",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "gnt_valid_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "accept_i",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

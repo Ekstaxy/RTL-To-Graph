@@ -1,0 +1,1141 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-ethernet_ip_eth_rx",
+ "tops": [
+  "ip_eth_rx"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "ip_eth_rx": {
+   "source": "teacher",
+   "canonical_instance": "ip_eth_rx",
+   "file": "data/rtl/verilog-ethernet/rtl/ip_eth_rx.v",
+   "lines": [
+    34,
+    579
+   ],
+   "summary": "Ethernet-to-IP receiver: a 5-state FSM walks a byte header pointer to parse IPv4 header fields into registers, checks version/IHL and ones-complement checksum, then forwards payload through a skid-buffered AXI stream.",
+   "blocks": [
+    {
+     "name": "rx_fsm",
+     "kind": "CONTROLLER",
+     "description": "FSM sequencing header accept, header parse, payload forwarding and discard",
+     "anchors": [
+      {
+       "id": "E41",
+       "name": "state_reg",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.4,
+       "struct_score": 98.5,
+       "trace": "control_backward",
+       "why": "Main FSM: idle, read header, read payload, payload last, wait last; drives all readies and stores",
+       "lines": [
+        128,
+        279,
+        445
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "s_eth_payload_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 92.4,
+       "struct_score": 80.7,
+       "trace": "control_backward",
+       "why": "Input stream ready, registered from FSM and output skid-buffer availability",
+       "lines": [
+        49,
+        197,
+        300
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "s_eth_hdr_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 27.4,
+       "struct_score": 53.1,
+       "trace": "control_backward",
+       "why": "Ethernet header ready, asserted in idle when no IP header is pending",
+       "lines": [
+        43,
+        196,
+        286
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "m_ip_hdr_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 81.9,
+       "struct_score": 47.4,
+       "trace": "control_backward",
+       "why": "Output IP header valid, raised after header passes version and checksum checks",
+       "lines": [
+        56,
+        199
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E42",
+       "name": "state_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E72",
+       "name": "s_eth_hdr_ready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E73",
+       "name": "s_eth_hdr_ready_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E74",
+       "name": "s_eth_payload_axis_tready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E75",
+       "name": "s_eth_payload_axis_tready_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E76",
+       "name": "m_ip_hdr_valid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E77",
+       "name": "m_ip_hdr_valid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E94",
+       "name": "busy_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "header_parser",
+     "kind": "DATAPATH",
+     "description": "Header pointer decodes byte position into per-field store enables filling header registers",
+     "anchors": [
+      {
+       "id": "E65",
+       "name": "hdr_ptr_reg",
+       "role": "COUNTER",
+       "importance": "critical",
+       "score": 82.6,
+       "struct_score": 50.1,
+       "trace": "control_backward",
+       "why": "Header byte counter; decoded to select which header field register stores each byte",
+       "lines": [
+        154,
+        302,
+        311
+       ]
+      },
+      {
+       "id": "E44",
+       "name": "store_ip_version_ihl",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.0,
+       "struct_score": 3.9,
+       "trace": "control_backward",
+       "why": "Representative per-field store enable decoded from header pointer",
+       "lines": [
+        132,
+        312,
+        476
+       ]
+      },
+      {
+       "id": "E43",
+       "name": "store_eth_hdr",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.1,
+       "struct_score": 4.5,
+       "trace": "control_backward",
+       "why": "Latches Ethernet MAC and type fields when header is accepted",
+       "lines": [
+        131,
+        289,
+        466
+       ]
+      },
+      {
+       "id": "E92",
+       "name": "m_ip_source_ip_reg",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 45.9,
+       "struct_score": 15.8,
+       "trace": "data_backward",
+       "why": "Representative parsed IP header field register, filled bytewise and output as header",
+       "lines": [
+        179,
+        214,
+        488
+       ]
+      },
+      {
+       "id": "E85",
+       "name": "m_ip_length_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 18.1,
+       "struct_score": 16.5,
+       "trace": "data_backward",
+       "why": "Parsed IP total length; seeds payload word counter",
+       "lines": [
+        172,
+        298,
+        478
+       ]
+      },
+      {
+       "id": "E81",
+       "name": "m_ip_version_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 17.1,
+       "struct_score": 12.5,
+       "trace": "data_backward",
+       "why": "Parsed IP version, checked with IHL for header validity",
+       "lines": [
+        168,
+        333,
+        476
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E66",
+       "name": "hdr_ptr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E45",
+       "name": "store_ip_dscp_ecn",
+       "kind": "comb"
+      },
+      {
+       "id": "E46",
+       "name": "store_ip_length_0",
+       "kind": "comb"
+      },
+      {
+       "id": "E47",
+       "name": "store_ip_length_1",
+       "kind": "comb"
+      },
+      {
+       "id": "E48",
+       "name": "store_ip_identification_0",
+       "kind": "comb"
+      },
+      {
+       "id": "E49",
+       "name": "store_ip_identification_1",
+       "kind": "comb"
+      },
+      {
+       "id": "E50",
+       "name": "store_ip_flags_fragment_offset_0",
+       "kind": "comb"
+      },
+      {
+       "id": "E51",
+       "name": "store_ip_flags_fragment_offset_1",
+       "kind": "comb"
+      },
+      {
+       "id": "E52",
+       "name": "store_ip_ttl",
+       "kind": "comb"
+      },
+      {
+       "id": "E53",
+       "name": "store_ip_protocol",
+       "kind": "comb"
+      },
+      {
+       "id": "E54",
+       "name": "store_ip_header_checksum_0",
+       "kind": "comb"
+      },
+      {
+       "id": "E55",
+       "name": "store_ip_header_checksum_1",
+       "kind": "comb"
+      },
+      {
+       "id": "E56",
+       "name": "store_ip_source_ip_0",
+       "kind": "comb"
+      },
+      {
+       "id": "E57",
+       "name": "store_ip_source_ip_1",
+       "kind": "comb"
+      },
+      {
+       "id": "E58",
+       "name": "store_ip_source_ip_2",
+       "kind": "comb"
+      },
+      {
+       "id": "E59",
+       "name": "store_ip_source_ip_3",
+       "kind": "comb"
+      },
+      {
+       "id": "E60",
+       "name": "store_ip_dest_ip_0",
+       "kind": "comb"
+      },
+      {
+       "id": "E61",
+       "name": "store_ip_dest_ip_1",
+       "kind": "comb"
+      },
+      {
+       "id": "E62",
+       "name": "store_ip_dest_ip_2",
+       "kind": "comb"
+      },
+      {
+       "id": "E63",
+       "name": "store_ip_dest_ip_3",
+       "kind": "comb"
+      },
+      {
+       "id": "E78",
+       "name": "m_eth_dest_mac_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E79",
+       "name": "m_eth_src_mac_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E80",
+       "name": "m_eth_type_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E82",
+       "name": "m_ip_ihl_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E83",
+       "name": "m_ip_dscp_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E84",
+       "name": "m_ip_ecn_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E86",
+       "name": "m_ip_identification_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E87",
+       "name": "m_ip_flags_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E88",
+       "name": "m_ip_fragment_offset_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E89",
+       "name": "m_ip_ttl_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E90",
+       "name": "m_ip_protocol_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E91",
+       "name": "m_ip_header_checksum_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E93",
+       "name": "m_ip_dest_ip_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "checksum",
+     "kind": "DATAPATH",
+     "description": "Ones-complement sum of header bytes compared to 0xffff",
+     "anchors": [
+      {
+       "id": "E69",
+       "name": "hdr_sum_reg",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 45.0,
+       "struct_score": 12.1,
+       "trace": "data_backward",
+       "why": "Ones-complement header checksum accumulator checked against 0xffff",
+       "lines": [
+        157,
+        306,
+        463
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E70",
+       "name": "hdr_sum_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "payload_counter",
+     "kind": "COUNTER_TIMER",
+     "description": "Counts remaining payload bytes and holds the last byte",
+     "anchors": [
+      {
+       "id": "E67",
+       "name": "word_count_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 52.4,
+       "struct_score": 41.9,
+       "trace": "control_backward",
+       "why": "Remaining payload byte count from IP length; detects last word and early termination",
+       "lines": [
+        155,
+        369,
+        372
+       ]
+      },
+      {
+       "id": "E71",
+       "name": "last_word_data_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 16.4,
+       "struct_score": 9.6,
+       "trace": "data_backward",
+       "why": "Holds final payload byte while trailing padding is discarded",
+       "lines": [
+        159,
+        397,
+        473
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E68",
+       "name": "word_count_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E64",
+       "name": "store_last_word",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "output_skid_buffer",
+     "kind": "BUFFER",
+     "description": "Two-register skid buffer driving output payload AXI stream",
+     "anchors": [
+      {
+       "id": "E114",
+       "name": "temp_m_ip_payload_axis_tdata_reg",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 48.8,
+       "struct_score": 27.8,
+       "trace": "data_backward",
+       "why": "Skid buffer temp register holding payload when output is stalled",
+       "lines": [
+        504,
+        561,
+        567
+       ]
+      },
+      {
+       "id": "E108",
+       "name": "m_ip_payload_axis_tready_int_early",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 15.8,
+       "struct_score": 7.4,
+       "trace": "control_backward",
+       "why": "Early ready from skid buffer; gates input stream ready during payload",
+       "lines": [
+        194,
+        361,
+        520
+       ]
+      },
+      {
+       "id": "E119",
+       "name": "store_ip_payload_int_to_output",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.1,
+       "struct_score": 4.5,
+       "trace": "control_backward",
+       "why": "Skid buffer enable loading internal payload directly into output register",
+       "lines": [
+        510,
+        536,
+        556
+       ]
+      },
+      {
+       "id": "E120",
+       "name": "store_ip_payload_int_to_temp",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.1,
+       "struct_score": 4.5,
+       "trace": "control_backward",
+       "why": "Skid buffer enable storing payload into temp register on stall",
+       "lines": [
+        511,
+        540,
+        566
+       ]
+      },
+      {
+       "id": "E31",
+       "name": "m_ip_payload_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 82.1,
+       "struct_score": 48.1,
+       "trace": "data_backward",
+       "why": "Output IP payload byte stream from skid buffer output register",
+       "lines": [
+        74,
+        514
+       ]
+      },
+      {
+       "id": "E32",
+       "name": "m_ip_payload_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 81.9,
+       "struct_score": 47.4,
+       "trace": "control_backward",
+       "why": "Output payload stream valid from skid buffer",
+       "lines": [
+        75,
+        515
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E103",
+       "name": "m_ip_payload_axis_tdata_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E104",
+       "name": "m_ip_payload_axis_tvalid_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E105",
+       "name": "m_ip_payload_axis_tready_int_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E106",
+       "name": "m_ip_payload_axis_tlast_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E107",
+       "name": "m_ip_payload_axis_tuser_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E109",
+       "name": "m_ip_payload_axis_tdata_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E110",
+       "name": "m_ip_payload_axis_tvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E111",
+       "name": "m_ip_payload_axis_tvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E112",
+       "name": "m_ip_payload_axis_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E113",
+       "name": "m_ip_payload_axis_tuser_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E115",
+       "name": "temp_m_ip_payload_axis_tvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E116",
+       "name": "temp_m_ip_payload_axis_tvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E117",
+       "name": "temp_m_ip_payload_axis_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E118",
+       "name": "temp_m_ip_payload_axis_tuser_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E121",
+       "name": "store_ip_payload_axis_temp_to_output",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "error_status",
+     "kind": "OTHER",
+     "description": "Registered busy and error flag outputs",
+     "anchors": [
+      {
+       "id": "E36",
+       "name": "busy",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 16.1,
+       "struct_score": 8.6,
+       "trace": "control_backward",
+       "why": "Busy level when FSM is not idle",
+       "lines": [
+        83,
+        217
+       ]
+      },
+      {
+       "id": "E39",
+       "name": "error_invalid_header",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 44.1,
+       "struct_score": 8.6,
+       "trace": "control_backward",
+       "why": "Error pulse for wrong IP version or IHL",
+       "lines": [
+        86,
+        220
+       ]
+      },
+      {
+       "id": "E40",
+       "name": "error_invalid_checksum",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 16.1,
+       "struct_score": 8.6,
+       "trace": "control_backward",
+       "why": "Error pulse when header checksum does not equal 0xffff",
+       "lines": [
+        87,
+        221
+       ]
+      },
+      {
+       "id": "E37",
+       "name": "error_header_early_termination",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 16.1,
+       "struct_score": 8.6,
+       "trace": "control_backward",
+       "why": "Error pulse when tlast arrives during header",
+       "lines": [
+        84,
+        218
+       ]
+      },
+      {
+       "id": "E38",
+       "name": "error_payload_early_termination",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 16.1,
+       "struct_score": 8.6,
+       "trace": "control_backward",
+       "why": "Error pulse when frame ends before IP length",
+       "lines": [
+        85,
+        219
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E95",
+       "name": "error_header_early_termination_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E96",
+       "name": "error_header_early_termination_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E97",
+       "name": "error_payload_early_termination_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E98",
+       "name": "error_payload_early_termination_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E99",
+       "name": "error_invalid_header_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E100",
+       "name": "error_invalid_header_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E101",
+       "name": "error_invalid_checksum_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E102",
+       "name": "error_invalid_checksum_next",
+       "kind": "comb"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E3",
+     "name": "s_eth_hdr_valid",
+     "role": "HANDSHAKE_VALID",
+     "importance": "major",
+     "score": 55.3,
+     "struct_score": 52.4,
+     "trace": "interface",
+     "why": "Ethernet header valid; accepted in idle to latch MAC/type and start parsing",
+     "lines": [
+      42,
+      286
+     ]
+    },
+    {
+     "id": "E8",
+     "name": "s_eth_payload_axis_tdata",
+     "role": "INTERFACE_DATA",
+     "importance": "critical",
+     "score": 93.7,
+     "struct_score": 84.0,
+     "trace": "interface",
+     "why": "Input byte stream carrying IP header bytes and payload",
+     "lines": [
+      47,
+      363,
+      476
+     ]
+    },
+    {
+     "id": "E9",
+     "name": "s_eth_payload_axis_tvalid",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 92.5,
+     "struct_score": 81.1,
+     "trace": "interface",
+     "why": "Input payload stream valid qualifying every header/payload byte transfer",
+     "lines": [
+      48,
+      300,
+      367
+     ]
+    },
+    {
+     "id": "E14",
+     "name": "m_ip_hdr_ready",
+     "role": "HANDSHAKE_READY",
+     "importance": "minor",
+     "score": 20.5,
+     "struct_score": 26.6,
+     "trace": "interface",
+     "why": "Downstream accepts IP header fields, clearing header valid",
+     "lines": [
+      57,
+      267
+     ]
+    },
+    {
+     "id": "E33",
+     "name": "m_ip_payload_axis_tready",
+     "role": "HANDSHAKE_READY",
+     "importance": "critical",
+     "score": 79.9,
+     "struct_score": 40.1,
+     "trace": "interface",
+     "why": "Downstream payload ready; controls skid buffer transfers and input backpressure",
+     "lines": [
+      76,
+      520,
+      533
+     ]
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "eth_header_in",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_eth_hdr_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_eth_hdr_ready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "s_eth_dest_mac",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_eth_src_mac",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "s_eth_type",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "eth_payload_in",
+     "protocol": "STREAM",
+     "direction": "IN",
+     "member_ids": [
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12"
+     ],
+     "members": [
+      {
+       "id": "E8",
+       "name": "s_eth_payload_axis_tdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_eth_payload_axis_tvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "s_eth_payload_axis_tready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E11",
+       "name": "s_eth_payload_axis_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E12",
+       "name": "s_eth_payload_axis_tuser",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "ip_header_out",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20",
+      "E21",
+      "E22",
+      "E23",
+      "E24",
+      "E25",
+      "E26",
+      "E27",
+      "E28",
+      "E29",
+      "E30"
+     ],
+     "members": [
+      {
+       "id": "E13",
+       "name": "m_ip_hdr_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "m_ip_hdr_ready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "m_eth_dest_mac",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "m_eth_src_mac",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "m_eth_type",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "m_ip_version",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "m_ip_ihl",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "m_ip_dscp",
+       "kind": "port_out"
+      },
+      {
+       "id": "E21",
+       "name": "m_ip_ecn",
+       "kind": "port_out"
+      },
+      {
+       "id": "E22",
+       "name": "m_ip_length",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "m_ip_identification",
+       "kind": "port_out"
+      },
+      {
+       "id": "E24",
+       "name": "m_ip_flags",
+       "kind": "port_out"
+      },
+      {
+       "id": "E25",
+       "name": "m_ip_fragment_offset",
+       "kind": "port_out"
+      },
+      {
+       "id": "E26",
+       "name": "m_ip_ttl",
+       "kind": "port_out"
+      },
+      {
+       "id": "E27",
+       "name": "m_ip_protocol",
+       "kind": "port_out"
+      },
+      {
+       "id": "E28",
+       "name": "m_ip_header_checksum",
+       "kind": "port_out"
+      },
+      {
+       "id": "E29",
+       "name": "m_ip_source_ip",
+       "kind": "port_out"
+      },
+      {
+       "id": "E30",
+       "name": "m_ip_dest_ip",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "ip_payload_out",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E31",
+      "E32",
+      "E33",
+      "E34",
+      "E35"
+     ],
+     "members": [
+      {
+       "id": "E31",
+       "name": "m_ip_payload_axis_tdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E32",
+       "name": "m_ip_payload_axis_tvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E33",
+       "name": "m_ip_payload_axis_tready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E34",
+       "name": "m_ip_payload_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E35",
+       "name": "m_ip_payload_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E36",
+      "E37",
+      "E38",
+      "E39",
+      "E40"
+     ],
+     "members": [
+      {
+       "id": "E36",
+       "name": "busy",
+       "kind": "port_out"
+      },
+      {
+       "id": "E37",
+       "name": "error_header_early_termination",
+       "kind": "port_out"
+      },
+      {
+       "id": "E38",
+       "name": "error_payload_early_termination",
+       "kind": "port_out"
+      },
+      {
+       "id": "E39",
+       "name": "error_invalid_header",
+       "kind": "port_out"
+      },
+      {
+       "id": "E40",
+       "name": "error_invalid_checksum",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,26 @@
+{
+ "module_summary": "Combinational AXI-stream to LocalLink bridge that inverts handshakes, derives SOF from a registered last-beat flag, and drops single-beat packets.",
+ "anchors": [
+  {"id": "E4", "name": "s_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "AXI input valid; drives LocalLink source-ready, SOF and last_tlast update.", "lines": [46, 66, 79]},
+  {"id": "E5", "name": "s_axis_tready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "AXI input ready, inverted copy of LocalLink destination ready.", "lines": [47, 74]},
+  {"id": "E3", "name": "s_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "AXI input payload passed straight to LocalLink data output.", "lines": [45, 76]},
+  {"id": "E6", "name": "s_axis_tlast", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Packet end marker; produces EOF and updates last_tlast.", "lines": [48, 66, 78]},
+  {"id": "E7", "name": "ll_data_out", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "LocalLink output payload driven from s_axis_tdata.", "lines": [53, 76]},
+  {"id": "E10", "name": "ll_src_rdy_out_n", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Active-low LocalLink source ready from tvalid masked by invalid.", "lines": [56, 79]},
+  {"id": "E11", "name": "ll_dst_rdy_in_n", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Active-low LocalLink destination ready, inverted onto s_axis_tready.", "lines": [57, 74]},
+  {"id": "E8", "name": "ll_sof_out_n", "role": "INTERFACE_DATA", "importance": "major", "trace": "control_backward", "why": "Active-low start-of-frame from last_tlast, tvalid and invalid.", "lines": [54, 77]},
+  {"id": "E9", "name": "ll_eof_out_n", "role": "INTERFACE_DATA", "importance": "major", "trace": "control_backward", "why": "Active-low end-of-frame from tlast masked by invalid.", "lines": [55, 78]},
+  {"id": "E12", "name": "last_tlast", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Registers previous accepted tlast; marks next beat as start of frame.", "lines": [60, 66, 77]},
+  {"id": "E13", "name": "invalid", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Flags single-beat packets; suppresses SOF, EOF and source ready.", "lines": [72, 77, 79]}
+ ],
+ "groups": [
+  {"name": "AXI input", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E4", "E5", "E3", "E6"], "member_ids": [], "description": "AXI-stream slave side: tdata, tvalid, tready, tlast."},
+  {"name": "Frame tracking", "kind": "CONTROLLER", "anchor_ids": ["E12", "E13"], "member_ids": [], "description": "Last-beat register and single-beat invalid detection controlling SOF/EOF."},
+  {"name": "LocalLink output", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E7", "E10", "E11", "E8", "E9"], "member_ids": [], "description": "Active-low LocalLink data, SOF, EOF, src/dst ready."}
+ ],
+ "interfaces": [
+  {"name": "clk_rst", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "s_axis", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6"]},
+  {"name": "ll_out", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E7", "E8", "E9", "E10", "E11"]}
+ ]
+}

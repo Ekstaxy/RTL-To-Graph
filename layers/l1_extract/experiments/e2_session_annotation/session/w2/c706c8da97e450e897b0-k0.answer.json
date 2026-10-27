@@ -1,0 +1,22 @@
+{
+  "module_summary": "4-entry by 4-bit LIFO stack: a stack pointer indexes a small memory, RW selects push or pop when enabled, and FULL/EMPTY flags derived from the pointer gate operations.",
+  "anchors": [
+    {"id": "E9", "name": "stack_mem", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "4x4-bit stack array written on push, read and cleared on pop."},
+    {"id": "E10", "name": "SP", "role": "FIFO_PTR", "importance": "critical", "trace": "control_backward", "why": "Stack pointer indexing stack_mem; decrements on push, increments on pop, sets FULL/EMPTY."},
+    {"id": "E2", "name": "RW", "role": "COMMAND", "importance": "critical", "trace": "forward", "why": "Selects push (0) or pop (1) operation on the stack."},
+    {"id": "E1", "name": "dataIn", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Data pushed into stack_mem at SP."},
+    {"id": "E8", "name": "dataOut", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Registered popped value read from stack_mem at SP."},
+    {"id": "E3", "name": "EN", "role": "ENABLE", "importance": "major", "trace": "forward", "why": "Global operation enable; gates reset, push and pop."},
+    {"id": "E7", "name": "FULL", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Full flag from SP; blocks pushes and reported as output."},
+    {"id": "E6", "name": "EMPTY", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Empty flag from SP[2]; blocks pops and reported as output."}
+  ],
+  "groups": [
+    {"name": "stack_control", "kind": "CONTROLLER", "anchor_ids": ["E10", "E2", "E3", "E7", "E6"], "member_ids": [], "description": "Stack pointer update and full/empty flag generation under RW and EN."},
+    {"name": "stack_memory", "kind": "BUFFER", "anchor_ids": ["E9", "E1", "E8"], "member_ids": [], "description": "Stack array with push data input and registered pop output."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E5", "E4"]},
+    {"name": "stack_access", "protocol": "OTHER", "direction": "BIDIR", "member_ids": ["E1", "E2", "E3", "E8"]},
+    {"name": "status_flags", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E6", "E7"]}
+  ]
+}

@@ -1,0 +1,26 @@
+{
+ "module_summary": "Pipelined unsigned 8x8 multiplier: registered operands, shifted partial products summed in a registered adder tree, with an enable shift register producing output valid.",
+ "anchors": [
+  {"id": "E7", "name": "mul_out", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Registered 16-bit product output, zeroed when the delayed enable is low."},
+  {"id": "E6", "name": "mul_en_out", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Output valid, delayed copy of mul_en_in through the enable pipeline."},
+  {"id": "E3", "name": "mul_en_in", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "forward", "why": "Input valid; gates operand capture and starts the enable shift register."},
+  {"id": "E8", "name": "mul_en_out_reg", "role": "PIPELINE_REG", "importance": "major", "trace": "control_backward", "why": "3-bit enable shift register; MSB gates mul_out load and feeds mul_en_out."},
+  {"id": "E9", "name": "mul_a_reg", "role": "PIPELINE_REG", "importance": "major", "trace": "data_backward", "why": "Registered multiplicand, zeroed when input enable low."},
+  {"id": "E10", "name": "mul_b_reg", "role": "PIPELINE_REG", "importance": "major", "trace": "data_backward", "why": "Registered multiplier; its bits select each partial product."},
+  {"id": "E11", "name": "temp", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Eight shifted partial products of mul_a_reg gated by mul_b_reg bits."},
+  {"id": "E12", "name": "sum", "role": "PIPELINE_REG", "importance": "major", "trace": "data_backward", "why": "Four registered pairwise partial-product sums, first adder-tree stage."},
+  {"id": "E13", "name": "mul_out_reg", "role": "PIPELINE_REG", "importance": "major", "trace": "data_backward", "why": "Registered final product, sum of the four partial sums."},
+  {"id": "E4", "name": "mul_a", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "8-bit multiplicand input."},
+  {"id": "E5", "name": "mul_b", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "8-bit multiplier input."}
+ ],
+ "groups": [
+  {"name": "enable_pipeline", "kind": "CONTROLLER", "anchor_ids": ["E3", "E8", "E6"], "member_ids": [], "description": "Shift register delaying input enable to align output valid with product."},
+  {"name": "operand_stage", "kind": "PIPELINE_STAGE", "anchor_ids": ["E9", "E10", "E4", "E5"], "member_ids": [], "description": "Captures operands when enabled, otherwise zero."},
+  {"name": "partial_product_tree", "kind": "DATAPATH", "anchor_ids": ["E11", "E12", "E13", "E7"], "member_ids": [], "description": "Shift-and-add partial products reduced through two registered adder stages."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "operand_in", "protocol": "STREAM", "direction": "IN", "member_ids": ["E3", "E4", "E5"]},
+  {"name": "product_out", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E6", "E7"]}
+ ]
+}

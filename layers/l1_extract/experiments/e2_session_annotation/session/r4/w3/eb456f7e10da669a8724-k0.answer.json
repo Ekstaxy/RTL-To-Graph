@@ -1,0 +1,502 @@
+{
+ "module_summary": "AXI-lite instruction fetch unit: issues incrementing AR requests throttled by outstanding/fill counters, buffers 64-bit read data in an sfifo, and shifts out 32-bit instructions with PC tracking and flush on new PC.",
+ "anchors": [
+  {
+   "id": "E12",
+   "name": "M_AXI_ARVALID",
+   "role": "HANDSHAKE_VALID",
+   "importance": "critical",
+   "trace": "control_backward",
+   "why": "AXI read address valid; issued unless fetch limit, full bus, or reset throttles requests",
+   "lines": [
+    204,
+    218,
+    221
+   ]
+  },
+  {
+   "id": "E14",
+   "name": "M_AXI_ARADDR",
+   "role": "INTERFACE_ADDR",
+   "importance": "critical",
+   "trace": "data_backward",
+   "why": "Fetch address: loads i_pc or pending_pc, else increments per bus word",
+   "lines": [
+    254,
+    256,
+    260
+   ]
+  },
+  {
+   "id": "E13",
+   "name": "M_AXI_ARREADY",
+   "role": "HANDSHAKE_READY",
+   "importance": "major",
+   "trace": "interface",
+   "why": "Slave accepts read address; advances ARADDR, clears flush_request, counts outstanding",
+   "lines": [
+    120,
+    193,
+    204
+   ]
+  },
+  {
+   "id": "E16",
+   "name": "M_AXI_RVALID",
+   "role": "HANDSHAKE_VALID",
+   "importance": "major",
+   "trace": "interface",
+   "why": "Read data valid; writes FIFO and decrements outstanding/flushcount",
+   "lines": [
+    106,
+    120,
+    185
+   ]
+  },
+  {
+   "id": "E18",
+   "name": "M_AXI_RDATA",
+   "role": "INTERFACE_DATA",
+   "importance": "critical",
+   "trace": "interface",
+   "why": "64-bit read data, endian-swapped and pushed into fetch FIFO",
+   "lines": [
+    300,
+    305
+   ]
+  },
+  {
+   "id": "E4",
+   "name": "i_new_pc",
+   "role": "COMMAND",
+   "importance": "critical",
+   "trace": "forward",
+   "why": "CPU branch request: resets FIFO, reloads ARADDR and o_pc from i_pc",
+   "lines": [
+    105,
+    253,
+    270
+   ]
+  },
+  {
+   "id": "E5",
+   "name": "i_clear_cache",
+   "role": "COMMAND",
+   "importance": "minor",
+   "trace": "forward",
+   "why": "Clears fetch FIFO and pending PC, suppresses ARVALID",
+   "lines": [
+    105,
+    221,
+    232
+   ]
+  },
+  {
+   "id": "E7",
+   "name": "i_pc",
+   "role": "INTERFACE_ADDR",
+   "importance": "minor",
+   "trace": "interface",
+   "why": "New program counter loaded into ARADDR, pending_pc and o_pc",
+   "lines": [
+    245,
+    254,
+    271
+   ]
+  },
+  {
+   "id": "E8",
+   "name": "o_insn",
+   "role": "INTERFACE_DATA",
+   "importance": "critical",
+   "trace": "data_backward",
+   "why": "Instruction output, low word of out_data shift register",
+   "lines": [
+    438
+   ]
+  },
+  {
+   "id": "E10",
+   "name": "o_valid",
+   "role": "HANDSHAKE_VALID",
+   "importance": "critical",
+   "trace": "control_backward",
+   "why": "Instruction valid to CPU; set from FIFO read or remaining out_fill words",
+   "lines": [
+    396,
+    397
+   ]
+  },
+  {
+   "id": "E6",
+   "name": "i_ready",
+   "role": "HANDSHAKE_READY",
+   "importance": "major",
+   "trace": "interface",
+   "why": "CPU accepts instruction; shifts out_data, decrements out_fill, advances o_pc",
+   "lines": [
+    272,
+    421,
+    434
+   ]
+  },
+  {
+   "id": "E9",
+   "name": "o_pc",
+   "role": "STATUS",
+   "importance": "major",
+   "trace": "control_backward",
+   "why": "Address of current instruction; loaded on new PC, increments on accept",
+   "lines": [
+    271,
+    275
+   ]
+  },
+  {
+   "id": "E11",
+   "name": "o_illegal",
+   "role": "STATUS",
+   "importance": "minor",
+   "trace": "data_backward",
+   "why": "Bus error flag latched from RRESP bit stored in FIFO data",
+   "lines": [
+    446,
+    447
+   ]
+  },
+  {
+   "id": "E21",
+   "name": "outstanding",
+   "role": "COUNTER",
+   "importance": "major",
+   "trace": "control_backward",
+   "why": "Counts outstanding AXI reads; drives full_bus and flushcount",
+   "lines": [
+    121,
+    122,
+    138
+   ]
+  },
+  {
+   "id": "E26",
+   "name": "full_bus",
+   "role": "CONTROL_FLAG",
+   "importance": "minor",
+   "trace": "control_backward",
+   "why": "Outstanding count at limit; blocks new ARVALID",
+   "lines": [
+    139,
+    221
+   ]
+  },
+  {
+   "id": "E37",
+   "name": "fill",
+   "role": "COUNTER",
+   "importance": "major",
+   "trace": "control_backward",
+   "why": "Requests issued but not consumed; throttles ARVALID against FETCH_LIMIT",
+   "lines": [
+    155,
+    156,
+    215
+   ]
+  },
+  {
+   "id": "E23",
+   "name": "flushcount",
+   "role": "COUNTER",
+   "importance": "minor",
+   "trace": "control_backward",
+   "why": "Number of stale responses to discard after a PC change",
+   "lines": [
+    181,
+    187,
+    189
+   ]
+  },
+  {
+   "id": "E24",
+   "name": "flushing",
+   "role": "CONTROL_FLAG",
+   "importance": "major",
+   "trace": "control_backward",
+   "why": "Discarding stale read responses; blocks FIFO writes",
+   "lines": [
+    106,
+    182,
+    189
+   ]
+  },
+  {
+   "id": "E25",
+   "name": "flush_request",
+   "role": "CONTROL_FLAG",
+   "importance": "minor",
+   "trace": "control_backward",
+   "why": "Pending AR during flush; prevents counting it in fill",
+   "lines": [
+    153,
+    183,
+    194
+   ]
+  },
+  {
+   "id": "E35",
+   "name": "pending_new_pc",
+   "role": "CONTROL_FLAG",
+   "importance": "minor",
+   "trace": "control_backward",
+   "why": "New PC arrived while AR stalled; selects pending_pc for ARADDR",
+   "lines": [
+    237,
+    255
+   ]
+  },
+  {
+   "id": "E36",
+   "name": "pending_pc",
+   "role": "HOLDING_REG",
+   "importance": "minor",
+   "trace": "data_backward",
+   "why": "Holds new PC until AR channel can accept it",
+   "lines": [
+    245,
+    256
+   ]
+  },
+  {
+   "id": "E29",
+   "name": "fifo_wr",
+   "role": "ENABLE",
+   "importance": "minor",
+   "trace": "control_backward",
+   "why": "FIFO write when read data valid and not flushing",
+   "lines": [
+    106,
+    380
+   ]
+  },
+  {
+   "id": "E30",
+   "name": "fifo_rd",
+   "role": "ENABLE",
+   "importance": "major",
+   "trace": "control_backward",
+   "why": "Pops FIFO word into out_data when output empty or last insn taken",
+   "lines": [
+    370,
+    411,
+    428
+   ]
+  },
+  {
+   "id": "E32",
+   "name": "fifo_empty",
+   "role": "CONTROL_FLAG",
+   "importance": "minor",
+   "trace": "control_backward",
+   "why": "FIFO empty; gates o_valid, out_fill and o_illegal updates",
+   "lines": [
+    383,
+    396,
+    413
+   ]
+  },
+  {
+   "id": "E34",
+   "name": "fifo_data",
+   "role": "DATAPATH_MAJOR",
+   "importance": "minor",
+   "trace": "data_backward",
+   "why": "FIFO output word with error bit, loaded into out_data",
+   "lines": [
+    383,
+    431,
+    447
+   ]
+  },
+  {
+   "id": "E39",
+   "name": "out_data",
+   "role": "STORAGE",
+   "importance": "major",
+   "trace": "data_backward",
+   "why": "Shift register of fetched word, shifts out one instruction per accept",
+   "lines": [
+    431,
+    435
+   ]
+  },
+  {
+   "id": "E38",
+   "name": "out_fill",
+   "role": "COUNTER",
+   "importance": "major",
+   "trace": "control_backward",
+   "why": "Remaining instructions in out_data word; controls fifo_rd and o_valid",
+   "lines": [
+    416,
+    419,
+    422
+   ]
+  },
+  {
+   "id": "E27",
+   "name": "shift",
+   "role": "INDEX",
+   "importance": "minor",
+   "trace": "data_backward",
+   "why": "Instruction offset within bus word from o_pc low bits",
+   "lines": [
+    282,
+    419,
+    433
+   ]
+  },
+  {
+   "id": "E40",
+   "name": "endian_swapped_rdata",
+   "role": "DATAPATH_MAJOR",
+   "importance": "minor",
+   "trace": "data_backward",
+   "why": "Byte-swapped read data written into fetch FIFO",
+   "lines": [
+    298,
+    381
+   ]
+  }
+ ],
+ "groups": [
+  {
+   "name": "AXI read request controller",
+   "kind": "CONTROLLER",
+   "anchor_ids": [
+    "E12",
+    "E14",
+    "E13",
+    "E35",
+    "E36",
+    "E26",
+    "E21",
+    "E37"
+   ],
+   "member_ids": [
+    "E22",
+    "E15"
+   ],
+   "description": "Issues incrementing AR requests, throttled by outstanding and fill counts"
+  },
+  {
+   "name": "Flush logic",
+   "kind": "CONTROLLER",
+   "anchor_ids": [
+    "E23",
+    "E24",
+    "E25",
+    "E4",
+    "E5"
+   ],
+   "member_ids": [
+    "E20",
+    "E3",
+    "E28"
+   ],
+   "description": "Discards stale responses after PC change, resets fetch FIFO"
+  },
+  {
+   "name": "Fetch FIFO",
+   "kind": "BUFFER",
+   "anchor_ids": [
+    "E16",
+    "E18",
+    "E40",
+    "E29",
+    "E30",
+    "E32",
+    "E34"
+   ],
+   "member_ids": [
+    "I1",
+    "E31",
+    "E33",
+    "E19",
+    "E17"
+   ],
+   "description": "sfifo buffering endian-swapped read words with error bit"
+  },
+  {
+   "name": "Instruction output stage",
+   "kind": "SERIALIZER",
+   "anchor_ids": [
+    "E39",
+    "E38",
+    "E27",
+    "E8",
+    "E10",
+    "E6",
+    "E9",
+    "E11",
+    "E7"
+   ],
+   "member_ids": [],
+   "description": "Shifts instructions out of bus word, tracks PC and bus error"
+  }
+ ],
+ "interfaces": [
+  {
+   "name": "clock_reset",
+   "protocol": "CLOCK_RESET",
+   "direction": "IN",
+   "member_ids": [
+    "E1",
+    "E2",
+    "E3"
+   ]
+  },
+  {
+   "name": "cpu_control",
+   "protocol": "SIMPLE",
+   "direction": "IN",
+   "member_ids": [
+    "E4",
+    "E5",
+    "E7"
+   ]
+  },
+  {
+   "name": "cpu_insn",
+   "protocol": "VALID_READY",
+   "direction": "OUT",
+   "member_ids": [
+    "E8",
+    "E9",
+    "E10",
+    "E11",
+    "E6"
+   ]
+  },
+  {
+   "name": "axi_ar",
+   "protocol": "VALID_READY",
+   "direction": "OUT",
+   "member_ids": [
+    "E12",
+    "E13",
+    "E14",
+    "E15"
+   ]
+  },
+  {
+   "name": "axi_r",
+   "protocol": "VALID_READY",
+   "direction": "IN",
+   "member_ids": [
+    "E16",
+    "E17",
+    "E18",
+    "E19"
+   ]
+  }
+ ]
+}

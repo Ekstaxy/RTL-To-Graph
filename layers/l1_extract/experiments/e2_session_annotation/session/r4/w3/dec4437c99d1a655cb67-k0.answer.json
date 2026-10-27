@@ -1,0 +1,29 @@
+{
+ "module_summary": "Glitch-free N-input clock mux: one-hot select gated by other clocks' disabled flags is glitch-filtered and synchronized per clock domain to drive clock gates, whose outputs are ORed and test-muxed.",
+ "anchors": [
+  {"id": "E5", "name": "async_sel_i", "role": "MUX_SELECT", "importance": "critical", "trace": "interface", "why": "Asynchronous selection of which input clock propagates to clk_o.", "lines": [86, 140]},
+  {"id": "E6", "name": "clk_o", "role": "CLOCK_GEN", "importance": "critical", "trace": "data_backward", "why": "Glitch-free muxed output clock from test clock mux.", "lines": [87, 249]},
+  {"id": "E7", "name": "s_sel_onehot", "role": "DECODE", "importance": "major", "trace": "control_backward", "why": "One-hot decode of async_sel_i per input clock.", "lines": [121, 140, 170]},
+  {"id": "E10", "name": "s_gate_enable_unfiltered_async", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Per-clock request: selected and all other clocks disabled.", "lines": [167, 170, 172]},
+  {"id": "E20", "name": "gen_input_stages[*].glitch_filter_q", "role": "STORAGE", "importance": "major", "trace": "data_backward", "why": "Two-stage glitch filter register on the unfiltered enable.", "lines": [150, 180, 181]},
+  {"id": "E11", "name": "s_glitch_filter_output_async", "role": "ENABLE", "importance": "minor", "trace": "data_backward", "why": "Filtered enable fed into the per-clock synchronizer.", "lines": [181, 189]},
+  {"id": "E12", "name": "s_gate_enable_sync", "role": "ENABLE", "importance": "minor", "trace": "data_backward", "why": "Synchronized enable from tc_sync in each clock domain.", "lines": [190, 208]},
+  {"id": "E13", "name": "s_gate_enable", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Final clock gate enable, bypassed to unfiltered during reset.", "lines": [206, 218, 232]},
+  {"id": "E18", "name": "async_reset_bypass_active_q", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Selects reset bypass path for gate enable while reset active.", "lines": [200, 206]},
+  {"id": "E21", "name": "gen_input_stages[*].clock_has_been_disabled_q", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Delayed disabled flag allowing other clocks to enable.", "lines": [151, 154, 232]},
+  {"id": "E15", "name": "s_gated_clock", "role": "CLOCK_GEN", "importance": "major", "trace": "data_backward", "why": "Per-input gated clocks combined by the OR tree.", "lines": [130, 220, 240]},
+  {"id": "E16", "name": "s_output_clock", "role": "CLOCK_GEN", "importance": "minor", "trace": "data_backward", "why": "OR-tree output clock before test mux.", "lines": [131, 241, 246]},
+  {"id": "E3", "name": "test_en_i", "role": "COMMAND", "importance": "minor", "trace": "interface", "why": "Test mode selects test_clk_i and bypasses reset sync.", "lines": [84, 160, 248]}
+ ],
+ "groups": [
+  {"name": "Select decode", "kind": "DECODER", "anchor_ids": ["E5", "E7"], "member_ids": [], "description": "Decodes async select into one-hot per-clock requests."},
+  {"name": "Per-clock enable stages", "kind": "CONTROLLER", "anchor_ids": ["E10", "E20", "E11", "E12", "E13", "E18", "E21"], "member_ids": ["I1", "E17", "E19", "E8", "E9", "E14"], "description": "Interlock, glitch filter, synchronizer and disabled flag per input clock."},
+  {"name": "Clock gating and output", "kind": "DATAPATH", "anchor_ids": ["E15", "E16", "E6", "E3"], "member_ids": ["I2", "E2"], "description": "Gates each clock, ORs gated clocks and muxes test clock."}
+ ],
+ "interfaces": [
+  {"name": "clocks_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E4"]},
+  {"name": "test", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E2", "E3"]},
+  {"name": "select", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E5"]},
+  {"name": "clock_out", "protocol": "CLOCK_RESET", "direction": "OUT", "member_ids": ["E6"]}
+ ]
+}

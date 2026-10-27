@@ -1,0 +1,19 @@
+{
+  "module_summary": "Parallel-to-serial converter: a 2-bit counter reloads a 4-bit rotating shift register from d every fourth cycle, emitting its MSB serially with a valid pulse.",
+  "anchors": [
+    {"id": "E6", "name": "data", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "4-bit shift register loaded from d at cnt==3, rotated left otherwise; MSB drives dout."},
+    {"id": "E7", "name": "cnt", "role": "COUNTER", "importance": "critical", "trace": "control_backward", "why": "Bit counter; at 3 triggers parallel load and valid pulse, else shift."},
+    {"id": "E5", "name": "dout", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Serial output bit, MSB of data shift register."},
+    {"id": "E4", "name": "valid_out", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "One-cycle pulse marking first serial bit of each new word; copy of valid register."},
+    {"id": "E3", "name": "d", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "4-bit parallel input word loaded into data every fourth cycle."}
+  ],
+  "groups": [
+    {"name": "shift_register", "kind": "SERIALIZER", "anchor_ids": ["E6", "E5", "E3"], "member_ids": [], "description": "4-bit rotating shift register converting parallel d into serial dout."},
+    {"name": "bit_counter", "kind": "COUNTER_TIMER", "anchor_ids": ["E7", "E4"], "member_ids": ["E8"], "description": "2-bit counter sequencing load/shift and generating valid pulse register."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "parallel_in", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E3"]},
+    {"name": "serial_out", "protocol": "SERIAL", "direction": "OUT", "member_ids": ["E5", "E4"]}
+  ]
+}

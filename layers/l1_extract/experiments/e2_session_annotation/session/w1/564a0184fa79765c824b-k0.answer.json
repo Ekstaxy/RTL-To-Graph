@@ -1,0 +1,29 @@
+{
+ "module_summary": "Multi-cycle IEEE-754 single-precision multiplier: a free-running 3-bit counter steps unpack, special-case, normalize, mantissa multiply, round and pack phases over shared field registers.",
+ "anchors": [
+  {"id": "E6", "name": "counter", "role": "COUNTER", "importance": "critical", "trace": "control_backward", "why": "Step counter acting as sequencer; each value enables one phase (unpack...pack)."},
+  {"id": "E16", "name": "product", "role": "DATAPATH_MAJOR", "importance": "critical", "trace": "data_backward", "why": "50-bit mantissa product, source of result mantissa and rounding bits."},
+  {"id": "E5", "name": "z", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Packed IEEE-754 result, also written with NaN/Inf/zero special cases."},
+  {"id": "E7", "name": "a_mantissa", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Unpacked, denormalized/normalized operand A mantissa feeding the multiplier."},
+  {"id": "E8", "name": "b_mantissa", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Unpacked, denormalized/normalized operand B mantissa feeding the multiplier."},
+  {"id": "E10", "name": "a_exponent", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Unbiased operand A exponent; checked for NaN/Inf/zero, summed into z_exponent."},
+  {"id": "E11", "name": "b_exponent", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Unbiased operand B exponent; checked for NaN/Inf/zero, summed into z_exponent."},
+  {"id": "E9", "name": "z_mantissa", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Result mantissa normalized and rounded before packing into z."},
+  {"id": "E12", "name": "z_exponent", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Result exponent (sum of operands), adjusted for underflow, normalize, round, overflow."},
+  {"id": "E15", "name": "z_sign", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Result sign as XOR of operand signs."},
+  {"id": "E17", "name": "guard_bit", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Guard bit controlling round-to-nearest increment and normalization shift-in."},
+  {"id": "E18", "name": "round_bit", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Round bit participating in round-up decision."},
+  {"id": "E19", "name": "sticky", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "OR of discarded product bits; participates in round-up decision."}
+ ],
+ "groups": [
+  {"name": "phase_sequencer", "kind": "CONTROLLER", "anchor_ids": ["E6"], "member_ids": [], "description": "Free-running counter selecting the active computation phase."},
+  {"name": "unpack_normalize", "kind": "DECODER", "anchor_ids": ["E7", "E8", "E10", "E11"], "member_ids": ["E13", "E14"], "description": "Field extraction, special-case detection, denormal handling and normalization of operands."},
+  {"name": "mantissa_multiply", "kind": "DATAPATH", "anchor_ids": ["E16", "E12", "E15"], "member_ids": [], "description": "Mantissa multiplier, exponent adder and sign XOR."},
+  {"name": "round_pack", "kind": "DATAPATH", "anchor_ids": ["E9", "E17", "E18", "E19", "E5"], "member_ids": [], "description": "Result normalization, guard/round/sticky rounding, overflow handling and IEEE packing."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "operands_in", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E3", "E4"]},
+  {"name": "result_out", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E5"]}
+ ]
+}

@@ -1,0 +1,20 @@
+stateDiagram-v2
+    ANY_STATE --> STATE_IDLE
+    STATE_IDLE --> STATE_WRITE_HEADER : s_udp_hdr_ready && s_udp_hdr_valid
+    STATE_IDLE --> STATE_WRITE_PAYLOAD : s_udp_hdr_ready && s_udp_hdr_valid && m_ip_payload_axis_tready_int_reg
+    STATE_IDLE --> STATE_IDLE : !(s_udp_hdr_ready && s_udp_hdr_valid)
+    STATE_WRITE_HEADER --> STATE_WRITE_PAYLOAD : m_ip_payload_axis_tready_int_reg
+    STATE_WRITE_HEADER --> STATE_WRITE_HEADER : !m_ip_payload_axis_tready_int_reg
+    STATE_WRITE_PAYLOAD --> STATE_IDLE : m_ip_payload_axis_tready_int_reg && s_udp_payload_axis_tvalid && word_count_reg <= 8 && s_udp_payload_axis_tlast
+    STATE_WRITE_PAYLOAD --> STATE_WRITE_PAYLOAD_LAST : m_ip_payload_axis_tready_int_reg && s_udp_payload_axis_tvalid && word_count_reg <= 8 && !s_udp_payload_axis_tlast
+    STATE_WRITE_PAYLOAD --> STATE_IDLE : m_ip_payload_axis_tready_int_reg && s_udp_payload_axis_tvalid && !(word_count_reg <= 8) && s_udp_payload_axis_tlast
+    STATE_WRITE_PAYLOAD --> STATE_WRITE_PAYLOAD : m_ip_payload_axis_tready_int_reg && s_udp_payload_axis_tvalid && !(word_count_reg <= 8) && !s_udp_payload_axis_tlast
+    STATE_WRITE_PAYLOAD --> STATE_WRITE_PAYLOAD : !(m_ip_payload_axis_tready_int_reg && s_udp_payload_axis_tvalid)
+    STATE_WRITE_PAYLOAD_LAST --> STATE_IDLE : s_udp_payload_axis_tready && s_udp_payload_axis_tvalid && s_udp_payload_axis_tlast
+    STATE_WRITE_PAYLOAD_LAST --> STATE_WRITE_PAYLOAD_LAST : s_udp_payload_axis_tready && s_udp_payload_axis_tvalid && !s_udp_payload_axis_tlast
+    STATE_WRITE_PAYLOAD_LAST --> STATE_WRITE_PAYLOAD_LAST : !(s_udp_payload_axis_tready && s_udp_payload_axis_tvalid)
+    STATE_WAIT_LAST --> STATE_IDLE : s_udp_payload_axis_tvalid && s_udp_payload_axis_tlast
+    STATE_WAIT_LAST --> STATE_WAIT_LAST : s_udp_payload_axis_tvalid && !s_udp_payload_axis_tlast
+    STATE_WAIT_LAST --> STATE_WAIT_LAST : !s_udp_payload_axis_tvalid
+    ANY_STATE --> STATE_IDLE : rst
+    %% output store_last_word (moore)

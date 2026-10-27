@@ -1,0 +1,26 @@
+{
+ "module_summary": "UART transmitter: one-hot 4-phase FSM (rest/start/data/stop) shifts a latched byte LSB-first, paced by a baud-tick sub-module.",
+ "anchors": [
+  {"id": "E9", "name": "phase_r", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "One-hot rest/start/data/stop state; selects line level and shift/count actions.", "lines": [67, 72, 77]},
+  {"id": "E8", "name": "hold_reg", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "Shift register loaded with tx_data, shifted right each baud tick; LSB drives line.", "lines": [73, 80, 93]},
+  {"id": "E10", "name": "nib", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Bit counter of data bits sent; terminal count moves FSM to stop phase.", "lines": [74, 81, 82]},
+  {"id": "E11", "name": "strobe", "role": "CLOCK_GEN", "importance": "major", "trace": "control_backward", "why": "Baud tick from pacer; advances FSM phases and shifts the data register.", "lines": [62, 77, 79]},
+  {"id": "E12", "name": "at_rest", "role": "CONTROL_FLAG", "importance": "minor", "trace": "forward", "why": "Idle decode of FSM; parks the baud pacer and drives busy.", "lines": [56, 61, 91]},
+  {"id": "E3", "name": "tx_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Input request; in rest phase loads byte and starts transmission.", "lines": [29, 71]},
+  {"id": "E4", "name": "tx_ready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Ready when transmitter idle (inverse of busy).", "lines": [30, 92]},
+  {"id": "E5", "name": "tx_data", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Parallel byte to transmit, latched into the shift register.", "lines": [31, 73]},
+  {"id": "E6", "name": "tx_o", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Serial line output: start low, data LSB, stop/idle high.", "lines": [32, 93]},
+  {"id": "E7", "name": "busy_o", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Level busy indication while FSM not in rest phase.", "lines": [33, 91]}
+ ],
+ "groups": [
+  {"name": "tx_controller", "kind": "CONTROLLER", "anchor_ids": ["E9", "E12", "E7"], "member_ids": ["E13"], "description": "One-hot phase FSM sequencing start, data and stop bits; idle decode drives busy/ready."},
+  {"name": "baud_pacer", "kind": "COUNTER_TIMER", "anchor_ids": ["E11"], "member_ids": ["I1", "E12"], "description": "Sub-instance divides clock into baud strobes, parked while idle."},
+  {"name": "tx_serializer", "kind": "SERIALIZER", "anchor_ids": ["E8", "E10", "E6"], "member_ids": [], "description": "Shift register and bit counter serialize the byte onto tx_o."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "tx_in", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5"]},
+  {"name": "serial_out", "protocol": "SERIAL", "direction": "OUT", "member_ids": ["E6"]},
+  {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E7"]}
+ ]
+}

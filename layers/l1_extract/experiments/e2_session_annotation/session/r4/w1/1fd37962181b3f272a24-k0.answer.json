@@ -1,0 +1,183 @@
+{
+ "module_summary": "Valid/ready skid buffer: a one-entry side register captures input data when the downstream stalls, while a registered output stage muxes skid or input data, giving full-throughput registered handshakes.",
+ "anchors": [
+  {
+   "id": "E3",
+   "name": "i_valid",
+   "role": "HANDSHAKE_VALID",
+   "importance": "critical",
+   "trace": "interface",
+   "why": "Upstream valid; loads skid register or output register.",
+   "lines": [
+    137,
+    198
+   ]
+  },
+  {
+   "id": "E4",
+   "name": "o_ready",
+   "role": "HANDSHAKE_READY",
+   "importance": "critical",
+   "trace": "control_backward",
+   "why": "Upstream ready, low whenever skid register holds data.",
+   "lines": [
+    160,
+    152
+   ]
+  },
+  {
+   "id": "E5",
+   "name": "i_data",
+   "role": "INTERFACE_DATA",
+   "importance": "critical",
+   "trace": "interface",
+   "why": "Incoming payload captured into skid or output register.",
+   "lines": [
+    153,
+    215
+   ]
+  },
+  {
+   "id": "E6",
+   "name": "o_valid",
+   "role": "HANDSHAKE_VALID",
+   "importance": "critical",
+   "trace": "control_backward",
+   "why": "Downstream valid driven from registered ro_valid.",
+   "lines": [
+    200,
+    137
+   ]
+  },
+  {
+   "id": "E7",
+   "name": "i_ready",
+   "role": "HANDSHAKE_READY",
+   "importance": "critical",
+   "trace": "interface",
+   "why": "Downstream ready; stall triggers skid capture, ready drains it.",
+   "lines": [
+    137,
+    140,
+    197
+   ]
+  },
+  {
+   "id": "E8",
+   "name": "o_data",
+   "role": "INTERFACE_DATA",
+   "importance": "critical",
+   "trace": "data_backward",
+   "why": "Registered output payload chosen from skid or input data.",
+   "lines": [
+    213,
+    215
+   ]
+  },
+  {
+   "id": "E10",
+   "name": "LOGIC.r_valid",
+   "role": "CONTROL_FLAG",
+   "importance": "major",
+   "trace": "control_backward",
+   "why": "Skid-occupied flag; set on downstream stall, drives o_ready and output mux.",
+   "lines": [
+    139,
+    160,
+    212
+   ]
+  },
+  {
+   "id": "E11",
+   "name": "LOGIC.r_data",
+   "role": "STORAGE",
+   "importance": "major",
+   "trace": "data_backward",
+   "why": "One-entry skid storage holding data accepted during a stall.",
+   "lines": [
+    153,
+    213
+   ]
+  },
+  {
+   "id": "E12",
+   "name": "LOGIC.REG_OUTPUT.ro_valid",
+   "role": "PIPELINE_REG",
+   "importance": "minor",
+   "trace": "control_backward",
+   "why": "Registered output valid flop behind o_valid.",
+   "lines": [
+    198,
+    200
+   ]
+  }
+ ],
+ "groups": [
+  {
+   "name": "Skid register",
+   "kind": "BUFFER",
+   "anchor_ids": [
+    "E10",
+    "E11",
+    "E4"
+   ],
+   "member_ids": [
+    "E9"
+   ],
+   "description": "One-entry overflow buffer and its occupancy flag driving o_ready."
+  },
+  {
+   "name": "Output register",
+   "kind": "PIPELINE_STAGE",
+   "anchor_ids": [
+    "E6",
+    "E8",
+    "E12"
+   ],
+   "member_ids": [],
+   "description": "Registered valid and data selecting skid or input payload."
+  },
+  {
+   "name": "Input port",
+   "kind": "INTERFACE_ADAPTER",
+   "anchor_ids": [
+    "E3",
+    "E5",
+    "E7"
+   ],
+   "member_ids": [],
+   "description": "Upstream valid/data and downstream ready controlling transfers."
+  }
+ ],
+ "interfaces": [
+  {
+   "name": "clock_reset",
+   "protocol": "CLOCK_RESET",
+   "direction": "IN",
+   "member_ids": [
+    "E1",
+    "E2"
+   ]
+  },
+  {
+   "name": "slave_in",
+   "protocol": "VALID_READY",
+   "direction": "IN",
+   "member_ids": [
+    "E3",
+    "E4",
+    "E5"
+   ]
+  },
+  {
+   "name": "master_out",
+   "protocol": "VALID_READY",
+   "direction": "OUT",
+   "member_ids": [
+    "E6",
+    "E7",
+    "E8"
+   ]
+  }
+ ]
+}

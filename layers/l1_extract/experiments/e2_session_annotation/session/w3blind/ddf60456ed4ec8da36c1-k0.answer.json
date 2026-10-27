@@ -1,0 +1,33 @@
+{
+  "module_summary": "Sequential 8-bit restoring divider (signed or unsigned): on an accepted start it latches magnitudes, then for 8 iterations trial-adds the negated divisor to the partial remainder in a combined remainder/quotient shift register, and presents sign-corrected {remainder, quotient} with a valid/ready output handshake.",
+  "anchors": [
+    {"id": "E12", "name": "n12_b52", "role": "DATAPATH_MAJOR", "importance": "critical", "trace": "data_backward", "why": "Combined partial-remainder/quotient shift register updated each iteration; holds final result."},
+    {"id": "E3", "name": "n0_70f", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Dividend operand, magnitude loaded into the shift register on start."},
+    {"id": "E4", "name": "n2_beb", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Divisor operand, negated magnitude stored for trial subtraction."},
+    {"id": "E9", "name": "n16_fac", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Result: sign-corrected remainder and quotient."},
+    {"id": "E6", "name": "n20_389", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Start request; accepted when idle and no pending result, latching operands."},
+    {"id": "E7", "name": "n18_115", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Result valid, set when iterations finish, cleared when consumer accepts."},
+    {"id": "E8", "name": "n6_b16", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Consumer ready; with result valid clears the output valid."},
+    {"id": "E5", "name": "n25_17f", "role": "COMMAND", "importance": "major", "trace": "interface", "why": "Signed-mode select controlling operand magnitude and result sign correction."},
+    {"id": "E13", "name": "n9_ede", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Negated divisor magnitude added to partial remainder each iteration."},
+    {"id": "E23", "name": "n3_a62", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Iteration counter; bit 3 marks completion and sets result valid."},
+    {"id": "E24", "name": "n17_73a", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Busy flag set on start, cleared at completion; gates iterations and new starts."},
+    {"id": "E20", "name": "n13_8f4", "role": "CONTROL_FLAG", "importance": "minor", "trace": "data_backward", "why": "Trial-subtract carry: quotient bit and restore/keep select."},
+    {"id": "E22", "name": "n1_b7a", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "New partial remainder: trial difference or restored value."},
+    {"id": "E10", "name": "n8_f0b", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Latched dividend; its sign drives remainder and quotient correction."},
+    {"id": "E11", "name": "n7_362", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Latched divisor; its sign drives quotient correction."},
+    {"id": "E15", "name": "n11_048", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Quotient field of the shift register before sign correction."},
+    {"id": "E25", "name": "n19_f66", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Output handshake fire, clears result valid."}
+  ],
+  "groups": [
+    {"name": "div_control", "kind": "CONTROLLER", "anchor_ids": ["E24", "E23", "E7", "E25"], "member_ids": [], "description": "Busy flag, iteration counter and result-valid handshake logic."},
+    {"name": "restoring_datapath", "kind": "DATAPATH", "anchor_ids": ["E12", "E13", "E20", "E22", "E15"], "member_ids": ["E14", "E16", "E21"], "description": "Trial add of negated divisor, restore select and remainder/quotient shift."},
+    {"name": "operand_latch", "kind": "PIPELINE_STAGE", "anchor_ids": ["E10", "E11"], "member_ids": [], "description": "Latched operands providing signs for correction."},
+    {"name": "sign_correct", "kind": "DATAPATH", "anchor_ids": ["E9"], "member_ids": ["E18", "E19"], "description": "Two's-complement correction of remainder and quotient outputs."}
+  ],
+  "interfaces": [
+    {"name": "clk_rst", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "operand_in", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6"]},
+    {"name": "result_out", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E7", "E8", "E9"]}
+  ]
+}

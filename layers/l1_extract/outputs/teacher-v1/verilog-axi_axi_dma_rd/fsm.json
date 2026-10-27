@@ -1,0 +1,177 @@
+[
+ {
+  "module": "axi_dma_rd",
+  "instance": "axi_dma_rd",
+  "state": "axi_state_reg",
+  "next": "axi_state_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "AXI_STATE_IDLE",
+    "value": "1'b0"
+   },
+   {
+    "name": "AXI_STATE_START",
+    "value": "1'b1"
+   }
+  ],
+  "reset_state": "AXI_STATE_IDLE",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "AXI_STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "AXI_STATE_IDLE",
+    "dst": "AXI_STATE_START",
+    "cond": "s_axis_read_desc_ready && s_axis_read_desc_valid"
+   },
+   {
+    "src": "AXI_STATE_IDLE",
+    "dst": "AXI_STATE_IDLE",
+    "cond": "!(s_axis_read_desc_ready && s_axis_read_desc_valid)"
+   },
+   {
+    "src": "AXI_STATE_START",
+    "dst": "AXI_STATE_START",
+    "cond": "!m_axi_arvalid && op_word_count_next > 0"
+   },
+   {
+    "src": "AXI_STATE_START",
+    "dst": "AXI_STATE_IDLE",
+    "cond": "!m_axi_arvalid && !(op_word_count_next > 0)"
+   },
+   {
+    "src": "AXI_STATE_START",
+    "dst": "AXI_STATE_START",
+    "cond": "m_axi_arvalid"
+   }
+  ],
+  "outputs": [],
+  "warnings": [],
+  "semantic_check": "consistent"
+ },
+ {
+  "module": "axi_dma_rd",
+  "instance": "axi_dma_rd",
+  "state": "axis_state_reg",
+  "next": "axis_state_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "AXIS_STATE_IDLE",
+    "value": "1'b0"
+   },
+   {
+    "name": "AXIS_STATE_READ",
+    "value": "1'b1"
+   }
+  ],
+  "reset_state": "AXIS_STATE_IDLE",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "AXIS_STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "AXIS_STATE_IDLE",
+    "dst": "AXIS_STATE_READ",
+    "cond": "axis_cmd_valid_reg"
+   },
+   {
+    "src": "AXIS_STATE_READ",
+    "dst": "AXIS_STATE_IDLE",
+    "cond": "(m_axi_rready && m_axi_rvalid || !input_active_reg) && output_last_cycle_reg"
+   },
+   {
+    "src": "AXIS_STATE_READ",
+    "dst": "AXIS_STATE_READ",
+    "cond": "(m_axi_rready && m_axi_rvalid || !input_active_reg) && !output_last_cycle_reg"
+   },
+   {
+    "src": "AXIS_STATE_READ",
+    "dst": "AXIS_STATE_READ",
+    "cond": "!(m_axi_rready && m_axi_rvalid || !input_active_reg)"
+   }
+  ],
+  "outputs": [],
+  "warnings": [],
+  "semantic_check": "consistent"
+ },
+ {
+  "module": "axi_dma_rd",
+  "instance": "axi_dma_rd",
+  "state": "m_axis_read_desc_status_error_reg",
+  "next": null,
+  "style": "semantic",
+  "states": [
+   {
+    "name": "S_0",
+    "value": "0"
+   },
+   {
+    "name": "S_4",
+    "value": "4"
+   },
+   {
+    "name": "S_5",
+    "value": "5"
+   }
+  ],
+  "reset_state": "S_0",
+  "transitions": [
+   {
+    "src": "S_0",
+    "dst": "S_0",
+    "cond": "(!output_last_cycle_reg) || (!axis_state_reg) || (!m_axi_rvalid && input_active_reg) || (bubble_cycle_reg && input_active_reg && !first_cycle_reg && m_axi_rresp[0] && !m_axi_rresp[1])"
+   },
+   {
+    "src": "S_0",
+    "dst": "S_4",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "S_0",
+    "dst": "S_5",
+    "cond": "bubble_cycle_reg && m_axi_rvalid && !input_active_reg && !first_cycle_reg && output_last_cycle_reg && axis_state_reg && m_axi_rresp[0] && m_axi_rresp[1] || <datapath condition>"
+   },
+   {
+    "src": "S_4",
+    "dst": "S_4",
+    "cond": "(!output_last_cycle_reg) || (!axis_state_reg) || (!m_axi_rvalid && input_active_reg) || (input_active_reg && !m_axi_rresp[0] && m_axi_rresp[1])"
+   },
+   {
+    "src": "S_4",
+    "dst": "S_0",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "S_4",
+    "dst": "S_5",
+    "cond": "bubble_cycle_reg && m_axi_rvalid && !input_active_reg && first_cycle_reg && output_last_cycle_reg && axis_state_reg && m_axi_rresp[0] && m_axi_rresp[1] || <datapath condition>"
+   },
+   {
+    "src": "S_5",
+    "dst": "S_5",
+    "cond": "(!output_last_cycle_reg) || (!axis_state_reg) || (!m_axi_rvalid && input_active_reg) || (input_active_reg && m_axi_rresp[0] && m_axi_rresp[1])"
+   },
+   {
+    "src": "S_5",
+    "dst": "S_0",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "S_5",
+    "dst": "S_4",
+    "cond": "<datapath condition>"
+   }
+  ],
+  "outputs": [],
+  "warnings": [
+   "extracted by execution (coding style not recognized syntactically)"
+  ],
+  "semantic_check": "semantic-only"
+ }
+]

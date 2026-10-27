@@ -1,0 +1,26 @@
+{
+ "module_summary": "UART transmitter: 4-state FSM with baud-tick divider shifts out a loaded byte LSB-first framed by start and stop bits.",
+ "anchors": [
+  {"id":"E8","name":"n1_409","role":"FSM_STATE","importance":"critical","trace":"control_backward","why":"IDLE/START/DATA/STOP controller; sequences frame, drives line, ready and busy."},
+  {"id":"E11","name":"n10_4a4","role":"CONTROL_FLAG","importance":"major","trace":"forward","why":"Baud tick when divider wraps; advances FSM, shifts data, counts bits."},
+  {"id":"E10","name":"n3_4bb","role":"COUNTER","importance":"major","trace":"control_backward","why":"Clock divider counter producing the baud tick; cleared while idle."},
+  {"id":"E12","name":"n12_2f4","role":"COUNTER","importance":"major","trace":"control_backward","why":"Data bit counter; ends DATA state after eight bits."},
+  {"id":"E13","name":"n11_74d","role":"STORAGE","importance":"critical","trace":"data_backward","why":"Transmit shift register loaded with input byte, shifted right each baud tick."},
+  {"id":"E3","name":"n5_b37","role":"HANDSHAKE_VALID","importance":"critical","trace":"interface","why":"Start request; in idle loads byte and launches frame."},
+  {"id":"E4","name":"n2_c30","role":"HANDSHAKE_READY","importance":"major","trace":"interface","why":"Ready output, high when FSM is idle."},
+  {"id":"E5","name":"n0_a36","role":"INTERFACE_DATA","importance":"critical","trace":"interface","why":"Parallel byte to transmit, captured into shift register."},
+  {"id":"E6","name":"n6_14d","role":"INTERFACE_DATA","importance":"critical","trace":"data_backward","why":"Serial TX line: start bit low, data LSB, stop/idle high."},
+  {"id":"E7","name":"n7_f2a","role":"CONTROL_FLAG","importance":"minor","trace":"control_backward","why":"Busy status output, high whenever FSM not idle."}
+ ],
+ "groups": [
+  {"name":"tx_controller","kind":"CONTROLLER","anchor_ids":["E8","E4","E7"],"member_ids":["E9"],"description":"Frame FSM with next-state logic; produces ready and busy status."},
+  {"name":"baud_generator","kind":"COUNTER_TIMER","anchor_ids":["E10","E11"],"member_ids":[],"description":"Divides clock by CLK_DIV to produce per-bit baud tick."},
+  {"name":"tx_shifter","kind":"SERIALIZER","anchor_ids":["E13","E12","E6"],"member_ids":[],"description":"Shift register and bit counter serialize byte onto TX line mux."}
+ ],
+ "interfaces": [
+  {"name":"clk_rst","protocol":"CLOCK_RESET","direction":"IN","member_ids":["E1","E2"]},
+  {"name":"tx_byte_in","protocol":"VALID_READY","direction":"IN","member_ids":["E3","E4","E5"]},
+  {"name":"serial_tx","protocol":"SERIAL","direction":"OUT","member_ids":["E6"]},
+  {"name":"status","protocol":"SIMPLE","direction":"OUT","member_ids":["E7"]}
+ ]
+}

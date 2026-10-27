@@ -1,0 +1,176 @@
+{
+  "module_summary": "Sequential 16x16 multiplier using shift-and-add with 3-state FSM controlling HOLD, SPIN (compute), and FIN (done) phases.",
+  "anchors": [
+    {
+      "id": "E3",
+      "name": "s",
+      "role": "COMMAND",
+      "importance": "critical",
+      "trace": "control_backward",
+      "why": "Start command: when asserted with HOLD state, initiates multiplication by loading operands.",
+      "lines": [4, 25, 30]
+    },
+    {
+      "id": "E4",
+      "name": "a",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "data_backward",
+      "why": "Input operand A (16-bit); loaded into multiplicand register on start.",
+      "lines": [5, 50]
+    },
+    {
+      "id": "E5",
+      "name": "b",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "data_backward",
+      "why": "Input operand B (16-bit); loaded into multiplier register on start.",
+      "lines": [6, 51]
+    },
+    {
+      "id": "E7",
+      "name": "p",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "forward",
+      "why": "Output product (32-bit result); driven by accumulator register.",
+      "lines": [9, 62]
+    },
+    {
+      "id": "E6",
+      "name": "bz",
+      "role": "STATUS",
+      "importance": "major",
+      "trace": "forward",
+      "why": "Busy flag output: high when FSM state is SPIN (computing).",
+      "lines": [8, 63]
+    },
+    {
+      "id": "E14",
+      "name": "d",
+      "role": "STATUS",
+      "importance": "major",
+      "trace": "forward",
+      "why": "Done flag output: high when FSM state is FIN (multiplication complete).",
+      "lines": [7, 39, 40]
+    },
+    {
+      "id": "E10",
+      "name": "st",
+      "role": "FSM_STATE",
+      "importance": "critical",
+      "trace": "control_backward",
+      "why": "3-state FSM register: HOLD (idle), SPIN (computing), FIN (done) controlling multiplication sequence.",
+      "lines": [15, 39, 40]
+    },
+    {
+      "id": "E8",
+      "name": "sum",
+      "role": "DATAPATH_MAJOR",
+      "importance": "critical",
+      "trace": "data_backward",
+      "why": "Accumulator register for partial products in shift-and-add algorithm.",
+      "lines": [13, 55, 62]
+    },
+    {
+      "id": "E9",
+      "name": "ctr",
+      "role": "COUNTER",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "5-bit cycle counter; counts down from 0 to detect completion of 16 iterations.",
+      "lines": [14, 53, 58]
+    },
+    {
+      "id": "E17",
+      "name": "load",
+      "role": "CONTROL_FLAG",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Load control flag: gates operand loading into multiplicand and multiplier registers.",
+      "lines": [21, 25, 49]
+    },
+    {
+      "id": "E12",
+      "name": "mplier",
+      "role": "HOLDING_REG",
+      "importance": "major",
+      "trace": "data_backward",
+      "why": "Multiplier shift register: holds and right-shifts operand B during SPIN phase.",
+      "lines": [16, 48, 57]
+    },
+    {
+      "id": "E13",
+      "name": "mcand",
+      "role": "HOLDING_REG",
+      "importance": "major",
+      "trace": "data_backward",
+      "why": "Multiplicand shift register: holds and left-shifts operand A during SPIN phase.",
+      "lines": [17, 48, 50]
+    }
+  ],
+  "groups": [
+    {
+      "name": "Control FSM",
+      "kind": "CONTROLLER",
+      "anchor_ids": ["E10"],
+      "member_ids": ["E11"],
+      "description": "3-state FSM managing multiplication phases: HOLD/SPIN/FIN with transitions based on start and completion."
+    },
+    {
+      "name": "Data accumulation",
+      "kind": "DATAPATH",
+      "anchor_ids": ["E8"],
+      "member_ids": ["E16"],
+      "description": "Accumulator and partial product computation for shift-and-add algorithm."
+    },
+    {
+      "name": "Operand pipeline",
+      "kind": "DATAPATH",
+      "anchor_ids": ["E12", "E13"],
+      "member_ids": [],
+      "description": "Shift registers holding and shifting operands during multiplication iterations."
+    },
+    {
+      "name": "Iteration control",
+      "kind": "COUNTER_TIMER",
+      "anchor_ids": ["E9"],
+      "member_ids": ["E15"],
+      "description": "Counter and cycle-completion detection for 16-bit multiplication."
+    },
+    {
+      "name": "Input/output interface",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E3", "E4", "E5", "E7", "E6", "E14"],
+      "member_ids": ["E17"],
+      "description": "Start command, operand inputs, product output, and status signals (busy, done)."
+    }
+  ],
+  "interfaces": [
+    {
+      "name": "Start command",
+      "protocol": "SIMPLE",
+      "direction": "IN",
+      "member_ids": ["E3"]
+    },
+    {
+      "name": "Operand inputs",
+      "protocol": "SIMPLE",
+      "direction": "IN",
+      "member_ids": ["E4", "E5"]
+    },
+    {
+      "name": "Result and status",
+      "protocol": "SIMPLE",
+      "direction": "OUT",
+      "member_ids": ["E7", "E6", "E14"]
+    },
+    {
+      "name": "Clock and reset",
+      "protocol": "CLOCK_RESET",
+      "direction": "IN",
+      "member_ids": ["E1", "E2"]
+    }
+  ]
+}

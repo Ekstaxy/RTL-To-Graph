@@ -1,0 +1,33 @@
+{
+ "module_summary": "Bit-serial RISC-V buffer register: a 32-bit dhi/dlo shift register that aligns store data, captures load data, and doubles as a shift-amount down-counter.",
+ "anchors": [
+  {"id": "E19", "name": "dhi", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "Upper 8 data bits; shift register in store mode, shift-amount down-counter in shift mode.", "lines": [36, 100]},
+  {"id": "E20", "name": "dlo", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "Lower 24 data bits shifted from dhi or loaded from bus data.", "lines": [37, 102]},
+  {"id": "E25", "name": "dat_shamt", "role": "MUX_SELECT", "importance": "minor", "trace": "data_backward", "why": "Next dhi value: decremented count or shifted-in operand, chosen by cnt_en.", "lines": [82, 100]},
+  {"id": "E24", "name": "cnt_next", "role": "COUNTER", "importance": "major", "trace": "data_backward", "why": "Decremented shift-amount count held in dhi low bits.", "lines": [73, 76, 84]},
+  {"id": "E22", "name": "shift_en", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Enables shifting dhi/dlo during init for store alignment or shift amount.", "lines": [56, 99, 101]},
+  {"id": "E23", "name": "cnt_en", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Enables down-counter mode of dhi during shift operations.", "lines": [58, 82, 99]},
+  {"id": "E21", "name": "byte_valid", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Store alignment condition (lsb + bytecnt < 4) gating shift_en.", "lines": [47, 56]},
+  {"id": "E17", "name": "i_load", "role": "ENABLE", "importance": "major", "trace": "forward", "why": "Parallel-loads bus data i_dat into dhi/dlo.", "lines": [32, 100, 102]},
+  {"id": "E18", "name": "i_dat", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "32-bit load data from bus latched into dhi/dlo.", "lines": [33, 100, 102]},
+  {"id": "E16", "name": "o_dat", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "32-bit store data {dhi,dlo} presented to the bus.", "lines": [31, 96]},
+  {"id": "E15", "name": "o_q", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Serial output bit selected from o_dat by byte lane i_lsb.", "lines": [29, 90]},
+  {"id": "E14", "name": "o_op_b", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Operand B: rs2 or immediate, also shifted into dhi.", "lines": [28, 54]},
+  {"id": "E10", "name": "i_op_b_sel", "role": "MUX_SELECT", "importance": "minor", "trace": "forward", "why": "Chooses rs2 versus immediate for operand B.", "lines": [54]},
+  {"id": "E11", "name": "i_shift_op", "role": "COMMAND", "importance": "major", "trace": "forward", "why": "Selects shift-operation mode, changing shift_en and enabling counter mode.", "lines": [56, 58]},
+  {"id": "E9", "name": "o_sh_done", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Signals shift count wrapped: requested shifts performed.", "lines": [21, 88]},
+  {"id": "E7", "name": "i_lsb", "role": "INTERFACE_ADDR", "importance": "minor", "trace": "interface", "why": "Address low bits selecting byte lane for o_q and store alignment.", "lines": [19, 91]}
+ ],
+ "groups": [
+  {"name": "Data shift register", "kind": "BUFFER", "anchor_ids": ["E19", "E20", "E22", "E17", "E18", "E16", "E21"], "member_ids": ["E8", "E2", "E3"], "description": "32-bit dhi/dlo register: parallel load from bus, shifting for store alignment."},
+  {"name": "Shift-amount counter", "kind": "COUNTER_TIMER", "anchor_ids": ["E24", "E23", "E25", "E9", "E11"], "member_ids": ["E4", "E5", "E6"], "description": "dhi low bits reused as down-counter signalling shift completion."},
+  {"name": "Operand B / output mux", "kind": "DATAPATH", "anchor_ids": ["E14", "E10", "E15", "E7"], "member_ids": ["E12", "E13"], "description": "Selects rs2/imm operand and byte-lane serial output."}
+ ],
+ "interfaces": [
+  {"name": "clock", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1"]},
+  {"name": "state", "protocol": "SIMPLE", "direction": "BIDIR", "member_ids": ["E2", "E3", "E4", "E5", "E6", "E7", "E8", "E9"]},
+  {"name": "control", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E10", "E11"]},
+  {"name": "serial data", "protocol": "STREAM", "direction": "BIDIR", "member_ids": ["E12", "E13", "E14", "E15"]},
+  {"name": "bus data", "protocol": "MEMORY_BUS", "direction": "BIDIR", "member_ids": ["E16", "E17", "E18"]}
+ ]
+}

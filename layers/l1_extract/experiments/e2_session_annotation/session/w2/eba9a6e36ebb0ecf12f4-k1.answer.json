@@ -1,0 +1,30 @@
+{
+ "module_summary": "Synchronous FIFO: circular memory array indexed by write/read pointers with an occupancy counter generating ready/valid on both valid-ready ports, plus flush.",
+ "anchors": [
+  {"id": "E11", "name": "mem_q", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "FIFO data array written at wptr_q on push, read at rptr_q."},
+  {"id": "E4", "name": "in_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Write-side valid; with in_ready forms do_push."},
+  {"id": "E5", "name": "in_ready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Write-side ready, high when count_q not full."},
+  {"id": "E6", "name": "in_data", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Write data stored into mem_q on push."},
+  {"id": "E7", "name": "out_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Read-side valid, high when count_q nonzero."},
+  {"id": "E8", "name": "out_ready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Read-side ready; with out_valid forms do_pop."},
+  {"id": "E9", "name": "out_data", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Read data, mem_q entry at rptr_q."},
+  {"id": "E12", "name": "wptr_q", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "Write pointer addressing mem_q, increments on push, cleared by flush."},
+  {"id": "E13", "name": "rptr_q", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "Read pointer selecting out_data, increments on pop, cleared by flush."},
+  {"id": "E14", "name": "count_q", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "Occupancy counter driving full/empty ready/valid and count_o."},
+  {"id": "E3", "name": "flush_i", "role": "COMMAND", "importance": "major", "trace": "forward", "why": "Flush request clearing pointers and occupancy count."},
+  {"id": "E15", "name": "do_push", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Write enable for mem_q, advances wptr_q and increments count."},
+  {"id": "E16", "name": "do_pop", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Read accept, advances rptr_q and decrements count."}
+ ],
+ "groups": [
+  {"name": "fifo_memory", "kind": "MEMORY", "anchor_ids": ["E11"], "member_ids": [], "description": "Circular data array holding queued entries."},
+  {"name": "pointer_control", "kind": "CONTROLLER", "anchor_ids": ["E12", "E13", "E14", "E3", "E15", "E16"], "member_ids": ["E10"], "description": "Write/read pointers and occupancy count updated by push, pop and flush."},
+  {"name": "write_port", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E4", "E5", "E6"], "member_ids": [], "description": "Valid-ready input side accepting data when not full."},
+  {"name": "read_port", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E7", "E8", "E9"], "member_ids": [], "description": "Valid-ready output side presenting head entry when not empty."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "write_side", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E4", "E5", "E6"]},
+  {"name": "read_side", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E7", "E8", "E9"]},
+  {"name": "control_status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E3", "E10"]}
+ ]
+}

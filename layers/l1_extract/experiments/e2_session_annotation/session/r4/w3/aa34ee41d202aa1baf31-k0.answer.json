@@ -1,0 +1,53 @@
+{
+ "module_summary": "Wishbone-to-AXI4 bridge: a skid buffer captures pipelined WB requests, issues single-beat AXI reads or writes, tracks outstanding transactions with a pending counter and direction flag, and returns acks/data (word-selected via an address FIFO) to Wishbone.",
+ "anchors": [
+  {"id": "E41", "name": "i_wb_stb", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Wishbone request strobe feeding the input skid buffer.", "lines": [275]},
+  {"id": "E47", "name": "o_wb_ack", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Wishbone ack pulse generated from non-error AXI B/R responses unless flushing.", "lines": [456, 460]},
+  {"id": "E3", "name": "o_axi_awvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "AXI write address valid, set on accepted WB write, cleared by awready.", "lines": [321, 323, 327]},
+  {"id": "E23", "name": "o_axi_arvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "AXI read address valid, set on accepted WB read, cleared by arready.", "lines": [384, 385, 388]},
+  {"id": "E55", "name": "npending", "role": "COUNTER", "importance": "critical", "trace": "control_backward", "why": "Counts outstanding AXI transactions; drives empty, full and nearfull flags.", "lines": [234, 241, 242]},
+  {"id": "E59", "name": "m_ready", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Accept signal back to skid buffer; deasserted on flush, nearfull, direction change or AXI stalls.", "lines": [287, 289, 290]},
+  {"id": "E57", "name": "m_valid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "data_backward", "why": "Buffered request valid from skid buffer; launches AXI transactions and counter updates.", "lines": [277, 321, 384]},
+  {"id": "E50", "name": "direction", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Records read/write direction of outstanding transactions; blocks direction switch until empty.", "lines": [218, 219, 289]},
+  {"id": "E53", "name": "flushing", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Set on bus error or WB cycle abort; suppresses acks and new requests until empty.", "lines": [252, 255, 289]},
+  {"id": "E6", "name": "o_axi_awaddr", "role": "INTERFACE_ADDR", "importance": "major", "trace": "data_backward", "why": "AXI write address registered from buffered WB address.", "lines": [398, 399]},
+  {"id": "E26", "name": "o_axi_araddr", "role": "INTERFACE_ADDR", "importance": "major", "trace": "data_backward", "why": "AXI read address registered from buffered WB address.", "lines": [402, 403]},
+  {"id": "E16", "name": "o_axi_wdata", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "AXI write data: WB data replicated across the wide bus.", "lines": [336, 337]},
+  {"id": "E37", "name": "i_axi_rdata", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Wide AXI read data, shifted to select the WB word.", "lines": [496]},
+  {"id": "E48", "name": "o_wb_data", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Wishbone read data registered from selected return word.", "lines": [511]},
+  {"id": "E63", "name": "READ_FIFO_DATA_SELECT.addr_fifo", "role": "STORAGE", "importance": "major", "trace": "data_backward", "why": "FIFO of sub-word address bits per request, used to select returned word.", "lines": [450, 481, 491]},
+  {"id": "E14", "name": "o_axi_wvalid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "AXI write data valid, set with awvalid, cleared by wready.", "lines": [324, 329]},
+  {"id": "E17", "name": "o_axi_wstrb", "role": "INTERFACE_DATA", "importance": "minor", "trace": "data_backward", "why": "AXI write strobes: WB select shifted to the addressed sub-word lane.", "lines": [355]},
+  {"id": "E4", "name": "i_axi_awready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Clears awvalid and stalls m_ready while awvalid pending.", "lines": [291, 326]},
+  {"id": "E15", "name": "i_axi_wready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Clears wvalid and gates wdata/wstrb updates.", "lines": [293, 328]},
+  {"id": "E24", "name": "i_axi_arready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Clears arvalid and stalls m_ready while arvalid pending.", "lines": [295, 386]},
+  {"id": "E19", "name": "i_axi_bvalid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Write response valid; decrements pending count and produces WB ack/err.", "lines": [232, 461]},
+  {"id": "E34", "name": "i_axi_rvalid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Read response valid; decrements pending count and produces WB ack/err.", "lines": [232, 460]},
+  {"id": "E46", "name": "o_wb_stall", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Wishbone stall: inverse of skid buffer ready.", "lines": [283]},
+  {"id": "E49", "name": "o_wb_err", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Wishbone error from AXI SLVERR/DECERR responses.", "lines": [466, 468]},
+  {"id": "E52", "name": "empty", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "No outstanding transactions; allows direction update and ends flushing.", "lines": [218, 242, 256]},
+  {"id": "E54", "name": "nearfull", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Pending count near capacity; blocks new requests via m_ready.", "lines": [236, 289]},
+  {"id": "E51", "name": "full", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Pending counter at capacity; feeds nearfull on decrement.", "lines": [237, 240]},
+  {"id": "E58", "name": "m_we", "role": "COMMAND", "importance": "minor", "trace": "data_backward", "why": "Buffered WB write-enable choosing AXI write versus read path.", "lines": [219, 321, 384]},
+  {"id": "E60", "name": "m_addr", "role": "INTERFACE_ADDR", "importance": "minor", "trace": "data_backward", "why": "Buffered WB address feeding AXI addresses and address FIFO.", "lines": [399, 481]},
+  {"id": "E65", "name": "READ_FIFO_DATA_SELECT.wr_addr", "role": "FIFO_PTR", "importance": "minor", "trace": "control_backward", "why": "Address FIFO write pointer, increments on accepted request.", "lines": [477, 481]},
+  {"id": "E66", "name": "READ_FIFO_DATA_SELECT.rd_addr", "role": "FIFO_PTR", "importance": "minor", "trace": "control_backward", "why": "Address FIFO read pointer, increments on AXI response.", "lines": [488, 491]},
+  {"id": "E67", "name": "READ_FIFO_DATA_SELECT.return_data", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Read data shifted by FIFO sub-word offset to select WB word.", "lines": [496, 511]}
+ ],
+ "groups": [
+  {"name": "wb_request_skid", "kind": "BUFFER", "anchor_ids": ["E41", "E57", "E58", "E60", "E46"], "member_ids": ["I1", "E56", "E61", "E62", "E42", "E43", "E44", "E45", "E40"], "description": "Skid buffer capturing Wishbone requests and presenting them to the AXI issue logic."},
+  {"name": "transaction_control", "kind": "CONTROLLER", "anchor_ids": ["E59", "E55", "E50", "E53", "E52", "E54", "E51"], "member_ids": [], "description": "Pending counter, direction and flush flags deciding when new requests are accepted."},
+  {"name": "axi_write_issue", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E3", "E14", "E6", "E16", "E17", "E4", "E15"], "member_ids": ["E18", "E20"], "description": "Registers AXI AW/W channel valid, address, data and strobes."},
+  {"name": "axi_read_issue", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E23", "E26", "E24"], "member_ids": ["E35"], "description": "Registers AXI AR channel valid and address."},
+  {"name": "response_return", "kind": "DATAPATH", "anchor_ids": ["E47", "E49", "E48", "E37", "E19", "E34", "E63", "E65", "E66", "E67"], "member_ids": ["E64", "E22", "E38"], "description": "Converts AXI B/R responses into WB ack/err and selects returned word via address FIFO."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "wishbone_slave", "protocol": "REQ_ACK", "direction": "IN", "member_ids": ["E40", "E41", "E42", "E43", "E44", "E45", "E46", "E47", "E48", "E49"]},
+  {"name": "axi_write_address", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12", "E13"]},
+  {"name": "axi_write_data", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E14", "E15", "E16", "E17", "E18"]},
+  {"name": "axi_write_response", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E19", "E20", "E21", "E22"]},
+  {"name": "axi_read_address", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E23", "E24", "E25", "E26", "E27", "E28", "E29", "E30", "E31", "E32", "E33"]},
+  {"name": "axi_read_data", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E34", "E35", "E36", "E37", "E38", "E39"]}
+ ]
+}

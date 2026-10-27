@@ -1,0 +1,129 @@
+{
+  "module_summary": "Round-robin arbiter with priority rotation: selects one of N requesters per cycle using double-width priority computation and rotating pointer.",
+  "anchors": [
+    {
+      "id": "E3",
+      "name": "req_i",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "data_backward",
+      "why": "Input request vector specifies which requesters are pending.",
+      "lines": [7, 18, 33]
+    },
+    {
+      "id": "E4",
+      "name": "gnt_o",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "forward",
+      "why": "Grant output carries arbitrated selection to external requester.",
+      "lines": [8, 42]
+    },
+    {
+      "id": "E5",
+      "name": "accept_i",
+      "role": "HANDSHAKE_READY",
+      "importance": "critical",
+      "trace": "control_backward",
+      "why": "Handshake ready signal: requester confirms grant acceptance and triggers priority rotation.",
+      "lines": [9, 34]
+    },
+    {
+      "id": "E6",
+      "name": "gnt_valid_o",
+      "role": "HANDSHAKE_VALID",
+      "importance": "critical",
+      "trace": "forward",
+      "why": "Handshake valid signal: indicates a valid grant is available to requester.",
+      "lines": [10, 43]
+    },
+    {
+      "id": "E7",
+      "name": "prio_q",
+      "role": "FSM_STATE",
+      "importance": "critical",
+      "trace": "control_backward",
+      "why": "One-hot priority pointer rotates each cycle to implement round-robin ordering.",
+      "lines": [12, 28, 36]
+    },
+    {
+      "id": "E8",
+      "name": "gnt_q",
+      "role": "FSM_STATE",
+      "importance": "critical",
+      "trace": "forward",
+      "why": "Grant register holds selected requester; drives gnt_o and is updated by combinational next-state.",
+      "lines": [13, 29, 32, 37, 42]
+    },
+    {
+      "id": "E10",
+      "name": "locked_q",
+      "role": "FSM_STATE",
+      "importance": "critical",
+      "trace": "control_backward",
+      "why": "Lock flag: when set, freezes arbitration until accept_i; gates new arbitration cycles.",
+      "lines": [14, 30, 33, 35, 43]
+    },
+    {
+      "id": "E11",
+      "name": "dbl_req",
+      "role": "DATAPATH_MAJOR",
+      "importance": "major",
+      "trace": "data_backward",
+      "why": "Doubled request vector for double-width priority selector algorithm.",
+      "lines": [15, 18, 19]
+    },
+    {
+      "id": "E12",
+      "name": "dbl_gnt",
+      "role": "DATAPATH_MAJOR",
+      "importance": "major",
+      "trace": "data_backward",
+      "why": "Doubled grant result from priority computation; fed to mux for arbitration decision.",
+      "lines": [15, 19, 23]
+    }
+  ],
+  "groups": [
+    {
+      "name": "Round-robin controller",
+      "kind": "CONTROLLER",
+      "anchor_ids": ["E7", "E8", "E10"],
+      "member_ids": ["E9"],
+      "description": "FSM managing grant, priority rotation, and lock state for round-robin arbitration."
+    },
+    {
+      "name": "Priority computation",
+      "kind": "DATAPATH",
+      "anchor_ids": ["E11", "E12"],
+      "member_ids": [],
+      "description": "Double-width priority selector: computes highest-priority requester from rotated requests."
+    },
+    {
+      "name": "Request/grant interface",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E3", "E4", "E5", "E6"],
+      "member_ids": [],
+      "description": "Handshake interface bundling requests, grant, and flow-control signals."
+    }
+  ],
+  "interfaces": [
+    {
+      "name": "Request vector",
+      "protocol": "SIMPLE",
+      "direction": "IN",
+      "member_ids": ["E3"]
+    },
+    {
+      "name": "Arbitration handshake",
+      "protocol": "VALID_READY",
+      "direction": "BIDIR",
+      "member_ids": ["E4", "E6", "E5"]
+    },
+    {
+      "name": "Clock and reset",
+      "protocol": "CLOCK_RESET",
+      "direction": "IN",
+      "member_ids": ["E1", "E2"]
+    }
+  ]
+}

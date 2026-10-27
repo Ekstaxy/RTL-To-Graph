@@ -1,0 +1,257 @@
+{
+  "module_summary": "Cache controller managing 16-line L1 cache with tag/data arrays, FSM-driven CPU and memory interfaces, multi-cycle refill and write operations.",
+  "anchors": [
+    {
+      "id": "E17",
+      "name": "state_q",
+      "role": "FSM_STATE",
+      "importance": "critical",
+      "trace": "control_backward",
+      "why": "FSM state register controlling cache operation sequence through 5 states",
+      "lines": [30, 49, 71]
+    },
+    {
+      "id": "E3",
+      "name": "cpu_req_valid",
+      "role": "HANDSHAKE_VALID",
+      "importance": "critical",
+      "trace": "forward",
+      "why": "Signals CPU request arrival; gates IDLE to LOOKUP transition",
+      "lines": [10, 51]
+    },
+    {
+      "id": "E4",
+      "name": "cpu_req_ready",
+      "role": "HANDSHAKE_READY",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Signals cache ready for new request when in IDLE state",
+      "lines": [11, 95]
+    },
+    {
+      "id": "E8",
+      "name": "cpu_resp_valid",
+      "role": "HANDSHAKE_VALID",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Signals CPU response ready when FSM reaches RESPOND state",
+      "lines": [15, 97]
+    },
+    {
+      "id": "E9",
+      "name": "cpu_rdata",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Read data output to CPU from cache hit or memory refill",
+      "lines": [16, 98]
+    },
+    {
+      "id": "E15",
+      "name": "mem_ack",
+      "role": "HANDSHAKE_READY",
+      "importance": "critical",
+      "trace": "control_backward",
+      "why": "Memory acknowledgment; completes REFILL and WRITE_MEM operations",
+      "lines": [23, 55, 56]
+    },
+    {
+      "id": "E11",
+      "name": "mem_req",
+      "role": "HANDSHAKE_VALID",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Memory request signal; asserted in REFILL or WRITE_MEM states",
+      "lines": [19, 100]
+    },
+    {
+      "id": "E19",
+      "name": "tag_array",
+      "role": "STORAGE",
+      "importance": "critical",
+      "trace": "data_backward",
+      "why": "Stores tags for 16 cache lines; enables cache hit detection",
+      "lines": [32, 46, 88]
+    },
+    {
+      "id": "E20",
+      "name": "data_array",
+      "role": "STORAGE",
+      "importance": "critical",
+      "trace": "data_backward",
+      "why": "Stores data for 16 cache lines; source for read hits",
+      "lines": [33, 77, 89]
+    },
+    {
+      "id": "E21",
+      "name": "valid_bits",
+      "role": "CONTROL_FLAG",
+      "importance": "major",
+      "trace": "data_backward",
+      "why": "Flags valid cache lines; required for cache hit detection",
+      "lines": [34, 46, 79]
+    },
+    {
+      "id": "E22",
+      "name": "addr_q",
+      "role": "HOLDING_REG",
+      "importance": "major",
+      "trace": "data_backward",
+      "why": "Holds CPU address across LOOKUP, WRITE_MEM, REFILL operations",
+      "lines": [36, 73, 102]
+    },
+    {
+      "id": "E23",
+      "name": "wdata_q",
+      "role": "HOLDING_REG",
+      "importance": "major",
+      "trace": "data_backward",
+      "why": "Holds CPU write data until cache update or write-through completes",
+      "lines": [37, 74, 103]
+    },
+    {
+      "id": "E28",
+      "name": "rdata_q",
+      "role": "HOLDING_REG",
+      "importance": "major",
+      "trace": "data_backward",
+      "why": "Holds read result from cache or memory before CPU output",
+      "lines": [42, 77, 80]
+    },
+    {
+      "id": "E24",
+      "name": "we_q",
+      "role": "CONTROL_FLAG",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Latched write-enable; steers read vs write operation path",
+      "lines": [38, 75, 52]
+    },
+    {
+      "id": "E16",
+      "name": "mem_rdata",
+      "role": "INTERFACE_DATA",
+      "importance": "major",
+      "trace": "interface",
+      "why": "Data input from memory during cache line refill operations",
+      "lines": [24, 80, 89]
+    },
+    {
+      "id": "E13",
+      "name": "mem_addr",
+      "role": "INTERFACE_ADDR",
+      "importance": "major",
+      "trace": "interface",
+      "why": "Address output to memory for fetch or write operations",
+      "lines": [21, 102]
+    },
+    {
+      "id": "E14",
+      "name": "mem_wdata",
+      "role": "INTERFACE_DATA",
+      "importance": "major",
+      "trace": "interface",
+      "why": "Data output to memory for cache line or result write",
+      "lines": [22, 103]
+    },
+    {
+      "id": "E27",
+      "name": "hit",
+      "role": "CONTROL_FLAG",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Cache hit signal; steers LOOKUP to RESPOND or REFILL",
+      "lines": [41, 46, 53]
+    }
+  ],
+  "groups": [
+    {
+      "name": "FSM_Controller",
+      "kind": "CONTROLLER",
+      "anchor_ids": ["E17"],
+      "member_ids": [],
+      "description": "5-state FSM orchestrating cache operations: IDLE, LOOKUP, WRITE_MEM, REFILL, RESPOND"
+    },
+    {
+      "name": "CPU_Request_Interface",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E3", "E4"],
+      "member_ids": ["E5", "E6", "E7"],
+      "description": "CPU request handshake: valid, ready, write-enable, address, write-data"
+    },
+    {
+      "name": "CPU_Response_Interface",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E8", "E9"],
+      "member_ids": ["E10"],
+      "description": "CPU response: valid signal and read-data output; stall indication"
+    },
+    {
+      "name": "Cache_Storage",
+      "kind": "MEMORY",
+      "anchor_ids": ["E19", "E20", "E21"],
+      "member_ids": [],
+      "description": "16-line cache with tag array, data array, and validity tracking"
+    },
+    {
+      "name": "Data_Pipeline",
+      "kind": "DATAPATH",
+      "anchor_ids": ["E22", "E23", "E28"],
+      "member_ids": ["E25", "E26"],
+      "description": "Holding registers for address, write data, result; address extraction"
+    },
+    {
+      "name": "Hit_Detection",
+      "kind": "DATAPATH",
+      "anchor_ids": ["E27"],
+      "member_ids": [],
+      "description": "Cache hit detection comparing valid bit and tag to select path"
+    },
+    {
+      "name": "Operation_Control",
+      "kind": "CONTROLLER",
+      "anchor_ids": ["E24"],
+      "member_ids": [],
+      "description": "Write-enable flag distinguishing read vs write operations"
+    },
+    {
+      "name": "Memory_Interface",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E11", "E15", "E16"],
+      "member_ids": ["E12", "E13", "E14"],
+      "description": "Memory request-response handshake and data paths for refill and write"
+    }
+  ],
+  "interfaces": [
+    {
+      "name": "Clock_Reset",
+      "protocol": "CLOCK_RESET",
+      "direction": "IN",
+      "member_ids": ["E1", "E2"]
+    },
+    {
+      "name": "CPU_Request",
+      "protocol": "VALID_READY",
+      "direction": "IN",
+      "member_ids": ["E3", "E4", "E5", "E6", "E7"]
+    },
+    {
+      "name": "CPU_Response",
+      "protocol": "STREAM",
+      "direction": "OUT",
+      "member_ids": ["E8", "E9", "E10"]
+    },
+    {
+      "name": "Memory_Request",
+      "protocol": "VALID_READY",
+      "direction": "OUT",
+      "member_ids": ["E11", "E12", "E13", "E14", "E15"]
+    },
+    {
+      "name": "Memory_Data",
+      "protocol": "STREAM",
+      "direction": "IN",
+      "member_ids": ["E16"]
+    }
+  ]
+}

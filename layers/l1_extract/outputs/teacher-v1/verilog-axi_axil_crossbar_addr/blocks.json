@@ -1,0 +1,500 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-axi_axil_crossbar_addr",
+ "tops": [
+  "axil_crossbar_addr"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "axil_crossbar_addr": {
+   "source": "teacher",
+   "canonical_instance": "axil_crossbar_addr",
+   "file": "data/rtl/verilog-axi/rtl/axil_crossbar_addr.v",
+   "lines": [
+    34,
+    307
+   ],
+   "summary": "AXI-lite crossbar address decoder: a 2-state FSM compares the incoming address against per-master base/width regions, registers the selected master index or a decode error, and issues address, write-command and reply-command valids before acknowledging the slave.",
+   "blocks": [
+    {
+     "name": "Decode controller",
+     "kind": "CONTROLLER",
+     "description": "FSM sequencing decode and completion of address/command handshakes",
+     "anchors": [
+      {
+       "id": "E18",
+       "name": "state_reg",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.8,
+       "struct_score": 99.5,
+       "trace": "control_backward",
+       "why": "IDLE/DECODE controller: decodes address then waits for all outputs accepted",
+       "lines": [
+        242,
+        296
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E19",
+       "name": "state_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E20",
+       "name": "s_axil_aready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E21",
+       "name": "s_axil_aready_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E24",
+       "name": "m_axil_avalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E25",
+       "name": "m_axil_avalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E28",
+       "name": "m_wc_valid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E29",
+       "name": "m_wc_valid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E30",
+       "name": "m_rc_valid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E31",
+       "name": "m_rc_valid_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Address decoder",
+     "kind": "DECODER",
+     "description": "Region match logic producing master select and decode error",
+     "anchors": [
+      {
+       "id": "E32",
+       "name": "match",
+       "role": "DECODE",
+       "importance": "major",
+       "score": 51.6,
+       "struct_score": 39.0,
+       "trace": "control_backward",
+       "why": "Address region match flag choosing successful decode versus decode error",
+       "lines": [
+        253,
+        258
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "m_select_reg",
+       "role": "MUX_SELECT",
+       "importance": "critical",
+       "score": 85.3,
+       "struct_score": 59.9,
+       "trace": "data_backward",
+       "why": "Decoded master index driving m_select, m_wc_select and m_rc_select",
+       "lines": [
+        216,
+        219,
+        303
+       ]
+      },
+      {
+       "id": "E26",
+       "name": "m_decerr_reg",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 46.7,
+       "struct_score": 18.9,
+       "trace": "control_backward",
+       "why": "Decode error flag reported on write and reply command outputs",
+       "lines": [
+        220,
+        224,
+        304
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E23",
+       "name": "m_select_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E27",
+       "name": "m_decerr_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Slave address input",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Incoming AXI-lite address channel",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "s_axil_aaddr",
+       "role": "INTERFACE_ADDR",
+       "importance": "critical",
+       "score": 90.1,
+       "struct_score": 75.0,
+       "trace": "interface",
+       "why": "Incoming address compared against master regions",
+       "lines": [
+        69,
+        251
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "s_axil_aprot",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 33.3,
+       "struct_score": 73.1,
+       "trace": "interface",
+       "why": "Protection bits blocking access to secure masters",
+       "lines": [
+        70,
+        251
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "s_axil_avalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 94.2,
+       "struct_score": 85.3,
+       "trace": "interface",
+       "why": "Address valid starting decode in IDLE",
+       "lines": [
+        71,
+        247
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "s_axil_aready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 94.2,
+       "struct_score": 85.3,
+       "trace": "interface",
+       "why": "Address accept pulse once all command outputs complete",
+       "lines": [
+        72,
+        214,
+        247
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Command outputs",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Address, write-command and reply-command output handshakes",
+     "anchors": [
+      {
+       "id": "E7",
+       "name": "m_select",
+       "role": "MUX_SELECT",
+       "importance": "major",
+       "score": 59.2,
+       "struct_score": 66.7,
+       "trace": "interface",
+       "why": "Selected master port index output",
+       "lines": [
+        77,
+        216
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "m_axil_avalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 62.2,
+       "struct_score": 75.3,
+       "trace": "interface",
+       "why": "Address valid to selected master",
+       "lines": [
+        78,
+        217
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "m_axil_aready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 27.8,
+       "struct_score": 54.4,
+       "trace": "interface",
+       "why": "Selected master accepts address",
+       "lines": [
+        79,
+        237
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "m_wc_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 34.2,
+       "struct_score": 75.3,
+       "trace": "interface",
+       "why": "Write command valid, enabled by WC_OUTPUT",
+       "lines": [
+        86,
+        221
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "m_wc_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 27.8,
+       "struct_score": 54.4,
+       "trace": "interface",
+       "why": "Write command accepted",
+       "lines": [
+        87,
+        239
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "m_rc_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 62.2,
+       "struct_score": 75.3,
+       "trace": "interface",
+       "why": "Reply command valid carrying select and decerr",
+       "lines": [
+        94,
+        225
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "m_rc_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 27.8,
+       "struct_score": 54.4,
+       "trace": "interface",
+       "why": "Reply command accepted",
+       "lines": [
+        95,
+        240
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E10",
+       "name": "m_wc_select",
+       "kind": "port_out"
+      },
+      {
+       "id": "E11",
+       "name": "m_wc_decerr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "m_rc_select",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "m_rc_decerr",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axil_a",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axil_aaddr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axil_aprot",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axil_avalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_axil_aready",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "m_axil_a",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E7",
+      "E8",
+      "E9"
+     ],
+     "members": [
+      {
+       "id": "E7",
+       "name": "m_select",
+       "kind": "port_out"
+      },
+      {
+       "id": "E8",
+       "name": "m_axil_avalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "m_axil_aready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "write_command",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E10",
+      "E11",
+      "E12",
+      "E13"
+     ],
+     "members": [
+      {
+       "id": "E10",
+       "name": "m_wc_select",
+       "kind": "port_out"
+      },
+      {
+       "id": "E11",
+       "name": "m_wc_decerr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "m_wc_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "m_wc_ready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "reply_command",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E14",
+      "E15",
+      "E16",
+      "E17"
+     ],
+     "members": [
+      {
+       "id": "E14",
+       "name": "m_rc_select",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "m_rc_decerr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "m_rc_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "m_rc_ready",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,165 @@
+[
+ {
+  "module": "axi_interconnect",
+  "instance": "axi_interconnect",
+  "state": "state_reg",
+  "next": "state_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "STATE_IDLE",
+    "value": "3'b0"
+   },
+   {
+    "name": "STATE_DECODE",
+    "value": "3'b1"
+   },
+   {
+    "name": "STATE_READ",
+    "value": "3'b101"
+   },
+   {
+    "name": "STATE_WRITE",
+    "value": "3'b10"
+   },
+   {
+    "name": "STATE_READ_DROP",
+    "value": "3'b110"
+   },
+   {
+    "name": "STATE_WRITE_DROP",
+    "value": "3'b100"
+   },
+   {
+    "name": "STATE_WRITE_RESP",
+    "value": "3'b11"
+   },
+   {
+    "name": "STATE_WAIT_IDLE",
+    "value": "3'b111"
+   }
+  ],
+  "reset_state": "STATE_IDLE",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_DECODE",
+    "cond": "grant_valid"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_IDLE",
+    "cond": "!grant_valid"
+   },
+   {
+    "src": "STATE_DECODE",
+    "dst": "STATE_READ",
+    "cond": "match && read"
+   },
+   {
+    "src": "STATE_DECODE",
+    "dst": "STATE_WRITE",
+    "cond": "match && !read"
+   },
+   {
+    "src": "STATE_DECODE",
+    "dst": "STATE_READ_DROP",
+    "cond": "!match && read"
+   },
+   {
+    "src": "STATE_DECODE",
+    "dst": "STATE_WRITE_DROP",
+    "cond": "!match && !read"
+   },
+   {
+    "src": "STATE_WRITE",
+    "dst": "STATE_WRITE_RESP",
+    "cond": "current_s_axi_wready && current_s_axi_wvalid && current_s_axi_wlast"
+   },
+   {
+    "src": "STATE_WRITE",
+    "dst": "STATE_WRITE",
+    "cond": "current_s_axi_wready && current_s_axi_wvalid && !current_s_axi_wlast"
+   },
+   {
+    "src": "STATE_WRITE",
+    "dst": "STATE_WRITE",
+    "cond": "!(current_s_axi_wready && current_s_axi_wvalid)"
+   },
+   {
+    "src": "STATE_WRITE_RESP",
+    "dst": "STATE_WAIT_IDLE",
+    "cond": "current_m_axi_bready && current_m_axi_bvalid"
+   },
+   {
+    "src": "STATE_WRITE_RESP",
+    "dst": "STATE_WRITE_RESP",
+    "cond": "!(current_m_axi_bready && current_m_axi_bvalid)"
+   },
+   {
+    "src": "STATE_WRITE_DROP",
+    "dst": "STATE_WAIT_IDLE",
+    "cond": "current_s_axi_wready && current_s_axi_wvalid && current_s_axi_wlast"
+   },
+   {
+    "src": "STATE_WRITE_DROP",
+    "dst": "STATE_WRITE_DROP",
+    "cond": "!(current_s_axi_wready && current_s_axi_wvalid && current_s_axi_wlast)"
+   },
+   {
+    "src": "STATE_READ",
+    "dst": "STATE_WAIT_IDLE",
+    "cond": "current_m_axi_rready && current_m_axi_rvalid && current_m_axi_rlast"
+   },
+   {
+    "src": "STATE_READ",
+    "dst": "STATE_READ",
+    "cond": "current_m_axi_rready && current_m_axi_rvalid && !current_m_axi_rlast"
+   },
+   {
+    "src": "STATE_READ",
+    "dst": "STATE_READ",
+    "cond": "!(current_m_axi_rready && current_m_axi_rvalid)"
+   },
+   {
+    "src": "STATE_READ_DROP",
+    "dst": "STATE_WAIT_IDLE",
+    "cond": "s_axi_rready_int_reg && axi_len_reg == 0"
+   },
+   {
+    "src": "STATE_READ_DROP",
+    "dst": "STATE_READ_DROP",
+    "cond": "s_axi_rready_int_reg && !(axi_len_reg == 0)"
+   },
+   {
+    "src": "STATE_READ_DROP",
+    "dst": "STATE_READ_DROP",
+    "cond": "!s_axi_rready_int_reg"
+   },
+   {
+    "src": "STATE_WAIT_IDLE",
+    "dst": "STATE_IDLE",
+    "cond": "(!grant_valid || acknowledge)"
+   },
+   {
+    "src": "STATE_WAIT_IDLE",
+    "dst": "STATE_WAIT_IDLE",
+    "cond": "!(!grant_valid || acknowledge)"
+   }
+  ],
+  "outputs": [
+   {
+    "signal": "i",
+    "kind": "moore",
+    "port": false
+   }
+  ],
+  "warnings": [],
+  "semantic_check": "consistent-subset"
+ }
+]

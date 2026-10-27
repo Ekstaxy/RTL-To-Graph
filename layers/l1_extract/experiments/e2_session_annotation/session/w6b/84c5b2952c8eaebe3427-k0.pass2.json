@@ -1,0 +1,37 @@
+{
+ "module_summary": "UART receiver with AXI-stream output: a bit-phase down-counter sequences start/data/stop bits on ticks from a prescale timer child, a SIPO child shifts sampled bits, and a valid stop bit latches the byte with overrun/frame error flags.",
+ "anchors": [
+  {"id": "E6", "name": "rxd", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Serial receive line, registered into the sample flop.", "lines": [60, 115]},
+  {"id": "E12", "name": "phase_k", "role": "COUNTER", "importance": "critical", "trace": "control_backward", "why": "Bit-phase counter: loaded on start, decremented per bit tick; decodes start/data/stop phases.", "lines": [122, 126, 84]},
+  {"id": "E3", "name": "m_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Received byte output, driven by the hold_w output register.", "lines": [56, 90]},
+  {"id": "E4", "name": "m_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Output valid from ack_v, set on good stop bit, cleared by tready.", "lines": [57, 91]},
+  {"id": "E5", "name": "m_axis_tready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Downstream ready clearing the output valid register.", "lines": [58, 144]},
+  {"id": "E11", "name": "smp", "role": "PIPELINE_REG", "importance": "major", "trace": "data_backward", "why": "Registered rxd sample: shifted into SIPO and checked for start/stop bits.", "lines": [115, 110, 87]},
+  {"id": "E18", "name": "tick_ok", "role": "CONTROL_FLAG", "importance": "major", "trace": "data_backward", "why": "Baud timer expiry from child; gates every phase step and start detection.", "lines": [78, 82, 102]},
+  {"id": "E19", "name": "frag", "role": "STORAGE", "importance": "major", "trace": "data_backward", "why": "Parallel output of the SIPO shift register child, latched on good stop.", "lines": [79, 111, 142]},
+  {"id": "E26", "name": "kick", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Start-bit detect: loads phase counter, half-bit timer and clears SIPO.", "lines": [87, 100, 121]},
+  {"id": "E27", "name": "tail_good", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Valid stop bit: loads output byte, sets valid and overrun check.", "lines": [88, 138, 141]},
+  {"id": "E10", "name": "prescale", "role": "CONFIG_REG", "importance": "major", "trace": "interface", "why": "Baud divisor input loaded into the bit timer child.", "lines": [66, 101]},
+  {"id": "E7", "name": "busy", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Receive-in-progress level from st_a register.", "lines": [62, 92]},
+  {"id": "E21", "name": "t_go", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Bit tick during an active frame; decrements phase counter.", "lines": [82, 125, 126]},
+  {"id": "E24", "name": "in_body", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Data-bit phase tick: advances SIPO and reloads full-bit timer.", "lines": [85, 99, 109]},
+  {"id": "E23", "name": "in_head", "role": "DECODE", "importance": "minor", "trace": "control_backward", "why": "Start-bit phase decode; aborts on false start.", "lines": [84, 99, 123]},
+  {"id": "E25", "name": "in_tail", "role": "DECODE", "importance": "minor", "trace": "control_backward", "why": "Stop-bit phase decode feeding frame check and tail_good.", "lines": [86, 88, 139]},
+  {"id": "E8", "name": "overrun_error", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Overrun pulse when new byte arrives while valid still set.", "lines": [63, 93]},
+  {"id": "E9", "name": "frame_error", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Frame error pulse when stop bit sampled low.", "lines": [64, 94]}
+ ],
+ "groups": [
+  {"name": "bit_sequencer", "kind": "CONTROLLER", "anchor_ids": ["E12", "E26", "E27", "E21", "E24", "E23", "E25"], "member_ids": ["E20", "E22"], "description": "Phase counter and decodes sequencing start, data and stop bits."},
+  {"name": "baud_timer", "kind": "COUNTER_TIMER", "anchor_ids": ["E18", "E10"], "member_ids": ["I1"], "description": "urx_tmr child counts full/half bit periods from prescale."},
+  {"name": "deserializer", "kind": "SERIALIZER", "anchor_ids": ["E6", "E11", "E19"], "member_ids": ["I2"], "description": "Sampled rxd shifted into urx_sipo child to build the byte."},
+  {"name": "axis_output", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E3", "E4", "E5"], "member_ids": ["E13", "E14"], "description": "Output byte and valid registers with AXI-stream ready handshake."},
+  {"name": "status_flags", "kind": "OTHER", "anchor_ids": ["E7", "E8", "E9"], "member_ids": ["E15", "E16", "E17"], "description": "Busy, overrun and frame error registers."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "m_axis", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E3", "E4", "E5"]},
+  {"name": "serial_in", "protocol": "SERIAL", "direction": "IN", "member_ids": ["E6"]},
+  {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E7", "E8", "E9"]},
+  {"name": "config", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E10"]}
+ ]
+}

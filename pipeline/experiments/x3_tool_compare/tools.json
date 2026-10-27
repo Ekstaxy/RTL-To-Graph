@@ -1,0 +1,286 @@
+{
+  "_note": "License / language / last update / input / layout / output are from the survey table the user supplied (2026-10-17). 'recipe' is the Yosys script or command each tool uses by default, taken from that tool's own source or README, so every tool is run the way it runs for its users.",
+  "ours": [
+    {
+      "id": "ours_elk",
+      "name": "rtl2diagram (ours) — elk",
+      "engine": "elk",
+      "why": "Detailed level: best mean rank on x2's system-view designs (2.67 of 6), and the same ELK layered algorithm netlistsvg / d3-hwschematic / DigitalJS use, so it is the like-for-like comparison.",
+      "draws": "Block diagram: named functional units and the buses between them, ELK layered layout."
+    },
+    {
+      "id": "ours_busbar",
+      "name": "rtl2diagram (ours) — busbar",
+      "engine": "busbar",
+      "why": "Paper-figure level: beats hola on both designs (picosoc 2 vs 3 crossings; darksocv ranked 1st of 6 overall).",
+      "draws": "Block diagram in paper-figure style: the same units, shared buses drawn as bars."
+    }
+  ],
+  "run": [
+    {
+      "id": "netlistsvg",
+      "name": "netlistsvg",
+      "license": "MIT",
+      "lang": "TypeScript",
+      "updated": "2024-01-25 (dormant)",
+      "input": "Yosys JSON",
+      "layout": "elkjs 0.7 layered",
+      "output": "static SVG",
+      "version": "1.0.2 (nturley/netlistsvg master d3518f1)",
+      "recipe": "yosys: read_verilog -sv <files>; prep -top <top>; write_json  →  netlistsvg <json> -o <svg>",
+      "draws": "Cell-level schematic of the top module: every gate, mux and constant; submodules as plain boxes.",
+      "minimal": {
+        "none": "Its only shrinking switches are skin flags (constants / splitsAndJoins off). They delete connections (picosoc loses 20, darksocv 31) and tie unrelated constant inputs together, so they lose information rather than abstract. CLI flags are only -o, --skin and --layout; its README's other Yosys scripts (prep -flatten, aigmap) add detail."
+      }
+    },
+    {
+      "id": "yosys_show",
+      "name": "Yosys show",
+      "license": "ISC",
+      "lang": "C++",
+      "updated": "2026-10-16",
+      "input": "RTLIL",
+      "layout": "Graphviz dot",
+      "output": "dot → SVG",
+      "recipe": "yosys: read_verilog -sv <files>; prep -top <top>; show -format dot -prefix <out> <top>  →  dot -Tsvg",
+      "draws": "Cell-level graph of the top module (RTLIL cells and wires); submodules as boxes.",
+      "minimal": {
+        "option": "show with a selection: submodule cells of the top plus their wires",
+        "effect": "Only the submodule instances and the wires touching them; all glue logic, constants and splices dropped.",
+        "recipe": "read_verilog ...; show -format dot -notitle -wireshape plaintext * %C <top> %i %x1  →  dot -Tsvg",
+        "evidence": "yosys -h show: show [options] [selection], -notitle, -wireshape; yosys -h select: %C (cells of module type), %i, %x1.",
+        "per_design": {
+          "picosoc": "116 nodes / 161 edges → 45 nodes / 52 edges",
+          "darksocv": "146 nodes / 194 edges → 35 nodes / 54 edges"
+        },
+        "caveats": "Nets that pass through glue logic (e.g. picosoc's iomem/irq muxing) appear as dangling named wires. show itself has no black-box mode; the reduction comes from its documented selection argument."
+      },
+      "module_minimal": {
+        "none": "Its top-level option selects submodule instances, and a leaf has none; the default prep + show is already its coarse, unflattened view."
+      }
+    },
+    {
+      "id": "yosys_viz",
+      "name": "Yosys viz",
+      "license": "ISC",
+      "lang": "C++",
+      "updated": "2026-10-16",
+      "input": "RTLIL",
+      "layout": "Graphviz dot",
+      "output": "dot → SVG",
+      "recipe": "yosys: read_verilog -sv <files>; prep -top <top>; viz -format dot -prefix <out> <top>  →  dot -Tsvg",
+      "draws": "Signal-group graph. With default options the whole top module collapses into one group that lists its wires.",
+      "minimal": {
+        "option": "viz -6, clock/reset excluded (-x), inter-instance wires as one group (-G)",
+        "effect": "Instances as separate blocks with the wires between them; glue logic and clock/reset left out.",
+        "recipe": "prep -top <top>; select -set inst <top>/t:* <top>/t:$* %d <top>/t:$paramod* %u; viz -format dot -6 -x w:<clk> -x w:<rst> -G @inst %co1 @inst %ci1 %i <top>/w:* %i . @inst @inst %x1 %u  →  dot -Tsvg",
+        "evidence": "yosys -h viz (-0..-9 effort, -x exclude, -G user group) and yosys -h select (t:, %d, %u, %co, %ci, %x) in Yosys 0.70+145; viz has no black-box switch of its own, the block view comes from its documented selection argument.",
+        "per_design": {
+          "picosoc": "1 node → 8 nodes / 7 edges (default merged the whole top into one group)",
+          "darksocv": "7 nodes / 16 edges → 8 nodes / 10 edges"
+        },
+        "caveats": "The reviewer found this recipe; it is smaller than the researcher's (9/10 and 11/13). viz never prints instance names or cell types, so blocks are only identifiable by the wires listed in them."
+      },
+      "module_minimal": {
+        "option": "Most merged effort that still splits the module (-x clock/reset)",
+        "recipe": "prep -top <top>; viz -format dot -<N> -x w:<clk> -x w:<rst> <top>, with N the highest of 9..0 that gives more than one group (spimemio_xfer: -6, darkuart: -9)  →  dot -Tsvg",
+        "effect": "Signal groups of the module; clock and reset left out."
+      }
+    },
+    {
+      "id": "d3_hwschematic",
+      "name": "d3-hwschematic",
+      "license": "EPL-2.0",
+      "lang": "JavaScript",
+      "updated": "2026-05-13",
+      "input": "Yosys JSON",
+      "layout": "elkjs 0.8 layered",
+      "output": "interactive SVG (DOM)",
+      "recipe": "yosys (examples/verilog_to_json.sh): hierarchy -top <top>; synth -run coarse -noabc -noalumacc -nordff; splice; write_json -compat-int  →  d3.HwSchematic.fromYosys → bindData, headless Chromium",
+      "deviation": "Added write_json -compat-int. Without it, today's Yosys writes parameters as binary strings and the importer throws 'Incorrect width00000000000000000000000000000001' (getPortNameSplice).",
+      "note": "hwtGraph is not used: it converts HWT (Python) designs, not Verilog. d3-hwschematic's own Yosys importer is the Verilog path.",
+      "draws": "Cell-level schematic after coarse synthesis; submodules as collapsible boxes.",
+      "minimal": {
+        "option": "Top node starts collapsed (_children / _edges)",
+        "effect": "One box for the top module with its ports; submodules were already collapsed by the importer.",
+        "recipe": "same Yosys script as before (… splice; write_json -compat-int) → fromYosys → rename the top node's children/edges to _children/_edges → bindData",
+        "evidence": "README.md, LNode: \"If the children should be collapsed by default, the children `children` and `edges` property should be renamed to `_children` and `_edges`\"; src/yosys.js already does this for submodules.",
+        "per_design": {
+          "picosoc": "66 nodes / 132 links → 1 node, 35 ports",
+          "darksocv": "68 nodes / 115 links → 1 node, 16 ports"
+        },
+        "caveats": "Expanded or collapsed is the only control: no expand depth, no way to hide logic cells while keeping the submodule boxes, so the minimal view jumps straight to a single box (like a symbol)."
+      },
+      "module_minimal": {
+        "none": "Its only control is collapsing a node; collapsing the leaf would leave a single box with ports, not a structure. The default draws the coarse cells."
+      }
+    },
+    {
+      "id": "digitaljs",
+      "name": "DigitalJS + yosys2digitaljs",
+      "license": "BSD-2-Clause",
+      "lang": "JavaScript / TypeScript",
+      "updated": "2026-02-10 / 2026-02-24",
+      "input": "Yosys JSON",
+      "layout": "elkjs 0.11 (dagre optional)",
+      "output": "interactive, simulatable circuit",
+      "recipe": "yosys2digitaljs (its default Yosys script) → digitaljs.Circuit.displayOn, headless Chromium",
+      "draws": "Gate-level circuit of the top module, ready to simulate; submodules as boxes.",
+      "minimal": {
+        "option": "DigitalJS graph simplification (transformCircuit)",
+        "effect": "Same gate-level circuit with constants, inverters and mux chains folded into fewer devices.",
+        "recipe": "yosys2digitaljs as before → json = digitaljs.transform.transformCircuit(json) → new digitaljs.Circuit(json).displayOn(...)",
+        "evidence": "digitaljs src/index.mjs:19 exports transform; src/transform.mjs:448 transformCircuit; ChangeLog.md:62 \"Circuit graph transformations, which make common circuits generated by Yosys more readable\"; digitaljs_online's \"Simplify diagram\" checkbox (on by default) calls it.",
+        "per_design": {
+          "picosoc": "93 devices / 141 connectors → 85 / 133",
+          "darksocv": "71 devices / 118 connectors → 46 / 87"
+        },
+        "caveats": "Still a cell-level netlist. --optimize (opt -full) helps picosoc a little more but makes darksocv bigger; techmap/abc options fail in yosys2digitaljs 0.10.3 and would add detail anyway; dagre layout only straightens wires; subcircuits are already collapsed."
+      },
+      "module_minimal": {
+        "option": "DigitalJS graph simplification (transformCircuit)",
+        "recipe": "yosys2digitaljs as before → digitaljs.transform.transformCircuit(json) → Circuit.displayOn"
+      }
+    },
+    {
+      "id": "sphinx_blackbox",
+      "name": "sphinxcontrib-hdl-diagrams (yosys-blackbox)",
+      "license": "Apache-2.0",
+      "lang": "Python",
+      "updated": "2023-09-25 (dormant)",
+      "input": "Yosys via yowasp",
+      "layout": "Graphviz dot",
+      "output": "SVG in Sphinx HTML",
+      "recipe": ".. hdl-diagram:: <all files concatenated> :type: yosys-blackbox :module: <top>  (prep -top; cd; show)",
+      "draws": "Same as Yosys show, produced inside a Sphinx documentation build.",
+      "minimal": {
+        "none": ":type: yosys-aig and :flatten: both add detail; :yosys_script: is a free-form hook that runs any Yosys script, not a simplification the extension offers."
+      }
+    },
+    {
+      "id": "sphinx_netlistsvg",
+      "name": "sphinxcontrib-hdl-diagrams (netlistsvg)",
+      "license": "Apache-2.0",
+      "lang": "Python",
+      "updated": "2023-09-25 (dormant)",
+      "input": "Yosys via yowasp",
+      "layout": "netlistsvg (elkjs)",
+      "output": "SVG in Sphinx HTML",
+      "recipe": ".. hdl-diagram:: <all files concatenated> :type: netlistsvg :module: <top>  (prep -top; cd; write_json -compat-int → netlistsvg)",
+      "draws": "Same as netlistsvg, produced inside a Sphinx documentation build.",
+      "minimal": {
+        "none": "Its :skin: option could only pass netlistsvg's lossy constants / splitsAndJoins flags (see netlistsvg); :flatten: adds detail."
+      }
+    },
+    {
+      "id": "symbolator",
+      "name": "Symbolator",
+      "license": "MIT",
+      "lang": "Python",
+      "updated": "2022-01-28 (dormant)",
+      "input": "hdlparse (regex)",
+      "layout": "none (fixed symbol)",
+      "output": "SVG / PNG / PDF",
+      "version": "1.2.2 (zebreus fork, the maintained PyPI release)",
+      "recipe": "symbolator -i <top file> --component <top> --title -f svg",
+      "draws": "Only the top module's port symbol; no internals.",
+      "minimal": {
+        "none": "It only ever draws the top's port symbol, which is already its most abstract view; --no-type only removes pin-type text."
+      }
+    },
+    {
+      "id": "teroshdl",
+      "name": "TerosHDL schematic",
+      "license": "GPL-3.0",
+      "lang": "TypeScript",
+      "updated": "2026-10-11",
+      "input": "Yosys proc",
+      "layout": "elkjs 0.7 (netlistsvg fork, 'hierarchy' branch)",
+      "output": "SVG in webview",
+      "recipe": "yosys (colibri/yosys/yosys.ts): read_verilog -sv <each file>; hierarchy -top <top>; proc; write_json  →  normalizeNetlist → TerosTechnology/netlistsvg#hierarchy render(default.svg, hierarchy.enable=all, expandLevel=0)",
+      "draws": "Cell-level schematic with every submodule expanded inline (whole design on one sheet).",
+      "minimal": {
+        "option": "Fork hierarchy mode \"off\" + Yosys opt",
+        "effect": "Top level only: submodules stay boxes with named ports instead of being expanded inline.",
+        "recipe": "yosys: read_verilog -sv <each file>; hierarchy -top <top>; proc; opt; write_json  →  netlistsvg fork with hierarchy.enable \"off\" (rest of the extension's config unchanged)",
+        "evidence": "teros-netlistsvg lib/ConfigModel.ts:7 (enable: off|level|all|modules), lib/FlatModule.ts:64-100, lib/config.json:3 (default \"off\"), README.md:211-239; opt goes in the extension's \"Arguments passed to Yosys\" setting (config_web.ts:1866-1871, inserted at yosys.ts:87).",
+        "per_design": {
+          "picosoc": "5.2 MB, 3406 nodes → 117 KB, 81 nodes",
+          "darksocv": "2.3 MB, 1131 nodes → 99 KB, 53 nodes"
+        },
+        "caveats": "A VS Code user can type opt, but cannot pick \"off\": schematic.ts:356-370 hard-codes \"all\" and the viewer has no setting for it. \"off\" is the fork's own default and is documented in its README. Top-level glue logic (muxes, comparators, constants) is still drawn."
+      },
+      "module_minimal": {
+        "option": "Fork hierarchy mode \"off\" + Yosys opt",
+        "recipe": "yosys: read_verilog -sv <file>; hierarchy -top <top>; proc; opt; write_json → netlistsvg fork with hierarchy.enable \"off\""
+      }
+    },
+    {
+      "id": "digital_ide",
+      "name": "Digital-IDE",
+      "license": "MIT",
+      "lang": "TypeScript + Rust",
+      "updated": "2026-09-17",
+      "input": "yosys.wasm",
+      "layout": "ELK + libavoid (closed bundle)",
+      "output": "SVG in webview",
+      "version": "0.4.6 (2025-07-09). The current 0.5.0 package on the Marketplace ships all 102 netlist-viewer files (netloom, avoid.wasm, yosys.wasm, index.html) as 0-byte placeholders, so it cannot render.",
+      "recipe": "yosys (out/function/dide-netlist/worker.js, mode 'before'): read_verilog -sv -formal -overwrite <files>; design -reset-vlog; proc; write_json  →  resources/dide-netlist/view in headless Chromium",
+      "draws": "Cell-level schematic of the top module with its own symbol set; submodules as boxes.",
+      "minimal": {
+        "none": "Its one knob, schema-mode before / after / RTL, picks the Yosys script, not a detail level ('after' is byte-identical, 'RTL' is larger); submodules are already black boxes. darksocv still fails in every mode: darkspi.v instantiates a missing spi_master and the viewer reads that cell's port_directions."
+      }
+    },
+    {
+      "id": "vl_hier_graph",
+      "name": "Verilator vl_hier_graph",
+      "license": "CC0 (example script)",
+      "lang": "Python",
+      "updated": "2026-10-16",
+      "input": "Verilator --json-only",
+      "layout": "Graphviz dot",
+      "output": "dot → SVG",
+      "recipe": "verilator/examples/json_py/vl_hier_graph --top-module <top> -Wno-fatal <files>  →  dot -Tsvg -Gdpi=72",
+      "deviation": "Added -Wno-fatal (picosoc leaves picorv32 pins unconnected, which Verilator treats as fatal lint) and -Gdpi=72 when rendering SVG (the script sets dpi=300 for raster output, which shrinks an SVG drawing into one corner).",
+      "note": "Module hierarchy only (which module instantiates which), no nets. CréVinn is a published method, not a runnable tool; this is its runnable Verilator part.",
+      "draws": "Module hierarchy only: which module instantiates which, no signals.",
+      "minimal": {
+        "none": "It already draws only the module hierarchy and has no detail, depth or filter options; the rest of its arguments pass through to Verilator."
+      }
+    }
+  ],
+  "skipped": [
+    {
+      "name": "HDElk",
+      "reason": "No RTL input: diagrams are drawn from hand-written JSON."
+    },
+    {
+      "name": "VSV",
+      "reason": "Repository not accessible (no public source to install)."
+    },
+    {
+      "name": "RTLViz",
+      "reason": "Excluded by choice: 0.6.3 is regex-only and 0.9.0 sends the RTL to Gemini."
+    },
+    {
+      "name": "FEntwumS Netlist Viewer",
+      "reason": "Excluded by choice: GUI plugin inside OneWare Studio, no headless entry point."
+    },
+    {
+      "name": "Kactus2",
+      "reason": "Excluded by choice: Qt GUI; imports to IP-XACT and lays out by hand."
+    },
+    {
+      "name": "Chisel diagrammer",
+      "reason": "Input is LowFIRRTL; there is no Verilog → FIRRTL path for these designs."
+    },
+    {
+      "name": "easysoc layered-firrtl + diagrammer",
+      "reason": "Input is LowFIRRTL (and the repo is archived)."
+    },
+    {
+      "name": "Rocket Chip Diplomacy GraphML",
+      "reason": "Needs Scala/Chisel elaboration (LazyModule); cannot take Verilog."
+    }
+  ]
+}

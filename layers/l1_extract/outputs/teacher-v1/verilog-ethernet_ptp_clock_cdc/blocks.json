@@ -1,0 +1,1228 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-ethernet_ptp_clock_cdc",
+ "tops": [
+  "ptp_clock_cdc"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "ptp_clock_cdc": {
+   "source": "teacher",
+   "canonical_instance": "ptp_clock_cdc",
+   "file": "data/rtl/verilog-ethernet/rtl/ptp_clock_cdc.v",
+   "lines": [
+    34,
+    828
+   ],
+   "summary": "PTP timestamp clock-domain crossing: captures source timestamps, toggle-synchronizes them to output_clk, and a PI loop disciplines a local ns/s counter with sample_clk phase detection and lock tracking.",
+   "blocks": [
+    {
+     "name": "Source capture (input_clk)",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Captures source timestamp every 2^LOG_RATE input cycles and toggles src_sync.",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "input_ts",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 93.2,
+       "struct_score": 82.8,
+       "trace": "interface",
+       "why": "Source PTP timestamp captured in input_clk domain into src_ts capture registers.",
+       "lines": [
+        51,
+        263,
+        264
+       ]
+      },
+      {
+       "id": "E19",
+       "name": "src_ts_ns_capt_reg",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 45.3,
+       "struct_score": 13.5,
+       "trace": "data_backward",
+       "why": "Source ns timestamp captured on src_update in input_clk domain.",
+       "lines": [
+        264,
+        499
+       ]
+      },
+      {
+       "id": "E46",
+       "name": "src_sync_reg",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 47.9,
+       "struct_score": 24.1,
+       "trace": "forward",
+       "why": "Toggle flag signalling new source capture across clock domains.",
+       "lines": [
+        270,
+        284,
+        296
+       ]
+      },
+      {
+       "id": "E47",
+       "name": "src_update_reg",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 16.0,
+       "struct_score": 7.9,
+       "trace": "control_backward",
+       "why": "Source phase counter carry enabling timestamp capture in input_clk domain.",
+       "lines": [
+        258,
+        260
+       ]
+      },
+      {
+       "id": "E41",
+       "name": "src_phase_reg",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 18.3,
+       "struct_score": 17.6,
+       "trace": "none",
+       "why": "Free-running input_clk divider producing src_update every 2^LOG_RATE cycles.",
+       "lines": [
+        258,
+        276
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "input_ts_step",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 17.4,
+       "struct_score": 13.8,
+       "trace": "interface",
+       "why": "Source step indication forcing timestamp reload.",
+       "lines": [
+        254,
+        268
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E18",
+       "name": "src_ts_s_capt_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E20",
+       "name": "src_ts_step_capt_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E75",
+       "name": "input_ts_step_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E48",
+       "name": "src_phase_sync_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Timestamp CDC",
+     "kind": "BUFFER",
+     "description": "Synchronizers moving captured source timestamp into output_clk domain.",
+     "anchors": [
+      {
+       "id": "E24",
+       "name": "src_ts_ns_sync_reg",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 49.0,
+       "struct_score": 28.5,
+       "trace": "data_backward",
+       "why": "Source timestamp transferred into output_clk domain on synchronized toggle.",
+       "lines": [
+        499,
+        608,
+        618
+       ]
+      },
+      {
+       "id": "E95",
+       "name": "ts_sync_valid_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 46.3,
+       "struct_score": 17.5,
+       "trace": "control_backward",
+       "why": "New synchronized source timestamp available; with capture valid triggers comparison/load.",
+       "lines": [
+        502,
+        505,
+        600
+       ]
+      },
+      {
+       "id": "E54",
+       "name": "src_sync_sync2_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.8,
+       "struct_score": 11.4,
+       "trace": "control_backward",
+       "why": "Representative synchronizer stage; edge with sync3 loads src_ts sync registers.",
+       "lines": [
+        285,
+        494
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "src_ts_step_sync_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.5,
+       "struct_score": 14.2,
+       "trace": "control_backward",
+       "why": "Synchronized source step flag forcing direct timestamp load.",
+       "lines": [
+        500,
+        603
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E23",
+       "name": "src_ts_s_sync_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E53",
+       "name": "src_sync_sync1_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E55",
+       "name": "src_sync_sync3_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E56",
+       "name": "src_phase_sync_sync1_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E57",
+       "name": "src_phase_sync_sync2_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E58",
+       "name": "src_phase_sync_sync3_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E59",
+       "name": "dest_phase_sync_sync1_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E60",
+       "name": "dest_phase_sync_sync2_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E61",
+       "name": "dest_phase_sync_sync3_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Local PTP clock",
+     "kind": "COUNTER_TIMER",
+     "description": "ns/seconds counter advanced by period_ns, producing output_ts and PPS.",
+     "anchors": [
+      {
+       "id": "E28",
+       "name": "ts_ns_reg",
+       "role": "COUNTER",
+       "importance": "critical",
+       "score": 85.4,
+       "struct_score": 60.0,
+       "trace": "data_backward",
+       "why": "Local nanosecond time counter in output_clk domain, advanced by period_ns.",
+       "lines": [
+        119,
+        226,
+        754
+       ]
+      },
+      {
+       "id": "E26",
+       "name": "ts_s_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 56.5,
+       "struct_score": 56.8,
+       "trace": "data_backward",
+       "why": "Local seconds counter incremented on ns overflow or loaded from source.",
+       "lines": [
+        593,
+        607,
+        753
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "output_ts",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 90.9,
+       "struct_score": 77.0,
+       "trace": "interface",
+       "why": "Output timestamp formed from local ts_s_reg and ts_ns_reg.",
+       "lines": [
+        57,
+        224,
+        226
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "output_pps",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 44.2,
+       "struct_score": 8.9,
+       "trace": "interface",
+       "why": "Pulse-per-second output from seconds rollover (pps_reg).",
+       "lines": [
+        63,
+        233
+       ]
+      },
+      {
+       "id": "E30",
+       "name": "ts_ns_inc_reg",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 21.1,
+       "struct_score": 28.8,
+       "trace": "data_backward",
+       "why": "Pre-computed next ns value for the local counter.",
+       "lines": [
+        583,
+        585,
+        755
+       ]
+      },
+      {
+       "id": "E32",
+       "name": "ts_ns_ovf_reg",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 20.6,
+       "struct_score": 26.9,
+       "trace": "control_backward",
+       "why": "Seconds-overflow lookahead; borrow bit triggers seconds increment and PPS.",
+       "lines": [
+        587,
+        592,
+        778
+       ]
+      },
+      {
+       "id": "E34",
+       "name": "ts_step_reg",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 15.0,
+       "struct_score": 3.9,
+       "trace": "none",
+       "why": "Step indication when local time loaded from source.",
+       "lines": [
+        231,
+        758
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "output_ts_step",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 16.2,
+       "struct_score": 8.9,
+       "trace": "interface",
+       "why": "Output step flag copied from ts_step_reg.",
+       "lines": [
+        231
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E14",
+       "name": "period_ns_delay_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E15",
+       "name": "period_ns_delay_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E16",
+       "name": "period_ns_ovf_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E17",
+       "name": "period_ns_ovf_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E27",
+       "name": "ts_s_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E29",
+       "name": "ts_ns_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E31",
+       "name": "ts_ns_inc_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E33",
+       "name": "ts_ns_ovf_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E35",
+       "name": "ts_step_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E36",
+       "name": "pps_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E37",
+       "name": "ts_s_pipe_reg",
+       "kind": "mem"
+      },
+      {
+       "id": "E38",
+       "name": "ts_ns_pipe_reg",
+       "kind": "mem"
+      },
+      {
+       "id": "E39",
+       "name": "ts_step_pipe_reg",
+       "kind": "mem"
+      },
+      {
+       "id": "E40",
+       "name": "pps_pipe_reg",
+       "kind": "mem"
+      }
+     ]
+    },
+    {
+     "name": "Time comparator and PI loop",
+     "kind": "DATAPATH",
+     "description": "Compares source vs local time and adjusts period_ns via gain-scheduled PI control.",
+     "anchors": [
+      {
+       "id": "E12",
+       "name": "period_ns_reg",
+       "role": "DATAPATH_MAJOR",
+       "importance": "critical",
+       "score": 76.2,
+       "struct_score": 25.1,
+       "trace": "data_backward",
+       "why": "PI-controlled clock increment per cycle driving the local time counter.",
+       "lines": [
+        579,
+        597,
+        749
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "dest_ts_ns_capt_reg",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 46.9,
+       "struct_score": 19.8,
+       "trace": "data_backward",
+       "why": "Local timestamp snapshot on dest_update for comparison with source.",
+       "lines": [
+        487,
+        618
+       ]
+      },
+      {
+       "id": "E105",
+       "name": "ts_ns_diff_reg",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 47.0,
+       "struct_score": 20.2,
+       "trace": "data_backward",
+       "why": "Time error between source and local timestamps feeding PI control.",
+       "lines": [
+        618,
+        693,
+        765
+       ]
+      },
+      {
+       "id": "E107",
+       "name": "time_err_int_reg",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 46.2,
+       "struct_score": 16.9,
+       "trace": "data_backward",
+       "why": "PI integrator of time error, saturating, used to compute period_ns.",
+       "lines": [
+        693,
+        708,
+        767
+       ]
+      },
+      {
+       "id": "E118",
+       "name": "gain_sel_reg",
+       "role": "MUX_SELECT",
+       "importance": "minor",
+       "score": 19.4,
+       "struct_score": 22.0,
+       "trace": "control_backward",
+       "why": "Selects PI loop gain based on time error magnitude.",
+       "lines": [
+        692,
+        707,
+        774
+       ]
+      },
+      {
+       "id": "E99",
+       "name": "ts_diff_valid_reg",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 16.6,
+       "struct_score": 10.6,
+       "trace": "control_backward",
+       "why": "Enables PI update and mismatch counting for a new difference.",
+       "lines": [
+        638,
+        673,
+        761
+       ]
+      },
+      {
+       "id": "E97",
+       "name": "ts_diff_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 15.9,
+       "struct_score": 7.7,
+       "trace": "control_backward",
+       "why": "Coarse timestamp mismatch flag counted by mismatch_cnt.",
+       "lines": [
+        639,
+        760
+       ]
+      },
+      {
+       "id": "E101",
+       "name": "mismatch_cnt_reg",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 19.0,
+       "struct_score": 20.4,
+       "trace": "none",
+       "why": "Counts repeated mismatches before forcing timestamp reload.",
+       "lines": [
+        640,
+        644
+       ]
+      },
+      {
+       "id": "E103",
+       "name": "load_ts_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.6,
+       "struct_score": 14.4,
+       "trace": "control_backward",
+       "why": "Forces local time to load source timestamp after mismatches.",
+       "lines": [
+        603,
+        641,
+        763
+       ]
+      },
+      {
+       "id": "E96",
+       "name": "ts_capt_valid_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.2,
+       "struct_score": 16.9,
+       "trace": "control_backward",
+       "why": "Local capture valid, paired with ts_sync_valid_reg for comparison.",
+       "lines": [
+        491,
+        505,
+        600
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E13",
+       "name": "period_ns_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E21",
+       "name": "dest_ts_s_capt_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E98",
+       "name": "ts_diff_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E100",
+       "name": "ts_diff_valid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E102",
+       "name": "mismatch_cnt_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E104",
+       "name": "load_ts_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E106",
+       "name": "ts_ns_diff_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E108",
+       "name": "time_err_int_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E109",
+       "name": "ptp_ovf",
+       "kind": "comb"
+      },
+      {
+       "id": "E119",
+       "name": "gain_sel_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Destination phase loop",
+     "kind": "DATAPATH",
+     "description": "sample_clk phase detector aligning dest capture strobes to source capture timing.",
+     "anchors": [
+      {
+       "id": "E42",
+       "name": "dest_phase_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 51.3,
+       "struct_score": 37.6,
+       "trace": "control_backward",
+       "why": "Destination phase accumulator whose overflow generates dest_update capture strobes.",
+       "lines": [
+        359,
+        430
+       ]
+      },
+      {
+       "id": "E50",
+       "name": "dest_update_reg",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 43.8,
+       "struct_score": 7.2,
+       "trace": "control_backward",
+       "why": "Strobe capturing local timestamp and toggling dest_sync_reg.",
+       "lines": [
+        432,
+        480
+       ]
+      },
+      {
+       "id": "E44",
+       "name": "dest_phase_inc_reg",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 19.2,
+       "struct_score": 21.2,
+       "trace": "data_backward",
+       "why": "Destination phase increment controlled by sample-clock phase loop.",
+       "lines": [
+        359,
+        431
+       ]
+      },
+      {
+       "id": "E81",
+       "name": "dest_err_int_reg",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 18.9,
+       "struct_score": 20.0,
+       "trace": "data_backward",
+       "why": "Integrator of sampled phase error for destination phase increment.",
+       "lines": [
+        372,
+        388,
+        510
+       ]
+      },
+      {
+       "id": "E68",
+       "name": "sample_acc_reg",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 15.9,
+       "struct_score": 7.6,
+       "trace": "data_backward",
+       "why": "sample_clk phase detector accumulator of src/dest sync edge differences.",
+       "lines": [
+        325,
+        335,
+        336
+       ]
+      },
+      {
+       "id": "E76",
+       "name": "edge_1_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.7,
+       "struct_score": 10.9,
+       "trace": "control_backward",
+       "why": "Phase-frequency detector edge-order flag in sample_clk domain.",
+       "lines": [
+        316,
+        325
+       ]
+      },
+      {
+       "id": "E71",
+       "name": "sample_update_reg",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 18.4,
+       "struct_score": 17.9,
+       "trace": "forward",
+       "why": "Toggle announcing new sample accumulator result to output_clk domain.",
+       "lines": [
+        338,
+        344
+       ]
+      },
+      {
+       "id": "E79",
+       "name": "sample_acc_sync_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 17.3,
+       "struct_score": 13.3,
+       "trace": "data_backward",
+       "why": "Phase-detector result transferred into output_clk domain.",
+       "lines": [
+        372,
+        437
+       ]
+      },
+      {
+       "id": "E80",
+       "name": "sample_acc_sync_valid_reg",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 20.2,
+       "struct_score": 25.3,
+       "trace": "control_backward",
+       "why": "Pulse enabling destination phase loop update.",
+       "lines": [
+        367,
+        438
+       ]
+      },
+      {
+       "id": "E70",
+       "name": "sample_cnt_reg",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 19.6,
+       "struct_score": 22.8,
+       "trace": "none",
+       "why": "sample_clk window counter dumping phase accumulator.",
+       "lines": [
+        327,
+        333
+       ]
+      },
+      {
+       "id": "E86",
+       "name": "dest_sync_locked_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.4,
+       "struct_score": 13.6,
+       "trace": "control_backward",
+       "why": "Destination phase loop locked; selects loop gains and feeds locked.",
+       "lines": [
+        371,
+        513,
+        549
+       ]
+      },
+      {
+       "id": "E84",
+       "name": "dest_sync_lock_count_reg",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 19.9,
+       "struct_score": 23.9,
+       "trace": "none",
+       "why": "Counts consecutive small phase errors before dest sync lock.",
+       "lines": [
+        404,
+        407
+       ]
+      },
+      {
+       "id": "E49",
+       "name": "dest_sync_reg",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 18.4,
+       "struct_score": 17.8,
+       "trace": "forward",
+       "why": "Toggle on local capture, synchronized into sample_clk detector.",
+       "lines": [
+        299,
+        490
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E43",
+       "name": "dest_phase_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E45",
+       "name": "dest_phase_inc_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E51",
+       "name": "dest_update_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E62",
+       "name": "src_sync_sample_sync1_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E63",
+       "name": "src_sync_sample_sync2_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E64",
+       "name": "src_sync_sample_sync3_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E65",
+       "name": "dest_sync_sample_sync1_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E66",
+       "name": "dest_sync_sample_sync2_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E67",
+       "name": "dest_sync_sample_sync3_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E69",
+       "name": "sample_acc_out_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E72",
+       "name": "sample_update_sync1_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E73",
+       "name": "sample_update_sync2_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E74",
+       "name": "sample_update_sync3_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E77",
+       "name": "edge_2_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E78",
+       "name": "active_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E82",
+       "name": "dest_err_int_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E83",
+       "name": "dest_ovf",
+       "kind": "comb"
+      },
+      {
+       "id": "E85",
+       "name": "dest_sync_lock_count_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E87",
+       "name": "dest_sync_locked_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Coarse phase detector",
+     "kind": "DATAPATH",
+     "description": "output_clk phase comparison of src/dest phase bits for frequency acquisition.",
+     "anchors": [
+      {
+       "id": "E89",
+       "name": "phase_err_out_reg",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 16.5,
+       "struct_score": 10.2,
+       "trace": "data_backward",
+       "why": "Coarse phase error from output_clk detector driving frequency lock.",
+       "lines": [
+        474,
+        653,
+        668
+       ]
+      },
+      {
+       "id": "E91",
+       "name": "phase_err_out_valid_reg",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 19.8,
+       "struct_score": 23.6,
+       "trace": "control_backward",
+       "why": "Valid pulse for coarse phase error window result.",
+       "lines": [
+        476,
+        651
+       ]
+      },
+      {
+       "id": "E90",
+       "name": "phase_err_cnt_reg",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 20.0,
+       "struct_score": 24.4,
+       "trace": "none",
+       "why": "Window counter for coarse phase error accumulation.",
+       "lines": [
+        464,
+        471
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E52",
+       "name": "dest_phase_sync_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E88",
+       "name": "phase_err_acc_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E92",
+       "name": "phase_edge_1_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E93",
+       "name": "phase_edge_2_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E94",
+       "name": "phase_active_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Lock detection",
+     "kind": "CONTROLLER",
+     "description": "Frequency and PTP lock counters combined into locked status.",
+     "anchors": [
+      {
+       "id": "E11",
+       "name": "locked",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 44.5,
+       "struct_score": 10.2,
+       "trace": "control_backward",
+       "why": "Lock status: ptp, frequency and dest-sync loops all locked.",
+       "lines": [
+        549
+       ]
+      },
+      {
+       "id": "E112",
+       "name": "freq_locked_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 45.7,
+       "struct_score": 15.1,
+       "trace": "control_backward",
+       "why": "Coarse frequency lock; gates fine time-difference use and ptp lock.",
+       "lines": [
+        615,
+        729,
+        770
+       ]
+      },
+      {
+       "id": "E116",
+       "name": "ptp_locked_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.7,
+       "struct_score": 11.0,
+       "trace": "control_backward",
+       "why": "Fine PTP lock flag contributing to locked output.",
+       "lines": [
+        549,
+        772
+       ]
+      },
+      {
+       "id": "E110",
+       "name": "freq_lock_count_reg",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 20.1,
+       "struct_score": 24.8,
+       "trace": "none",
+       "why": "Up/down counter qualifying frequency lock.",
+       "lines": [
+        654,
+        660
+       ]
+      },
+      {
+       "id": "E114",
+       "name": "ptp_lock_count_reg",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 20.2,
+       "struct_score": 25.0,
+       "trace": "none",
+       "why": "Up/down counter qualifying PTP time lock.",
+       "lines": [
+        733,
+        739
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E111",
+       "name": "freq_lock_count_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E113",
+       "name": "freq_locked_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E115",
+       "name": "ptp_lock_count_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E117",
+       "name": "ptp_locked_next",
+       "kind": "comb"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clocks_resets",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2",
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "input_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "input_rst",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "output_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "output_rst",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "sample_clk",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "input_timestamp",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "input_ts",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "input_ts_step",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "output_timestamp",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E8",
+       "name": "output_ts",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "output_ts_step",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "output_pps",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E11"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "locked",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

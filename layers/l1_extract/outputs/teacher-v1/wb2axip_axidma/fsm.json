@@ -1,0 +1,218 @@
+[
+ {
+  "module": "axidma",
+  "instance": "axidma",
+  "state": "r_busy",
+  "next": null,
+  "style": "one-process",
+  "states": [
+   {
+    "name": "0",
+    "value": "0"
+   }
+  ],
+  "reset_state": "0",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "!(!r_busy && axil_write_ready) && r_busy && M_AXI_BVALID && M_AXI_BREADY && last_write_ack"
+   },
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "!(!r_busy && axil_write_ready) && r_busy && r_done"
+   }
+  ],
+  "outputs": [
+   {
+    "signal": "M_AXI_ARADDR",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "M_AXI_ARLEN",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "M_AXI_ARVALID",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "M_AXI_AWADDR",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "M_AXI_AWLEN",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "M_AXI_WLAST",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "S_AXIL_RDATA",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "o_int",
+    "kind": "moore",
+    "port": true
+   }
+  ],
+  "warnings": [
+   "non-constant next state: w_start",
+   "semantic_check: mismatch (syntactic 1 states / 0 edges vs executed 2 / 2); semantic transitions attached"
+  ],
+  "semantic_check": "mismatch",
+  "semantic_transitions": [
+   {
+    "src": "0",
+    "dst": "0",
+    "cond": "(zero_len) || (!last_write_ack && !S_AXIL_BREADY) || (!r_done && S_AXIL_BVALID) || (M_AXI_BVALID && !r_err) || (!last_write_ack && r_done && r_err) || (last_write_ack && r_done && !r_err) || (last_write_ack && M_AXI_BVALID && S_AXIL_BREADY) || (!r_done && S_AXIL_BREADY && r_valid) || (S_AXIL_BVALID && !S_AXIL_BREADY) || (!r_done && !S_AXIL_BREADY && !r_valid) || (!last_write_ack && !r_err && !r_valid) || (last_write_ack && r_err && !S_AXIL_BVALID && S_AXIL_BREADY && !r_valid) || (!r_err && !S_AXIL_BREADY) || (r_err && S_AXIL_BVALID && r_valid) || (M_AXI_BVALID && !S_AXIL_BREADY && !r_valid) || (last_write_ack && M_AXI_BVALID && !r_done) || (!M_AXI_BVALID && r_done && !S_AXIL_BREADY && r_valid)"
+   },
+   {
+    "src": "0",
+    "dst": "1",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "1",
+    "dst": "1",
+    "cond": "(!M_AXI_BVALID && !r_done) || (!last_write_ack && !r_done)"
+   },
+   {
+    "src": "1",
+    "dst": "0",
+    "cond": "(r_done) || (last_write_ack && M_AXI_BVALID)"
+   }
+  ]
+ },
+ {
+  "module": "axidma",
+  "instance": "axidma",
+  "state": "phantom_read",
+  "next": "w_start_read",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "0",
+    "value": "0"
+   }
+  ],
+  "reset_state": null,
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "phantom_read"
+   },
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "fifo_space_available < MAXBURST"
+   },
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "M_AXI_ARVALID && !M_AXI_ARREADY"
+   },
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "(r_err || r_abort)"
+   },
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "(i_reset || !r_busy)"
+   },
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "!(i_reset || !r_busy) && !(!M_AXI_ARVALID || M_AXI_ARREADY)"
+   }
+  ],
+  "outputs": [],
+  "warnings": [
+   "non-constant next state: r_busy && reads_remaining_nonzero",
+   "semantic_check: mismatch (syntactic 1 states / 0 edges vs executed 2 / 2); semantic transitions attached"
+  ],
+  "semantic_check": "mismatch",
+  "semantic_transitions": [
+   {
+    "src": "0",
+    "dst": "0",
+    "cond": "(M_AXI_ARVALID) || (!r_busy) || (!reads_remaining_nonzero) || (r_err) || (r_abort) || (!S_AXI_ARESETN)"
+   },
+   {
+    "src": "0",
+    "dst": "1",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "1",
+    "dst": "0",
+    "cond": "1"
+   }
+  ]
+ },
+ {
+  "module": "axidma",
+  "instance": "axidma",
+  "state": "phantom_write",
+  "next": "w_write_start",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "0",
+    "value": "0"
+   }
+  ],
+  "reset_state": "0",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "!write_requests_remaining"
+   },
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "phantom_write"
+   },
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "M_AXI_AWVALID && !M_AXI_AWREADY"
+   },
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "M_AXI_WVALID && (!M_AXI_WLAST || !M_AXI_WREADY)"
+   },
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "(((i_reset || r_err) || r_abort) || !r_busy)"
+   },
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "!(!M_AXI_AWVALID || M_AXI_AWREADY)"
+   }
+  ],
+  "outputs": [],
+  "warnings": [
+   "non-constant next state: (fifo_data_available > 1) &&(fifo_data_available > write_burst_length)",
+   "non-constant next state: (fifo_data_available >= write_burst_length)"
+  ],
+  "semantic_check": "consistent"
+ }
+]

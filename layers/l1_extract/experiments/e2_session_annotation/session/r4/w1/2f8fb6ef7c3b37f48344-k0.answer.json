@@ -1,0 +1,37 @@
+{
+ "module_summary": "PicoRV32 PCPI multiply coprocessor: decodes MUL-family instructions, then iterates a shift-and-add carry-save accumulator over 64-bit operand registers under a down-counter, returning the result via pcpi_wr/pcpi_ready.",
+ "anchors": [
+  {"id": "E3", "name": "pcpi_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "PCPI request valid qualifying instruction decode.", "lines": [2203, 2227]},
+  {"id": "E4", "name": "pcpi_insn", "role": "COMMAND", "importance": "critical", "trace": "interface", "why": "Instruction word decoded into MUL/MULH/MULHSU/MULHU flags.", "lines": [2204, 2227, 2228]},
+  {"id": "E5", "name": "pcpi_rs1", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "First operand, sign/zero-extended into rs1.", "lines": [2205, 2280]},
+  {"id": "E6", "name": "pcpi_rs2", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Second operand, sign/zero-extended into rs2.", "lines": [2206, 2285]},
+  {"id": "E8", "name": "pcpi_rd", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Result output: low or high half of rd accumulator.", "lines": [2208, 2313]},
+  {"id": "E10", "name": "pcpi_ready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "One-cycle completion pulse after mul_finish.", "lines": [2210, 2312]},
+  {"id": "E7", "name": "pcpi_wr", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Write-back request for pcpi_rd, pulsed with pcpi_ready.", "lines": [2207, 2311]},
+  {"id": "E9", "name": "pcpi_wait", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Tells CPU a multiply instruction is accepted and in progress.", "lines": [2209, 2236, 2219]},
+  {"id": "E12", "name": "instr_mulh", "role": "DECODE", "importance": "major", "trace": "control_backward", "why": "Decoded MULH flag; representative of the four mul-type decode registers.", "lines": [2212, 2230, 2214]},
+  {"id": "E16", "name": "instr_any_mulh", "role": "DECODE", "importance": "minor", "trace": "control_backward", "why": "High-half product select: sets counter length and pcpi_rd shift.", "lines": [2214, 2291, 2313]},
+  {"id": "E17", "name": "instr_rs1_signed", "role": "DECODE", "importance": "minor", "trace": "control_backward", "why": "Selects signed extension of rs1 operand.", "lines": [2215, 2279]},
+  {"id": "E32", "name": "mul_waiting", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Two-state controller: idle loading operands vs iterating the accumulator.", "lines": [2244, 2278, 2292]},
+  {"id": "E31", "name": "mul_counter", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Iteration down-counter; bit 6 underflow ends multiplication.", "lines": [2243, 2299, 2300]},
+  {"id": "E33", "name": "mul_finish", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Done pulse triggering pcpi_wr/pcpi_ready and result output.", "lines": [2245, 2301, 2310]},
+  {"id": "E20", "name": "mul_start", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Rising edge of pcpi_wait starting the iteration.", "lines": [2219, 2292]},
+  {"id": "E23", "name": "rd", "role": "HOLDING_REG", "importance": "critical", "trace": "data_backward", "why": "Carry-save accumulator sum register holding the product.", "lines": [2240, 2294, 2313]},
+  {"id": "E24", "name": "rdx", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Carry-save accumulator carry register.", "lines": [2240, 2290, 2295]},
+  {"id": "E21", "name": "rs1", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Multiplier operand shifted right each step.", "lines": [2240, 2280, 2296]},
+  {"id": "E22", "name": "rs2", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Multiplicand operand shifted left each step.", "lines": [2240, 2285, 2297]},
+  {"id": "E28", "name": "next_rd", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Combinational next accumulator sum from carry-chain adder.", "lines": [2242, 2265, 2294]},
+  {"id": "E27", "name": "this_rs2", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Partial product: rs2 gated by current rs1 bit.", "lines": [2241, 2256, 2265]}
+ ],
+ "groups": [
+  {"name": "Instruction decoder", "kind": "DECODER", "anchor_ids": ["E4", "E12", "E16", "E17", "E9"], "member_ids": ["E11", "E13", "E14", "E15", "E18", "E19"], "description": "Decodes MUL opcodes into type and signedness flags; raises pcpi_wait."},
+  {"name": "Multiply controller", "kind": "CONTROLLER", "anchor_ids": ["E32", "E31", "E33", "E20"], "member_ids": [], "description": "Idle/iterate state, step counter and finish pulse."},
+  {"name": "Carry-save accumulator", "kind": "DATAPATH", "anchor_ids": ["E23", "E24", "E21", "E22", "E28", "E27"], "member_ids": ["E25", "E26", "E29", "E30"], "description": "Shift-and-add operand and accumulator registers with next-state logic."},
+  {"name": "PCPI interface", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E3", "E5", "E6", "E8", "E10", "E7"], "member_ids": [], "description": "Coprocessor request and result handshake with the CPU."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "pcpi_request", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E9"]},
+  {"name": "pcpi_response", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E7", "E8", "E10"]}
+ ]
+}

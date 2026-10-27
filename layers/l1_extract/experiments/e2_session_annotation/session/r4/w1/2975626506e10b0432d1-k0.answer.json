@@ -1,0 +1,20 @@
+{
+ "module_summary": "Byte-stream packet framer: a 4-state FSM syncs on in[3] to count three bytes while a 24-bit shift register captures them, output when done.",
+ "anchors": [
+  {"id": "E6", "name": "state", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "4-state framing FSM BYTE1/BYTE2/BYTE3/DONE tracking message byte position", "lines": [17, 26, 27]},
+  {"id": "E9", "name": "out_bytes_r", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "24-bit shift register shifting in each input byte", "lines": [32, 34]},
+  {"id": "E5", "name": "done", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Decoded from DONE state; validates out_bytes for one cycle per message", "lines": [30, 39]},
+  {"id": "E4", "name": "out_bytes", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "24-bit received message output, gated by done", "lines": [39]},
+  {"id": "E2", "name": "in", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Input byte stream shifted into out_bytes_r", "lines": [14, 34]},
+  {"id": "E8", "name": "in3", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Bit 3 of input byte; marks first byte, steers FSM transitions", "lines": [14, 18, 21]}
+ ],
+ "groups": [
+  {"name": "Framing FSM", "kind": "CONTROLLER", "anchor_ids": ["E6", "E5", "E8"], "member_ids": ["E7"], "description": "Detects message start via in[3] and counts three bytes, asserting done"},
+  {"name": "Byte shift register", "kind": "DATAPATH", "anchor_ids": ["E9", "E4", "E2"], "member_ids": [], "description": "Shifts input bytes into 24-bit register, output as out_bytes when done"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E3"]},
+  {"name": "byte_in", "protocol": "STREAM", "direction": "IN", "member_ids": ["E2"]},
+  {"name": "message_out", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E4", "E5"]}
+ ]
+}

@@ -1,0 +1,42 @@
+{
+ "module_summary": "MII Ethernet MAC wrapper: a 10/100 MII MAC instance sits between dual-clock AXI-stream TX and RX FIFOs, with toggle synchronizers bringing MAC error pulses into logic_clk.",
+ "anchors": [
+  {"id": "E4", "name": "tx_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Transmit AXI-stream payload entering the TX FIFO.", "lines": [69, 256]},
+  {"id": "E6", "name": "tx_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Transmit stream valid into TX FIFO slave port.", "lines": [71, 258]},
+  {"id": "E7", "name": "tx_axis_tready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "TX FIFO ready back-pressure to the transmit source.", "lines": [72, 259]},
+  {"id": "E10", "name": "rx_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Received frame payload output from the RX FIFO.", "lines": [79, 318]},
+  {"id": "E12", "name": "rx_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "RX FIFO output valid for received stream.", "lines": [81, 320]},
+  {"id": "E13", "name": "rx_axis_tready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Downstream ready controlling RX FIFO reads.", "lines": [82, 321]},
+  {"id": "E17", "name": "mii_rxd", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "MII receive nibble from PHY into the MAC.", "lines": [90, 218]},
+  {"id": "E21", "name": "mii_txd", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "MII transmit nibble driven by the MAC to the PHY.", "lines": [94, 222]},
+  {"id": "E40", "name": "tx_fifo_axis_tdata", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "TX FIFO output stream feeding MAC transmit input in tx_clk domain.", "lines": [124, 208, 267]},
+  {"id": "E41", "name": "tx_fifo_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "forward", "why": "Valid from TX FIFO to MAC transmit path.", "lines": [125, 209, 269]},
+  {"id": "E45", "name": "rx_fifo_axis_tdata", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "MAC receive stream written into the RX FIFO.", "lines": [130, 213, 307]},
+  {"id": "E46", "name": "rx_fifo_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "forward", "why": "MAC receive valid writing the RX FIFO.", "lines": [131, 214, 309]},
+  {"id": "E24", "name": "tx_error_underflow", "role": "STATUS", "importance": "major", "trace": "data_backward", "why": "Synchronized TX underflow pulse decoded from toggle synchronizer registers.", "lines": [101, 143]},
+  {"id": "E28", "name": "rx_error_bad_frame", "role": "STATUS", "importance": "major", "trace": "data_backward", "why": "Synchronized RX bad-frame pulse from toggle synchronizer.", "lines": [105, 173]},
+  {"id": "E29", "name": "rx_error_bad_fcs", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "Synchronized RX bad-FCS pulse from toggle synchronizer bit 1.", "lines": [106, 174]},
+  {"id": "E50", "name": "tx_sync_reg_1", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Toggle register in tx_clk flipping on each underflow event for CDC.", "lines": [138, 149]},
+  {"id": "E56", "name": "rx_sync_reg_1", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Toggle register in rx_clk capturing bad frame/FCS events for CDC.", "lines": [168, 180]},
+  {"id": "E25", "name": "tx_fifo_overflow", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "TX FIFO overflow status from FIFO slave side.", "lines": [102, 276]},
+  {"id": "E30", "name": "rx_fifo_overflow", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "RX FIFO overflow status from FIFO master side.", "lines": [107, 330]},
+  {"id": "E33", "name": "cfg_ifg", "role": "CONFIG_REG", "importance": "minor", "trace": "interface", "why": "Inter-frame gap configuration passed to the MAC.", "lines": [114, 228]},
+  {"id": "E34", "name": "cfg_tx_enable", "role": "ENABLE", "importance": "minor", "trace": "interface", "why": "Enables MAC transmit path.", "lines": [115, 229]},
+  {"id": "E35", "name": "cfg_rx_enable", "role": "ENABLE", "importance": "minor", "trace": "interface", "why": "Enables MAC receive path.", "lines": [116, 230]}
+ ],
+ "groups": [
+  {"name": "tx_fifo", "kind": "BUFFER", "anchor_ids": ["E4", "E6", "E7", "E40", "E41", "E25"], "member_ids": ["I2", "E5", "E8", "E9", "E42", "E43", "E44", "E26", "E27"], "description": "Async AXI-stream FIFO moving transmit frames from logic_clk to MAC tx_clk."},
+  {"name": "mii_mac", "kind": "DATAPATH", "anchor_ids": ["E17", "E21", "E33", "E34", "E35"], "member_ids": ["I1", "E16", "E18", "E19", "E20", "E22", "E23", "E49", "E54", "E55"], "description": "10/100 MAC with MII PHY adapter converting frames to nibble streams."},
+  {"name": "rx_fifo", "kind": "BUFFER", "anchor_ids": ["E10", "E12", "E13", "E45", "E46", "E30"], "member_ids": ["I3", "E11", "E14", "E15", "E47", "E48", "E31", "E32"], "description": "Async AXI-stream FIFO moving received frames from rx_clk to logic_clk."},
+  {"name": "status_sync", "kind": "OTHER", "anchor_ids": ["E24", "E28", "E29", "E50", "E56"], "member_ids": ["E51", "E52", "E53", "E57", "E58", "E59"], "description": "Toggle synchronizers moving MAC error pulses into logic_clk."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2", "E3"]},
+  {"name": "tx_axis", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E4", "E5", "E6", "E7", "E8", "E9"]},
+  {"name": "rx_axis", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E10", "E11", "E12", "E13", "E14", "E15"]},
+  {"name": "mii_rx", "protocol": "STREAM", "direction": "IN", "member_ids": ["E16", "E17", "E18", "E19"]},
+  {"name": "mii_tx", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E20", "E21", "E22", "E23"]},
+  {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E24", "E25", "E26", "E27", "E28", "E29", "E30", "E31", "E32"]},
+  {"name": "config", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E33", "E34", "E35"]}
+ ]
+}

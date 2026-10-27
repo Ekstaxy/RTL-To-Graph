@@ -1,0 +1,33 @@
+{
+  "module_summary": "Synchronous FIFO: memory array addressed by wrapping write/read pointers, fill counter derives full/empty, registered read with write-through bypass path.",
+  "anchors": [
+    {"id": "E12", "name": "mem", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "FIFO data array written at wr_addr, read at rd_next.", "lines": [69, 128, 217]},
+    {"id": "E3", "name": "i_wr", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Write request; qualified by !o_full into w_wr, also arms bypass.", "lines": [40, 72, 201]},
+    {"id": "E4", "name": "i_data", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Write data stored into mem or bypass register.", "lines": [41, 128, 211]},
+    {"id": "E7", "name": "i_rd", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Read request/consumer accept; qualified by !o_empty into w_rd.", "lines": [46, 73, 199]},
+    {"id": "E8", "name": "o_data", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Read data muxed from bypass_data or rd_data.", "lines": [47, 223, 225]},
+    {"id": "E5", "name": "o_full", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "Full backpressure to writer, blocks writes.", "lines": [42, 111, 72]},
+    {"id": "E9", "name": "o_empty", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Empty indication to reader, blocks reads.", "lines": [48, 161, 73]},
+    {"id": "E6", "name": "o_fill", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "Occupancy count; MSB gives full, used for empty and bypass decisions.", "lines": [43, 90, 91]},
+    {"id": "E13", "name": "wr_addr", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "Write pointer incremented on accepted write, addresses mem.", "lines": [70, 121, 128]},
+    {"id": "E14", "name": "rd_addr", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "Read pointer incremented on accepted read; base for rd_next.", "lines": [70, 146, 191]},
+    {"id": "E10", "name": "r_empty", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Registered empty flag; gates bypass capture and o_empty.", "lines": [67, 156, 199]},
+    {"id": "E15", "name": "w_wr", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Accepted write enable: mem write, wr_addr and fill increment.", "lines": [72, 120, 127]},
+    {"id": "E16", "name": "w_rd", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Accepted read enable: rd_addr increment, rd_data load.", "lines": [73, 145, 216]},
+    {"id": "E17", "name": "REGISTERED_READ.bypass_valid", "role": "MUX_SELECT", "importance": "minor", "trace": "control_backward", "why": "Selects bypass_data over rd_data for o_data.", "lines": [186, 204, 222]},
+    {"id": "E18", "name": "REGISTERED_READ.bypass_data", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Latches incoming write data for write-through when nearly empty.", "lines": [187, 211, 223]},
+    {"id": "E19", "name": "REGISTERED_READ.rd_data", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Registered memory read of next entry.", "lines": [187, 217, 225]},
+    {"id": "E20", "name": "REGISTERED_READ.rd_next", "role": "INDEX", "importance": "minor", "trace": "data_backward", "why": "Next read index rd_addr+1 for prefetch read.", "lines": [188, 191, 217]}
+  ],
+  "groups": [
+    {"name": "Write port", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E3", "E4", "E5", "E15", "E13"], "member_ids": ["E11"], "description": "Qualifies writes against full, advances write pointer."},
+    {"name": "FIFO memory", "kind": "MEMORY", "anchor_ids": ["E12"], "member_ids": [], "description": "Data array holding queued entries."},
+    {"name": "Read port with bypass", "kind": "DATAPATH", "anchor_ids": ["E7", "E8", "E9", "E10", "E16", "E14", "E17", "E18", "E19", "E20"], "member_ids": [], "description": "Registered prefetch read plus write-through bypass mux driving o_data."},
+    {"name": "Occupancy tracking", "kind": "COUNTER_TIMER", "anchor_ids": ["E6"], "member_ids": ["E11"], "description": "Fill counter producing full flag and empty updates."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "write", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6"]},
+    {"name": "read", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E7", "E8", "E9"]}
+  ]
+}

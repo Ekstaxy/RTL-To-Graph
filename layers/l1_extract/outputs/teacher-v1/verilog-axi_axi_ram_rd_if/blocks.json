@@ -1,0 +1,844 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-axi_axi_ram_rd_if",
+ "tops": [
+  "axi_ram_rd_if"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "axi_ram_rd_if": {
+   "source": "teacher",
+   "canonical_instance": "axi_ram_rd_if",
+   "file": "data/rtl/verilog-axi/rtl/axi_ram_rd_if.v",
+   "lines": [
+    34,
+    272
+   ],
+   "summary": "AXI read-to-RAM adapter: an idle/burst FSM latches the AR request and issues one RAM read command per beat with incrementing address and beat counter, while RAM responses pass to the AXI R channel through an optional pipeline register.",
+   "blocks": [
+    {
+     "name": "Burst controller",
+     "kind": "CONTROLLER",
+     "description": "FSM accepting AR and counting beats of the RAM read burst.",
+     "anchors": [
+      {
+       "id": "E40",
+       "name": "state_reg",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.0,
+       "struct_score": 97.4,
+       "trace": "control_backward",
+       "why": "Idle/burst FSM accepting AR requests and sequencing per-beat RAM commands.",
+       "lines": [
+        126,
+        189,
+        236
+       ]
+      },
+      {
+       "id": "E62",
+       "name": "read_count_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 52.7,
+       "struct_score": 43.0,
+       "trace": "control_backward",
+       "why": "Remaining beats in burst, loaded from arlen; ends burst at zero.",
+       "lines": [
+        138,
+        219,
+        221
+       ]
+      },
+      {
+       "id": "E60",
+       "name": "read_last_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.2,
+       "struct_score": 16.9,
+       "trace": "control_backward",
+       "why": "Marks last beat of burst on RAM command.",
+       "lines": [
+        137,
+        166,
+        220
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "s_axi_arvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 92.1,
+       "struct_score": 80.2,
+       "trace": "interface",
+       "why": "AR request valid starting a burst in idle.",
+       "lines": [
+        73,
+        193
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "s_axi_arready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 64.1,
+       "struct_score": 79.9,
+       "trace": "control_backward",
+       "why": "AR ready, high in idle until request accepted.",
+       "lines": [
+        74,
+        149,
+        193
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E41",
+       "name": "state_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E63",
+       "name": "read_count_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E61",
+       "name": "read_last_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E68",
+       "name": "s_axi_arready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E69",
+       "name": "s_axi_arready_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E58",
+       "name": "read_addr_valid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E59",
+       "name": "read_addr_valid_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Address generator",
+     "kind": "DATAPATH",
+     "description": "Holds request attributes and increments address per beat.",
+     "anchors": [
+      {
+       "id": "E44",
+       "name": "read_addr_reg",
+       "role": "HOLDING_REG",
+       "importance": "critical",
+       "score": 75.9,
+       "struct_score": 24.2,
+       "trace": "data_backward",
+       "why": "Current beat address, incremented by size each accepted command.",
+       "lines": [
+        129,
+        158,
+        217
+       ]
+      },
+      {
+       "id": "E66",
+       "name": "read_burst_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 16.3,
+       "struct_score": 9.5,
+       "trace": "data_backward",
+       "why": "Latched burst type controlling address increment.",
+       "lines": [
+        140,
+        216
+       ]
+      },
+      {
+       "id": "E64",
+       "name": "read_size_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 17.2,
+       "struct_score": 12.9,
+       "trace": "data_backward",
+       "why": "Clamped beat size used as address increment step.",
+       "lines": [
+        139,
+        203,
+        217
+       ]
+      },
+      {
+       "id": "E42",
+       "name": "read_id_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 18.4,
+       "struct_score": 17.9,
+       "trace": "data_backward",
+       "why": "Latched transaction ID driving RAM command ID.",
+       "lines": [
+        128,
+        157,
+        194
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "s_axi_araddr",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 53.7,
+       "struct_score": 46.9,
+       "trace": "interface",
+       "why": "Burst start address latched into read_addr_reg.",
+       "lines": [
+        63,
+        195
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E45",
+       "name": "read_addr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E65",
+       "name": "read_size_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E67",
+       "name": "read_burst_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E43",
+       "name": "read_id_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E46",
+       "name": "read_lock_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E47",
+       "name": "read_lock_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E48",
+       "name": "read_cache_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E49",
+       "name": "read_cache_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E50",
+       "name": "read_prot_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E51",
+       "name": "read_prot_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E52",
+       "name": "read_qos_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E53",
+       "name": "read_qos_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E54",
+       "name": "read_region_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E55",
+       "name": "read_region_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E56",
+       "name": "read_aruser_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E57",
+       "name": "read_aruser_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "RAM command port",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Issues per-beat RAM read commands with valid/ready.",
+     "anchors": [
+      {
+       "id": "E31",
+       "name": "ram_rd_cmd_en",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 92.5,
+       "struct_score": 81.0,
+       "trace": "control_backward",
+       "why": "RAM read command valid driven by read_addr_valid_reg.",
+       "lines": [
+        94,
+        165,
+        215
+       ]
+      },
+      {
+       "id": "E33",
+       "name": "ram_rd_cmd_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 54.6,
+       "struct_score": 50.0,
+       "trace": "interface",
+       "why": "RAM command ready advancing address and beat count.",
+       "lines": [
+        96,
+        181,
+        215
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "ram_rd_cmd_addr",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 54.9,
+       "struct_score": 51.2,
+       "trace": "interface",
+       "why": "RAM read command address output.",
+       "lines": [
+        87,
+        158
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E23",
+       "name": "ram_rd_cmd_id",
+       "kind": "port_out"
+      },
+      {
+       "id": "E25",
+       "name": "ram_rd_cmd_lock",
+       "kind": "port_out"
+      },
+      {
+       "id": "E26",
+       "name": "ram_rd_cmd_cache",
+       "kind": "port_out"
+      },
+      {
+       "id": "E27",
+       "name": "ram_rd_cmd_prot",
+       "kind": "port_out"
+      },
+      {
+       "id": "E28",
+       "name": "ram_rd_cmd_qos",
+       "kind": "port_out"
+      },
+      {
+       "id": "E29",
+       "name": "ram_rd_cmd_region",
+       "kind": "port_out"
+      },
+      {
+       "id": "E30",
+       "name": "ram_rd_cmd_auser",
+       "kind": "port_out"
+      },
+      {
+       "id": "E32",
+       "name": "ram_rd_cmd_last",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "Read response path",
+     "kind": "PIPELINE_STAGE",
+     "description": "Forwards RAM responses to AXI R, optionally via pipeline registers.",
+     "anchors": [
+      {
+       "id": "E35",
+       "name": "ram_rd_resp_data",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 91.1,
+       "struct_score": 77.5,
+       "trace": "interface",
+       "why": "RAM read response data forwarded to AXI R channel.",
+       "lines": [
+        98,
+        151,
+        256
+       ]
+      },
+      {
+       "id": "E38",
+       "name": "ram_rd_resp_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 58.6,
+       "struct_score": 64.4,
+       "trace": "interface",
+       "why": "RAM response valid forwarded as s_axi_rvalid.",
+       "lines": [
+        101,
+        155,
+        259
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "s_axi_rdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 90.2,
+       "struct_score": 75.4,
+       "trace": "data_backward",
+       "why": "AXI read data from RAM response or pipeline register.",
+       "lines": [
+        76,
+        151
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "s_axi_rready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 54.8,
+       "struct_score": 50.9,
+       "trace": "interface",
+       "why": "AXI R ready backpressuring RAM responses and pipeline register.",
+       "lines": [
+        81,
+        168,
+        254
+       ]
+      },
+      {
+       "id": "E39",
+       "name": "ram_rd_resp_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 24.4,
+       "struct_score": 42.1,
+       "trace": "control_backward",
+       "why": "Response ready to RAM from s_axi_rready or empty pipe.",
+       "lines": [
+        102,
+        168
+       ]
+      },
+      {
+       "id": "E71",
+       "name": "s_axi_rdata_pipe_reg",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 20.9,
+       "struct_score": 28.2,
+       "trace": "data_backward",
+       "why": "Optional output pipeline data register, unused when PIPELINE_OUTPUT=0.",
+       "lines": [
+        144,
+        151,
+        256
+       ]
+      },
+      {
+       "id": "E74",
+       "name": "s_axi_rvalid_pipe_reg",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 18.8,
+       "struct_score": 19.4,
+       "trace": "control_backward",
+       "why": "Optional output pipeline valid register.",
+       "lines": [
+        147,
+        168,
+        259
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E70",
+       "name": "s_axi_rid_pipe_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E72",
+       "name": "s_axi_rlast_pipe_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E73",
+       "name": "s_axi_ruser_pipe_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E34",
+       "name": "ram_rd_resp_id",
+       "kind": "port_in"
+      },
+      {
+       "id": "E36",
+       "name": "ram_rd_resp_last",
+       "kind": "port_in"
+      },
+      {
+       "id": "E37",
+       "name": "ram_rd_resp_user",
+       "kind": "port_in"
+      },
+      {
+       "id": "E16",
+       "name": "s_axi_rid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "s_axi_rlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "s_axi_ruser",
+       "kind": "port_out"
+      },
+      {
+       "id": "E21",
+       "name": "s_axi_rvalid",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axi_ar",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axi_arid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axi_araddr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axi_arlen",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_axi_arsize",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "s_axi_arburst",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_axi_arlock",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_axi_arcache",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "s_axi_arprot",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "s_axi_arqos",
+       "kind": "port_in"
+      },
+      {
+       "id": "E12",
+       "name": "s_axi_arregion",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "s_axi_aruser",
+       "kind": "port_in"
+      },
+      {
+       "id": "E14",
+       "name": "s_axi_arvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "s_axi_arready",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "s_axi_r",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20",
+      "E21",
+      "E22"
+     ],
+     "members": [
+      {
+       "id": "E16",
+       "name": "s_axi_rid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "s_axi_rdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "s_axi_rresp",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "s_axi_rlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "s_axi_ruser",
+       "kind": "port_out"
+      },
+      {
+       "id": "E21",
+       "name": "s_axi_rvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E22",
+       "name": "s_axi_rready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "ram_rd_cmd",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E23",
+      "E24",
+      "E25",
+      "E26",
+      "E27",
+      "E28",
+      "E29",
+      "E30",
+      "E31",
+      "E32",
+      "E33"
+     ],
+     "members": [
+      {
+       "id": "E23",
+       "name": "ram_rd_cmd_id",
+       "kind": "port_out"
+      },
+      {
+       "id": "E24",
+       "name": "ram_rd_cmd_addr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E25",
+       "name": "ram_rd_cmd_lock",
+       "kind": "port_out"
+      },
+      {
+       "id": "E26",
+       "name": "ram_rd_cmd_cache",
+       "kind": "port_out"
+      },
+      {
+       "id": "E27",
+       "name": "ram_rd_cmd_prot",
+       "kind": "port_out"
+      },
+      {
+       "id": "E28",
+       "name": "ram_rd_cmd_qos",
+       "kind": "port_out"
+      },
+      {
+       "id": "E29",
+       "name": "ram_rd_cmd_region",
+       "kind": "port_out"
+      },
+      {
+       "id": "E30",
+       "name": "ram_rd_cmd_auser",
+       "kind": "port_out"
+      },
+      {
+       "id": "E31",
+       "name": "ram_rd_cmd_en",
+       "kind": "port_out"
+      },
+      {
+       "id": "E32",
+       "name": "ram_rd_cmd_last",
+       "kind": "port_out"
+      },
+      {
+       "id": "E33",
+       "name": "ram_rd_cmd_ready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "ram_rd_resp",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E34",
+      "E35",
+      "E36",
+      "E37",
+      "E38",
+      "E39"
+     ],
+     "members": [
+      {
+       "id": "E34",
+       "name": "ram_rd_resp_id",
+       "kind": "port_in"
+      },
+      {
+       "id": "E35",
+       "name": "ram_rd_resp_data",
+       "kind": "port_in"
+      },
+      {
+       "id": "E36",
+       "name": "ram_rd_resp_last",
+       "kind": "port_in"
+      },
+      {
+       "id": "E37",
+       "name": "ram_rd_resp_user",
+       "kind": "port_in"
+      },
+      {
+       "id": "E38",
+       "name": "ram_rd_resp_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E39",
+       "name": "ram_rd_resp_ready",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

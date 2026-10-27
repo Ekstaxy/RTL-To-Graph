@@ -1,0 +1,41 @@
+{
+  "module_summary": "AXI-Stream FIFO: packs sideband fields into a word written to a memory via MSB-wrapped pointers, read through a skid output pipeline; optional frame-mode drop logic.",
+  "anchors": [
+    {"id": "E27", "name": "mem", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "FIFO memory of packed AXIS words, written at wr_ptr, read at rd_ptr.", "lines": [156, 214, 276]},
+    {"id": "E3", "name": "s_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Input stream data packed into FIFO word.", "lines": [84, 181]},
+    {"id": "E5", "name": "s_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Input valid; with tready triggers memory write.", "lines": [86, 210]},
+    {"id": "E6", "name": "s_axis_tready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Input ready derived from full (or frame-mode flags).", "lines": [87, 178, 210]},
+    {"id": "E11", "name": "m_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Output data from last output pipeline stage.", "lines": [96, 191]},
+    {"id": "E13", "name": "m_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Output valid from last valid pipeline bit.", "lines": [98, 189]},
+    {"id": "E14", "name": "m_axis_tready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Output ready advances the output pipeline and memory read.", "lines": [99, 259, 273]},
+    {"id": "E24", "name": "wr_ptr_reg", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "Committed write pointer; addresses mem writes, compared for full/empty.", "lines": [152, 214, 215]},
+    {"id": "E26", "name": "rd_ptr_reg", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "Read pointer addressing mem, incremented when not empty.", "lines": [154, 276, 280]},
+    {"id": "E31", "name": "m_axis_pipe_reg", "role": "PIPELINE_REG", "importance": "major", "trace": "data_backward", "why": "Output pipeline stages carrying words from mem to m_axis.", "lines": [162, 268, 276]},
+    {"id": "E33", "name": "full", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Pointer-compare full flag deasserting s_axis_tready.", "lines": [166, 178, 201]},
+    {"id": "E35", "name": "empty", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Pointer-equal empty flag gating reads and rd_ptr increment.", "lines": [169, 277, 202]},
+    {"id": "E32", "name": "m_axis_tvalid_pipe_reg", "role": "PIPELINE_REG", "importance": "minor", "trace": "control_backward", "why": "Per-stage valid bits of output pipeline, bubble collapse.", "lines": [163, 267, 279]},
+    {"id": "E30", "name": "s_axis", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Packed input word {user,last,data} written to mem.", "lines": [160, 181, 214]},
+    {"id": "E7", "name": "s_axis_tlast", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Frame end marker packed into word; ends frames in frame mode.", "lines": [88, 183, 220]},
+    {"id": "E10", "name": "s_axis_tuser", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "User sideband packed into word; bad-frame marker.", "lines": [91, 186, 231]},
+    {"id": "E25", "name": "wr_ptr_cur_reg", "role": "FIFO_PTR", "importance": "minor", "trace": "control_backward", "why": "Frame-mode speculative write pointer (FRAME_FIFO disabled).", "lines": [153, 227, 228]},
+    {"id": "E34", "name": "full_cur", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Frame-mode full check against speculative pointer.", "lines": [167, 216]},
+    {"id": "E36", "name": "full_wr", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Frame larger than FIFO overflow condition.", "lines": [171, 216]},
+    {"id": "E37", "name": "drop_frame_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Dropping current frame flag in frame mode.", "lines": [173, 216, 219]},
+    {"id": "E38", "name": "overflow_reg", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Pulse on dropped frame, drives status_overflow.", "lines": [174, 198, 224]},
+    {"id": "E39", "name": "bad_frame_reg", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Pulse on bad frame discarded, drives status_bad_frame.", "lines": [175, 199, 234]},
+    {"id": "E40", "name": "good_frame_reg", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Pulse on good frame committed, drives status_good_frame.", "lines": [176, 200, 238]}
+  ],
+  "groups": [
+    {"name": "Write side", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E3", "E5", "E6", "E30", "E24", "E7", "E10"], "member_ids": ["E4", "E8", "E9"], "description": "Packs AXIS input fields, writes mem at write pointer when ready and valid."},
+    {"name": "FIFO memory", "kind": "MEMORY", "anchor_ids": ["E27"], "member_ids": [], "description": "Packed word storage array."},
+    {"name": "Full/empty logic", "kind": "CONTROLLER", "anchor_ids": ["E33", "E35"], "member_ids": ["E22", "E23"], "description": "Pointer comparisons giving full and empty flags and status."},
+    {"name": "Output pipeline", "kind": "PIPELINE_STAGE", "anchor_ids": ["E26", "E31", "E32", "E11", "E13", "E14"], "member_ids": ["E12", "E15", "E16", "E17", "E18", "E28", "E29"], "description": "Reads mem at read pointer into bubble-collapsing output stages."},
+    {"name": "Frame drop control", "kind": "CONTROLLER", "anchor_ids": ["E25", "E34", "E36", "E37", "E38", "E39", "E40"], "member_ids": ["E19", "E20", "E21"], "description": "Frame-mode speculative pointer, drop and frame status pulses."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "s_axis", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10"]},
+    {"name": "m_axis", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E11", "E12", "E13", "E14", "E15", "E16", "E17", "E18"]},
+    {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E19", "E20", "E21", "E22", "E23"]}
+  ]
+}

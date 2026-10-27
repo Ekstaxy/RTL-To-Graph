@@ -1,0 +1,151 @@
+{
+  "module_summary": "UART transmitter with phase-based serialization; strobe timing from external pacer module.",
+  "anchors": [
+    {
+      "id": "E9",
+      "name": "phase_r",
+      "role": "FSM_STATE",
+      "importance": "critical",
+      "trace": "control_backward",
+      "why": "4-bit phase state machine: REST, LEAD, BODY, TAIL; controls entire transmission sequence.",
+      "lines": [70, 72, 82]
+    },
+    {
+      "id": "E3",
+      "name": "tx_valid",
+      "role": "HANDSHAKE_VALID",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Request to transmit; gates transition from REST to LEAD phase.",
+      "lines": [71, 74]
+    },
+    {
+      "id": "E4",
+      "name": "tx_ready",
+      "role": "HANDSHAKE_READY",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Ready output: asserted when in REST phase, derived from phase_r[0].",
+      "lines": [92]
+    },
+    {
+      "id": "E5",
+      "name": "tx_data",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "8-bit input data loaded into hold_reg when transitioning to LEAD.",
+      "lines": [73, 76]
+    },
+    {
+      "id": "E6",
+      "name": "tx_o",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Serial output bit derived from phase and hold_reg LSB via line_level function.",
+      "lines": [93]
+    },
+    {
+      "id": "E8",
+      "name": "hold_reg",
+      "role": "HOLDING_REG",
+      "importance": "major",
+      "trace": "data_backward",
+      "why": "8-bit data holding register; loaded with tx_data and right-shifted during BODY phase.",
+      "lines": [73, 80, 93]
+    },
+    {
+      "id": "E10",
+      "name": "nib",
+      "role": "COUNTER",
+      "importance": "major",
+      "trace": "data_backward",
+      "why": "3-bit nibble counter tracking shift progress; triggers phase transition when saturated.",
+      "lines": [81, 82, 85]
+    },
+    {
+      "id": "E11",
+      "name": "strobe",
+      "role": "ENABLE",
+      "importance": "major",
+      "trace": "forward",
+      "why": "Timing strobe from child pacer; gates phase transitions in LEAD, BODY, TAIL states.",
+      "lines": [77, 79, 82, 85]
+    },
+    {
+      "id": "E12",
+      "name": "at_rest",
+      "role": "CONTROL_FLAG",
+      "importance": "major",
+      "trace": "forward",
+      "why": "Phase decoder asserting REST state; parks pacer and drives busy status.",
+      "lines": [56, 64, 91]
+    },
+    {
+      "id": "E7",
+      "name": "busy_o",
+      "role": "STATUS",
+      "importance": "major",
+      "trace": "interface",
+      "why": "Status output: asserted when not at rest; inverse of at_rest.",
+      "lines": [91, 94]
+    }
+  ],
+  "groups": [
+    {
+      "name": "FSM Controller",
+      "kind": "CONTROLLER",
+      "anchor_ids": ["E9"],
+      "member_ids": [],
+      "description": "4-phase state machine controlling transmission sequence through LEAD, BODY, TAIL phases."
+    },
+    {
+      "name": "Data Path",
+      "kind": "PIPELINE_STAGE",
+      "anchor_ids": ["E8", "E10"],
+      "member_ids": [],
+      "description": "Holding register for transmission data and nibble counter tracking shift progress."
+    },
+    {
+      "name": "Timing Control",
+      "kind": "COUNTER_TIMER",
+      "anchor_ids": ["E11", "E12"],
+      "member_ids": ["I1"],
+      "description": "Pacer strobe and rest-state decoder gating phase transitions and child module behavior."
+    },
+    {
+      "name": "External Interface",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E3", "E4", "E5", "E6", "E7"],
+      "member_ids": [],
+      "description": "Handshake ports (tx_valid/tx_ready), data ports (tx_data/tx_o), and busy status output."
+    }
+  ],
+  "interfaces": [
+    {
+      "name": "TX Handshake",
+      "protocol": "VALID_READY",
+      "direction": "IN",
+      "member_ids": ["E3", "E4"]
+    },
+    {
+      "name": "TX Data",
+      "protocol": "STREAM",
+      "direction": "OUT",
+      "member_ids": ["E5", "E6"]
+    },
+    {
+      "name": "Status",
+      "protocol": "SIMPLE",
+      "direction": "OUT",
+      "member_ids": ["E7"]
+    },
+    {
+      "name": "Clock/Reset",
+      "protocol": "CLOCK_RESET",
+      "direction": "IN",
+      "member_ids": ["E1", "E2"]
+    }
+  ]
+}

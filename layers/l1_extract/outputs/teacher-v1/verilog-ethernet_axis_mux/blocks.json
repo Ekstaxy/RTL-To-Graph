@@ -1,0 +1,646 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-ethernet_axis_mux",
+ "tops": [
+  "axis_mux"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "axis_mux": {
+   "source": "teacher",
+   "canonical_instance": "axis_mux",
+   "file": "data/rtl/verilog-ethernet/lib/axis/rtl/axis_mux.v",
+   "lines": [
+    34,
+    265
+   ],
+   "summary": "AXI-stream N:1 frame multiplexer: at frame start latches the select input, passes the chosen input's beats through an indexed mux into a registered output stage with skid buffer, and releases at tlast.",
+   "blocks": [
+    {
+     "name": "Frame select control",
+     "kind": "CONTROLLER",
+     "description": "Latches select at frame start, holds until tlast, drives per-input ready",
+     "anchors": [
+      {
+       "id": "E21",
+       "name": "select_reg",
+       "role": "MUX_SELECT",
+       "importance": "critical",
+       "score": 91.6,
+       "struct_score": 78.9,
+       "trace": "control_backward",
+       "why": "latched input index steering all current_s_* mux slices",
+       "lines": [
+        94,
+        113,
+        155
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "frame_reg",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 94.9,
+       "struct_score": 87.2,
+       "trace": "control_backward",
+       "why": "in-frame lock; blocks reselect until tlast, gates output valid",
+       "lines": [
+        95,
+        135,
+        147
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "select",
+       "role": "COMMAND",
+       "importance": "major",
+       "score": 47.4,
+       "struct_score": 22.1,
+       "trace": "interface",
+       "why": "requested input port, captured into select_reg at frame start",
+       "lines": [
+        89,
+        135,
+        138
+       ]
+      },
+      {
+       "id": "E19",
+       "name": "enable",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 47.8,
+       "struct_score": 23.6,
+       "trace": "interface",
+       "why": "permits starting a new frame selection",
+       "lines": [
+        88,
+        135
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 88.6,
+       "struct_score": 71.1,
+       "trace": "control_backward",
+       "why": "ready asserted only on selected input from s_axis_tready_reg",
+       "lines": [
+        67,
+        110
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E22",
+       "name": "select_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E24",
+       "name": "frame_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E25",
+       "name": "s_axis_tready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E26",
+       "name": "s_axis_tready_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Input mux",
+     "kind": "DATAPATH",
+     "description": "Indexed slices of concatenated inputs by select_reg",
+     "anchors": [
+      {
+       "id": "E36",
+       "name": "current_s_tdata",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 16.6,
+       "struct_score": 10.4,
+       "trace": "data_backward",
+       "why": "mux output: selected input data slice",
+       "lines": [
+        113,
+        145
+       ]
+      },
+      {
+       "id": "E29",
+       "name": "m_axis_tvalid_int",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 23.3,
+       "struct_score": 37.8,
+       "trace": "control_backward",
+       "why": "internal valid of selected beat into output stage",
+       "lines": [
+        102,
+        147,
+        212
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 90.1,
+       "struct_score": 75.1,
+       "trace": "interface",
+       "why": "per-input valid; selected bit drives current_s_tvalid",
+       "lines": [
+        66,
+        115,
+        135
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "s_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 89.6,
+       "struct_score": 73.8,
+       "trace": "interface",
+       "why": "concatenated input data sliced by select_reg",
+       "lines": [
+        64,
+        113
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E27",
+       "name": "m_axis_tdata_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E28",
+       "name": "m_axis_tkeep_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E31",
+       "name": "m_axis_tlast_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E32",
+       "name": "m_axis_tid_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E33",
+       "name": "m_axis_tdest_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E34",
+       "name": "m_axis_tuser_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E37",
+       "name": "current_s_tkeep",
+       "kind": "wire"
+      },
+      {
+       "id": "E38",
+       "name": "current_s_tvalid",
+       "kind": "wire"
+      },
+      {
+       "id": "E39",
+       "name": "current_s_tready",
+       "kind": "wire"
+      },
+      {
+       "id": "E40",
+       "name": "current_s_tlast",
+       "kind": "wire"
+      },
+      {
+       "id": "E41",
+       "name": "current_s_tid",
+       "kind": "wire"
+      },
+      {
+       "id": "E42",
+       "name": "current_s_tdest",
+       "kind": "wire"
+      },
+      {
+       "id": "E43",
+       "name": "current_s_tuser",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Output register stage",
+     "kind": "PIPELINE_STAGE",
+     "description": "Registered AXI-stream output with internal ready",
+     "anchors": [
+      {
+       "id": "E11",
+       "name": "m_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 86.4,
+       "struct_score": 63.8,
+       "trace": "data_backward",
+       "why": "output data from m_axis_tdata_reg",
+       "lines": [
+        76,
+        188
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "m_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 86.1,
+       "struct_score": 62.7,
+       "trace": "control_backward",
+       "why": "output valid from output register stage",
+       "lines": [
+        78,
+        190
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "m_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 86.7,
+       "struct_score": 64.9,
+       "trace": "interface",
+       "why": "output ready; drives skid transfers and internal ready",
+       "lines": [
+        79,
+        197,
+        210
+       ]
+      },
+      {
+       "id": "E30",
+       "name": "m_axis_tready_int_reg",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 23.2,
+       "struct_score": 37.3,
+       "trace": "control_backward",
+       "why": "internal registered ready from output stage to mux",
+       "lines": [
+        103,
+        208,
+        229
+       ]
+      },
+      {
+       "id": "E60",
+       "name": "store_axis_int_to_output",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 17.1,
+       "struct_score": 12.7,
+       "trace": "control_backward",
+       "why": "loads mux output into output registers",
+       "lines": [
+        184,
+        213,
+        233
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E35",
+       "name": "m_axis_tready_int_early",
+       "kind": "wire"
+      },
+      {
+       "id": "E44",
+       "name": "m_axis_tdata_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E45",
+       "name": "m_axis_tkeep_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E46",
+       "name": "m_axis_tvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E47",
+       "name": "m_axis_tvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E48",
+       "name": "m_axis_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E49",
+       "name": "m_axis_tid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E50",
+       "name": "m_axis_tdest_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E51",
+       "name": "m_axis_tuser_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Skid buffer",
+     "kind": "BUFFER",
+     "description": "Temp registers absorb a beat when output stalls",
+     "anchors": [
+      {
+       "id": "E52",
+       "name": "temp_m_axis_tdata_reg",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 52.7,
+       "struct_score": 43.0,
+       "trace": "data_backward",
+       "why": "skid register holding beat while output stalls",
+       "lines": [
+        175,
+        241,
+        250
+       ]
+      },
+      {
+       "id": "E54",
+       "name": "temp_m_axis_tvalid_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 48.1,
+       "struct_score": 24.7,
+       "trace": "control_backward",
+       "why": "skid occupied; gates internal ready and temp-to-output move",
+       "lines": [
+        177,
+        197,
+        221
+       ]
+      },
+      {
+       "id": "E61",
+       "name": "store_axis_int_to_temp",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 17.1,
+       "struct_score": 12.7,
+       "trace": "control_backward",
+       "why": "loads mux output into skid registers",
+       "lines": [
+        185,
+        217,
+        249
+       ]
+      },
+      {
+       "id": "E62",
+       "name": "store_axis_temp_to_output",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 17.0,
+       "struct_score": 12.0,
+       "trace": "control_backward",
+       "why": "moves skid contents to output registers",
+       "lines": [
+        186,
+        223,
+        240
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E53",
+       "name": "temp_m_axis_tkeep_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E55",
+       "name": "temp_m_axis_tvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E56",
+       "name": "temp_m_axis_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E57",
+       "name": "temp_m_axis_tid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E58",
+       "name": "temp_m_axis_tdest_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E59",
+       "name": "temp_m_axis_tuser_reg",
+       "kind": "reg"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock/reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "AXI-stream inputs",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axis_tdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_tkeep",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_tvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_tready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_axis_tid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_axis_tdest",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "s_axis_tuser",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "AXI-stream output",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "m_axis_tdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "m_axis_tkeep",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "m_axis_tvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "m_axis_tready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "m_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "m_axis_tid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "m_axis_tdest",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "m_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "control",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E19",
+      "E20"
+     ],
+     "members": [
+      {
+       "id": "E19",
+       "name": "enable",
+       "kind": "port_in"
+      },
+      {
+       "id": "E20",
+       "name": "select",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

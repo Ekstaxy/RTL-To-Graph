@@ -1,0 +1,26 @@
+{
+ "module_summary": "AXI-stream broadcaster: one input beat is registered in an output stage replicated to M_COUNT outputs, with a skid (temp) register and registered ready so input waits until all outputs accept.",
+ "anchors": [
+  {"id": "E5", "name": "s_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "input beat valid, copied into per-output valid vector", "lines": [68, 140, 144]},
+  {"id": "E6", "name": "s_axis_tready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "registered input ready from s_axis_tready_reg", "lines": [69, 114]},
+  {"id": "E3", "name": "s_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "input payload stored to output or temp register", "lines": [66, 162, 178]},
+  {"id": "E13", "name": "m_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "per-output valid vector, cleared per output as each accepts", "lines": [80, 118, 138]},
+  {"id": "E14", "name": "m_axis_tready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "per-output ready; all must accept before next beat", "lines": [81, 129, 138]},
+  {"id": "E11", "name": "m_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "output data register replicated to all outputs", "lines": [78, 116]},
+  {"id": "E29", "name": "temp_m_axis_tdata_reg", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "skid register holding input beat while outputs stall", "lines": [101, 169, 178]},
+  {"id": "E31", "name": "temp_m_axis_tvalid_reg", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "skid register occupied; gates ready_early and temp-to-output transfer", "lines": [103, 125, 149]},
+  {"id": "E37", "name": "store_axis_input_to_output", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "loads input beat into output registers", "lines": [110, 141, 161]},
+  {"id": "E38", "name": "store_axis_input_to_temp", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "loads input beat into skid registers", "lines": [111, 145, 177]},
+  {"id": "E39", "name": "store_axis_temp_to_output", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "moves skid register contents to output registers", "lines": [112, 151, 168]}
+ ],
+ "groups": [
+  {"name": "Output register stage", "kind": "PIPELINE_STAGE", "anchor_ids": ["E11", "E13", "E37"], "member_ids": ["E21", "E22", "E23", "E24", "E25", "E26", "E27", "E28", "E12", "E15", "E16", "E17", "E18"], "description": "Output registers broadcast to all M_COUNT ports with per-port valid"},
+  {"name": "Skid buffer", "kind": "BUFFER", "anchor_ids": ["E29", "E31", "E38", "E39"], "member_ids": ["E30", "E32", "E33", "E34", "E35", "E36"], "description": "Temp registers capture input when outputs not ready"},
+  {"name": "Input ready control", "kind": "CONTROLLER", "anchor_ids": ["E6", "E5", "E14"], "member_ids": ["E19", "E20", "E40"], "description": "Registered ready computed from output acceptance and skid occupancy"}
+ ],
+ "interfaces": [
+  {"name": "clock/reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "AXI-stream input", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10"]},
+  {"name": "AXI-stream outputs", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E11", "E12", "E13", "E14", "E15", "E16", "E17", "E18"]}
+ ]
+}

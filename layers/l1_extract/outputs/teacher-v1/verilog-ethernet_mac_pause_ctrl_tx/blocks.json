@@ -1,0 +1,916 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-ethernet_mac_pause_ctrl_tx",
+ "tops": [
+  "mac_pause_ctrl_tx"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "mac_pause_ctrl_tx": {
+   "source": "teacher",
+   "canonical_instance": "mac_pause_ctrl_tx",
+   "file": "data/rtl/verilog-ethernet/rtl/mac_pause_ctrl_tx.v",
+   "lines": [
+    34,
+    311
+   ],
+   "summary": "Ethernet pause-frame TX controller: tracks LFC/PFC pause requests with send flags and quanta refresh down-counters, then muxes config fields into a valid/ready MAC control frame.",
+   "blocks": [
+    {
+     "name": "LFC request tracker",
+     "kind": "CONTROLLER",
+     "description": "Tracks link pause requests and pending send for XON/XOFF frames",
+     "anchors": [
+      {
+       "id": "E10",
+       "name": "tx_lfc_req",
+       "role": "COMMAND",
+       "importance": "critical",
+       "score": 74.7,
+       "struct_score": 19.2,
+       "trace": "interface",
+       "why": "Link-level pause request; change triggers XON/XOFF frame",
+       "lines": [
+        57,
+        218,
+        219
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "tx_lfc_resend",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 17.5,
+       "struct_score": 14.3,
+       "trace": "interface",
+       "why": "Forces LFC frame resend",
+       "lines": [
+        58,
+        172
+       ]
+      },
+      {
+       "id": "E38",
+       "name": "lfc_req_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 48.0,
+       "struct_score": 24.6,
+       "trace": "control_backward",
+       "why": "Current LFC pause state; selects quanta, refresh reload and paused status",
+       "lines": [
+        109,
+        132,
+        228
+       ]
+      },
+      {
+       "id": "E42",
+       "name": "lfc_send_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 48.3,
+       "struct_score": 25.8,
+       "trace": "control_backward",
+       "why": "Pending LFC frame transmission flag",
+       "lines": [
+        111,
+        224,
+        229
+       ]
+      },
+      {
+       "id": "E40",
+       "name": "lfc_act_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 20.4,
+       "struct_score": 26.1,
+       "trace": "control_backward",
+       "why": "LFC active flag gating frame valid and stats",
+       "lines": [
+        110,
+        226,
+        231
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "cfg_tx_lfc_en",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 22.8,
+       "struct_score": 35.9,
+       "trace": "interface",
+       "why": "Enables LFC request handling",
+       "lines": [
+        73,
+        216
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E39",
+       "name": "lfc_req_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E41",
+       "name": "lfc_act_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E43",
+       "name": "lfc_send_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "PFC request tracker",
+     "kind": "CONTROLLER",
+     "description": "Tracks per-priority pause requests and pending PFC send",
+     "anchors": [
+      {
+       "id": "E12",
+       "name": "tx_pfc_req",
+       "role": "COMMAND",
+       "importance": "critical",
+       "score": 77.7,
+       "struct_score": 31.4,
+       "trace": "interface",
+       "why": "Per-priority pause request vector; change triggers PFC frame",
+       "lines": [
+        63,
+        240,
+        241
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "tx_pfc_resend",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 17.5,
+       "struct_score": 14.3,
+       "trace": "interface",
+       "why": "Forces PFC frame resend",
+       "lines": [
+        64,
+        176
+       ]
+      },
+      {
+       "id": "E44",
+       "name": "pfc_req_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 51.1,
+       "struct_score": 37.1,
+       "trace": "control_backward",
+       "why": "Per-priority pause state selecting PFC quanta fields",
+       "lines": [
+        112,
+        136,
+        207
+       ]
+      },
+      {
+       "id": "E50",
+       "name": "pfc_send_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 50.7,
+       "struct_score": 35.4,
+       "trace": "control_backward",
+       "why": "Pending PFC frame flag, prioritized over LFC",
+       "lines": [
+        115,
+        224,
+        246
+       ]
+      },
+      {
+       "id": "E46",
+       "name": "pfc_act_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 24.1,
+       "struct_score": 41.0,
+       "trace": "control_backward",
+       "why": "Active priorities to include in next PFC frame",
+       "lines": [
+        113,
+        248,
+        249
+       ]
+      },
+      {
+       "id": "E48",
+       "name": "pfc_en_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 18.5,
+       "struct_score": 18.4,
+       "trace": "data_backward",
+       "why": "Priority enable vector placed in PFC parameters",
+       "lines": [
+        114,
+        135,
+        249
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "cfg_tx_pfc_en",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 25.3,
+       "struct_score": 45.3,
+       "trace": "interface",
+       "why": "Enables PFC request handling and priority over LFC",
+       "lines": [
+        80,
+        224,
+        238
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E45",
+       "name": "pfc_req_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E47",
+       "name": "pfc_act_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E49",
+       "name": "pfc_en_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E51",
+       "name": "pfc_send_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Refresh timers",
+     "kind": "COUNTER_TIMER",
+     "description": "Quanta down-counters re-arming pause frame transmission",
+     "anchors": [
+      {
+       "id": "E52",
+       "name": "lfc_refresh_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 53.6,
+       "struct_score": 46.4,
+       "trace": "control_backward",
+       "why": "LFC refresh down-counter; expiry re-sends pause frame",
+       "lines": [
+        117,
+        189,
+        190
+       ]
+      },
+      {
+       "id": "E54",
+       "name": "pfc_refresh_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 59.2,
+       "struct_score": 66.6,
+       "trace": "control_backward",
+       "why": "Per-priority PFC refresh down-counters triggering resend",
+       "lines": [
+        118,
+        203,
+        204
+       ]
+      },
+      {
+       "id": "E29",
+       "name": "cfg_quanta_clk_en",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 20.4,
+       "struct_score": 26.2,
+       "trace": "interface",
+       "why": "Quanta tick enabling refresh counter decrement",
+       "lines": [
+        84,
+        188,
+        202
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E53",
+       "name": "lfc_refresh_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E55",
+       "name": "pfc_refresh_next",
+       "kind": "mem"
+      },
+      {
+       "id": "E28",
+       "name": "cfg_quanta_step",
+       "kind": "port_in"
+      },
+      {
+       "id": "E20",
+       "name": "cfg_tx_lfc_refresh",
+       "kind": "port_in"
+      },
+      {
+       "id": "E27",
+       "name": "cfg_tx_pfc_refresh",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Control frame output",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Selects LFC/PFC headers and params, drives valid/ready frame request",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "mcf_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 85.1,
+       "struct_score": 58.9,
+       "trace": "control_backward",
+       "why": "Control frame request valid, held until mcf_ready",
+       "lines": [
+        46,
+        145
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "mcf_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 78.6,
+       "struct_score": 34.8,
+       "trace": "interface",
+       "why": "Downstream acceptance clearing mcf_valid_reg",
+       "lines": [
+        47,
+        179
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "mcf_params",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 95.2,
+       "struct_score": 87.8,
+       "trace": "data_backward",
+       "why": "Pause quanta parameters selected between LFC and PFC formats",
+       "lines": [
+        52,
+        150
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "mcf_eth_dst",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 36.0,
+       "struct_score": 79.7,
+       "trace": "data_backward",
+       "why": "Frame destination MAC muxed from LFC/PFC config",
+       "lines": [
+        48,
+        146
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "mcf_opcode",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 32.8,
+       "struct_score": 71.6,
+       "trace": "data_backward",
+       "why": "Control opcode muxed from LFC/PFC config",
+       "lines": [
+        51,
+        149
+       ]
+      },
+      {
+       "id": "E68",
+       "name": "mcf_pfc_sel_reg",
+       "role": "MUX_SELECT",
+       "importance": "major",
+       "score": 50.8,
+       "struct_score": 36.0,
+       "trace": "control_backward",
+       "why": "Selects PFC vs LFC header fields and params for frame",
+       "lines": [
+        128,
+        146,
+        150
+       ]
+      },
+      {
+       "id": "E73",
+       "name": "mcf_pfc_params",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 20.8,
+       "struct_score": 27.5,
+       "trace": "data_backward",
+       "why": "Assembled PFC parameter field with per-priority quanta",
+       "lines": [
+        134,
+        136,
+        150
+       ]
+      },
+      {
+       "id": "E72",
+       "name": "mcf_lfc_params",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 16.9,
+       "struct_score": 11.6,
+       "trace": "data_backward",
+       "why": "Assembled LFC quanta parameter",
+       "lines": [
+        131,
+        132,
+        150
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E70",
+       "name": "mcf_valid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E71",
+       "name": "mcf_valid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E69",
+       "name": "mcf_pfc_sel_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E6",
+       "name": "mcf_eth_src",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "mcf_eth_type",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "Statistics",
+     "kind": "OTHER",
+     "description": "Registered pulses for frames sent, XON/XOFF and paused state",
+     "anchors": [
+      {
+       "id": "E33",
+       "name": "stat_tx_lfc_paused",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 17.2,
+       "struct_score": 13.1,
+       "trace": "control_backward",
+       "why": "Reports current LFC pause state",
+       "lines": [
+        92,
+        155
+       ]
+      },
+      {
+       "id": "E30",
+       "name": "stat_tx_lfc_pkt",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 17.2,
+       "struct_score": 13.1,
+       "trace": "control_backward",
+       "why": "Pulse when an LFC frame is issued",
+       "lines": [
+        89,
+        152
+       ]
+      },
+      {
+       "id": "E34",
+       "name": "stat_tx_pfc_pkt",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 17.2,
+       "struct_score": 13.1,
+       "trace": "control_backward",
+       "why": "Pulse when a PFC frame is issued",
+       "lines": [
+        93,
+        156
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E31",
+       "name": "stat_tx_lfc_xon",
+       "kind": "port_out"
+      },
+      {
+       "id": "E32",
+       "name": "stat_tx_lfc_xoff",
+       "kind": "port_out"
+      },
+      {
+       "id": "E35",
+       "name": "stat_tx_pfc_xon",
+       "kind": "port_out"
+      },
+      {
+       "id": "E36",
+       "name": "stat_tx_pfc_xoff",
+       "kind": "port_out"
+      },
+      {
+       "id": "E37",
+       "name": "stat_tx_pfc_paused",
+       "kind": "port_out"
+      },
+      {
+       "id": "E56",
+       "name": "stat_tx_lfc_pkt_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E57",
+       "name": "stat_tx_lfc_pkt_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E58",
+       "name": "stat_tx_lfc_xon_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E59",
+       "name": "stat_tx_lfc_xon_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E60",
+       "name": "stat_tx_lfc_xoff_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E61",
+       "name": "stat_tx_lfc_xoff_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E62",
+       "name": "stat_tx_pfc_pkt_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E63",
+       "name": "stat_tx_pfc_pkt_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E64",
+       "name": "stat_tx_pfc_xon_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E65",
+       "name": "stat_tx_pfc_xon_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E66",
+       "name": "stat_tx_pfc_xoff_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E67",
+       "name": "stat_tx_pfc_xoff_next",
+       "kind": "comb"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "mac_control_frame",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "mcf_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E4",
+       "name": "mcf_ready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "mcf_eth_dst",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "mcf_eth_src",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "mcf_eth_type",
+       "kind": "port_out"
+      },
+      {
+       "id": "E8",
+       "name": "mcf_opcode",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "mcf_params",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "lfc_request",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E10",
+      "E11"
+     ],
+     "members": [
+      {
+       "id": "E10",
+       "name": "tx_lfc_req",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "tx_lfc_resend",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "pfc_request",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E12",
+      "E13"
+     ],
+     "members": [
+      {
+       "id": "E12",
+       "name": "tx_pfc_req",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "tx_pfc_resend",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "configuration",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20",
+      "E21",
+      "E22",
+      "E23",
+      "E24",
+      "E25",
+      "E26",
+      "E27",
+      "E28",
+      "E29"
+     ],
+     "members": [
+      {
+       "id": "E14",
+       "name": "cfg_tx_lfc_eth_dst",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "cfg_tx_lfc_eth_src",
+       "kind": "port_in"
+      },
+      {
+       "id": "E16",
+       "name": "cfg_tx_lfc_eth_type",
+       "kind": "port_in"
+      },
+      {
+       "id": "E17",
+       "name": "cfg_tx_lfc_opcode",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "cfg_tx_lfc_en",
+       "kind": "port_in"
+      },
+      {
+       "id": "E19",
+       "name": "cfg_tx_lfc_quanta",
+       "kind": "port_in"
+      },
+      {
+       "id": "E20",
+       "name": "cfg_tx_lfc_refresh",
+       "kind": "port_in"
+      },
+      {
+       "id": "E21",
+       "name": "cfg_tx_pfc_eth_dst",
+       "kind": "port_in"
+      },
+      {
+       "id": "E22",
+       "name": "cfg_tx_pfc_eth_src",
+       "kind": "port_in"
+      },
+      {
+       "id": "E23",
+       "name": "cfg_tx_pfc_eth_type",
+       "kind": "port_in"
+      },
+      {
+       "id": "E24",
+       "name": "cfg_tx_pfc_opcode",
+       "kind": "port_in"
+      },
+      {
+       "id": "E25",
+       "name": "cfg_tx_pfc_en",
+       "kind": "port_in"
+      },
+      {
+       "id": "E26",
+       "name": "cfg_tx_pfc_quanta",
+       "kind": "port_in"
+      },
+      {
+       "id": "E27",
+       "name": "cfg_tx_pfc_refresh",
+       "kind": "port_in"
+      },
+      {
+       "id": "E28",
+       "name": "cfg_quanta_step",
+       "kind": "port_in"
+      },
+      {
+       "id": "E29",
+       "name": "cfg_quanta_clk_en",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E30",
+      "E31",
+      "E32",
+      "E33",
+      "E34",
+      "E35",
+      "E36",
+      "E37"
+     ],
+     "members": [
+      {
+       "id": "E30",
+       "name": "stat_tx_lfc_pkt",
+       "kind": "port_out"
+      },
+      {
+       "id": "E31",
+       "name": "stat_tx_lfc_xon",
+       "kind": "port_out"
+      },
+      {
+       "id": "E32",
+       "name": "stat_tx_lfc_xoff",
+       "kind": "port_out"
+      },
+      {
+       "id": "E33",
+       "name": "stat_tx_lfc_paused",
+       "kind": "port_out"
+      },
+      {
+       "id": "E34",
+       "name": "stat_tx_pfc_pkt",
+       "kind": "port_out"
+      },
+      {
+       "id": "E35",
+       "name": "stat_tx_pfc_xon",
+       "kind": "port_out"
+      },
+      {
+       "id": "E36",
+       "name": "stat_tx_pfc_xoff",
+       "kind": "port_out"
+      },
+      {
+       "id": "E37",
+       "name": "stat_tx_pfc_paused",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

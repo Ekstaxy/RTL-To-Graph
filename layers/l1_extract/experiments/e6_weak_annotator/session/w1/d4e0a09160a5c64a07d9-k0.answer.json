@@ -1,0 +1,107 @@
+{
+  "module_summary": "Sequence detector using child state machine (sd_route) advancing through states on input bits, detecting completion when reaching MATCH state (111).",
+  "anchors": [
+    {
+      "id": "E5",
+      "name": "ph_r",
+      "role": "FSM_STATE",
+      "importance": "critical",
+      "trace": "control_backward",
+      "why": "Phase/state register tracking position in sequence; updated by child sd_route logic",
+      "lines": [36, 43, 44, 48]
+    },
+    {
+      "id": "E3",
+      "name": "data_in",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Serial input bit driving state machine transitions via sd_route child",
+      "lines": [29, 37, 42]
+    },
+    {
+      "id": "E4",
+      "name": "sequence_detected",
+      "role": "HANDSHAKE_VALID",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Output detection pulse when sequence complete (ph_r == Q_MATCH)",
+      "lines": [30, 47, 52]
+    },
+    {
+      "id": "E6",
+      "name": "ph_d",
+      "role": "DATAPATH_MAJOR",
+      "importance": "major",
+      "trace": "data_backward",
+      "why": "Next state output from sd_route child; feeds back into ph_r on clock",
+      "lines": [37, 39, 44, 49]
+    },
+    {
+      "id": "E7",
+      "name": "eq_w",
+      "role": "CONTROL_FLAG",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Sequence match detection (XNOR reduction of ph_r vs Q_MATCH); drives output",
+      "lines": [38, 46, 51, 52]
+    }
+  ],
+  "groups": [
+    {
+      "name": "State_Machine",
+      "kind": "CONTROLLER",
+      "anchor_ids": ["E5"],
+      "member_ids": ["I1"],
+      "description": "FSM state register with child state routing module"
+    },
+    {
+      "name": "Input_Interface",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E3"],
+      "member_ids": [],
+      "description": "Serial input bit stream"
+    },
+    {
+      "name": "Match_Detection",
+      "kind": "DECODER",
+      "anchor_ids": ["E7"],
+      "member_ids": [],
+      "description": "Sequence match comparator detecting target state"
+    },
+    {
+      "name": "Output_Interface",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E4"],
+      "member_ids": [],
+      "description": "Sequence detection output pulse"
+    },
+    {
+      "name": "State_Transition",
+      "kind": "DATAPATH",
+      "anchor_ids": ["E6"],
+      "member_ids": [],
+      "description": "Next state from routing logic"
+    }
+  ],
+  "interfaces": [
+    {
+      "name": "Clock_Reset",
+      "protocol": "CLOCK_RESET",
+      "direction": "IN",
+      "member_ids": ["E1", "E2"]
+    },
+    {
+      "name": "Data_Input",
+      "protocol": "STREAM",
+      "direction": "IN",
+      "member_ids": ["E3"]
+    },
+    {
+      "name": "Detection_Output",
+      "protocol": "SIMPLE",
+      "direction": "OUT",
+      "member_ids": ["E4"]
+    }
+  ]
+}

@@ -1,0 +1,737 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "wb2axip_wbm2axilite",
+ "tops": [
+  "wbm2axilite"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "wbm2axilite": {
+   "source": "teacher",
+   "canonical_instance": "wbm2axilite",
+   "file": "data/rtl/wb2axip/rtl/wbm2axilite.v",
+   "lines": [
+    37,
+    681
+   ],
+   "summary": "Wishbone-to-AXI-Lite bridge that registers each accepted WB request onto AW/W or AR channels, counts outstanding transactions for stall/ack, and tracks bus errors and post-reset settling.",
+   "blocks": [
+    {
+     "name": "WB request acceptance",
+     "kind": "CONTROLLER",
+     "description": "Stall logic deciding when WB requests are accepted and routed to read or write",
+     "anchors": [
+      {
+       "id": "E9",
+       "name": "o_wb_stall",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 97.7,
+       "struct_score": 94.1,
+       "trace": "control_backward",
+       "why": "WB stall combining full, direction change, error, reset and AXI backpressure; gates request acceptance",
+       "lines": [
+        135,
+        193
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "i_wb_stb",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 93.2,
+       "struct_score": 82.8,
+       "trace": "interface",
+       "why": "WB request strobe; with !stall launches AXI read or write requests",
+       "lines": [
+        193,
+        210
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "i_wb_we",
+       "role": "COMMAND",
+       "importance": "major",
+       "score": 53.4,
+       "struct_score": 45.7,
+       "trace": "interface",
+       "why": "WB write-enable selects AXI write channels versus read channel",
+       "lines": [
+        194,
+        210,
+        238
+       ]
+      },
+      {
+       "id": "E35",
+       "name": "wb_we",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 19.0,
+       "struct_score": 20.5,
+       "trace": "data_backward",
+       "why": "Direction of last accepted request; stalls on read/write switch while pending",
+       "lines": [
+        136,
+        194
+       ]
+      },
+      {
+       "id": "E32",
+       "name": "full_fifo",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 22.5,
+       "struct_score": 34.5,
+       "trace": "control_backward",
+       "why": "Outstanding-count full flag that stalls new WB requests",
+       "lines": [
+        135,
+        186
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E3",
+       "name": "i_wb_cyc",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "AXI request channels",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Registered AW, W and AR valid/payload signals held until AXI ready",
+     "anchors": [
+      {
+       "id": "E13",
+       "name": "o_axi_awvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 97.5,
+       "struct_score": 93.7,
+       "trace": "control_backward",
+       "why": "AXI write-address valid, set on accepted WB write, held until awready",
+       "lines": [
+        210,
+        211
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "o_axi_wvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 69.5,
+       "struct_score": 93.7,
+       "trace": "control_backward",
+       "why": "AXI write-data valid, set on accepted WB write, held until wready",
+       "lines": [
+        274,
+        275
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "o_axi_arvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 97.5,
+       "struct_score": 93.7,
+       "trace": "control_backward",
+       "why": "AXI read-address valid, set on accepted WB read, held until arready",
+       "lines": [
+        238,
+        239
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "o_axi_awaddr",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 64.9,
+       "struct_score": 82.1,
+       "trace": "data_backward",
+       "why": "AXI write address latched from WB word address when not stalled",
+       "lines": [
+        219
+       ]
+      },
+      {
+       "id": "E26",
+       "name": "o_axi_araddr",
+       "role": "INTERFACE_ADDR",
+       "importance": "minor",
+       "score": 36.9,
+       "struct_score": 82.1,
+       "trace": "data_backward",
+       "why": "AXI read address latched from WB word address when not stalled",
+       "lines": [
+        246
+       ]
+      },
+      {
+       "id": "E19",
+       "name": "o_axi_wdata",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 68.9,
+       "struct_score": 92.3,
+       "trace": "data_backward",
+       "why": "AXI write data registered from WB write data",
+       "lines": [
+        262
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "o_axi_wstrb",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 37.4,
+       "struct_score": 83.3,
+       "trace": "data_backward",
+       "why": "AXI write strobes registered from WB byte selects",
+       "lines": [
+        263
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "i_wb_addr",
+       "role": "INTERFACE_ADDR",
+       "importance": "minor",
+       "score": 32.6,
+       "struct_score": 71.3,
+       "trace": "interface",
+       "why": "WB word address shifted into AXI byte addresses",
+       "lines": [
+        219,
+        246
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "i_wb_data",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 36.1,
+       "struct_score": 80.0,
+       "trace": "interface",
+       "why": "WB write data captured into AXI write data register",
+       "lines": [
+        262
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E14",
+       "name": "i_axi_awready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "i_axi_wready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E25",
+       "name": "i_axi_arready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E16",
+       "name": "o_axi_awprot",
+       "kind": "port_out"
+      },
+      {
+       "id": "E27",
+       "name": "o_axi_arprot",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "Response return",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Converts AXI B/R responses into WB ack, err and read data",
+     "anchors": [
+      {
+       "id": "E10",
+       "name": "o_wb_ack",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 96.8,
+       "struct_score": 91.9,
+       "trace": "control_backward",
+       "why": "WB acknowledge pulse raised on successful AXI B or R response",
+       "lines": [
+        287,
+        289
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "o_wb_err",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 50.8,
+       "struct_score": 35.6,
+       "trace": "control_backward",
+       "why": "WB error response raised when AXI bresp or rresp signals error",
+       "lines": [
+        311,
+        313
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "o_wb_data",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 66.5,
+       "struct_score": 86.1,
+       "trace": "data_backward",
+       "why": "WB read data registered from AXI read data every cycle",
+       "lines": [
+        297
+       ]
+      },
+      {
+       "id": "E21",
+       "name": "i_axi_bvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 62.2,
+       "struct_score": 75.4,
+       "trace": "forward",
+       "why": "AXI write response valid; drives WB ack/err and decrements counters",
+       "lines": [
+        286,
+        310
+       ]
+      },
+      {
+       "id": "E28",
+       "name": "i_axi_rvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 62.2,
+       "struct_score": 75.4,
+       "trace": "forward",
+       "why": "AXI read response valid; drives WB ack/err and decrements counters",
+       "lines": [
+        288,
+        312
+       ]
+      },
+      {
+       "id": "E30",
+       "name": "i_axi_rdata",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 36.1,
+       "struct_score": 80.0,
+       "trace": "interface",
+       "why": "AXI read data payload forwarded to WB data output",
+       "lines": [
+        297
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E22",
+       "name": "o_axi_bready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E29",
+       "name": "o_axi_rready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "i_axi_bresp",
+       "kind": "port_in"
+      },
+      {
+       "id": "E31",
+       "name": "i_axi_rresp",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Transaction tracking",
+     "kind": "COUNTER_TIMER",
+     "description": "Counters of outstanding requests and expected AXI responses",
+     "anchors": [
+      {
+       "id": "E38",
+       "name": "outstanding",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 57.9,
+       "struct_score": 62.0,
+       "trace": "control_backward",
+       "why": "Counts outstanding WB requests; sets pending and full_fifo",
+       "lines": [
+        179,
+        184,
+        186
+       ]
+      },
+      {
+       "id": "E37",
+       "name": "pending",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 51.4,
+       "struct_score": 38.1,
+       "trace": "control_backward",
+       "why": "Requests outstanding flag; stalls direction changes and flags abort errors",
+       "lines": [
+        136,
+        185,
+        328
+       ]
+      },
+      {
+       "id": "E39",
+       "name": "err_pending",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 26.3,
+       "struct_score": 48.8,
+       "trace": "control_backward",
+       "why": "Counts AXI responses still due; clears err_state when zero",
+       "lines": [
+        330,
+        342,
+        343
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Error and reset recovery",
+     "kind": "CONTROLLER",
+     "description": "Error-drain state and post-reset settling timer that stall the bridge",
+     "anchors": [
+      {
+       "id": "E33",
+       "name": "err_state",
+       "role": "CONTROL_FLAG",
+       "importance": "critical",
+       "score": 80.1,
+       "struct_score": 41.1,
+       "trace": "control_backward",
+       "why": "Error-recovery flag set on bus error or abort; stalls WB and suppresses acks until drained",
+       "lines": [
+        325,
+        329,
+        331
+       ]
+      },
+      {
+       "id": "E34",
+       "name": "axi_reset_state",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 50.0,
+       "struct_score": 32.5,
+       "trace": "control_backward",
+       "why": "Post-reset settling flag; stalls WB and clears counters until reset_count expires",
+       "lines": [
+        154,
+        157,
+        167
+       ]
+      },
+      {
+       "id": "E36",
+       "name": "reset_count",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 22.7,
+       "struct_score": 35.2,
+       "trace": "control_backward",
+       "why": "Down-counter timing the AXI reset settling period",
+       "lines": [
+        152,
+        155,
+        158
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "i_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "i_reset",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "wishbone_slave",
+     "protocol": "MEMORY_BUS",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "i_wb_cyc",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "i_wb_stb",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "i_wb_we",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "i_wb_addr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "i_wb_data",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "i_wb_sel",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "o_wb_stall",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "o_wb_ack",
+       "kind": "port_out"
+      },
+      {
+       "id": "E11",
+       "name": "o_wb_data",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "o_wb_err",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "axi_write_address",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E13",
+      "E14",
+      "E15",
+      "E16"
+     ],
+     "members": [
+      {
+       "id": "E13",
+       "name": "o_axi_awvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "i_axi_awready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "o_axi_awaddr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "o_axi_awprot",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "axi_write_data",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E17",
+      "E18",
+      "E19",
+      "E20"
+     ],
+     "members": [
+      {
+       "id": "E17",
+       "name": "o_axi_wvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "i_axi_wready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E19",
+       "name": "o_axi_wdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "o_axi_wstrb",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "axi_write_response",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E21",
+      "E22",
+      "E23"
+     ],
+     "members": [
+      {
+       "id": "E21",
+       "name": "i_axi_bvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E22",
+       "name": "o_axi_bready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "i_axi_bresp",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "axi_read_address",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E24",
+      "E25",
+      "E26",
+      "E27"
+     ],
+     "members": [
+      {
+       "id": "E24",
+       "name": "o_axi_arvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E25",
+       "name": "i_axi_arready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E26",
+       "name": "o_axi_araddr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E27",
+       "name": "o_axi_arprot",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "axi_read_data",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E28",
+      "E29",
+      "E30",
+      "E31"
+     ],
+     "members": [
+      {
+       "id": "E28",
+       "name": "i_axi_rvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E29",
+       "name": "o_axi_rready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E30",
+       "name": "i_axi_rdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E31",
+       "name": "i_axi_rresp",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,19 @@
+{
+ "module_summary": "Majority-vote glitch filter: shifts d_i into a WindowLen history register, popcounts it via a child, and outputs 1 when the count meets the threshold.",
+ "anchors": [
+  {"id": "E9", "name": "history_q", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "Shift register of the last WindowLen samples, fed to the popcount child.", "lines": [40, 41, 46]},
+  {"id": "E7", "name": "popcount_o", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Number of ones in the history window, compared against Threshold.", "lines": [47, 50]},
+  {"id": "E6", "name": "q_o", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Filtered output: popcount at or above the majority threshold.", "lines": [50]},
+  {"id": "E5", "name": "d_i", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Raw input bit shifted into the history window.", "lines": [40]},
+  {"id": "E4", "name": "en_i", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Sample enable gating the history shift register update.", "lines": [41]}
+ ],
+ "groups": [
+  {"name": "History window", "kind": "BUFFER", "anchor_ids": ["E9", "E5", "E4"], "member_ids": ["E8"], "description": "Enable-gated shift register holding recent input samples."},
+  {"name": "Majority decision", "kind": "DATAPATH", "anchor_ids": ["E7", "E6"], "member_ids": ["I1"], "description": "Popcount child and threshold compare producing the filtered output."}
+ ],
+ "interfaces": [
+  {"name": "Clock/reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2", "E3"]},
+  {"name": "Input sample", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E4", "E5"]},
+  {"name": "Filtered output", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E6"]}
+ ]
+}

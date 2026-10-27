@@ -1,0 +1,33 @@
+{
+ "module_summary": "Destination half of a clearable gray-code CDC FIFO: a reset-controller half sequences isolate/clear phases across domains, gating the FIFO read side's valid/ready while clearing its pointers.",
+ "anchors": [
+  {"id": "E5", "name": "dst_data_o", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "FIFO read data presented to destination-domain consumer.", "lines": [334, 394]},
+  {"id": "E6", "name": "dst_valid_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Destination valid, masked during isolation.", "lines": [335, 403]},
+  {"id": "E7", "name": "dst_ready_i", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Consumer ready, gated by isolate before reaching FIFO read side.", "lines": [336, 396]},
+  {"id": "E8", "name": "async_data_i", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "FIFO storage array contents from source domain, read by destination side.", "lines": [338, 398]},
+  {"id": "E9", "name": "async_wptr_i", "role": "FIFO_PTR", "importance": "major", "trace": "interface", "why": "Gray-coded write pointer from source domain, synchronized for valid.", "lines": [339, 399]},
+  {"id": "E10", "name": "async_rptr_o", "role": "FIFO_PTR", "importance": "major", "trace": "interface", "why": "Gray-coded read pointer returned to source domain.", "lines": [340, 400]},
+  {"id": "E3", "name": "dst_clear_i", "role": "COMMAND", "importance": "major", "trace": "interface", "why": "Destination-side request to clear the CDC FIFO.", "lines": [332, 373]},
+  {"id": "E20", "name": "dst_isolate_req", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Isolation from reset controller; masks valid and ready during clear.", "lines": [376, 396, 403]},
+  {"id": "E17", "name": "dst_clear_req", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Clear request from reset controller resetting FIFO read pointers.", "lines": [374, 393, 407]},
+  {"id": "E21", "name": "dst_isolate_ack_q", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "One-cycle delayed acknowledge of isolate request.", "lines": [377, 406]},
+  {"id": "E18", "name": "dst_clear_ack_q", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "One-cycle delayed acknowledge of clear request.", "lines": [375, 407]},
+  {"id": "E4", "name": "dst_clear_pending_o", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Reports clear sequence in progress (isolate active).", "lines": [333, 409]},
+  {"id": "E12", "name": "async_reset_req_o", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "4-phase request sending clear phase to source side.", "lines": [342, 379]},
+  {"id": "E15", "name": "async_reset_req_i", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "4-phase request receiving clear phase from source side.", "lines": [345, 382]},
+  {"id": "E11", "name": "async_reset_next_phase_o", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Clear sequence phase sent to the source half.", "lines": [341, 378]},
+  {"id": "E19", "name": "dst_valid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "data_backward", "why": "Raw FIFO not-empty valid before isolation masking.", "lines": [351, 395, 403]}
+ ],
+ "groups": [
+  {"name": "fifo_read_side", "kind": "BUFFER", "anchor_ids": ["E5", "E6", "E7", "E8", "E9", "E10", "E19"], "member_ids": ["I2"], "description": "Synchronizes write pointer, reads async array and drives destination stream."},
+  {"name": "clear_controller", "kind": "CONTROLLER", "anchor_ids": ["E3", "E20", "E17", "E21", "E18", "E4", "E12", "E15", "E11"], "member_ids": ["I1", "E13", "E14", "E16"], "description": "Sequences isolate/clear phases with the source half over async handshake."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "clear_ctrl", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E3", "E4"]},
+  {"name": "dst_stream", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E5", "E6", "E7"]},
+  {"name": "async_fifo", "protocol": "MEMORY_BUS", "direction": "IN", "member_ids": ["E8", "E9", "E10"]},
+  {"name": "async_reset_tx", "protocol": "REQ_ACK", "direction": "OUT", "member_ids": ["E11", "E12", "E13"]},
+  {"name": "async_reset_rx", "protocol": "REQ_ACK", "direction": "IN", "member_ids": ["E14", "E15", "E16"]}
+ ]
+}

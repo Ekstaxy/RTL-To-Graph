@@ -1,0 +1,45 @@
+{
+ "module_summary": "True dual-port AXI RAM: two axi_ram_wr_rd_if adapters convert AXI bursts into RAM commands, each served by its own clock domain on a shared byte-strobed memory array with registered read responses.",
+ "anchors": [
+  {"id": "E101", "name": "mem", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "Shared word-addressed RAM array written and read by both ports.", "lines": [361, 385, 408]},
+  {"id": "E35", "name": "s_axi_a_rdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Port A AXI read data output from adapter a_if.", "lines": [90, 236]},
+  {"id": "E70", "name": "s_axi_b_rdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Port B AXI read data output from adapter b_if.", "lines": [126, 327]},
+  {"id": "E15", "name": "s_axi_a_wdata", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Port A AXI write data into adapter a_if.", "lines": [70, 211]},
+  {"id": "E50", "name": "s_axi_b_wdata", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Port B AXI write data into adapter b_if.", "lines": [106, 302]},
+  {"id": "E102", "name": "addr_a_valid", "role": "INDEX", "importance": "major", "trace": "data_backward", "why": "Port A word index into mem derived from command address.", "lines": [363, 385, 391]},
+  {"id": "E103", "name": "addr_b_valid", "role": "INDEX", "importance": "major", "trace": "data_backward", "why": "Port B word index into mem derived from command address.", "lines": [364, 408, 414]},
+  {"id": "E80", "name": "ram_a_cmd_rd_en", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Port A read command enable; loads read response registers from mem.", "lines": [258, 383]},
+  {"id": "E79", "name": "ram_a_cmd_wr_en", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Port A write command enable; writes strobed bytes into mem.", "lines": [257, 388]},
+  {"id": "E93", "name": "ram_b_cmd_rd_en", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Port B read command enable; loads read response registers from mem.", "lines": [349, 406]},
+  {"id": "E92", "name": "ram_b_cmd_wr_en", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Port B write command enable; writes strobed bytes into mem.", "lines": [348, 411]},
+  {"id": "E78", "name": "ram_a_cmd_wr_strb", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Port A per-byte write strobes gating mem byte lanes.", "lines": [255, 390]},
+  {"id": "E91", "name": "ram_b_cmd_wr_strb", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Port B per-byte write strobes gating mem byte lanes.", "lines": [346, 413]},
+  {"id": "E82", "name": "ram_a_cmd_ready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "Port A command ready when response slot free; gates read and write.", "lines": [378, 383, 388]},
+  {"id": "E95", "name": "ram_b_cmd_ready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "Port B command ready when response slot free; gates read and write.", "lines": [401, 406, 411]},
+  {"id": "E86", "name": "ram_a_rd_resp_valid_reg", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Port A read response valid back to adapter a_if.", "lines": [381, 387, 265]},
+  {"id": "E99", "name": "ram_b_rd_resp_valid_reg", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Port B read response valid back to adapter b_if.", "lines": [404, 410, 356]},
+  {"id": "E84", "name": "ram_a_rd_resp_data_reg", "role": "PIPELINE_REG", "importance": "major", "trace": "data_backward", "why": "Port A registered read data from mem to adapter.", "lines": [385, 262]},
+  {"id": "E97", "name": "ram_b_rd_resp_data_reg", "role": "PIPELINE_REG", "importance": "major", "trace": "data_backward", "why": "Port B registered read data from mem to adapter.", "lines": [408, 353]}
+ ],
+ "groups": [
+  {"name": "Port A AXI adapter", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E35", "E15", "E80", "E79"], "member_ids": ["I1", "E75", "E76", "E77", "E81", "E87"], "description": "a_if converts port A AXI bursts into RAM read/write commands."},
+  {"name": "Port B AXI adapter", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E70", "E50", "E93", "E92"], "member_ids": ["I2", "E88", "E89", "E90", "E94", "E100"], "description": "b_if converts port B AXI bursts into RAM read/write commands."},
+  {"name": "Dual-port RAM array", "kind": "MEMORY", "anchor_ids": ["E101", "E102", "E103", "E78", "E91"], "member_ids": [], "description": "Shared memory with per-port word index and byte strobed writes."},
+  {"name": "Port A read response", "kind": "PIPELINE_STAGE", "anchor_ids": ["E82", "E86", "E84"], "member_ids": ["E83", "E85"], "description": "Registers port A read id, data, last and valid with ready backpressure."},
+  {"name": "Port B read response", "kind": "PIPELINE_STAGE", "anchor_ids": ["E95", "E99", "E97"], "member_ids": ["E96", "E98"], "description": "Registers port B read id, data, last and valid with ready backpressure."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset_a", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "clock_reset_b", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E3", "E4"]},
+  {"name": "s_axi_a_aw", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12", "E13", "E14"]},
+  {"name": "s_axi_a_w", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E15", "E16", "E17", "E18", "E19"]},
+  {"name": "s_axi_a_b", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E20", "E21", "E22", "E23"]},
+  {"name": "s_axi_a_ar", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E24", "E25", "E26", "E27", "E28", "E29", "E30", "E31", "E32", "E33"]},
+  {"name": "s_axi_a_r", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E34", "E35", "E36", "E37", "E38", "E39"]},
+  {"name": "s_axi_b_aw", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E40", "E41", "E42", "E43", "E44", "E45", "E46", "E47", "E48", "E49"]},
+  {"name": "s_axi_b_w", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E50", "E51", "E52", "E53", "E54"]},
+  {"name": "s_axi_b_b", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E55", "E56", "E57", "E58"]},
+  {"name": "s_axi_b_ar", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E59", "E60", "E61", "E62", "E63", "E64", "E65", "E66", "E67", "E68"]},
+  {"name": "s_axi_b_r", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E69", "E70", "E71", "E72", "E73", "E74"]}
+ ]
+}

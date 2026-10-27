@@ -1,0 +1,24 @@
+{
+ "module_summary": "Destination side of a 4-phase CDC: synchronizes the async request, a 3-state FSM presents data downstream and returns a glitch-filtered registered acknowledge, with optional spill-register decoupling.",
+ "anchors": [
+  {"id": "E15", "name": "state_q", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "4-phase handshake state controlling data_valid and acknowledge generation", "lines": [237, 274, 307]},
+  {"id": "E11", "name": "req_synced", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Synchronized async request driving FSM transitions and data_valid", "lines": [250, 258, 277]},
+  {"id": "E7", "name": "async_ack_o", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Registered acknowledge returned across the asynchronous channel", "lines": [222, 336]},
+  {"id": "E6", "name": "async_req_i", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Asynchronous request input fed to the synchronizer", "lines": [221, 249]},
+  {"id": "E8", "name": "async_data_i", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Asynchronous data bus captured into spill register or output", "lines": [223, 324, 332]},
+  {"id": "E3", "name": "data_o", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Destination-domain output payload", "lines": [218, 327, 332]},
+  {"id": "E4", "name": "valid_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Downstream valid from spill register or data_valid", "lines": [219, 325, 330]},
+  {"id": "E5", "name": "ready_i", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Downstream ready accepting the transferred word", "lines": [220, 326, 331]},
+  {"id": "E12", "name": "data_valid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "State-decoded valid into spill register", "lines": [231, 258, 322]},
+  {"id": "E13", "name": "output_ready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Spill-register ready advancing FSM to acknowledge", "lines": [233, 287, 323]}
+ ],
+ "groups": [
+  {"name": "Handshake FSM", "kind": "CONTROLLER", "anchor_ids": ["E15", "E11", "E7", "E6"], "member_ids": ["E14", "E9", "E10"], "description": "Synchronizes request and sequences 4-phase acknowledge"},
+  {"name": "Output decoupling", "kind": "BUFFER", "anchor_ids": ["E8", "E3", "E4", "E5", "E12", "E13"], "member_ids": ["I1"], "description": "Spill register presenting async data as valid/ready stream"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "dst_stream", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E3", "E4", "E5"]},
+  {"name": "async_channel", "protocol": "REQ_ACK", "direction": "IN", "member_ids": ["E6", "E7", "E8"]}
+ ]
+}

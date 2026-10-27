@@ -1,0 +1,40 @@
+{
+ "module_summary": "SERV register-file to SRAM adapter: a shared cycle counter sequences serial-to-parallel write shift registers and parallel-to-serial read registers for two write and two read ports.",
+ "anchors": [
+  {"id": "E3", "name": "i_wreq", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Write request from SERV; restarts rcnt and asserts o_ready.", "lines": [31, 57, 164]},
+  {"id": "E4", "name": "i_rreq", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Read request from SERV; restarts rcnt and opens read gate.", "lines": [32, 159, 164]},
+  {"id": "E5", "name": "o_ready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Ready to SERV from delayed read grant or write request.", "lines": [33, 57]},
+  {"id": "E22", "name": "rgnt", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Read grant, two-cycle delayed rreq, driving o_ready.", "lines": [56, 57, 168]},
+  {"id": "E23", "name": "rcnt", "role": "COUNTER", "importance": "critical", "trace": "control_backward", "why": "Cycle counter sequencing read/write triggers and RAM address LSBs.", "lines": [58, 163, 165]},
+  {"id": "E25", "name": "wcnt", "role": "COUNTER", "importance": "minor", "trace": "data_backward", "why": "Write-side count offset from rcnt; times wen capture and write address.", "lines": [65, 100, 103]},
+  {"id": "E33", "name": "rtrig0", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Loads rdata0 from RAM and selects read register port.", "lines": [118, 120, 171]},
+  {"id": "E24", "name": "rtrig1", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Delayed trigger loading rdata1 and selecting o_rdata1 source.", "lines": [60, 134, 150]},
+  {"id": "E31", "name": "wtrig1", "role": "MUX_SELECT", "importance": "major", "trace": "control_backward", "why": "Selects write port 1 data, register and enable toward RAM.", "lines": [73, 86, 90]},
+  {"id": "E26", "name": "wdata0_r", "role": "STORAGE", "importance": "major", "trace": "data_backward", "why": "Shift register collecting serial write port 0 bits into a RAM word.", "lines": [67, 108, 88]},
+  {"id": "E27", "name": "wdata1_r", "role": "STORAGE", "importance": "minor", "trace": "data_backward", "why": "Shift register collecting serial write port 1 bits into a RAM word.", "lines": [68, 109, 87]},
+  {"id": "E28", "name": "wen0_r", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Latched write enable for port 0 gating o_wen.", "lines": [70, 104, 98]},
+  {"id": "E35", "name": "rdata0", "role": "STORAGE", "importance": "major", "trace": "data_backward", "why": "Shift register serializing RAM read word to read port 0.", "lines": [128, 172, 133]},
+  {"id": "E36", "name": "rdata1", "role": "STORAGE", "importance": "minor", "trace": "data_backward", "why": "Shift register serializing RAM read word to read port 1.", "lines": [129, 151, 134]},
+  {"id": "E37", "name": "rgate", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Read gate set by rreq, drives RAM read enable.", "lines": [131, 139, 160]},
+  {"id": "E32", "name": "wreg", "role": "INDEX", "importance": "minor", "trace": "data_backward", "why": "Selected write register number forming RAM write address.", "lines": [90, 94]},
+  {"id": "E34", "name": "rreg", "role": "INDEX", "importance": "minor", "trace": "data_backward", "why": "Selected read register number forming RAM read address.", "lines": [120, 124]},
+  {"id": "E10", "name": "i_wdata0", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Serial write data port 0 shifted into wdata0_r.", "lines": [38, 108]},
+  {"id": "E14", "name": "o_rdata0", "role": "INTERFACE_DATA", "importance": "minor", "trace": "data_backward", "why": "Serial read data port 0 from rdata0.", "lines": [42, 133]},
+  {"id": "E16", "name": "o_waddr", "role": "INTERFACE_ADDR", "importance": "major", "trace": "data_backward", "why": "RAM write address from selected register and wcnt.", "lines": [45, 94]},
+  {"id": "E17", "name": "o_wdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "RAM write word muxed from write shift registers.", "lines": [46, 86]},
+  {"id": "E18", "name": "o_wen", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "RAM write enable from triggers and latched port enables.", "lines": [47, 98]},
+  {"id": "E19", "name": "o_raddr", "role": "INTERFACE_ADDR", "importance": "major", "trace": "data_backward", "why": "RAM read address from selected register and rcnt.", "lines": [48, 124]},
+  {"id": "E21", "name": "i_rdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "RAM read word loaded into rdata0/rdata1.", "lines": [50, 172, 151]}
+ ],
+ "groups": [
+  {"name": "Request/sequencing", "kind": "CONTROLLER", "anchor_ids": ["E3", "E4", "E5", "E22", "E23", "E25"], "member_ids": ["E38"], "description": "Request handshake, ready generation and shared cycle counter."},
+  {"name": "Write path", "kind": "SERIALIZER", "anchor_ids": ["E31", "E26", "E27", "E28", "E32", "E10", "E16", "E17", "E18"], "member_ids": ["E30", "E29", "E6", "E7", "E8", "E9", "E11"], "description": "Deserializes two serial write ports into RAM words, address and enable."},
+  {"name": "Read path", "kind": "SERIALIZER", "anchor_ids": ["E33", "E24", "E35", "E36", "E37", "E34", "E14", "E19", "E21"], "member_ids": ["E15", "E20", "E12", "E13"], "description": "Reads RAM words and serializes them to two read ports."}
+ ],
+ "interfaces": [
+  {"name": "clk_rst", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "serv_rf", "protocol": "REQ_ACK", "direction": "BIDIR", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12", "E13", "E14", "E15"]},
+  {"name": "sram_write", "protocol": "MEMORY_BUS", "direction": "OUT", "member_ids": ["E16", "E17", "E18"]},
+  {"name": "sram_read", "protocol": "MEMORY_BUS", "direction": "IN", "member_ids": ["E19", "E20", "E21"]}
+ ]
+}

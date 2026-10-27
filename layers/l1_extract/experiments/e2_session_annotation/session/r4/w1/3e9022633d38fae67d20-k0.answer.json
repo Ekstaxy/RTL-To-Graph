@@ -1,0 +1,37 @@
+{
+ "module_summary": "AXI-Lite read-channel clock-domain crossing: slave- and master-side 3-state FSMs exchange a four-phase flag handshake via two-flop synchronizers, holding address and read data in registers.",
+ "anchors": [
+  {"id": "E21", "name": "s_state_reg", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Slave-domain FSM: request, wait for master flag, return response.", "lines": [73, 121, 124]},
+  {"id": "E25", "name": "m_state_reg", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Master-domain FSM: issue read, capture response, release flag.", "lines": [80, 174, 177]},
+  {"id": "E22", "name": "s_flag_reg", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "forward", "why": "Slave-to-master request flag crossing into m_clk domain.", "lines": [74, 125, 160]},
+  {"id": "E26", "name": "m_flag_reg", "role": "HANDSHAKE_READY", "importance": "major", "trace": "forward", "why": "Master-to-slave completion flag crossing into s_clk domain.", "lines": [81, 186, 155]},
+  {"id": "E24", "name": "s_flag_sync_reg_2", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Synchronized request flag steering master FSM transitions.", "lines": [78, 161, 176]},
+  {"id": "E28", "name": "m_flag_sync_reg_2", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Synchronized completion flag steering slave FSM transitions.", "lines": [85, 156, 129]},
+  {"id": "E5", "name": "s_axil_arvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Slave read address valid, captured into s_axil_arvalid_reg.", "lines": [51, 118]},
+  {"id": "E6", "name": "s_axil_arready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "Slave read address ready when no request or response pending.", "lines": [52, 101]},
+  {"id": "E3", "name": "s_axil_araddr", "role": "INTERFACE_ADDR", "importance": "critical", "trace": "interface", "why": "Slave read address latched into s_axil_araddr_reg.", "lines": [49, 116]},
+  {"id": "E7", "name": "s_axil_rdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Read data returned to slave side from s_axil_rdata_reg.", "lines": [53, 102]},
+  {"id": "E9", "name": "s_axil_rvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Slave read response valid from s_axil_rvalid_reg.", "lines": [55, 104]},
+  {"id": "E13", "name": "m_axil_araddr", "role": "INTERFACE_ADDR", "importance": "critical", "trace": "data_backward", "why": "Master read address forwarded from crossed address register.", "lines": [63, 106]},
+  {"id": "E15", "name": "m_axil_arvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Master read address valid driven by m_axil_arvalid_reg.", "lines": [65, 108]},
+  {"id": "E17", "name": "m_axil_rdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Master read data captured into m_axil_rdata_reg.", "lines": [67, 169]},
+  {"id": "E29", "name": "s_axil_araddr_reg", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Holds request address across the CDC handshake for master side.", "lines": [87, 116, 178]},
+  {"id": "E38", "name": "m_axil_rdata_reg", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Holds read data until slave FSM copies it across domains.", "lines": [97, 169, 132]},
+  {"id": "E31", "name": "s_axil_arvalid_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Pending request flag starting slave FSM and blocking arready.", "lines": [89, 101, 123]},
+  {"id": "E40", "name": "m_axil_rvalid_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Response captured flag advancing master FSM and gating rready.", "lines": [99, 109, 185]}
+ ],
+ "groups": [
+  {"name": "Slave-side controller", "kind": "CONTROLLER", "anchor_ids": ["E21", "E22", "E28", "E31"], "member_ids": ["E27", "E34"], "description": "s_clk FSM raising request flag and returning response."},
+  {"name": "Master-side controller", "kind": "CONTROLLER", "anchor_ids": ["E25", "E26", "E24", "E40"], "member_ids": ["E23", "E37"], "description": "m_clk FSM issuing read and signalling completion."},
+  {"name": "Address crossing", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E3", "E5", "E6", "E29", "E13", "E15"], "member_ids": ["E30", "E35", "E36", "E4", "E14"], "description": "Latched read address and prot carried to master domain."},
+  {"name": "Read data crossing", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E17", "E38", "E7", "E9"], "member_ids": ["E39", "E32", "E33", "E8", "E18"], "description": "Captured read data and resp carried back to slave domain."}
+ ],
+ "interfaces": [
+  {"name": "s_clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "m_clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E11", "E12"]},
+  {"name": "s_axil_ar", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6"]},
+  {"name": "s_axil_r", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E7", "E8", "E9", "E10"]},
+  {"name": "m_axil_ar", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E13", "E14", "E15", "E16"]},
+  {"name": "m_axil_r", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E17", "E18", "E19", "E20"]}
+ ]
+}

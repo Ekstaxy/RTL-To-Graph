@@ -1,0 +1,416 @@
+[
+ {
+  "module": "axidma",
+  "instance": "axisgdma.subdma",
+  "state": "r_busy",
+  "next": null,
+  "style": "one-process",
+  "states": [
+   {
+    "name": "0",
+    "value": "0"
+   }
+  ],
+  "reset_state": "0",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "!(!r_busy && axil_write_ready) && r_busy && M_AXI_BVALID && M_AXI_BREADY && last_write_ack"
+   },
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "!(!r_busy && axil_write_ready) && r_busy && r_done"
+   }
+  ],
+  "outputs": [
+   {
+    "signal": "M_AXI_ARADDR",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "M_AXI_ARLEN",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "M_AXI_ARVALID",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "M_AXI_AWADDR",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "M_AXI_AWLEN",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "M_AXI_WLAST",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "S_AXIL_RDATA",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "o_int",
+    "kind": "moore",
+    "port": true
+   }
+  ],
+  "warnings": [
+   "non-constant next state: w_start",
+   "semantic_check: mismatch (syntactic 1 states / 0 edges vs executed 2 / 2); semantic transitions attached"
+  ],
+  "semantic_check": "mismatch",
+  "semantic_transitions": [
+   {
+    "src": "0",
+    "dst": "0",
+    "cond": "(zero_len) || (!S_AXIL_BVALID && M_AXI_BVALID) || (M_AXI_BVALID && !r_valid) || (!last_write_ack && S_AXIL_BVALID && r_valid) || (last_write_ack && S_AXIL_BVALID && !r_valid) || (r_done && !r_err && S_AXIL_BVALID) || (r_err && !M_AXI_BVALID && !r_valid && r_valid) || (!last_write_ack && r_err && r_valid) || (last_write_ack && r_done && !S_AXIL_BVALID && !r_valid) || (!r_done && !r_err && !S_AXIL_BVALID && r_valid) || (last_write_ack && !r_done && r_valid && !r_valid) || (!r_done && r_err && S_AXIL_BVALID && r_valid) || (!last_write_ack && !r_err && !S_AXIL_BVALID && !r_valid) || (!r_done && r_err && !S_AXIL_BVALID && !r_valid) || (last_write_ack && r_done && M_AXI_BVALID) || (!r_err && M_AXI_BVALID && !r_valid) || (!last_write_ack && r_done && S_AXIL_BVALID && !r_valid) || (r_done && r_err && !S_AXIL_BVALID && r_valid)"
+   },
+   {
+    "src": "0",
+    "dst": "1",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "1",
+    "dst": "1",
+    "cond": "(!r_done && !M_AXI_BVALID) || (!last_write_ack && !r_done)"
+   },
+   {
+    "src": "1",
+    "dst": "0",
+    "cond": "(r_done) || (last_write_ack && M_AXI_BVALID)"
+   }
+  ]
+ },
+ {
+  "module": "axidma",
+  "instance": "axisgdma.subdma",
+  "state": "phantom_read",
+  "next": "w_start_read",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "0",
+    "value": "0"
+   }
+  ],
+  "reset_state": null,
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "phantom_read"
+   },
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "fifo_space_available < MAXBURST"
+   },
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "M_AXI_ARVALID && !M_AXI_ARREADY"
+   },
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "(r_err || r_abort)"
+   },
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "(i_reset || !r_busy)"
+   },
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "!(i_reset || !r_busy) && !(!M_AXI_ARVALID || M_AXI_ARREADY)"
+   }
+  ],
+  "outputs": [],
+  "warnings": [
+   "non-constant next state: r_busy && reads_remaining_nonzero",
+   "semantic_check: mismatch (syntactic 1 states / 0 edges vs executed 2 / 2); semantic transitions attached"
+  ],
+  "semantic_check": "mismatch",
+  "semantic_transitions": [
+   {
+    "src": "0",
+    "dst": "0",
+    "cond": "(!reads_remaining_nonzero) || (r_err) || (!r_busy) || (r_abort) || (M_AXI_ARVALID && r_valid) || (M_AXI_ARVALID && pf_wins_arbitration)"
+   },
+   {
+    "src": "0",
+    "dst": "1",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "1",
+    "dst": "0",
+    "cond": "1"
+   }
+  ]
+ },
+ {
+  "module": "axidma",
+  "instance": "axisgdma.subdma",
+  "state": "phantom_write",
+  "next": "w_write_start",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "0",
+    "value": "0"
+   }
+  ],
+  "reset_state": "0",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "!write_requests_remaining"
+   },
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "phantom_write"
+   },
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "M_AXI_AWVALID && !M_AXI_AWREADY"
+   },
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "M_AXI_WVALID && (!M_AXI_WLAST || !M_AXI_WREADY)"
+   },
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "(((i_reset || r_err) || r_abort) || !r_busy)"
+   },
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "!(!M_AXI_AWVALID || M_AXI_AWREADY)"
+   }
+  ],
+  "outputs": [],
+  "warnings": [
+   "non-constant next state: (fifo_data_available > 1) &&(fifo_data_available > write_burst_length)",
+   "non-constant next state: (fifo_data_available >= write_burst_length)",
+   "semantic_check: mismatch (syntactic 1 states / 0 edges vs executed 2 / 2); semantic transitions attached"
+  ],
+  "semantic_check": "mismatch",
+  "semantic_transitions": [
+   {
+    "src": "0",
+    "dst": "0",
+    "cond": "(!r_busy) || (!write_requests_remaining) || (r_abort) || (r_err) || (M_AXI_AWVALID && !M_AXI_AWREADY) || (!M_AXI_WLAST && M_AXI_WVALID)"
+   },
+   {
+    "src": "0",
+    "dst": "1",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "1",
+    "dst": "0",
+    "cond": "1"
+   }
+  ]
+ },
+ {
+  "module": "axisgfsm",
+  "instance": "axisgdma.fsm",
+  "state": "sgstate",
+  "next": null,
+  "style": "one-process",
+  "states": [
+   {
+    "name": "SG_IDLE",
+    "value": "3'b0"
+   },
+   {
+    "name": "SG_SRCHALF",
+    "value": "3'b1"
+   },
+   {
+    "name": "SG_SRCADDR",
+    "value": "3'b10"
+   },
+   {
+    "name": "SG_DSTHALF",
+    "value": "3'b11"
+   },
+   {
+    "name": "SG_DSTADDR",
+    "value": "3'b100"
+   },
+   {
+    "name": "SG_LENGTH",
+    "value": "3'b101"
+   },
+   {
+    "name": "SG_CONTROL",
+    "value": "3'b110"
+   },
+   {
+    "name": "SG_WAIT",
+    "value": "3'b111"
+   }
+  ],
+  "reset_state": "SG_IDLE",
+  "transitions": [
+   {
+    "src": "SG_IDLE",
+    "dst": "SG_SRCHALF",
+    "cond": "i_start"
+   },
+   {
+    "src": "SG_SRCHALF",
+    "dst": "SG_SRCADDR",
+    "cond": "i_pf_valid && (!o_dmac_wvalid || i_dmac_wready)"
+   },
+   {
+    "src": "SG_SRCADDR",
+    "dst": "SG_DSTHALF",
+    "cond": "i_pf_valid && o_pf_ready"
+   },
+   {
+    "src": "SG_SRCADDR",
+    "dst": "SG_SRCHALF",
+    "cond": "i_pf_valid && o_pf_ready && i_pf_insn[31:30] == 2'b10"
+   },
+   {
+    "src": "SG_SRCADDR",
+    "dst": "SG_SRCHALF",
+    "cond": "i_pf_valid && o_pf_ready && i_pf_insn[31:30] == 2'b11"
+   },
+   {
+    "src": "SG_DSTHALF",
+    "dst": "SG_DSTADDR",
+    "cond": "i_pf_valid && (!o_dmac_wvalid || i_dmac_wready)"
+   },
+   {
+    "src": "SG_DSTADDR",
+    "dst": "SG_LENGTH",
+    "cond": "i_pf_valid && (!o_dmac_wvalid || i_dmac_wready)"
+   },
+   {
+    "src": "SG_LENGTH",
+    "dst": "SG_CONTROL",
+    "cond": "i_pf_valid && (!o_dmac_wvalid || i_dmac_wready)"
+   },
+   {
+    "src": "SG_LENGTH",
+    "dst": "SG_IDLE",
+    "cond": "i_pf_valid && (!o_dmac_wvalid || i_dmac_wready) && i_pf_insn <= 0 && tbl_last"
+   },
+   {
+    "src": "SG_LENGTH",
+    "dst": "SG_SRCADDR",
+    "cond": "i_pf_valid && (!o_dmac_wvalid || i_dmac_wready) && i_pf_insn <= 0 && !tbl_last"
+   },
+   {
+    "src": "SG_CONTROL",
+    "dst": "SG_WAIT",
+    "cond": "(!o_dmac_wvalid || i_dmac_wready)"
+   },
+   {
+    "src": "SG_WAIT",
+    "dst": "SG_IDLE",
+    "cond": "dma_op_complete && dma_terminate"
+   },
+   {
+    "src": "SG_WAIT",
+    "dst": "SG_SRCHALF",
+    "cond": "dma_op_complete && !dma_terminate"
+   },
+   {
+    "src": "*",
+    "dst": "SG_IDLE",
+    "cond": "i_pf_valid && i_pf_illegal && sgstate != SG_CONTROL && sgstate != SG_WAIT && !o_new_pc && !o_pf_clear_cache"
+   },
+   {
+    "src": "*",
+    "dst": "SG_IDLE",
+    "cond": "i_abort && (!o_dmac_wvalid || i_dmac_wready) && !dma_busy && (sgstate != SG_WAIT)"
+   }
+  ],
+  "outputs": [
+   {
+    "signal": "o_busy",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "o_dmac_waddr",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "o_dmac_wdata",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "o_dmac_wvalid",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "o_done",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "o_err",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "o_int",
+    "kind": "mealy",
+    "port": true
+   },
+   {
+    "signal": "o_new_pc",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "o_pf_clear_cache",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "o_pf_ready",
+    "kind": "mealy",
+    "port": true
+   },
+   {
+    "signal": "o_tbl_addr",
+    "kind": "moore",
+    "port": true
+   }
+  ],
+  "warnings": [
+   "semantic_check: unsupported (unsupported: constant \" // Clear any errors\\r\\n\\t\\t\\t\\t\\t1'b1\")"
+  ],
+  "semantic_check": "unsupported"
+ }
+]

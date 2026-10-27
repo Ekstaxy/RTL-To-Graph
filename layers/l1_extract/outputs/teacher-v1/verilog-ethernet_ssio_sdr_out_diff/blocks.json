@@ -1,0 +1,527 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-ethernet_ssio_sdr_out_diff",
+ "tops": [
+  "ssio_sdr_out_diff"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "oddr": {
+   "source": "teacher",
+   "canonical_instance": "ssio_sdr_out_diff.ssio_ddr_out_inst.clk_oddr_inst",
+   "file": "data/rtl/verilog-ethernet/rtl/oddr.v",
+   "lines": [
+    34,
+    144
+   ],
+   "summary": "Portable DDR output register: vendor ODDR primitives for Xilinx/Altera, otherwise a generic model that drives q from d1 on rising edge and registered d2 on falling edge.",
+   "blocks": [
+    {
+     "name": "generic_ddr_output",
+     "kind": "SERIALIZER",
+     "description": "Generic two-edge register model multiplexing d1 and d2 onto q.",
+     "anchors": [
+      {
+       "id": "E7",
+       "name": "genblk1.q_reg",
+       "role": "PIPELINE_REG",
+       "importance": "major",
+       "score": 56.9,
+       "struct_score": 58.3,
+       "trace": "data_backward",
+       "why": "Output flop updated on both clock edges, alternately with d1 and d_reg_2.",
+       "lines": [
+        132,
+        136,
+        139
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "genblk1.d_reg_2",
+       "role": "PIPELINE_REG",
+       "importance": "major",
+       "score": 53.8,
+       "struct_score": 47.1,
+       "trace": "data_backward",
+       "why": "Captures d2 at posedge to present on negedge output.",
+       "lines": [
+        128,
+        136
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "genblk1.d_reg_1",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 22.1,
+       "struct_score": 33.1,
+       "trace": "none",
+       "why": "Registered d1 copy; unused (no fanout) in generic path.",
+       "lines": [
+        121,
+        127
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "ddr_ports",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Two single-rate inputs combined into one DDR output.",
+     "anchors": [
+      {
+       "id": "E2",
+       "name": "d1",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 95.1,
+       "struct_score": 87.7,
+       "trace": "interface",
+       "why": "Rising-edge data input sampled into q_reg on posedge clk.",
+       "lines": [
+        48,
+        132
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "d2",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 93.1,
+       "struct_score": 82.5,
+       "trace": "interface",
+       "why": "Falling-edge data input, registered into d_reg_2 first.",
+       "lines": [
+        49,
+        128
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "q",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 94.7,
+       "struct_score": 86.6,
+       "trace": "interface",
+       "why": "Double-data-rate output driven by q_reg.",
+       "lines": [
+        51,
+        139
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "sdr_data_in",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E2",
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E2",
+       "name": "d1",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "d2",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "ddr_out",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "q",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "ssio_sdr_out": {
+   "source": "teacher",
+   "canonical_instance": "ssio_sdr_out_diff.ssio_ddr_out_inst",
+   "file": "data/rtl/verilog-ethernet/rtl/ssio_sdr_out.v",
+   "lines": [
+    34,
+    75
+   ],
+   "summary": "Source-synchronous SDR output: registers data in an IOB flip-flop and forwards an inverted-phase clock through a DDR output register instance.",
+   "blocks": [
+    {
+     "name": "data_output_register",
+     "kind": "PIPELINE_STAGE",
+     "description": "IOB flip-flop registering data onto the output pins.",
+     "anchors": [
+      {
+       "id": "E5",
+       "name": "output_q_reg",
+       "role": "PIPELINE_REG",
+       "importance": "critical",
+       "score": 85.1,
+       "struct_score": 59.0,
+       "trace": "data_backward",
+       "why": "IOB output register capturing input_d each clock, drives output_q.",
+       "lines": [
+        67,
+        69,
+        72
+       ]
+      },
+      {
+       "id": "E2",
+       "name": "input_d",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 94.6,
+       "struct_score": 86.5,
+       "trace": "interface",
+       "why": "Input data registered into the IOB output flip-flop.",
+       "lines": [
+        48,
+        72
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "output_q",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 68.2,
+       "struct_score": 90.4,
+       "trace": "interface",
+       "why": "Registered output data aligned with forwarded clock.",
+       "lines": [
+        51,
+        69
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "clock_forwarding",
+     "kind": "OTHER",
+     "description": "ODDR instance generating the source-synchronous output clock.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "output_clk",
+       "role": "CLOCK_GEN",
+       "importance": "critical",
+       "score": 91.1,
+       "struct_score": 77.6,
+       "trace": "data_backward",
+       "why": "Forwarded clock generated by ODDR with constant d1=0, d2=1.",
+       "lines": [
+        50,
+        63
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "clk_oddr_inst",
+       "module": "oddr"
+      }
+     ],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "data_in",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E2",
+       "name": "input_d",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "sdr_out",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "output_clk",
+       "kind": "port_out"
+      },
+      {
+       "id": "E4",
+       "name": "output_q",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "ssio_sdr_out_diff": {
+   "source": "teacher",
+   "canonical_instance": "ssio_sdr_out_diff",
+   "file": "data/rtl/verilog-ethernet/rtl/ssio_sdr_out_diff.v",
+   "lines": [
+    34,
+    114
+   ],
+   "summary": "Differential source-synchronous SDR output: an SDR output register stage produces forwarded clock and data, which are driven out through differential buffers (or true/complement assigns generically).",
+   "blocks": [
+    {
+     "name": "SDR output register",
+     "kind": "PIPELINE_STAGE",
+     "description": "Registers data and generates the forwarded output clock.",
+     "anchors": [
+      {
+       "id": "E2",
+       "name": "input_d",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 92.0,
+       "struct_score": 79.9,
+       "trace": "interface",
+       "why": "Parallel data registered by the SDR output stage.",
+       "lines": [
+        48,
+        66
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "output_q",
+       "role": "PIPELINE_REG",
+       "importance": "critical",
+       "score": 80.8,
+       "struct_score": 43.5,
+       "trace": "data_backward",
+       "why": "Registered single-ended data feeding the differential output buffers.",
+       "lines": [
+        68,
+        108,
+        109
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "output_clk",
+       "role": "CLOCK_GEN",
+       "importance": "critical",
+       "score": 80.8,
+       "struct_score": 43.6,
+       "trace": "data_backward",
+       "why": "Forwarded source-synchronous clock from SDR stage, driven differentially.",
+       "lines": [
+        67,
+        106,
+        107
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "ssio_ddr_out_inst",
+       "module": "ssio_sdr_out"
+      }
+     ],
+     "members": []
+    },
+    {
+     "name": "Differential output buffers",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Drives clock and data as true/complement differential pairs.",
+     "anchors": [
+      {
+       "id": "E5",
+       "name": "output_q_p",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 66.0,
+       "struct_score": 84.9,
+       "trace": "interface",
+       "why": "Positive leg of differential data output.",
+       "lines": [
+        108
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "output_q_n",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 38.0,
+       "struct_score": 84.9,
+       "trace": "interface",
+       "why": "Negative leg of differential data output.",
+       "lines": [
+        109
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "output_clk_p",
+       "role": "CLOCK_GEN",
+       "importance": "major",
+       "score": 62.2,
+       "struct_score": 75.3,
+       "trace": "interface",
+       "why": "Positive leg of forwarded differential clock.",
+       "lines": [
+        106
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "output_clk_n",
+       "role": "CLOCK_GEN",
+       "importance": "minor",
+       "score": 34.2,
+       "struct_score": 75.3,
+       "trace": "interface",
+       "why": "Negative leg of forwarded differential clock.",
+       "lines": [
+        107
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "data_in",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E2",
+       "name": "input_d",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "diff_sdr_out",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "output_clk_p",
+       "kind": "port_out"
+      },
+      {
+       "id": "E4",
+       "name": "output_clk_n",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "output_q_p",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "output_q_n",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

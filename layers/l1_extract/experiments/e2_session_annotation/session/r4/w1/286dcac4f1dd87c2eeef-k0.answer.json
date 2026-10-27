@@ -1,0 +1,533 @@
+{
+ "module_summary": "AXI-Stream FIFO: write logic stores packed beats into a RAM via write/commit pointers, a read pipeline fetches via rd pointer to the output port, with full/empty compare and depth/overflow status.",
+ "anchors": [
+  {
+   "id": "E29",
+   "name": "mem",
+   "role": "STORAGE",
+   "importance": "critical",
+   "trace": "data_backward",
+   "why": "Main FIFO RAM holding packed tdata/tlast/tuser beats.",
+   "lines": [
+    191,
+    286,
+    392
+   ]
+  },
+  {
+   "id": "E26",
+   "name": "wr_ptr_reg",
+   "role": "FIFO_PTR",
+   "importance": "critical",
+   "trace": "control_backward",
+   "why": "Write pointer addressing mem, incremented on accepted input beats.",
+   "lines": [
+    186,
+    286,
+    287
+   ]
+  },
+  {
+   "id": "E28",
+   "name": "rd_ptr_reg",
+   "role": "FIFO_PTR",
+   "importance": "critical",
+   "trace": "control_backward",
+   "why": "Read pointer addressing mem, incremented when a beat enters the output pipeline.",
+   "lines": [
+    188,
+    392,
+    396
+   ]
+  },
+  {
+   "id": "E27",
+   "name": "wr_ptr_commit_reg",
+   "role": "FIFO_PTR",
+   "importance": "minor",
+   "trace": "control_backward",
+   "why": "Committed write pointer; frames become visible to reader once committed, used for empty.",
+   "lines": [
+    187,
+    201,
+    297
+   ]
+  },
+  {
+   "id": "E3",
+   "name": "s_axis_tdata",
+   "role": "INTERFACE_DATA",
+   "importance": "critical",
+   "trace": "interface",
+   "why": "Input stream payload packed into s_axis and written to mem.",
+   "lines": [
+    100,
+    221
+   ]
+  },
+  {
+   "id": "E5",
+   "name": "s_axis_tvalid",
+   "role": "HANDSHAKE_VALID",
+   "importance": "critical",
+   "trace": "interface",
+   "why": "Input valid; with tready triggers writes into mem.",
+   "lines": [
+    102,
+    265,
+    310
+   ]
+  },
+  {
+   "id": "E6",
+   "name": "s_axis_tready",
+   "role": "HANDSHAKE_READY",
+   "importance": "critical",
+   "trace": "control_backward",
+   "why": "Input ready derived from full and drop/mark mode parameters.",
+   "lines": [
+    103,
+    216
+   ]
+  },
+  {
+   "id": "E11",
+   "name": "m_axis_tdata",
+   "role": "INTERFACE_DATA",
+   "importance": "critical",
+   "trace": "data_backward",
+   "why": "Output stream payload from last RAM pipeline stage.",
+   "lines": [
+    112,
+    550
+   ]
+  },
+  {
+   "id": "E13",
+   "name": "m_axis_tvalid",
+   "role": "HANDSHAKE_VALID",
+   "importance": "critical",
+   "trace": "control_backward",
+   "why": "Output valid driven from valid pipeline, optionally gated by pause.",
+   "lines": [
+    114,
+    548
+   ]
+  },
+  {
+   "id": "E14",
+   "name": "m_axis_tready",
+   "role": "HANDSHAKE_READY",
+   "importance": "critical",
+   "trace": "interface",
+   "why": "Downstream ready advancing the output pipeline and read pointer.",
+   "lines": [
+    115,
+    547
+   ]
+  },
+  {
+   "id": "E33",
+   "name": "full",
+   "role": "CONTROL_FLAG",
+   "importance": "major",
+   "trace": "control_backward",
+   "why": "Pointer MSB compare; deasserts s_axis_tready and triggers drop/mark.",
+   "lines": [
+    199,
+    216
+   ]
+  },
+  {
+   "id": "E34",
+   "name": "empty",
+   "role": "CONTROL_FLAG",
+   "importance": "major",
+   "trace": "control_backward",
+   "why": "Commit pointer equals read pointer; blocks read pointer increment.",
+   "lines": [
+    201,
+    393
+   ]
+  },
+  {
+   "id": "E35",
+   "name": "full_wr",
+   "role": "CONTROL_FLAG",
+   "importance": "minor",
+   "trace": "control_backward",
+   "why": "Frame overflow flag (frame mode only) forcing drop or send of oversize frame.",
+   "lines": [
+    203,
+    274
+   ]
+  },
+  {
+   "id": "E37",
+   "name": "drop_frame_reg",
+   "role": "CONTROL_FLAG",
+   "importance": "minor",
+   "trace": "control_backward",
+   "why": "Set while discarding the current frame; parameter-disabled in this config.",
+   "lines": [
+    207,
+    274,
+    277
+   ]
+  },
+  {
+   "id": "E38",
+   "name": "mark_frame_reg",
+   "role": "CONTROL_FLAG",
+   "importance": "minor",
+   "trace": "control_backward",
+   "why": "Marks truncated frame bad via tlast/tuser override when full.",
+   "lines": [
+    223,
+    226,
+    330
+   ]
+  },
+  {
+   "id": "E39",
+   "name": "send_frame_reg",
+   "role": "CONTROL_FLAG",
+   "importance": "minor",
+   "trace": "control_backward",
+   "why": "Forces commit of oversize frame beats in frame mode.",
+   "lines": [
+    209,
+    290
+   ]
+  },
+  {
+   "id": "E36",
+   "name": "s_frame_reg",
+   "role": "CONTROL_FLAG",
+   "importance": "minor",
+   "trace": "control_backward",
+   "why": "Tracks being inside an input frame for mark-when-full.",
+   "lines": [
+    205,
+    267,
+    330
+   ]
+  },
+  {
+   "id": "E31",
+   "name": "m_axis_pipe_reg",
+   "role": "PIPELINE_REG",
+   "importance": "major",
+   "trace": "data_backward",
+   "why": "RAM read pipeline stages carrying beats from mem to the output.",
+   "lines": [
+    195,
+    384,
+    392
+   ]
+  },
+  {
+   "id": "E32",
+   "name": "m_axis_tvalid_pipe_reg",
+   "role": "ENABLE",
+   "importance": "minor",
+   "trace": "control_backward",
+   "why": "Valid chain for the read pipeline stages; bubbles allow advance.",
+   "lines": [
+    196,
+    383,
+    395
+   ]
+  },
+  {
+   "id": "E47",
+   "name": "m_axis_tready_pipe",
+   "role": "ENABLE",
+   "importance": "minor",
+   "trace": "control_backward",
+   "why": "Ready into the read pipeline enabling stage transfers and reads.",
+   "lines": [
+    375,
+    389,
+    412
+   ]
+  },
+  {
+   "id": "E45",
+   "name": "s_axis",
+   "role": "DATAPATH_MAJOR",
+   "importance": "minor",
+   "trace": "data_backward",
+   "why": "Packed input word (data, tlast, tuser) written into mem.",
+   "lines": [
+    218,
+    337
+   ]
+  },
+  {
+   "id": "E46",
+   "name": "m_axis",
+   "role": "DATAPATH_MAJOR",
+   "importance": "minor",
+   "trace": "data_backward",
+   "why": "Packed output word from last pipeline stage unpacked into fields.",
+   "lines": [
+    229,
+    234
+   ]
+  },
+  {
+   "id": "E7",
+   "name": "s_axis_tlast",
+   "role": "INTERFACE_DATA",
+   "importance": "minor",
+   "trace": "interface",
+   "why": "Input end-of-frame stored with beat and steering frame tracking.",
+   "lines": [
+    104,
+    223,
+    267
+   ]
+  },
+  {
+   "id": "E15",
+   "name": "m_axis_tlast",
+   "role": "INTERFACE_DATA",
+   "importance": "minor",
+   "trace": "data_backward",
+   "why": "Output end-of-frame unpacked from stored beat.",
+   "lines": [
+    116,
+    552
+   ]
+  },
+  {
+   "id": "E10",
+   "name": "s_axis_tuser",
+   "role": "INTERFACE_DATA",
+   "importance": "minor",
+   "trace": "interface",
+   "why": "Input user sideband stored with beat, overridden on marked frames.",
+   "lines": [
+    107,
+    226
+   ]
+  },
+  {
+   "id": "E21",
+   "name": "status_depth",
+   "role": "STATUS",
+   "importance": "major",
+   "trace": "data_backward",
+   "why": "FIFO occupancy output from registered write-read pointer difference.",
+   "lines": [
+    130,
+    253
+   ]
+  },
+  {
+   "id": "E22",
+   "name": "status_depth_commit",
+   "role": "STATUS",
+   "importance": "minor",
+   "trace": "data_backward",
+   "why": "Committed occupancy output from commit pointer minus read pointer.",
+   "lines": [
+    131,
+    254
+   ]
+  },
+  {
+   "id": "E23",
+   "name": "status_overflow",
+   "role": "STATUS",
+   "importance": "minor",
+   "trace": "data_backward",
+   "why": "Pulse reporting a dropped frame due to overflow.",
+   "lines": [
+    132,
+    255
+   ]
+  },
+  {
+   "id": "E24",
+   "name": "status_bad_frame",
+   "role": "STATUS",
+   "importance": "minor",
+   "trace": "data_backward",
+   "why": "Pulse reporting a dropped bad frame.",
+   "lines": [
+    133,
+    256
+   ]
+  },
+  {
+   "id": "E25",
+   "name": "status_good_frame",
+   "role": "STATUS",
+   "importance": "minor",
+   "trace": "data_backward",
+   "why": "Pulse reporting a committed good frame.",
+   "lines": [
+    134,
+    257
+   ]
+  }
+ ],
+ "groups": [
+  {
+   "name": "Write controller",
+   "kind": "CONTROLLER",
+   "anchor_ids": [
+    "E26",
+    "E27",
+    "E6",
+    "E33",
+    "E35",
+    "E37",
+    "E38",
+    "E39",
+    "E36",
+    "E45"
+   ],
+   "member_ids": [
+    "E3",
+    "E5",
+    "E7",
+    "E10"
+   ],
+   "description": "Accepts input beats, writes mem, manages commit pointer and frame drop/mark logic."
+  },
+  {
+   "name": "FIFO RAM",
+   "kind": "MEMORY",
+   "anchor_ids": [
+    "E29"
+   ],
+   "member_ids": [
+    "E30"
+   ],
+   "description": "Dual-pointer RAM storing packed stream beats."
+  },
+  {
+   "name": "Read pipeline",
+   "kind": "PIPELINE_STAGE",
+   "anchor_ids": [
+    "E28",
+    "E34",
+    "E31",
+    "E32",
+    "E47",
+    "E46",
+    "E11",
+    "E13",
+    "E14",
+    "E15"
+   ],
+   "member_ids": [
+    "E48",
+    "E49",
+    "E50",
+    "E51",
+    "E52",
+    "E53",
+    "E54",
+    "E55",
+    "E56",
+    "E57",
+    "E58",
+    "E59",
+    "E60",
+    "E61",
+    "E62",
+    "E63",
+    "E12",
+    "E16",
+    "E17",
+    "E18"
+   ],
+   "description": "Reads mem through RAM pipeline registers and drives the output stream handshake."
+  },
+  {
+   "name": "Status",
+   "kind": "REGISTER_BANK",
+   "anchor_ids": [
+    "E21",
+    "E22",
+    "E23",
+    "E24",
+    "E25"
+   ],
+   "member_ids": [
+    "E40",
+    "E41",
+    "E42",
+    "E43",
+    "E44"
+   ],
+   "description": "Registered depth and frame-event status outputs."
+  }
+ ],
+ "interfaces": [
+  {
+   "name": "clock_reset",
+   "protocol": "CLOCK_RESET",
+   "direction": "IN",
+   "member_ids": [
+    "E1",
+    "E2"
+   ]
+  },
+  {
+   "name": "s_axis",
+   "protocol": "VALID_READY",
+   "direction": "IN",
+   "member_ids": [
+    "E3",
+    "E4",
+    "E5",
+    "E6",
+    "E7",
+    "E8",
+    "E9",
+    "E10"
+   ]
+  },
+  {
+   "name": "m_axis",
+   "protocol": "VALID_READY",
+   "direction": "OUT",
+   "member_ids": [
+    "E11",
+    "E12",
+    "E13",
+    "E14",
+    "E15",
+    "E16",
+    "E17",
+    "E18"
+   ]
+  },
+  {
+   "name": "pause",
+   "protocol": "REQ_ACK",
+   "direction": "IN",
+   "member_ids": [
+    "E19",
+    "E20"
+   ]
+  },
+  {
+   "name": "status",
+   "protocol": "SIMPLE",
+   "direction": "OUT",
+   "member_ids": [
+    "E21",
+    "E22",
+    "E23",
+    "E24",
+    "E25"
+   ]
+  }
+ ]
+}

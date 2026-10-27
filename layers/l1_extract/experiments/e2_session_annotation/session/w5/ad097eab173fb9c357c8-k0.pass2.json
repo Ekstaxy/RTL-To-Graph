@@ -1,0 +1,27 @@
+{
+ "module_summary": "AXI-stream SRL FIFO: input beats (data plus enabled sidebands) shift into a shift-register array; an occupancy pointer selects the oldest entry for output, with registered full/empty flags driving ready/valid.",
+ "anchors": [
+  {"id": "E20", "name": "data_reg", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "shift-register array of packed beats; shifts in s_axis on shift", "lines": [100, 184, 186]},
+  {"id": "E21", "name": "ptr_reg", "role": "FIFO_PTR", "importance": "critical", "trace": "control_backward", "why": "occupancy count; indexes oldest entry and drives count", "lines": [101, 107, 173]},
+  {"id": "E5", "name": "s_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "input beat valid; with tready triggers shift/inc", "lines": [68, 155, 163]},
+  {"id": "E6", "name": "s_axis_tready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "input ready, inverse of full_reg", "lines": [69, 109]},
+  {"id": "E3", "name": "s_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "input payload packed into s_axis word", "lines": [66, 112]},
+  {"id": "E13", "name": "m_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "output valid, inverse of empty_reg", "lines": [80, 120]},
+  {"id": "E14", "name": "m_axis_tready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "output ready; with valid decrements pointer", "lines": [81, 155, 159]},
+  {"id": "E11", "name": "m_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "output payload from selected entry m_axis", "lines": [78, 122]},
+  {"id": "E32", "name": "shift", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "shift enable for data_reg on accepted input beat", "lines": [136, 156, 183]},
+  {"id": "E33", "name": "inc", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "increments ptr_reg occupancy", "lines": [137, 165, 172]},
+  {"id": "E34", "name": "dec", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "decrements ptr_reg occupancy on output pop", "lines": [138, 160, 174]},
+  {"id": "E27", "name": "m_axis", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "oldest packed entry data_reg[ptr_reg-1], unpacked to outputs", "lines": [107, 122, 124]}
+ ],
+ "groups": [
+  {"name": "SRL storage", "kind": "BUFFER", "anchor_ids": ["E20", "E32", "E27"], "member_ids": ["E26"], "description": "Shift-register array with input packing and pointer-indexed output"},
+  {"name": "Occupancy control", "kind": "CONTROLLER", "anchor_ids": ["E21", "E33", "E34", "E6", "E13"], "member_ids": ["E22", "E23", "E24", "E25", "E28", "E29", "E30", "E31", "E19"], "description": "Pointer inc/dec and full/empty flags producing ready/valid"}
+ ],
+ "interfaces": [
+  {"name": "clock/reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "AXI-stream input", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10"]},
+  {"name": "AXI-stream output", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E11", "E12", "E13", "E14", "E15", "E16", "E17", "E18"]},
+  {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E19"]}
+ ]
+}

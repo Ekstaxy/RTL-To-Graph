@@ -1,0 +1,22 @@
+{
+ "module_summary": "Randomized exponential backoff timer: a 16-bit LFSR masked by an exponentially growing shift-register mask loads a down-counter whose zero flag permits retries.",
+ "anchors": [
+  {"id": "E10", "name": "cnt_q", "role": "COUNTER", "importance": "critical", "trace": "control_backward", "why": "Backoff down-counter loaded with masked random value, decremented to zero.", "lines": [71, 73, 77]},
+  {"id": "E8", "name": "lfsr_q", "role": "STORAGE", "importance": "major", "trace": "data_backward", "why": "16-bit LFSR shift register providing random wait counts.", "lines": [56, 61, 70]},
+  {"id": "E12", "name": "mask_q", "role": "STORAGE", "importance": "major", "trace": "data_backward", "why": "Exponential mask shift register widening on each failed trial.", "lines": [66, 70, 76]},
+  {"id": "E4", "name": "set_cnt_i", "role": "COMMAND", "importance": "critical", "trace": "interface", "why": "Trial-failed pulse: advances LFSR, widens mask and loads counter.", "lines": [39, 61, 70]},
+  {"id": "E5", "name": "clr_cnt_i", "role": "COMMAND", "importance": "major", "trace": "interface", "why": "Trial-succeeded pulse: clears mask and counter.", "lines": [41, 65, 69]},
+  {"id": "E6", "name": "is_zero_o", "role": "STATUS", "importance": "critical", "trace": "control_backward", "why": "Counter-zero indication allowing a new trial; also stops decrement.", "lines": [43, 71, 73]},
+  {"id": "E13", "name": "lfsr", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "LFSR feedback XOR bit shifted into lfsr_q.", "lines": [56, 61]}
+ ],
+ "groups": [
+  {"name": "random_generator", "kind": "DATAPATH", "anchor_ids": ["E8", "E13", "E12"], "member_ids": ["E7", "E11"], "description": "LFSR and exponential mask generating masked random backoff values."},
+  {"name": "backoff_counter", "kind": "COUNTER_TIMER", "anchor_ids": ["E10", "E6"], "member_ids": ["E9"], "description": "Down-counter loaded on set and zero-detect output."},
+  {"name": "command_inputs", "kind": "CONTROLLER", "anchor_ids": ["E4", "E5"], "member_ids": [], "description": "Set/clear pulses sequencing LFSR, mask and counter updates."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2", "E3"]},
+  {"name": "backoff_control", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E4", "E5"]},
+  {"name": "backoff_status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E6"]}
+ ]
+}

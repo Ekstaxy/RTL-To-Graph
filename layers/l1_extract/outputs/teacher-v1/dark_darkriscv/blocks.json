@@ -1,0 +1,1370 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "dark_darkriscv",
+ "tops": [
+  "darkriscv"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "darkriscv": {
+   "source": "teacher",
+   "canonical_instance": "darkriscv",
+   "file": "data/rtl/darkriscv/rtl/darkriscv.v",
+   "lines": [
+    57,
+    965
+   ],
+   "summary": "DarkRISCV 3-stage RV32I core: fetch PC, registered decode (instruction, opcode flags, immediates), single-cycle execute with register file, ALU, branch unit and load/store bus, plus halt/flush control and M/S trap CSRs.",
+   "blocks": [
+    {
+     "name": "Instruction fetch",
+     "kind": "PIPELINE_STAGE",
+     "description": "Fetch PC, instruction bus request and halt-safe instruction capture.",
+     "anchors": [
+      {
+       "id": "E25",
+       "name": "IFPC",
+       "role": "PIPELINE_REG",
+       "importance": "critical",
+       "score": 84.2,
+       "struct_score": 55.6,
+       "trace": "control_backward",
+       "why": "Fetch-stage PC driving IADDR; loads reset, trap, jump target or PC+4.",
+       "lines": [
+        148,
+        156,
+        760
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "IDATA",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 86.6,
+       "struct_score": 64.7,
+       "trace": "interface",
+       "why": "Fetched instruction word from instruction bus.",
+       "lines": [
+        73,
+        164
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "IDREQ",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 33.8,
+       "struct_score": 74.2,
+       "trace": "control_backward",
+       "why": "Instruction fetch request, active out of reset.",
+       "lines": [
+        71,
+        141,
+        151
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "IDACK",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 21.3,
+       "struct_score": 29.7,
+       "trace": "interface",
+       "why": "Instruction fetch acknowledge releasing HLT.",
+       "lines": [
+        74,
+        141
+       ]
+      },
+      {
+       "id": "E27",
+       "name": "HLT2",
+       "role": "MUX_SELECT",
+       "importance": "minor",
+       "score": 19.0,
+       "struct_score": 20.4,
+       "trace": "control_backward",
+       "why": "Delayed halt selecting held instruction IDATA2.",
+       "lines": [
+        170,
+        175,
+        183
+       ]
+      },
+      {
+       "id": "E28",
+       "name": "IDATA2",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 18.6,
+       "struct_score": 18.6,
+       "trace": "data_backward",
+       "why": "Instruction captured on halt transitions, replayed after stall.",
+       "lines": [
+        171,
+        178,
+        183
+       ]
+      },
+      {
+       "id": "E29",
+       "name": "IDATAX",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 22.8,
+       "struct_score": 35.7,
+       "trace": "data_backward",
+       "why": "Halt-aware instruction feeding decode registers.",
+       "lines": [
+        182,
+        204,
+        206
+       ]
+      },
+      {
+       "id": "E65",
+       "name": "IDPC",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 21.2,
+       "struct_score": 29.3,
+       "trace": "data_backward",
+       "why": "Decode-stage PC, link value for JAL/JALR.",
+       "lines": [
+        360,
+        725,
+        757
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E5",
+       "name": "IADDR",
+       "kind": "port_out"
+      },
+      {
+       "id": "E26",
+       "name": "IDATA1",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Decode",
+     "kind": "DECODER",
+     "description": "Registered instruction, opcode flags and immediates; FLUSH-gated decode.",
+     "anchors": [
+      {
+       "id": "E30",
+       "name": "XIDATA",
+       "role": "PIPELINE_REG",
+       "importance": "critical",
+       "score": 85.2,
+       "struct_score": 59.4,
+       "trace": "data_backward",
+       "why": "Decode/execute instruction register; fields feed register pointers, FCT3 and CSR decode.",
+       "lines": [
+        191,
+        204,
+        323
+       ]
+      },
+      {
+       "id": "E49",
+       "name": "FCT3",
+       "role": "DECODE",
+       "importance": "major",
+       "score": 48.4,
+       "struct_score": 25.9,
+       "trace": "data_backward",
+       "why": "funct3 field selecting ALU op, branch condition and access size.",
+       "lines": [
+        330,
+        551,
+        796
+       ]
+      },
+      {
+       "id": "E58",
+       "name": "LCC",
+       "role": "DECODE",
+       "importance": "major",
+       "score": 45.1,
+       "struct_score": 12.5,
+       "trace": "control_backward",
+       "why": "Load decode: drives DRD/DDREQ and selects LDATA writeback.",
+       "lines": [
+        346,
+        719,
+        820
+       ]
+      },
+      {
+       "id": "E59",
+       "name": "SCC",
+       "role": "DECODE",
+       "importance": "major",
+       "score": 45.8,
+       "struct_score": 15.3,
+       "trace": "control_backward",
+       "why": "Store decode: drives DWR/DDREQ and read/write direction.",
+       "lines": [
+        347,
+        819,
+        821
+       ]
+      },
+      {
+       "id": "E42",
+       "name": "XSIMM",
+       "role": "PIPELINE_REG",
+       "importance": "major",
+       "score": 49.4,
+       "struct_score": 29.9,
+       "trace": "data_backward",
+       "why": "Registered sign-extended immediate per instruction format.",
+       "lines": [
+        199,
+        227,
+        333
+       ]
+      },
+      {
+       "id": "E38",
+       "name": "XMCC",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 18.5,
+       "struct_score": 18.2,
+       "trace": "control_backward",
+       "why": "Registered immediate-ALU decode selecting SIMM as second operand.",
+       "lines": [
+        193,
+        218,
+        530
+       ]
+      },
+      {
+       "id": "E80",
+       "name": "CSRX",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 18.4,
+       "struct_score": 18.1,
+       "trace": "control_backward",
+       "why": "CSR instruction decode enabling CSR writes and CRDATA writeback.",
+       "lines": [
+        450,
+        633,
+        733
+       ]
+      },
+      {
+       "id": "E74",
+       "name": "EBRK",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 17.6,
+       "struct_score": 14.5,
+       "trace": "forward",
+       "why": "EBREAK decode causing trap to STVEC and flush.",
+       "lines": [
+        437,
+        600,
+        767
+       ]
+      },
+      {
+       "id": "E88",
+       "name": "MRET",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 16.5,
+       "struct_score": 10.1,
+       "trace": "forward",
+       "why": "MRET decode returning PC to MEPC.",
+       "lines": [
+        461,
+        604,
+        773
+       ]
+      },
+      {
+       "id": "E96",
+       "name": "SRET",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 16.3,
+       "struct_score": 9.4,
+       "trace": "forward",
+       "why": "SRET decode returning PC to SEPC.",
+       "lines": [
+        473,
+        601,
+        762
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E31",
+       "name": "XLUI",
+       "kind": "reg"
+      },
+      {
+       "id": "E32",
+       "name": "XAUIPC",
+       "kind": "reg"
+      },
+      {
+       "id": "E33",
+       "name": "XJAL",
+       "kind": "reg"
+      },
+      {
+       "id": "E34",
+       "name": "XJALR",
+       "kind": "reg"
+      },
+      {
+       "id": "E35",
+       "name": "XBCC",
+       "kind": "reg"
+      },
+      {
+       "id": "E36",
+       "name": "XLCC",
+       "kind": "reg"
+      },
+      {
+       "id": "E37",
+       "name": "XSCC",
+       "kind": "reg"
+      },
+      {
+       "id": "E39",
+       "name": "XRCC",
+       "kind": "reg"
+      },
+      {
+       "id": "E40",
+       "name": "XCUS",
+       "kind": "reg"
+      },
+      {
+       "id": "E41",
+       "name": "XSYS",
+       "kind": "reg"
+      },
+      {
+       "id": "E43",
+       "name": "XUIMM",
+       "kind": "reg"
+      },
+      {
+       "id": "E48",
+       "name": "OPCODE",
+       "kind": "wire"
+      },
+      {
+       "id": "E50",
+       "name": "FCT7",
+       "kind": "wire"
+      },
+      {
+       "id": "E51",
+       "name": "SIMM",
+       "kind": "wire"
+      },
+      {
+       "id": "E52",
+       "name": "UIMM",
+       "kind": "wire"
+      },
+      {
+       "id": "E53",
+       "name": "LUI",
+       "kind": "wire"
+      },
+      {
+       "id": "E54",
+       "name": "AUIPC",
+       "kind": "wire"
+      },
+      {
+       "id": "E55",
+       "name": "JAL",
+       "kind": "wire"
+      },
+      {
+       "id": "E56",
+       "name": "JALR",
+       "kind": "wire"
+      },
+      {
+       "id": "E57",
+       "name": "BCC",
+       "kind": "wire"
+      },
+      {
+       "id": "E60",
+       "name": "MCC",
+       "kind": "wire"
+      },
+      {
+       "id": "E61",
+       "name": "RCC",
+       "kind": "wire"
+      },
+      {
+       "id": "E62",
+       "name": "CUS",
+       "kind": "wire"
+      },
+      {
+       "id": "E63",
+       "name": "SYS",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Register file",
+     "kind": "MEMORY",
+     "description": "Register array with two read ports and writeback mux.",
+     "anchors": [
+      {
+       "id": "E64",
+       "name": "REGS",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 98.2,
+       "struct_score": 95.5,
+       "trace": "data_backward",
+       "why": "32x32 register file written via DPTR, read via S1PTR/S2PTR.",
+       "lines": [
+        357,
+        378,
+        716
+       ]
+      },
+      {
+       "id": "E45",
+       "name": "DPTR",
+       "role": "INDEX",
+       "importance": "minor",
+       "score": 15.2,
+       "struct_score": 5.0,
+       "trace": "data_backward",
+       "why": "Destination register index for REGS writeback.",
+       "lines": [
+        323,
+        380,
+        716
+       ]
+      },
+      {
+       "id": "E46",
+       "name": "S1PTR",
+       "role": "INDEX",
+       "importance": "minor",
+       "score": 15.7,
+       "struct_score": 7.1,
+       "trace": "data_backward",
+       "why": "Source-1 register index reading U1REG.",
+       "lines": [
+        324,
+        378
+       ]
+      },
+      {
+       "id": "E47",
+       "name": "S2PTR",
+       "role": "INDEX",
+       "importance": "minor",
+       "score": 15.1,
+       "struct_score": 4.6,
+       "trace": "data_backward",
+       "why": "Source-2 register index reading U2REG.",
+       "lines": [
+        325,
+        379
+       ]
+      },
+      {
+       "id": "E67",
+       "name": "U1REG",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 20.6,
+       "struct_score": 26.9,
+       "trace": "data_backward",
+       "why": "Source-1 operand feeding ALU, address adder and CSR mask.",
+       "lines": [
+        378,
+        551,
+        791
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E68",
+       "name": "U2REG",
+       "kind": "wire"
+      },
+      {
+       "id": "E69",
+       "name": "DREG",
+       "kind": "wire"
+      },
+      {
+       "id": "E70",
+       "name": "S1REG",
+       "kind": "wire"
+      },
+      {
+       "id": "E71",
+       "name": "S2REG",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Execute",
+     "kind": "DATAPATH",
+     "description": "ALU, branch comparator and jump target generation.",
+     "anchors": [
+      {
+       "id": "E104",
+       "name": "RMDATA",
+       "role": "DATAPATH_MAJOR",
+       "importance": "critical",
+       "score": 73.5,
+       "struct_score": 14.4,
+       "trace": "data_backward",
+       "why": "ALU result for register/immediate ops selected by FCT3, written to REGS.",
+       "lines": [
+        542,
+        727
+       ]
+      },
+      {
+       "id": "E105",
+       "name": "BMUX",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 15.1,
+       "struct_score": 4.3,
+       "trace": "data_backward",
+       "why": "Branch condition comparator result by FCT3.",
+       "lines": [
+        577,
+        585
+       ]
+      },
+      {
+       "id": "E106",
+       "name": "PCSIMM",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 17.6,
+       "struct_score": 14.5,
+       "trace": "data_backward",
+       "why": "PC+immediate for branch/JAL target and AUIPC.",
+       "lines": [
+        584,
+        586,
+        720
+       ]
+      },
+      {
+       "id": "E107",
+       "name": "JREQ",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 44.7,
+       "struct_score": 10.8,
+       "trace": "control_backward",
+       "why": "Jump/taken-branch request redirecting IFPC and triggering flush.",
+       "lines": [
+        585,
+        606,
+        777
+       ]
+      },
+      {
+       "id": "E108",
+       "name": "JVAL",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 46.1,
+       "struct_score": 16.8,
+       "trace": "data_backward",
+       "why": "Jump target: DADDR for JALR else PC+SIMM.",
+       "lines": [
+        586,
+        646,
+        777
+       ]
+      },
+      {
+       "id": "E66",
+       "name": "PC",
+       "role": "PIPELINE_REG",
+       "importance": "major",
+       "score": 49.3,
+       "struct_score": 29.5,
+       "trace": "data_backward",
+       "why": "Execute-stage PC used for branch target and trap EPC.",
+       "lines": [
+        368,
+        584,
+        785
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E102",
+       "name": "S2REGX",
+       "kind": "wire"
+      },
+      {
+       "id": "E103",
+       "name": "U2REGX",
+       "kind": "wire"
+      },
+      {
+       "id": "E21",
+       "name": "ALL0",
+       "kind": "wire"
+      },
+      {
+       "id": "E22",
+       "name": "ALL1",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Load/store unit",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Data bus address, byte lanes, strobes and load alignment.",
+     "anchors": [
+      {
+       "id": "E10",
+       "name": "DADDR",
+       "role": "INTERFACE_ADDR",
+       "importance": "critical",
+       "score": 90.3,
+       "struct_score": 75.5,
+       "trace": "data_backward",
+       "why": "Data bus address U1REG+SIMM, also JALR target.",
+       "lines": [
+        80,
+        586,
+        791
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "DATAO",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 60.4,
+       "struct_score": 70.8,
+       "trace": "data_backward",
+       "why": "Store data positioned by byte lane from SDATA.",
+       "lines": [
+        86,
+        790
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "DATAI",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 55.8,
+       "struct_score": 54.3,
+       "trace": "interface",
+       "why": "Load data from data bus, aligned/extended into LDATA.",
+       "lines": [
+        87,
+        417
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "DDREQ",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 62.7,
+       "struct_score": 76.5,
+       "trace": "control_backward",
+       "why": "Data bus request for load or store; stalls core until DDACK.",
+       "lines": [
+        79,
+        140,
+        821
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "DDACK",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 49.3,
+       "struct_score": 29.7,
+       "trace": "interface",
+       "why": "Data bus acknowledge releasing HLT.",
+       "lines": [
+        88,
+        140
+       ]
+      },
+      {
+       "id": "E72",
+       "name": "LDATA",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 17.2,
+       "struct_score": 12.9,
+       "trace": "data_backward",
+       "why": "Byte/half aligned, sign-extended load data for writeback.",
+       "lines": [
+        417,
+        719
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "DWR",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 19.5,
+       "struct_score": 22.3,
+       "trace": "control_backward",
+       "why": "Data bus write strobe for stores.",
+       "lines": [
+        85,
+        819
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "DRD",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 19.5,
+       "struct_score": 22.3,
+       "trace": "control_backward",
+       "why": "Data bus read strobe for loads.",
+       "lines": [
+        84,
+        820
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "DBE",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 20.3,
+       "struct_score": 25.5,
+       "trace": "data_backward",
+       "why": "Byte enables from access size and address low bits.",
+       "lines": [
+        82,
+        810
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E73",
+       "name": "SDATA",
+       "kind": "wire"
+      },
+      {
+       "id": "E11",
+       "name": "DLEN",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "DRW",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "DBERR",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Pipeline control",
+     "kind": "CONTROLLER",
+     "description": "Halt on bus wait, flush after redirects, exception detection.",
+     "anchors": [
+      {
+       "id": "E44",
+       "name": "FLUSH",
+       "role": "CONTROL_FLAG",
+       "importance": "critical",
+       "score": 85.4,
+       "struct_score": 60.2,
+       "trace": "control_backward",
+       "why": "Pipeline flush countdown after reset, jumps, traps; squashes decoded opcodes.",
+       "lines": [
+        247,
+        338,
+        595
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "HLT",
+       "role": "CONTROL_FLAG",
+       "importance": "critical",
+       "score": 78.2,
+       "struct_score": 33.4,
+       "trace": "control_backward",
+       "why": "Stall while instruction or data bus request lacks ack; freezes all stages.",
+       "lines": [
+        136,
+        204,
+        760
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "XRES",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 21.6,
+       "struct_score": 31.0,
+       "trace": "control_backward",
+       "why": "Registered core reset forcing reset PC, flush and CSR clear.",
+       "lines": [
+        117,
+        130,
+        760
+       ]
+      },
+      {
+       "id": "E75",
+       "name": "IERR",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.7,
+       "struct_score": 15.2,
+       "trace": "forward",
+       "why": "Illegal instruction flag causing trap and flush.",
+       "lines": [
+        441,
+        599,
+        766
+       ]
+      },
+      {
+       "id": "E78",
+       "name": "DAER",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.1,
+       "struct_score": 12.7,
+       "trace": "forward",
+       "why": "Data address misalignment flag causing trap.",
+       "lines": [
+        445,
+        599,
+        768
+       ]
+      },
+      {
+       "id": "E79",
+       "name": "IAER",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.5,
+       "struct_score": 10.3,
+       "trace": "forward",
+       "why": "Instruction address misalignment flag causing trap.",
+       "lines": [
+        446,
+        599,
+        764
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E2",
+       "name": "RES",
+       "kind": "port_in"
+      },
+      {
+       "id": "E76",
+       "name": "DBER",
+       "kind": "wire"
+      },
+      {
+       "id": "E77",
+       "name": "IBER",
+       "kind": "wire"
+      },
+      {
+       "id": "E8",
+       "name": "IBERR",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "CSR and traps",
+     "kind": "REGISTER_BANK",
+     "description": "Machine interrupt and supervisor exception CSRs with read/write mux.",
+     "anchors": [
+      {
+       "id": "E87",
+       "name": "MIP",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 51.4,
+       "struct_score": 38.2,
+       "trace": "control_backward",
+       "why": "Machine interrupt pending; with JREQ redirects PC to MTVEC.",
+       "lines": [
+        459,
+        616,
+        774
+       ]
+      },
+      {
+       "id": "E81",
+       "name": "MSTATUS",
+       "role": "CONFIG_REG",
+       "importance": "minor",
+       "score": 22.4,
+       "struct_score": 34.3,
+       "trace": "data_backward",
+       "why": "Machine status; MIE bit gates interrupt pending.",
+       "lines": [
+        453,
+        616,
+        636
+       ]
+      },
+      {
+       "id": "E86",
+       "name": "MIE",
+       "role": "CONFIG_REG",
+       "importance": "minor",
+       "score": 22.2,
+       "struct_score": 33.3,
+       "trace": "data_backward",
+       "why": "Machine interrupt enable mask gating MIP.",
+       "lines": [
+        458,
+        616,
+        640
+       ]
+      },
+      {
+       "id": "E85",
+       "name": "MTVEC",
+       "role": "CONFIG_REG",
+       "importance": "minor",
+       "score": 22.0,
+       "struct_score": 32.7,
+       "trace": "data_backward",
+       "why": "Interrupt vector loaded into IFPC on pending interrupt.",
+       "lines": [
+        457,
+        638,
+        775
+       ]
+      },
+      {
+       "id": "E84",
+       "name": "MEPC",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 23.9,
+       "struct_score": 40.3,
+       "trace": "data_backward",
+       "why": "Saved return PC on interrupt, restored by MRET.",
+       "lines": [
+        456,
+        646,
+        773
+       ]
+      },
+      {
+       "id": "E83",
+       "name": "MCAUSE",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 17.8,
+       "struct_score": 15.3,
+       "trace": "data_backward",
+       "why": "Interrupt cause readable via CSR.",
+       "lines": [
+        455,
+        500,
+        649
+       ]
+      },
+      {
+       "id": "E93",
+       "name": "STVEC",
+       "role": "CONFIG_REG",
+       "importance": "minor",
+       "score": 25.2,
+       "struct_score": 45.0,
+       "trace": "data_backward",
+       "why": "Exception vector; nonzero enables trap redirect of IFPC.",
+       "lines": [
+        469,
+        698,
+        769
+       ]
+      },
+      {
+       "id": "E92",
+       "name": "SEPC",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 24.5,
+       "struct_score": 42.4,
+       "trace": "data_backward",
+       "why": "Saved PC on exception, restored by SRET.",
+       "lines": [
+        468,
+        676,
+        762
+       ]
+      },
+      {
+       "id": "E91",
+       "name": "SCAUSE",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 18.4,
+       "struct_score": 17.7,
+       "trace": "data_backward",
+       "why": "Exception cause code from error flags.",
+       "lines": [
+        467,
+        680
+       ]
+      },
+      {
+       "id": "E99",
+       "name": "CRDATA",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 19.7,
+       "struct_score": 23.2,
+       "trace": "data_backward",
+       "why": "CSR read mux by CSR address, written back to REGS.",
+       "lines": [
+        490,
+        523,
+        733
+       ]
+      },
+      {
+       "id": "E101",
+       "name": "WRDATA",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 24.4,
+       "struct_score": 42.2,
+       "trace": "data_backward",
+       "why": "CSR write value for CSRRW/RS/RC.",
+       "lines": [
+        523,
+        636,
+        696
+       ]
+      },
+      {
+       "id": "E97",
+       "name": "CSRCLK",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 24.5,
+       "struct_score": 42.4,
+       "trace": "none",
+       "why": "64-bit cycle counter CSR.",
+       "lines": [
+        477,
+        483,
+        515
+       ]
+      },
+      {
+       "id": "E98",
+       "name": "CSRINS",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 25.8,
+       "struct_score": 46.9,
+       "trace": "none",
+       "why": "64-bit retired-instruction counter CSR.",
+       "lines": [
+        478,
+        485,
+        516
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E82",
+       "name": "MSCRATCH",
+       "kind": "reg"
+      },
+      {
+       "id": "E89",
+       "name": "SSTATUS",
+       "kind": "reg"
+      },
+      {
+       "id": "E90",
+       "name": "SSCRATCH",
+       "kind": "reg"
+      },
+      {
+       "id": "E94",
+       "name": "SIE",
+       "kind": "reg"
+      },
+      {
+       "id": "E95",
+       "name": "SIP",
+       "kind": "reg"
+      },
+      {
+       "id": "E100",
+       "name": "CRMASK",
+       "kind": "wire"
+      },
+      {
+       "id": "E3",
+       "name": "IRQ",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Debug",
+     "kind": "OTHER",
+     "description": "Oscilloscope debug outputs.",
+     "anchors": [
+      {
+       "id": "E20",
+       "name": "DEBUG",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 18.2,
+       "struct_score": 17.1,
+       "trace": "data_backward",
+       "why": "Debug view of IRQ, MIP, MIE and MRET.",
+       "lines": [
+        107,
+        825
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "CLK",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "RES",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "irq",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "IRQ",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "instruction_bus",
+     "protocol": "MEMORY_BUS",
+     "direction": "IN",
+     "member_ids": [
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "IDREQ",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "IADDR",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "IDATA",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "IDACK",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "IBERR",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "data_bus",
+     "protocol": "MEMORY_BUS",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E9",
+      "E10",
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18",
+      "E19"
+     ],
+     "members": [
+      {
+       "id": "E9",
+       "name": "DDREQ",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "DADDR",
+       "kind": "port_out"
+      },
+      {
+       "id": "E11",
+       "name": "DLEN",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "DBE",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "DRW",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "DRD",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "DWR",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "DATAO",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "DATAI",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "DDACK",
+       "kind": "port_in"
+      },
+      {
+       "id": "E19",
+       "name": "DBERR",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "debug",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E20"
+     ],
+     "members": [
+      {
+       "id": "E20",
+       "name": "DEBUG",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

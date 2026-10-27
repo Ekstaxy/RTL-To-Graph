@@ -1,0 +1,25 @@
+{
+ "module_summary": "Serial-triggered timer: FSM detects 1101, shifts in a 4-bit delay, counts (delay+1)*1000 cycles with a fast 0-999 counter and a decrementing delay register, then waits for ack.",
+ "anchors": [
+  {"id": "E8", "name": "state", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Controller: pattern search, 4 shift states, Count, Wait for ack", "lines": [16, 24, 41]},
+  {"id": "E12", "name": "scount", "role": "COUNTER", "importance": "critical", "trace": "data_backward", "why": "Delay shift register, then decrementing remaining-time counter", "lines": [20, 61, 63]},
+  {"id": "E11", "name": "fcount", "role": "COUNTER", "importance": "critical", "trace": "control_backward", "why": "Fast 0-999 cycle counter pacing scount decrements", "lines": [19, 70, 73]},
+  {"id": "E13", "name": "done_counting", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Terminal condition moving FSM from Count to Wait", "lines": [21, 33]},
+  {"id": "E10", "name": "shift_ena", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Enables shifting data bits into scount in B0-B3", "lines": [18, 47, 60]},
+  {"id": "E5", "name": "counting", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Count-state indication; enables counters and count output", "lines": [7, 49, 68]},
+  {"id": "E6", "name": "done", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Timeout indication asserted in Wait state", "lines": [8, 51]},
+  {"id": "E4", "name": "count", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Remaining time output from scount while counting", "lines": [6, 75]},
+  {"id": "E7", "name": "ack", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "User acknowledge returning FSM from Wait to search", "lines": [9, 34]},
+  {"id": "E3", "name": "data", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Serial input for pattern detection and delay bits", "lines": [5, 25, 61]}
+ ],
+ "groups": [
+  {"name": "Timer controller", "kind": "CONTROLLER", "anchor_ids": ["E8", "E10", "E5", "E6", "E7"], "member_ids": ["E9"], "description": "Pattern detect, delay shift, count and wait sequencing"},
+  {"name": "Delay counters", "kind": "COUNTER_TIMER", "anchor_ids": ["E12", "E11", "E13", "E4"], "member_ids": [], "description": "Fast 1000-cycle counter and remaining-delay counter"},
+  {"name": "Serial input", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E3"], "member_ids": [], "description": "Serial data bits feeding detector and delay shift"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "serial_in", "protocol": "SERIAL", "direction": "IN", "member_ids": ["E3"]},
+  {"name": "timer_status", "protocol": "REQ_ACK", "direction": "OUT", "member_ids": ["E4", "E5", "E6", "E7"]}
+ ]
+}

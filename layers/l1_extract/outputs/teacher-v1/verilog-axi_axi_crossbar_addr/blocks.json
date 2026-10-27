@@ -1,0 +1,642 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-axi_axi_crossbar_addr",
+ "tops": [
+  "axi_crossbar_addr"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "axi_crossbar_addr": {
+   "source": "teacher",
+   "canonical_instance": "axi_crossbar_addr",
+   "file": "data/rtl/verilog-axi/rtl/axi_crossbar_addr.v",
+   "lines": [
+    34,
+    416
+   ],
+   "summary": "AXI crossbar address decoder: a two-state FSM decodes the slave address into master select/region or decode error, enforcing outstanding-transaction and per-ID thread limits tracked by counters.",
+   "blocks": [
+    {
+     "name": "Decode controller",
+     "kind": "CONTROLLER",
+     "description": "IDLE/DECODE FSM issuing address, write command and reply command handshakes.",
+     "anchors": [
+      {
+       "id": "E22",
+       "name": "state_reg",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.8,
+       "struct_score": 99.5,
+       "trace": "control_backward",
+       "why": "IDLE/DECODE controller: decodes address, issues outputs, waits for handshakes before aready.",
+       "lines": [
+        331,
+        398
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "s_axi_avalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 93.5,
+       "struct_score": 83.5,
+       "trace": "interface",
+       "why": "Address valid starting a decode in IDLE.",
+       "lines": [
+        336
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "s_axi_aready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 65.4,
+       "struct_score": 83.3,
+       "trace": "interface",
+       "why": "Registered address ready pulsed after all outputs handshake.",
+       "lines": [
+        247,
+        336
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "m_axi_avalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 87.2,
+       "struct_score": 66.8,
+       "trace": "interface",
+       "why": "Decoded address valid toward selected master.",
+       "lines": [
+        251
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "m_axi_aready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 52.6,
+       "struct_score": 42.9,
+       "trace": "interface",
+       "why": "Master address ready clearing address valid.",
+       "lines": [
+        326
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "m_wc_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 31.2,
+       "struct_score": 66.8,
+       "trace": "interface",
+       "why": "Write command valid carrying select and decerr when WC_OUTPUT.",
+       "lines": [
+        255
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "m_rc_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 31.2,
+       "struct_score": 66.8,
+       "trace": "interface",
+       "why": "Reply command valid issued on decode error.",
+       "lines": [
+        258
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E23",
+       "name": "state_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E24",
+       "name": "s_axi_aready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E25",
+       "name": "s_axi_aready_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E30",
+       "name": "m_axi_avalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E31",
+       "name": "m_axi_avalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E34",
+       "name": "m_wc_valid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E35",
+       "name": "m_wc_valid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E36",
+       "name": "m_rc_valid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E37",
+       "name": "m_rc_valid_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Address decoder",
+     "kind": "DECODER",
+     "description": "Compares address/prot to master regions, yields select, region and decerr.",
+     "anchors": [
+      {
+       "id": "E4",
+       "name": "s_axi_aaddr",
+       "role": "INTERFACE_ADDR",
+       "importance": "critical",
+       "score": 89.5,
+       "struct_score": 73.4,
+       "trace": "interface",
+       "why": "Slave address compared against master base addresses to select destination.",
+       "lines": [
+        340
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "m_select",
+       "role": "DECODE",
+       "importance": "critical",
+       "score": 81.0,
+       "struct_score": 44.3,
+       "trace": "data_backward",
+       "why": "Decoded destination master index steering the crossbar.",
+       "lines": [
+        250
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "m_axi_aregion",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 26.3,
+       "struct_score": 48.8,
+       "trace": "data_backward",
+       "why": "Decoded region index within selected master.",
+       "lines": [
+        249
+       ]
+      },
+      {
+       "id": "E38",
+       "name": "match",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 48.7,
+       "struct_score": 27.1,
+       "trace": "control_backward",
+       "why": "Address matched a permitted master region; chooses issue versus decode error.",
+       "lines": [
+        343,
+        348
+       ]
+      },
+      {
+       "id": "E32",
+       "name": "m_decerr_reg",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 45.9,
+       "struct_score": 16.0,
+       "trace": "control_backward",
+       "why": "Decode error flag on no-match, sent to write and reply command outputs.",
+       "lines": [
+        254,
+        413
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E5",
+       "name": "s_axi_aprot",
+       "kind": "port_in"
+      },
+      {
+       "id": "E26",
+       "name": "m_axi_aregion_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E27",
+       "name": "m_axi_aregion_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E28",
+       "name": "m_select_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E29",
+       "name": "m_select_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E33",
+       "name": "m_decerr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E13",
+       "name": "m_wc_select",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "m_wc_decerr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "m_rc_decerr",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "Transaction tracking",
+     "kind": "COUNTER_TIMER",
+     "description": "Global outstanding counter and per-ID thread table enforcing accept and ordering limits.",
+     "anchors": [
+      {
+       "id": "E41",
+       "name": "trans_count_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 54.6,
+       "struct_score": 50.1,
+       "trace": "control_backward",
+       "why": "Outstanding transaction count, incremented on start, decremented on completion.",
+       "lines": [
+        265,
+        405
+       ]
+      },
+      {
+       "id": "E42",
+       "name": "trans_limit",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 19.6,
+       "struct_score": 22.7,
+       "trace": "control_backward",
+       "why": "Outstanding limit reached; blocks new decode issue.",
+       "lines": [
+        265,
+        350
+       ]
+      },
+      {
+       "id": "E39",
+       "name": "trans_start",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 18.0,
+       "struct_score": 16.2,
+       "trace": "forward",
+       "why": "Transaction issue pulse updating counters and thread table.",
+       "lines": [
+        356,
+        404
+       ]
+      },
+      {
+       "id": "E43",
+       "name": "thread_id_reg",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 68.2,
+       "struct_score": 90.3,
+       "trace": "data_backward",
+       "why": "Per-thread table of active IDs with destination, preserving ID ordering.",
+       "lines": [
+        289,
+        307
+       ]
+      },
+      {
+       "id": "E46",
+       "name": "thread_count_reg",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 35.3,
+       "struct_score": 78.1,
+       "trace": "control_backward",
+       "why": "Per-thread outstanding count; nonzero marks thread active.",
+       "lines": [
+        288,
+        300
+       ]
+      },
+      {
+       "id": "E48",
+       "name": "thread_match",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 21.6,
+       "struct_score": 30.9,
+       "trace": "control_backward",
+       "why": "Incoming ID matches an active thread.",
+       "lines": [
+        289,
+        350
+       ]
+      },
+      {
+       "id": "E49",
+       "name": "thread_match_dest",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 23.0,
+       "struct_score": 36.7,
+       "trace": "control_backward",
+       "why": "Matching thread targets same master/region, allowing issue.",
+       "lines": [
+        290,
+        350
+       ]
+      },
+      {
+       "id": "E21",
+       "name": "s_cpl_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 30.6,
+       "struct_score": 64.4,
+       "trace": "interface",
+       "why": "Completion strobe decrementing transaction and thread counters.",
+       "lines": [
+        385
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E40",
+       "name": "trans_complete",
+       "kind": "comb"
+      },
+      {
+       "id": "E44",
+       "name": "thread_m_reg",
+       "kind": "mem"
+      },
+      {
+       "id": "E45",
+       "name": "thread_region_reg",
+       "kind": "mem"
+      },
+      {
+       "id": "E47",
+       "name": "thread_active",
+       "kind": "wire"
+      },
+      {
+       "id": "E50",
+       "name": "thread_cpl_match",
+       "kind": "wire"
+      },
+      {
+       "id": "E51",
+       "name": "thread_trans_start",
+       "kind": "wire"
+      },
+      {
+       "id": "E52",
+       "name": "thread_trans_complete",
+       "kind": "wire"
+      },
+      {
+       "id": "E3",
+       "name": "s_axi_aid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E20",
+       "name": "s_cpl_id",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock/reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axi address",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axi_aid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axi_aaddr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axi_aprot",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_axi_aqos",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "s_axi_avalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_axi_aready",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "m_axi address",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E9",
+      "E10",
+      "E11",
+      "E12"
+     ],
+     "members": [
+      {
+       "id": "E9",
+       "name": "m_axi_aregion",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "m_select",
+       "kind": "port_out"
+      },
+      {
+       "id": "E11",
+       "name": "m_axi_avalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "m_axi_aready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "write command",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E13",
+      "E14",
+      "E15",
+      "E16"
+     ],
+     "members": [
+      {
+       "id": "E13",
+       "name": "m_wc_select",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "m_wc_decerr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "m_wc_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "m_wc_ready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "reply command",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E17",
+      "E18",
+      "E19"
+     ],
+     "members": [
+      {
+       "id": "E17",
+       "name": "m_rc_decerr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "m_rc_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "m_rc_ready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "completion",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E20",
+      "E21"
+     ],
+     "members": [
+      {
+       "id": "E20",
+       "name": "s_cpl_id",
+       "kind": "port_in"
+      },
+      {
+       "id": "E21",
+       "name": "s_cpl_valid",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

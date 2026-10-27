@@ -1,0 +1,385 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "biriscv_biriscv_multiplier",
+ "tops": [
+  "biriscv_multiplier"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "biriscv_multiplier": {
+   "source": "teacher",
+   "canonical_instance": "biriscv_multiplier",
+   "file": "data/rtl/biriscv/src/core/biriscv_multiplier.v",
+   "lines": [
+    26,
+    145
+   ],
+   "summary": "Pipelined RISC-V multiplier: decodes MUL/MULH variants, registers sign-extended 33-bit operands, multiplies, selects high/low half and pipelines result over 2-3 stages under hold.",
+   "blocks": [
+    {
+     "name": "Decode and operand prep",
+     "kind": "DECODER",
+     "description": "Decodes multiply variant and sign-extends operands",
+     "anchors": [
+      {
+       "id": "E4",
+       "name": "opcode_opcode_i",
+       "role": "COMMAND",
+       "importance": "critical",
+       "score": 89.8,
+       "struct_score": 74.1,
+       "trace": "interface",
+       "why": "Instruction word decoded for MUL variant and operand signedness",
+       "lines": [
+        32,
+        73,
+        81
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "mult_inst_w",
+       "role": "DECODE",
+       "importance": "major",
+       "score": 50.5,
+       "struct_score": 34.4,
+       "trace": "control_backward",
+       "why": "Decoded any-multiply instruction flag enabling operand capture",
+       "lines": [
+        73,
+        110
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "opcode_ra_operand_i",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 66.7,
+       "struct_score": 86.5,
+       "trace": "interface",
+       "why": "Source operand A, sign/zero extended into operand_a_r",
+       "lines": [
+        38,
+        82,
+        86
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "opcode_rb_operand_i",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 66.7,
+       "struct_score": 86.5,
+       "trace": "interface",
+       "why": "Source operand B, sign/zero extended into operand_b_r",
+       "lines": [
+        39,
+        94,
+        96
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E20",
+       "name": "operand_b_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E21",
+       "name": "operand_a_r",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Stage 1 operand registers",
+     "kind": "PIPELINE_STAGE",
+     "description": "Captures operands and high/low select under hold",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "opcode_valid_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 94.0,
+       "struct_score": 84.9,
+       "trace": "interface",
+       "why": "Issue valid; with mult_inst_w loads E1 operand registers",
+       "lines": [
+        31,
+        110
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "hold_i",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 61.0,
+       "struct_score": 72.1,
+       "trace": "interface",
+       "why": "Pipeline stall freezing operand and result registers",
+       "lines": [
+        40,
+        108,
+        133
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "operand_a_e1_q",
+       "role": "PIPELINE_REG",
+       "importance": "major",
+       "score": 58.1,
+       "struct_score": 62.7,
+       "trace": "data_backward",
+       "why": "Stage-1 33-bit operand A register feeding multiplier",
+       "lines": [
+        61,
+        112,
+        123
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "operand_b_e1_q",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 30.1,
+       "struct_score": 62.7,
+       "trace": "data_backward",
+       "why": "Stage-1 33-bit operand B register feeding multiplier",
+       "lines": [
+        62,
+        113,
+        123
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "mulhi_sel_e1_q",
+       "role": "MUX_SELECT",
+       "importance": "major",
+       "score": 52.5,
+       "struct_score": 42.5,
+       "trace": "control_backward",
+       "why": "Selects high or low 32 bits of product",
+       "lines": [
+        63,
+        114,
+        127
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Multiplier",
+     "kind": "DATAPATH",
+     "description": "33x33 signed multiply and half select",
+     "anchors": [
+      {
+       "id": "E19",
+       "name": "mult_result_w",
+       "role": "DATAPATH_MAJOR",
+       "importance": "critical",
+       "score": 80.6,
+       "struct_score": 42.8,
+       "trace": "data_backward",
+       "why": "65-bit product of stage-1 operands",
+       "lines": [
+        68,
+        123,
+        127
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E22",
+       "name": "result_r",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Result pipeline",
+     "kind": "PIPELINE_STAGE",
+     "description": "Result registers to writeback output",
+     "anchors": [
+      {
+       "id": "E14",
+       "name": "result_e2_q",
+       "role": "PIPELINE_REG",
+       "importance": "major",
+       "score": 61.0,
+       "struct_score": 72.3,
+       "trace": "data_backward",
+       "why": "Stage-2 result register, default writeback source",
+       "lines": [
+        58,
+        134,
+        142
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "result_e3_q",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 28.8,
+       "struct_score": 58.1,
+       "trace": "data_backward",
+       "why": "Optional stage-3 result register when MULT_STAGES is 3",
+       "lines": [
+        59,
+        140,
+        142
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "writeback_value_o",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 96.0,
+       "struct_score": 89.9,
+       "trace": "data_backward",
+       "why": "Multiply result from stage 2 or 3 register",
+       "lines": [
+        43,
+        142
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "opcode_issue",
+     "protocol": "OTHER",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "opcode_valid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "opcode_opcode_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "opcode_pc_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "opcode_invalid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "opcode_rd_idx_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "opcode_ra_idx_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "opcode_rb_idx_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "opcode_ra_operand_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "opcode_rb_operand_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "pipeline_control",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E12"
+     ],
+     "members": [
+      {
+       "id": "E12",
+       "name": "hold_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "writeback",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E13"
+     ],
+     "members": [
+      {
+       "id": "E13",
+       "name": "writeback_value_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

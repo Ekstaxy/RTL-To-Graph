@@ -1,0 +1,19 @@
+{
+ "module_summary": "Clock/reset generator: stretches the external reset with a down-counter, feeds a vendor PLL/MMCM (or passes XCLK through) and releases the internal reset via a second counter after LOCKED.",
+ "anchors": [
+  {"id": "E5", "name": "IRES", "role": "COUNTER", "importance": "critical", "trace": "control_backward", "why": "Reset-stretch down-counter on XCLK; IRES[7] resets the PLL and defines LOCKED in bypass.", "lines": [45, 50]},
+  {"id": "E6", "name": "LOCKED", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "PLL lock flag; while low it reloads DRES holding internal reset.", "lines": [53, 206, 216]},
+  {"id": "E7", "name": "DRES", "role": "COUNTER", "importance": "critical", "trace": "control_backward", "why": "Down-counter on CLK delaying reset release after lock; MSB drives RES.", "lines": [212, 216, 219]},
+  {"id": "E4", "name": "RES", "role": "CLOCK_GEN", "importance": "critical", "trace": "data_backward", "why": "Generated internal reset output synchronized to CLK from DRES[7].", "lines": [40, 219]},
+  {"id": "E2", "name": "XRES", "role": "COMMAND", "importance": "major", "trace": "interface", "why": "External reset request reloading the IRES stretch counter.", "lines": [37, 50]}
+ ],
+ "groups": [
+  {"name": "input_reset_stretch", "kind": "COUNTER_TIMER", "anchor_ids": ["E5", "E2"], "member_ids": [], "description": "Stretches external reset XRES for PLL reset using IRES counter."},
+  {"name": "clock_generator", "kind": "OTHER", "anchor_ids": ["E6"], "member_ids": ["E3"], "description": "Vendor PLL/MMCM or bypass producing CLK and LOCKED from XCLK."},
+  {"name": "output_reset_sync", "kind": "COUNTER_TIMER", "anchor_ids": ["E7", "E4"], "member_ids": [], "description": "Holds RES asserted until DRES counts down after PLL lock."}
+ ],
+ "interfaces": [
+  {"name": "external_clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "internal_clock_reset", "protocol": "CLOCK_RESET", "direction": "OUT", "member_ids": ["E3", "E4"]}
+ ]
+}

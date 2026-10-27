@@ -1,0 +1,29 @@
+{
+  "module_summary": "AXI-stream width upsizer (8 to 32 bit): a segment counter packs input beats into an output register lane by lane, with a one-beat input skid buffer while the output is stalled.",
+  "anchors": [
+    {"id": "E3", "name": "s_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Narrow input beat written into the selected output segment or skid buffer.", "lines": [70, 182, 211]},
+    {"id": "E5", "name": "s_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Input valid; advances segment counter or loads skid buffer.", "lines": [72, 200, 209]},
+    {"id": "E6", "name": "s_axis_tready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Input ready, asserted while the skid buffer is empty.", "lines": [73, 162, 209]},
+    {"id": "E11", "name": "m_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Wide output word assembled in m_axis_tdata_reg.", "lines": [82, 164]},
+    {"id": "E13", "name": "m_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Output valid, set when last segment or tlast packed.", "lines": [84, 166]},
+    {"id": "E14", "name": "m_axis_tready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Output ready; gates all output register and skid updates.", "lines": [85, 173, 175]},
+    {"id": "E20", "name": "upsize.seg_reg", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Segment counter selecting output lane; wraps at SEG_COUNT-1 or tlast.", "lines": [144, 178, 198]},
+    {"id": "E21", "name": "upsize.s_axis_tdata_reg", "role": "STORAGE", "importance": "major", "trace": "data_backward", "why": "Skid buffer holding one input beat while output is stalled.", "lines": [146, 179, 211]},
+    {"id": "E23", "name": "upsize.s_axis_tvalid_reg", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Skid buffer full flag: selects buffer as source, deasserts tready.", "lines": [148, 162, 190]},
+    {"id": "E7", "name": "s_axis_tlast", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "End-of-packet sideband forcing early output of partial word.", "lines": [74, 202, 214]},
+    {"id": "E15", "name": "m_axis_tlast", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Output end-of-packet from m_axis_tlast_reg.", "lines": [86, 167]},
+    {"id": "E12", "name": "m_axis_tkeep", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Output byte-valid mask built per segment for partial words.", "lines": [83, 165]},
+    {"id": "E10", "name": "s_axis_tuser", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Input user sideband captured into output register.", "lines": [77, 188, 217]},
+    {"id": "E18", "name": "m_axis_tuser", "role": "INTERFACE_DATA", "importance": "minor", "trace": "data_backward", "why": "Output user sideband from m_axis_tuser_reg.", "lines": [89, 170]}
+  ],
+  "groups": [
+    {"name": "Input AXI-stream and skid buffer", "kind": "BUFFER", "anchor_ids": ["E3", "E5", "E6", "E7", "E10", "E21", "E23"], "member_ids": ["E4", "E8", "E9", "E19", "E22", "E24", "E25", "E26", "E27"], "description": "Input handshake with single-beat skid buffer for stalled output."},
+    {"name": "Segment packer", "kind": "DATAPATH", "anchor_ids": ["E20"], "member_ids": ["E28", "E29"], "description": "Counter-driven lane writes building the wide output word."},
+    {"name": "Output AXI-stream register", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E11", "E13", "E14", "E15", "E12", "E18"], "member_ids": ["E16", "E17", "E30", "E31", "E32", "E33", "E34"], "description": "Registered wide output with valid cleared on ready."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "s_axis", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10"]},
+    {"name": "m_axis", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E11", "E12", "E13", "E14", "E15", "E16", "E17", "E18"]}
+  ]
+}

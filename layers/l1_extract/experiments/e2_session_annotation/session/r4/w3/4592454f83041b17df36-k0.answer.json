@@ -1,0 +1,40 @@
+{
+ "module_summary": "N:1 Ethernet frame arbitrated mux: an arbiter grants one input per frame, header fields are latched into output registers, and the granted payload stream is muxed through a skid-buffered output register stage.",
+ "anchors": [
+  {"id": "E45", "name": "grant_encoded", "role": "MUX_SELECT", "importance": "critical", "trace": "control_backward", "why": "Encoded granted input index; selects header fields and payload stream from that input.", "lines": [120, 128, 182]},
+  {"id": "E29", "name": "frame_reg", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Two-state idle/in-frame tracker: starts frame on grant, clears on tlast.", "lines": [175, 198]},
+  {"id": "E3", "name": "s_eth_hdr_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Per-input header valid vector forming arbiter requests.", "lines": [155]},
+  {"id": "E8", "name": "s_eth_payload_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Concatenated input payload streams muxed by grant_encoded.", "lines": [128]},
+  {"id": "E21", "name": "m_eth_payload_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Registered output payload data of the selected frame.", "lines": [236]},
+  {"id": "E43", "name": "grant", "role": "ARBITRATION", "importance": "major", "trace": "control_backward", "why": "One-hot grant from arbiter; masks requests and drives header ready.", "lines": [150, 155, 179]},
+  {"id": "E44", "name": "grant_valid", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "A grant is active; gates frame start, payload valid and input ready.", "lines": [120, 175, 190]},
+  {"id": "E16", "name": "m_eth_hdr_valid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Output header valid, set at frame start and cleared by m_eth_hdr_ready.", "lines": [122, 175]},
+  {"id": "E35", "name": "m_eth_dest_mac_reg", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Holds selected input header fields (dest MAC representative) for output header.", "lines": [182, 203, 123]},
+  {"id": "E11", "name": "s_eth_payload_axis_tready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "Ready routed only to granted input when output path can accept.", "lines": [120]},
+  {"id": "E23", "name": "m_eth_payload_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Output payload valid from skid output register.", "lines": [238]},
+  {"id": "E24", "name": "m_eth_payload_axis_tready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Downstream ready; steers output vs temp register storage.", "lines": [245, 258]},
+  {"id": "E41", "name": "request", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "data_backward", "why": "Arbiter request vector from header valids masked by current grant.", "lines": [148, 155]},
+  {"id": "E42", "name": "acknowledge", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Releases grant at last payload beat of granted input.", "lines": [149, 156]},
+  {"id": "E4", "name": "s_eth_hdr_ready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Header accept pulse to granted input at frame start.", "lines": [118]},
+  {"id": "E55", "name": "current_s_tdata", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Muxed payload data of granted input into internal datapath.", "lines": [128, 188]},
+  {"id": "E49", "name": "m_eth_payload_axis_tready_int_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Registered internal ready gating input ready and skid buffer storage decisions.", "lines": [190, 256, 277]},
+  {"id": "E71", "name": "temp_m_eth_payload_axis_tdata_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Skid temp register holding payload beat when output stalls.", "lines": [289, 298]},
+  {"id": "E73", "name": "temp_m_eth_payload_axis_tvalid_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Temp skid register occupied flag; affects early ready.", "lines": [245, 269]},
+  {"id": "E79", "name": "store_axis_int_to_output", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Loads output registers from internal datapath.", "lines": [261, 281]},
+  {"id": "E80", "name": "store_axis_int_to_temp", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Loads temp skid registers when output not ready.", "lines": [265, 297]},
+  {"id": "E81", "name": "store_eth_payload_axis_temp_to_output", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Moves temp skid registers into output registers.", "lines": [271, 288]}
+ ],
+ "groups": [
+  {"name": "Arbiter and frame control", "kind": "ARBITER", "anchor_ids": ["E45", "E43", "E44", "E29", "E41", "E42", "E3", "E4"], "member_ids": ["I1", "E30", "E31", "E32"], "description": "Arbiter grants one input per frame; frame_reg tracks frame boundaries and acknowledges on tlast."},
+  {"name": "Header register", "kind": "REGISTER_BANK", "anchor_ids": ["E16", "E35"], "member_ids": ["E33", "E34", "E36", "E37", "E38", "E39", "E40", "E18", "E19", "E20"], "description": "Latches granted input header fields into output header registers with valid/ready."},
+  {"name": "Payload mux", "kind": "DATAPATH", "anchor_ids": ["E8", "E11", "E55"], "member_ids": ["E56", "E57", "E58", "E59", "E60", "E61", "E62", "E46", "E47", "E48", "E50", "E51", "E52", "E53"], "description": "Selects granted input payload stream into internal datapath."},
+  {"name": "Output skid buffer", "kind": "BUFFER", "anchor_ids": ["E21", "E23", "E24", "E49", "E71", "E73", "E79", "E80", "E81"], "member_ids": ["E54", "E63", "E64", "E65", "E66", "E67", "E68", "E69", "E70", "E72", "E74", "E75", "E76", "E77", "E78", "E22", "E25", "E26", "E27", "E28"], "description": "Output plus temp register pair giving registered ready on payload output."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "s_eth_hdr", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7"]},
+  {"name": "s_eth_payload_axis", "protocol": "STREAM", "direction": "IN", "member_ids": ["E8", "E9", "E10", "E11", "E12", "E13", "E14", "E15"]},
+  {"name": "m_eth_hdr", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E16", "E17", "E18", "E19", "E20"]},
+  {"name": "m_eth_payload_axis", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E21", "E22", "E23", "E24", "E25", "E26", "E27", "E28"]}
+ ]
+}

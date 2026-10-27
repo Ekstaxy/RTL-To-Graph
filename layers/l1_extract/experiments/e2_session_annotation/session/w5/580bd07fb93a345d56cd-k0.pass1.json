@@ -1,0 +1,36 @@
+{
+ "module_summary": "SERV bit-serial immediate decoder: latches instruction fields from the bus into segment registers, then shifts them as a chained shift register to emit the immediate one bit per cycle, sharing the segments as rd/rs1/rs2 addresses.",
+ "anchors": [
+  {"id": "E13", "name": "i_wb_rdt", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Instruction word bits loaded into the immediate segment registers.", "lines": [28, 55, 63]},
+  {"id": "E12", "name": "i_wb_en", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Load enable: parallel-loads all segment registers from i_wb_rdt.", "lines": [27, 50, 54]},
+  {"id": "E2", "name": "i_cnt_en", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Shift enable advancing the immediate shift chain each serial cycle.", "lines": [14, 54, 56]},
+  {"id": "E4", "name": "i_immdec_en", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Per-segment shift enables selecting which immediate segments shift.", "lines": [17, 59, 62]},
+  {"id": "E6", "name": "i_ctrl", "role": "MUX_SELECT", "importance": "major", "trace": "control_backward", "why": "Selects sign bit vs neighbor segment inputs and o_imm source by format.", "lines": [19, 60, 100]},
+  {"id": "E15", "name": "gen_immdec_w_eq_1.imm19_12_20", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "Shift segment holding imm[19:12,20]; also supplies rs1 address and csr immediate.", "lines": [34, 45, 55]},
+  {"id": "E17", "name": "gen_immdec_w_eq_1.imm30_25", "role": "STORAGE", "importance": "major", "trace": "data_backward", "why": "Shift segment holding imm[30:25], feeding imm24_20 and imm11_7.", "lines": [36, 60]},
+  {"id": "E18", "name": "gen_immdec_w_eq_1.imm24_20", "role": "STORAGE", "importance": "major", "trace": "data_backward", "why": "Shift segment holding imm[24:20]; doubles as rs2 address; o_imm source.", "lines": [37, 46, 63]},
+  {"id": "E19", "name": "gen_immdec_w_eq_1.imm11_7", "role": "STORAGE", "importance": "major", "trace": "data_backward", "why": "Shift segment holding imm[11:7]; doubles as rd address; o_imm source.", "lines": [38, 47, 66]},
+  {"id": "E16", "name": "gen_immdec_w_eq_1.imm7", "role": "STORAGE", "importance": "minor", "trace": "data_backward", "why": "Single-bit segment for instruction bit 7 used by B-type immediates.", "lines": [35, 57]},
+  {"id": "E14", "name": "gen_immdec_w_eq_1.imm31", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Latched instruction bit 31 held as immediate sign for the whole operation.", "lines": [32, 52]},
+  {"id": "E20", "name": "gen_immdec_w_eq_1.signbit", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Sign extension bit (imm31 masked for CSR) shifted into segments.", "lines": [42, 57]},
+  {"id": "E11", "name": "o_imm", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Serial immediate output bit selected from segments or sign bit.", "lines": [25, 100]},
+  {"id": "E7", "name": "o_rd_addr", "role": "INTERFACE_ADDR", "importance": "major", "trace": "interface", "why": "Destination register address output from imm11_7.", "lines": [20, 47]},
+  {"id": "E8", "name": "o_rs1_addr", "role": "INTERFACE_ADDR", "importance": "major", "trace": "interface", "why": "Source register 1 address output from imm19_12_20.", "lines": [21, 45]},
+  {"id": "E9", "name": "o_rs2_addr", "role": "INTERFACE_ADDR", "importance": "major", "trace": "interface", "why": "Source register 2 address output from imm24_20.", "lines": [22, 46]},
+  {"id": "E10", "name": "o_csr_imm", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "CSR immediate bit taken from imm19_12_20.", "lines": [24, 40]},
+  {"id": "E5", "name": "i_csr_imm_en", "role": "COMMAND", "importance": "minor", "trace": "interface", "why": "CSR immediate mode clearing the sign bit for zero extension.", "lines": [18, 42]}
+ ],
+ "groups": [
+  {"name": "immediate_shift_chain", "kind": "SERIALIZER", "anchor_ids": ["E15", "E17", "E18", "E19", "E16", "E14", "E20", "E11", "E10"], "member_ids": ["E3"], "description": "Segment registers chained as a shift register emitting immediate bits serially."},
+  {"name": "load_shift_control", "kind": "CONTROLLER", "anchor_ids": ["E12", "E2", "E4", "E6", "E5"], "member_ids": [], "description": "Load, shift-enable and format-select controls for the segment chain."},
+  {"name": "register_addresses", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E7", "E8", "E9"], "member_ids": ["E15", "E18", "E19"], "description": "rd/rs1/rs2 addresses tapped from shared segment registers."}
+ ],
+ "interfaces": [
+  {"name": "clock", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1"]},
+  {"name": "state", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E2", "E3"]},
+  {"name": "control", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E4", "E5", "E6"]},
+  {"name": "rf_addresses", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E7", "E8", "E9"]},
+  {"name": "imm_data", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E10", "E11"]},
+  {"name": "instruction_bus", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E12", "E13"]}
+ ]
+}

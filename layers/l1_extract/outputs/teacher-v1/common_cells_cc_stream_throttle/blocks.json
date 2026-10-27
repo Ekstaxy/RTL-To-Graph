@@ -1,0 +1,275 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "common_cells_cc_stream_throttle",
+ "tops": [
+  "cc_stream_throttle"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "cc_stream_throttle": {
+   "source": "teacher",
+   "canonical_instance": "cc_stream_throttle",
+   "file": "data/rtl/common_cells/src/cc_stream_throttle.sv",
+   "lines": [
+    13,
+    84
+   ],
+   "summary": "Credit-based request throttle: an up/down credit counter tracks outstanding requests and gates request valid/ready pass-through when the credit limit is reached.",
+   "blocks": [
+    {
+     "name": "credit_counter",
+     "kind": "COUNTER_TIMER",
+     "description": "Up/down credit counter and limit comparison producing credit_available.",
+     "anchors": [
+      {
+       "id": "E12",
+       "name": "credit_q",
+       "role": "COUNTER",
+       "importance": "critical",
+       "score": 92.8,
+       "struct_score": 81.9,
+       "trace": "control_backward",
+       "why": "Outstanding-request counter; increments on request handshake, decrements on response handshake.",
+       "lines": [
+        59,
+        73,
+        82
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "credit_available",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 53.6,
+       "struct_score": 46.3,
+       "trace": "control_backward",
+       "why": "Compares counter to credit limit; gates both req_valid_o and req_ready_o.",
+       "lines": [
+        73,
+        76,
+        79
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "credit_i",
+       "role": "CONFIG_REG",
+       "importance": "major",
+       "score": 56.0,
+       "struct_score": 55.2,
+       "trace": "interface",
+       "why": "Configured maximum number of outstanding transfers compared against counter.",
+       "lines": [
+        43,
+        73
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E11",
+       "name": "credit_d",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "request_gate",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Gates request valid and ready with credit availability.",
+     "anchors": [
+      {
+       "id": "E5",
+       "name": "req_valid_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 98.3,
+       "struct_score": 95.8,
+       "trace": "interface",
+       "why": "Throttled request valid passed downstream only when credit available.",
+       "lines": [
+        31,
+        76
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "req_ready_o",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 96.5,
+       "struct_score": 91.3,
+       "trace": "interface",
+       "why": "Throttled ready returned upstream only when credit available.",
+       "lines": [
+        35,
+        79
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E4",
+       "name": "req_valid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "req_ready_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "response_monitor",
+     "kind": "OTHER",
+     "description": "Observes response handshakes to return credit.",
+     "anchors": [
+      {
+       "id": "E8",
+       "name": "rsp_valid_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 66.2,
+       "struct_score": 85.2,
+       "trace": "interface",
+       "why": "Response valid; with rsp_ready_i decrements the credit counter.",
+       "lines": [
+        38,
+        67
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "rsp_ready_i",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 33.8,
+       "struct_score": 74.3,
+       "trace": "interface",
+       "why": "Response ready; qualifies response handshake for counter decrement.",
+       "lines": [
+        40,
+        67
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2",
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_ni",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "clr_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "request_in",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E4",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "req_valid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "req_ready_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "request_out",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E5",
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "req_valid_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "req_ready_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "response_monitor",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E8",
+      "E9"
+     ],
+     "members": [
+      {
+       "id": "E8",
+       "name": "rsp_valid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "rsp_ready_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "credit_config",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E10",
+       "name": "credit_i",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

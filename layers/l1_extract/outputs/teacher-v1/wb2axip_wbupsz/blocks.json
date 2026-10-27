@@ -1,0 +1,936 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "wb2axip_wbupsz",
+ "tops": [
+  "wbupsz"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "sfifo": {
+   "source": "teacher",
+   "canonical_instance": "wbupsz.UPSIZE.u_fifo",
+   "file": "data/rtl/wb2axip/rtl/sfifo.v",
+   "lines": [
+    26,
+    483
+   ],
+   "summary": "Synchronous FIFO built on a circular memory array with write/read address pointers, an occupancy counter deriving full, and a registered empty flag.",
+   "blocks": [
+    {
+     "name": "fifo_memory",
+     "kind": "MEMORY",
+     "description": "Circular data array holding queued words.",
+     "anchors": [
+      {
+       "id": "E12",
+       "name": "mem",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 95.9,
+       "struct_score": 89.8,
+       "trace": "data_backward",
+       "why": "FIFO memory array written at wr_addr, read asynchronously at rd_addr.",
+       "lines": [
+        69,
+        128,
+        182
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "write_side",
+     "kind": "CONTROLLER",
+     "description": "Qualifies write requests and advances the write pointer into mem.",
+     "anchors": [
+      {
+       "id": "E15",
+       "name": "w_wr",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 51.7,
+       "struct_score": 39.3,
+       "trace": "control_backward",
+       "why": "Qualified write enable: advances wr_addr, writes mem, updates fill.",
+       "lines": [
+        72,
+        120,
+        127
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "wr_addr",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 60.0,
+       "struct_score": 69.7,
+       "trace": "control_backward",
+       "why": "Write pointer, increments on accepted write, addresses mem.",
+       "lines": [
+        70,
+        121,
+        128
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E3",
+       "name": "i_wr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "i_data",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "read_side",
+     "kind": "CONTROLLER",
+     "description": "Qualifies read requests and advances the read pointer driving o_data.",
+     "anchors": [
+      {
+       "id": "E16",
+       "name": "w_rd",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 50.1,
+       "struct_score": 32.8,
+       "trace": "control_backward",
+       "why": "Qualified read enable: advances rd_addr, updates fill and empty.",
+       "lines": [
+        73,
+        145
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "rd_addr",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 59.6,
+       "struct_score": 68.0,
+       "trace": "control_backward",
+       "why": "Read pointer, increments on accepted read, addresses mem.",
+       "lines": [
+        70,
+        146,
+        182
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E7",
+       "name": "i_rd",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "o_data",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "occupancy_flags",
+     "kind": "COUNTER_TIMER",
+     "description": "Fill counter and derived full/empty flags.",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "o_fill",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 71.1,
+       "struct_score": 97.7,
+       "trace": "control_backward",
+       "why": "Occupancy count, +1 on write, -1 on read; MSB gives full.",
+       "lines": [
+        43,
+        90,
+        91
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "o_full",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 56.7,
+       "struct_score": 57.8,
+       "trace": "control_backward",
+       "why": "Full indication from fill MSB; blocks writes.",
+       "lines": [
+        42,
+        111
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "o_empty",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 56.0,
+       "struct_score": 55.0,
+       "trace": "control_backward",
+       "why": "Empty indication from r_empty; blocks reads.",
+       "lines": [
+        48,
+        161
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "r_empty",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 27.1,
+       "struct_score": 51.7,
+       "trace": "control_backward",
+       "why": "Registered empty flag updated from fill on read/write.",
+       "lines": [
+        67,
+        156,
+        161
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E11",
+       "name": "r_full",
+       "kind": "wire"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E3",
+     "name": "i_wr",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 95.7,
+     "struct_score": 89.0,
+     "trace": "interface",
+     "why": "Write request; qualified by not-full to push i_data.",
+     "lines": [
+      40,
+      72
+     ]
+    },
+    {
+     "id": "E4",
+     "name": "i_data",
+     "role": "INTERFACE_DATA",
+     "importance": "critical",
+     "score": 88.7,
+     "struct_score": 71.5,
+     "trace": "interface",
+     "why": "Write data payload stored into mem.",
+     "lines": [
+      41,
+      128
+     ]
+    },
+    {
+     "id": "E7",
+     "name": "i_rd",
+     "role": "HANDSHAKE_READY",
+     "importance": "critical",
+     "score": 92.6,
+     "struct_score": 81.2,
+     "trace": "interface",
+     "why": "Read request from consumer; qualified by not-empty to pop.",
+     "lines": [
+      46,
+      73
+     ]
+    },
+    {
+     "id": "E8",
+     "name": "o_data",
+     "role": "INTERFACE_DATA",
+     "importance": "critical",
+     "score": 91.6,
+     "struct_score": 78.7,
+     "trace": "data_backward",
+     "why": "Read data output taken from mem at rd_addr.",
+     "lines": [
+      47,
+      182
+     ]
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "i_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "i_reset",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "write_port",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "i_wr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "i_data",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "o_full",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "read_port",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E7",
+      "E8",
+      "E9"
+     ],
+     "members": [
+      {
+       "id": "E7",
+       "name": "i_rd",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "o_data",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "o_empty",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "fill_level",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "o_fill",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "wbupsz": {
+   "source": "teacher",
+   "canonical_instance": "wbupsz",
+   "file": "data/rtl/wb2axip/rtl/wbupsz.v",
+   "lines": [
+    35,
+    233
+   ],
+   "summary": "Wishbone bus upsizer: registers each narrow request shifted into the wide word, pushes its sub-word offset into a FIFO, and uses the popped offset to shift returned wide data back.",
+   "blocks": [
+    {
+     "name": "request_register",
+     "kind": "DATAPATH",
+     "description": "Registers narrow request, shifting data and select into wide word and address.",
+     "anchors": [
+      {
+       "id": "E14",
+       "name": "o_wstb",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 93.5,
+       "struct_score": 83.6,
+       "trace": "control_backward",
+       "why": "Wide-side request strobe, gated by FIFO full; also pushes shift into FIFO.",
+       "lines": [
+        162,
+        173
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "o_wdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 94.4,
+       "struct_score": 85.9,
+       "trace": "data_backward",
+       "why": "Wide write data driven from shifted request register.",
+       "lines": [
+        165
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "o_waddr",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 59.2,
+       "struct_score": 66.6,
+       "trace": "data_backward",
+       "why": "Wide word address from registered upper narrow address bits.",
+       "lines": [
+        164
+       ]
+      },
+      {
+       "id": "E32",
+       "name": "UPSIZE.r_shift",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 46.2,
+       "struct_score": 17.2,
+       "trace": "data_backward",
+       "why": "Latched sub-word offset of request, pushed into offset FIFO.",
+       "lines": [
+        156,
+        174
+       ]
+      },
+      {
+       "id": "E36",
+       "name": "UPSIZE.w_shift",
+       "role": "MUX_SELECT",
+       "importance": "minor",
+       "score": 21.7,
+       "struct_score": 31.4,
+       "trace": "data_backward",
+       "why": "Low narrow address bits selecting data/sel shift position.",
+       "lines": [
+        117,
+        150
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "o_wcyc",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 41.0,
+       "struct_score": 92.3,
+       "trace": "control_backward",
+       "why": "Wide bus cycle from r_cyc; qualifies ack and error capture.",
+       "lines": [
+        161,
+        207
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "i_swe",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 19.5,
+       "struct_score": 22.3,
+       "trace": "interface",
+       "why": "Write-enable command latched into wide request.",
+       "lines": [
+        146
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E23",
+       "name": "UPSIZE.r_cyc",
+       "kind": "reg"
+      },
+      {
+       "id": "E24",
+       "name": "UPSIZE.r_stb",
+       "kind": "reg"
+      },
+      {
+       "id": "E25",
+       "name": "UPSIZE.r_we",
+       "kind": "reg"
+      },
+      {
+       "id": "E28",
+       "name": "UPSIZE.r_addr",
+       "kind": "reg"
+      },
+      {
+       "id": "E29",
+       "name": "UPSIZE.r_data",
+       "kind": "reg"
+      },
+      {
+       "id": "E31",
+       "name": "UPSIZE.r_sel",
+       "kind": "reg"
+      },
+      {
+       "id": "E38",
+       "name": "UPSIZE.w_data",
+       "kind": "wire"
+      },
+      {
+       "id": "E39",
+       "name": "UPSIZE.w_sel",
+       "kind": "wire"
+      },
+      {
+       "id": "E15",
+       "name": "o_wwe",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "o_wsel",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "offset_fifo",
+     "kind": "BUFFER",
+     "description": "FIFO of outstanding sub-word offsets, pushed on wide strobe and popped on ack.",
+     "anchors": [
+      {
+       "id": "E33",
+       "name": "UPSIZE.fifo_full",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 46.1,
+       "struct_score": 16.6,
+       "trace": "control_backward",
+       "why": "Offset FIFO full; blocks wide strobe and stalls narrow side.",
+       "lines": [
+        162,
+        221
+       ]
+      },
+      {
+       "id": "E37",
+       "name": "UPSIZE.fifo_shift",
+       "role": "MUX_SELECT",
+       "importance": "minor",
+       "score": 18.8,
+       "struct_score": 19.6,
+       "trace": "data_backward",
+       "why": "Popped offset selecting shift amount for returned data.",
+       "lines": [
+        176,
+        190
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "UPSIZE.u_fifo",
+       "module": "sfifo"
+      }
+     ],
+     "members": [
+      {
+       "id": "E34",
+       "name": "UPSIZE.ign_fifo_empty",
+       "kind": "wire"
+      },
+      {
+       "id": "E35",
+       "name": "UPSIZE.ign_fifo_fill",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "return_path",
+     "kind": "DATAPATH",
+     "description": "Shifts wide return data by offset and registers ack/error to narrow side.",
+     "anchors": [
+      {
+       "id": "E30",
+       "name": "UPSIZE.rtn_data",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 55.2,
+       "struct_score": 52.1,
+       "trace": "data_backward",
+       "why": "Wide return data shifted by FIFO offset to align narrow read data.",
+       "lines": [
+        190,
+        192,
+        197
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "o_sdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 92.8,
+       "struct_score": 81.9,
+       "trace": "data_backward",
+       "why": "Narrow read data sliced from the shifted return word.",
+       "lines": [
+        197,
+        199
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "o_sack",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 55.4,
+       "struct_score": 53.0,
+       "trace": "control_backward",
+       "why": "Registered acknowledge to narrow side, one cycle after wide ack.",
+       "lines": [
+        209
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "i_wack",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 56.7,
+       "struct_score": 57.7,
+       "trace": "forward",
+       "why": "Wide-side ack; pops offset FIFO and captures return data.",
+       "lines": [
+        176,
+        187,
+        207
+       ]
+      },
+      {
+       "id": "E21",
+       "name": "i_wdata",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 37.7,
+       "struct_score": 84.0,
+       "trace": "interface",
+       "why": "Wide read data captured into return register on ack.",
+       "lines": [
+        190
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "o_serr",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 26.3,
+       "struct_score": 48.9,
+       "trace": "control_backward",
+       "why": "Registered error to narrow side; also clears cycle state.",
+       "lines": [
+        132,
+        218
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "i_werr",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 23.1,
+       "struct_score": 37.0,
+       "trace": "forward",
+       "why": "Wide bus error; aborts cycle and request registers, forwarded as error.",
+       "lines": [
+        121,
+        216
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E26",
+       "name": "UPSIZE.r_ack",
+       "kind": "reg"
+      },
+      {
+       "id": "E27",
+       "name": "UPSIZE.r_err",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "flow_control",
+     "kind": "CONTROLLER",
+     "description": "Narrow-side request acceptance and stall generation.",
+     "anchors": [
+      {
+       "id": "E4",
+       "name": "i_sstb",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 92.6,
+       "struct_score": 81.4,
+       "trace": "interface",
+       "why": "Narrow-side request strobe; loads a new wide request into the outgoing registers.",
+       "lines": [
+        123,
+        142
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "o_sstall",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 65.2,
+       "struct_score": 82.9,
+       "trace": "control_backward",
+       "why": "Stall to narrow master when request pending and FIFO full or wide stalls.",
+       "lines": [
+        142,
+        221
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "i_sdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 91.9,
+       "struct_score": 79.5,
+       "trace": "interface",
+       "why": "Narrow write data, zero-extended and shifted into the wide word.",
+       "lines": [
+        110,
+        113
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "i_saddr",
+       "role": "INTERFACE_ADDR",
+       "importance": "minor",
+       "score": 32.7,
+       "struct_score": 71.4,
+       "trace": "interface",
+       "why": "Narrow address split into wide address and sub-word offset.",
+       "lines": [
+        117,
+        147
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "i_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "i_reset",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "narrow_wishbone_slave",
+     "protocol": "REQ_ACK",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "i_scyc",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "i_sstb",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "i_swe",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "i_saddr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "i_sdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "i_ssel",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "o_sstall",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "o_sack",
+       "kind": "port_out"
+      },
+      {
+       "id": "E11",
+       "name": "o_sdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "o_serr",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "wide_wishbone_master",
+     "protocol": "REQ_ACK",
+     "direction": "OUT",
+     "member_ids": [
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20",
+      "E21",
+      "E22"
+     ],
+     "members": [
+      {
+       "id": "E13",
+       "name": "o_wcyc",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "o_wstb",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "o_wwe",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "o_waddr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "o_wdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "o_wsel",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "i_wstall",
+       "kind": "port_in"
+      },
+      {
+       "id": "E20",
+       "name": "i_wack",
+       "kind": "port_in"
+      },
+      {
+       "id": "E21",
+       "name": "i_wdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E22",
+       "name": "i_werr",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

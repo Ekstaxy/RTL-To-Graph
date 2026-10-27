@@ -1,0 +1,43 @@
+{
+ "module_summary": "GMII Ethernet MAC wrapper: a 1G MAC instance sits between dual-clock AXI-stream TX and RX FIFOs, with toggle synchronizers bringing MAC error/speed status into the logic clock domain.",
+ "anchors": [
+  {"id": "E5", "name": "tx_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Transmit AXI-stream payload entering the TX FIFO.", "lines": [74, 279]},
+  {"id": "E7", "name": "tx_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Transmit stream valid into TX FIFO slave port.", "lines": [76, 281]},
+  {"id": "E8", "name": "tx_axis_tready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "TX FIFO ready back-pressure to the transmit source.", "lines": [77, 282]},
+  {"id": "E11", "name": "rx_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Received frame payload output from the RX FIFO.", "lines": [84, 341]},
+  {"id": "E13", "name": "rx_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "RX FIFO output valid for received stream.", "lines": [86, 343]},
+  {"id": "E14", "name": "rx_axis_tready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Downstream ready controlling RX FIFO reads.", "lines": [87, 344]},
+  {"id": "E18", "name": "gmii_rxd", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "GMII receive data from PHY into the MAC.", "lines": [95, 239]},
+  {"id": "E23", "name": "gmii_txd", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "GMII transmit data driven by the MAC to the PHY.", "lines": [100, 244]},
+  {"id": "E43", "name": "tx_fifo_axis_tdata", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "TX FIFO output stream feeding MAC transmit input in tx_clk domain.", "lines": [131, 229, 290]},
+  {"id": "E44", "name": "tx_fifo_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "forward", "why": "Valid from TX FIFO to MAC transmit path.", "lines": [132, 230, 292]},
+  {"id": "E48", "name": "rx_fifo_axis_tdata", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "MAC receive stream written into the RX FIFO.", "lines": [137, 234, 330]},
+  {"id": "E49", "name": "rx_fifo_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "forward", "why": "MAC receive valid writing the RX FIFO.", "lines": [138, 235, 332]},
+  {"id": "E26", "name": "tx_error_underflow", "role": "STATUS", "importance": "major", "trace": "data_backward", "why": "Synchronized TX underflow pulse decoded from toggle synchronizer registers.", "lines": [107, 150]},
+  {"id": "E30", "name": "rx_error_bad_frame", "role": "STATUS", "importance": "major", "trace": "data_backward", "why": "Synchronized RX bad-frame pulse from toggle synchronizer.", "lines": [111, 180]},
+  {"id": "E31", "name": "rx_error_bad_fcs", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "Synchronized RX bad-FCS pulse from toggle synchronizer bit 1.", "lines": [112, 181]},
+  {"id": "E35", "name": "speed", "role": "STATUS", "importance": "major", "trace": "data_backward", "why": "Link speed from MAC, double-synchronized into logic clock.", "lines": [116, 208]},
+  {"id": "E53", "name": "tx_sync_reg_1", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Toggle register in tx_clk flipping on each underflow event for CDC.", "lines": [145, 156]},
+  {"id": "E59", "name": "rx_sync_reg_1", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Toggle register in rx_clk capturing bad frame/FCS events for CDC.", "lines": [175, 187]},
+  {"id": "E27", "name": "tx_fifo_overflow", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "TX FIFO overflow status from FIFO slave side.", "lines": [108, 299]},
+  {"id": "E32", "name": "rx_fifo_overflow", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "RX FIFO overflow status from FIFO master side.", "lines": [113, 353]},
+  {"id": "E36", "name": "cfg_ifg", "role": "CONFIG_REG", "importance": "minor", "trace": "interface", "why": "Inter-frame gap configuration passed to the MAC.", "lines": [121, 251]},
+  {"id": "E37", "name": "cfg_tx_enable", "role": "ENABLE", "importance": "minor", "trace": "interface", "why": "Enables MAC transmit path.", "lines": [122, 252]},
+  {"id": "E38", "name": "cfg_rx_enable", "role": "ENABLE", "importance": "minor", "trace": "interface", "why": "Enables MAC receive path.", "lines": [123, 253]}
+ ],
+ "groups": [
+  {"name": "tx_fifo", "kind": "BUFFER", "anchor_ids": ["E5", "E7", "E8", "E43", "E44", "E27"], "member_ids": ["I2", "E6", "E9", "E10", "E45", "E46", "E47", "E28", "E29"], "description": "Async AXI-stream FIFO moving transmit frames from logic_clk to MAC tx_clk."},
+  {"name": "gmii_mac", "kind": "DATAPATH", "anchor_ids": ["E18", "E23", "E36", "E37", "E38"], "member_ids": ["I1", "E17", "E19", "E20", "E21", "E22", "E24", "E25", "E52", "E57", "E58", "E63"], "description": "1G MAC with GMII I/O framing transmit stream and parsing receive data."},
+  {"name": "rx_fifo", "kind": "BUFFER", "anchor_ids": ["E11", "E13", "E14", "E48", "E49", "E32"], "member_ids": ["I3", "E12", "E15", "E16", "E50", "E51", "E33", "E34"], "description": "Async AXI-stream FIFO moving received frames from rx_clk to logic_clk."},
+  {"name": "status_sync", "kind": "OTHER", "anchor_ids": ["E26", "E30", "E31", "E35", "E53", "E59"], "member_ids": ["E54", "E55", "E56", "E60", "E61", "E62", "E64", "E65"], "description": "Toggle and two-flop synchronizers moving MAC error and speed status into logic_clk."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2", "E3", "E4"]},
+  {"name": "tx_axis", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E5", "E6", "E7", "E8", "E9", "E10"]},
+  {"name": "rx_axis", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E11", "E12", "E13", "E14", "E15", "E16"]},
+  {"name": "gmii_rx", "protocol": "STREAM", "direction": "IN", "member_ids": ["E17", "E18", "E19", "E20"]},
+  {"name": "gmii_tx", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E21", "E22", "E23", "E24", "E25"]},
+  {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E26", "E27", "E28", "E29", "E30", "E31", "E32", "E33", "E34", "E35"]},
+  {"name": "config", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E36", "E37", "E38"]}
+ ]
+}

@@ -1,0 +1,38 @@
+stateDiagram-v2
+    [*] --> STATE_IDLE
+    ANY_STATE --> STATE_IDLE
+    STATE_IDLE --> STATE_START_WAIT : !(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && s_axis_cmd_ready & s_axis_cmd_valid && s_axis_cmd_read ^ (s_axis_cmd_write | s_axis_cmd_write_multiple) && bus_active
+    STATE_IDLE --> STATE_ADDRESS_1 : !(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && s_axis_cmd_ready & s_axis_cmd_valid && s_axis_cmd_read ^ (s_axis_cmd_write | s_axis_cmd_write_multiple) && !bus_active
+    STATE_IDLE --> STATE_IDLE : !(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && s_axis_cmd_ready & s_axis_cmd_valid && !(s_axis_cmd_read ^ (s_axis_cmd_write | s_axis_cmd_write_multiple))
+    STATE_IDLE --> STATE_IDLE : !(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && !(s_axis_cmd_ready & s_axis_cmd_valid)
+    STATE_ACTIVE_WRITE --> STATE_ADDRESS_1 : !(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && s_axis_cmd_ready & s_axis_cmd_valid && s_axis_cmd_read ^ (s_axis_cmd_write | s_axis_cmd_write_multiple) && ((s_axis_cmd_start || s_axis_cmd_address != addr_reg) || s_axis_cmd_read)
+    STATE_ACTIVE_WRITE --> STATE_WRITE_1 : !(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && s_axis_cmd_ready & s_axis_cmd_valid && s_axis_cmd_read ^ (s_axis_cmd_write | s_axis_cmd_write_multiple) && !((s_axis_cmd_start || s_axis_cmd_address != addr_reg) || s_axis_cmd_read)
+    STATE_ACTIVE_WRITE --> STATE_IDLE : !(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && s_axis_cmd_ready & s_axis_cmd_valid && !(s_axis_cmd_read ^ (s_axis_cmd_write | s_axis_cmd_write_multiple)) && s_axis_cmd_stop && !(s_axis_cmd_read || s_axis_cmd_write || s_axis_cmd_write_multiple)
+    STATE_ACTIVE_WRITE --> STATE_ACTIVE_WRITE : !(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && s_axis_cmd_ready & s_axis_cmd_valid && !(s_axis_cmd_read ^ (s_axis_cmd_write | s_axis_cmd_write_multiple)) && !(s_axis_cmd_stop && !(s_axis_cmd_read || s_axis_cmd_write || s_axis_cmd_write_multiple))
+    STATE_ACTIVE_WRITE --> STATE_IDLE : !(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && !(s_axis_cmd_ready & s_axis_cmd_valid) && stop_on_idle & s_axis_cmd_ready & ~s_axis_cmd_valid
+    STATE_ACTIVE_WRITE --> STATE_ACTIVE_WRITE : !(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && !(s_axis_cmd_ready & s_axis_cmd_valid) && !(stop_on_idle & s_axis_cmd_ready & ~s_axis_cmd_valid)
+    STATE_ACTIVE_READ --> STATE_START : !(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && s_axis_cmd_ready & s_axis_cmd_valid && s_axis_cmd_read ^ (s_axis_cmd_write | s_axis_cmd_write_multiple) && ((s_axis_cmd_start || s_axis_cmd_address != addr_reg) || s_axis_cmd_write)
+    STATE_ACTIVE_READ --> STATE_READ : !(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && s_axis_cmd_ready & s_axis_cmd_valid && s_axis_cmd_read ^ (s_axis_cmd_write | s_axis_cmd_write_multiple) && !((s_axis_cmd_start || s_axis_cmd_address != addr_reg) || s_axis_cmd_write)
+    STATE_ACTIVE_READ --> STATE_STOP : !(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && s_axis_cmd_ready & s_axis_cmd_valid && !(s_axis_cmd_read ^ (s_axis_cmd_write | s_axis_cmd_write_multiple)) && s_axis_cmd_stop && !(s_axis_cmd_read || s_axis_cmd_write || s_axis_cmd_write_multiple)
+    STATE_ACTIVE_READ --> STATE_ACTIVE_READ : !(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && s_axis_cmd_ready & s_axis_cmd_valid && !(s_axis_cmd_read ^ (s_axis_cmd_write | s_axis_cmd_write_multiple)) && !(s_axis_cmd_stop && !(s_axis_cmd_read || s_axis_cmd_write || s_axis_cmd_write_multiple))
+    STATE_ACTIVE_READ --> STATE_STOP : !(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && !(s_axis_cmd_ready & s_axis_cmd_valid) && stop_on_idle & s_axis_cmd_ready & ~s_axis_cmd_valid
+    STATE_ACTIVE_READ --> STATE_ACTIVE_READ : !(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && !(s_axis_cmd_ready & s_axis_cmd_valid) && !(stop_on_idle & s_axis_cmd_ready & ~s_axis_cmd_valid)
+    STATE_START_WAIT --> STATE_START_WAIT : !(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && bus_active
+    STATE_START_WAIT --> STATE_ADDRESS_1 : !(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && !bus_active
+    STATE_START --> STATE_ADDRESS_1 : !(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE)
+    STATE_ADDRESS_1 --> STATE_ADDRESS_1 : !(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && bit_count_reg > 1
+    STATE_ADDRESS_1 --> STATE_ADDRESS_1 : !(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && !(bit_count_reg > 1) && bit_count_reg > 0
+    STATE_ADDRESS_1 --> STATE_ADDRESS_2 : !(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && !(bit_count_reg > 1) && !(bit_count_reg > 0)
+    STATE_ADDRESS_2 --> STATE_READ : !(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && mode_read_reg
+    STATE_ADDRESS_2 --> STATE_WRITE_1 : !(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && !mode_read_reg
+    STATE_WRITE_1 --> STATE_WRITE_2 : !(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && s_axis_data_tready & s_axis_data_tvalid
+    STATE_WRITE_1 --> STATE_WRITE_1 : !(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && !(s_axis_data_tready & s_axis_data_tvalid)
+    STATE_WRITE_2 --> STATE_WRITE_2 : !(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && bit_count_reg > 0
+    STATE_WRITE_2 --> STATE_WRITE_3 : !(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && !(bit_count_reg > 0)
+    STATE_WRITE_3 --> STATE_WRITE_1 : !(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && mode_write_multiple_reg && !last_reg
+    STATE_WRITE_3 --> STATE_IDLE : !(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && !(mode_write_multiple_reg && !last_reg) && mode_stop_reg
+    STATE_WRITE_3 --> STATE_ACTIVE_WRITE : !(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && !(mode_write_multiple_reg && !last_reg) && !mode_stop_reg
+    STATE_READ --> STATE_READ : !(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && bit_count_reg > 0
+    STATE_READ --> STATE_STOP : !(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && !(bit_count_reg > 0) && mode_stop_reg
+    STATE_READ --> STATE_ACTIVE_READ : !(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE) && !(bit_count_reg > 0) && !mode_stop_reg
+    STATE_STOP --> STATE_IDLE : !(phy_state_reg != PHY_STATE_IDLE && phy_state_reg != PHY_STATE_ACTIVE)

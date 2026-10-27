@@ -1,0 +1,47 @@
+{
+ "module_summary": "Wishbone-to-AXI-Lite bridge that registers each accepted WB request onto AW/W or AR channels, counts outstanding transactions for stall/ack, and tracks bus errors and post-reset settling.",
+ "anchors": [
+  {"id": "E9", "name": "o_wb_stall", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "WB stall combining full, direction change, error, reset and AXI backpressure; gates request acceptance", "lines": [135, 193]},
+  {"id": "E4", "name": "i_wb_stb", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "WB request strobe; with !stall launches AXI read or write requests", "lines": [193, 210]},
+  {"id": "E10", "name": "o_wb_ack", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "WB acknowledge pulse raised on successful AXI B or R response", "lines": [287, 289]},
+  {"id": "E13", "name": "o_axi_awvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "AXI write-address valid, set on accepted WB write, held until awready", "lines": [210, 211]},
+  {"id": "E24", "name": "o_axi_arvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "AXI read-address valid, set on accepted WB read, held until arready", "lines": [238, 239]},
+  {"id": "E33", "name": "err_state", "role": "CONTROL_FLAG", "importance": "critical", "trace": "control_backward", "why": "Error-recovery flag set on bus error or abort; stalls WB and suppresses acks until drained", "lines": [325, 329, 331]},
+  {"id": "E5", "name": "i_wb_we", "role": "COMMAND", "importance": "major", "trace": "interface", "why": "WB write-enable selects AXI write channels versus read channel", "lines": [194, 210, 238]},
+  {"id": "E17", "name": "o_axi_wvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "AXI write-data valid, set on accepted WB write, held until wready", "lines": [274, 275]},
+  {"id": "E15", "name": "o_axi_awaddr", "role": "INTERFACE_ADDR", "importance": "major", "trace": "data_backward", "why": "AXI write address latched from WB word address when not stalled", "lines": [219]},
+  {"id": "E26", "name": "o_axi_araddr", "role": "INTERFACE_ADDR", "importance": "minor", "trace": "data_backward", "why": "AXI read address latched from WB word address when not stalled", "lines": [246]},
+  {"id": "E19", "name": "o_axi_wdata", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "AXI write data registered from WB write data", "lines": [262]},
+  {"id": "E20", "name": "o_axi_wstrb", "role": "INTERFACE_DATA", "importance": "minor", "trace": "data_backward", "why": "AXI write strobes registered from WB byte selects", "lines": [263]},
+  {"id": "E28", "name": "i_axi_rvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "forward", "why": "AXI read response valid; drives WB ack/err and decrements counters", "lines": [288, 312]},
+  {"id": "E21", "name": "i_axi_bvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "forward", "why": "AXI write response valid; drives WB ack/err and decrements counters", "lines": [286, 310]},
+  {"id": "E11", "name": "o_wb_data", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "WB read data registered from AXI read data every cycle", "lines": [297]},
+  {"id": "E30", "name": "i_axi_rdata", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "AXI read data payload forwarded to WB data output", "lines": [297]},
+  {"id": "E7", "name": "i_wb_data", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "WB write data captured into AXI write data register", "lines": [262]},
+  {"id": "E6", "name": "i_wb_addr", "role": "INTERFACE_ADDR", "importance": "minor", "trace": "interface", "why": "WB word address shifted into AXI byte addresses", "lines": [219, 246]},
+  {"id": "E12", "name": "o_wb_err", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "WB error response raised when AXI bresp or rresp signals error", "lines": [311, 313]},
+  {"id": "E38", "name": "outstanding", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Counts outstanding WB requests; sets pending and full_fifo", "lines": [179, 184, 186]},
+  {"id": "E37", "name": "pending", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Requests outstanding flag; stalls direction changes and flags abort errors", "lines": [136, 185, 328]},
+  {"id": "E32", "name": "full_fifo", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Outstanding-count full flag that stalls new WB requests", "lines": [135, 186]},
+  {"id": "E34", "name": "axi_reset_state", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Post-reset settling flag; stalls WB and clears counters until reset_count expires", "lines": [154, 157, 167]},
+  {"id": "E36", "name": "reset_count", "role": "COUNTER", "importance": "minor", "trace": "control_backward", "why": "Down-counter timing the AXI reset settling period", "lines": [152, 155, 158]},
+  {"id": "E35", "name": "wb_we", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Direction of last accepted request; stalls on read/write switch while pending", "lines": [136, 194]},
+  {"id": "E39", "name": "err_pending", "role": "COUNTER", "importance": "minor", "trace": "control_backward", "why": "Counts AXI responses still due; clears err_state when zero", "lines": [330, 342, 343]}
+ ],
+ "groups": [
+  {"name": "WB request acceptance", "kind": "CONTROLLER", "anchor_ids": ["E9", "E4", "E5", "E35", "E32"], "member_ids": ["E3"], "description": "Stall logic deciding when WB requests are accepted and routed to read or write"},
+  {"name": "AXI request channels", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E13", "E17", "E24", "E15", "E26", "E19", "E20", "E6", "E7"], "member_ids": ["E14", "E18", "E25", "E16", "E27"], "description": "Registered AW, W and AR valid/payload signals held until AXI ready"},
+  {"name": "Response return", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E10", "E12", "E11", "E21", "E28", "E30"], "member_ids": ["E22", "E29", "E23", "E31"], "description": "Converts AXI B/R responses into WB ack, err and read data"},
+  {"name": "Transaction tracking", "kind": "COUNTER_TIMER", "anchor_ids": ["E38", "E37", "E39"], "member_ids": [], "description": "Counters of outstanding requests and expected AXI responses"},
+  {"name": "Error and reset recovery", "kind": "CONTROLLER", "anchor_ids": ["E33", "E34", "E36"], "member_ids": [], "description": "Error-drain state and post-reset settling timer that stall the bridge"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "wishbone_slave", "protocol": "MEMORY_BUS", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12"]},
+  {"name": "axi_write_address", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E13", "E14", "E15", "E16"]},
+  {"name": "axi_write_data", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E17", "E18", "E19", "E20"]},
+  {"name": "axi_write_response", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E21", "E22", "E23"]},
+  {"name": "axi_read_address", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E24", "E25", "E26", "E27"]},
+  {"name": "axi_read_data", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E28", "E29", "E30", "E31"]}
+ ]
+}

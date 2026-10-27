@@ -1,0 +1,36 @@
+{
+ "module_summary": "Bit-serial RISC-V machine-mode CSR unit: holds mstatus/mie/mcause bits in flops, computes write/set/clear CSR values serially, and edge-detects timer interrupts.",
+ "anchors": [
+  {"id": "E29", "name": "mstatus_mie", "role": "CONFIG_REG", "importance": "critical", "trace": "data_backward", "why": "Global interrupt enable mstatus.MIE; written by CSR access, cleared on trap, restored on mret.", "lines": [53, 117, 118]},
+  {"id": "E31", "name": "mie_mtie", "role": "CONFIG_REG", "importance": "major", "trace": "data_backward", "why": "Timer interrupt enable bit written via mie CSR access; gates timer_irq.", "lines": [55, 105, 130]},
+  {"id": "E30", "name": "mstatus_mpie", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Saves mstatus_mie on trap entry for restore on mret.", "lines": [54, 125]},
+  {"id": "E33", "name": "mcause3_0", "role": "CONFIG_REG", "importance": "major", "trace": "data_backward", "why": "mcause exception code bits, set by trap cause logic or CSR write.", "lines": [58, 150, 153]},
+  {"id": "E32", "name": "mcause31", "role": "CONFIG_REG", "importance": "minor", "trace": "data_backward", "why": "mcause interrupt bit, set from o_new_irq on trap or CSR write.", "lines": [57, 156]},
+  {"id": "E35", "name": "csr_in", "role": "DATAPATH_MAJOR", "importance": "critical", "trace": "data_backward", "why": "New CSR value: external write, set or clear of current csr_out by operand d.", "lines": [68, 105, 118]},
+  {"id": "E28", "name": "o_q", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Serial CSR read value (mstatus, mcause or regfile CSR) returned to rd.", "lines": [45, 88]},
+  {"id": "E21", "name": "i_csr_source", "role": "COMMAND", "importance": "major", "trace": "forward", "why": "Selects CSR operation: keep, write, set or clear.", "lines": [37, 68, 69]},
+  {"id": "E38", "name": "d", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "CSR write operand: immediate or rs1 chosen by i_csr_d_sel.", "lines": [66, 68]},
+  {"id": "E14", "name": "o_new_irq", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Rising-edge detected timer interrupt request to the core; also sets mcause.", "lines": [101, 151, 156]},
+  {"id": "E37", "name": "timer_irq_r", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Previous timer_irq value for rising-edge detection.", "lines": [64, 100, 101]},
+  {"id": "E40", "name": "timer_irq", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Pending timer interrupt: mtip gated by mstatus_mie and mie_mtie.", "lines": [90, 100]},
+  {"id": "E13", "name": "i_trap", "role": "COMMAND", "importance": "major", "trace": "forward", "why": "Trap entry: clears MIE, saves MPIE, updates mcause.", "lines": [117, 124, 149]},
+  {"id": "E22", "name": "i_mret", "role": "COMMAND", "importance": "minor", "trace": "forward", "why": "mret: restores mstatus_mie from mstatus_mpie.", "lines": [117, 118]},
+  {"id": "E18", "name": "i_mstatus_en", "role": "ENABLE", "importance": "minor", "trace": "forward", "why": "mstatus CSR access enable: write MIE and drive mstatus onto csr_out.", "lines": [84, 117]},
+  {"id": "E19", "name": "i_mie_en", "role": "ENABLE", "importance": "minor", "trace": "forward", "why": "mie CSR write enable for mie_mtie.", "lines": [104]},
+  {"id": "E20", "name": "i_mcause_en", "role": "ENABLE", "importance": "minor", "trace": "forward", "why": "mcause CSR access enable: write and read mcause.", "lines": [86, 149, 155]},
+  {"id": "E24", "name": "i_rf_csr_out", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "CSR value stored in the register file, ORed into csr_out.", "lines": [41, 85]},
+  {"id": "E27", "name": "i_rs1", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "rs1 serial operand for CSR write/set/clear.", "lines": [44, 66]},
+  {"id": "E26", "name": "i_csr_imm", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Immediate operand for CSRxI instructions.", "lines": [43, 66]}
+ ],
+ "groups": [
+  {"name": "CSR registers", "kind": "REGISTER_BANK", "anchor_ids": ["E29", "E31", "E30", "E33", "E32", "E18", "E19", "E20"], "member_ids": ["E34", "E39", "E5", "E6", "E7", "E8", "E9", "E10"], "description": "mstatus MIE/MPIE, mie MTIE and mcause flops with per-CSR enables."},
+  {"name": "CSR read/modify datapath", "kind": "DATAPATH", "anchor_ids": ["E35", "E28", "E21", "E38", "E24", "E27", "E26"], "member_ids": ["E36", "E25", "E23", "E4"], "description": "Builds csr_out from CSR sources and csr_in via write/set/clear."},
+  {"name": "Trap and interrupt control", "kind": "CONTROLLER", "anchor_ids": ["E14", "E37", "E40", "E13", "E22"], "member_ids": ["E3", "E12", "E11", "E15", "E16", "E17"], "description": "Timer interrupt edge detect and trap/mret driven CSR updates."}
+ ],
+ "interfaces": [
+  {"name": "clock/reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "state", "protocol": "SIMPLE", "direction": "BIDIR", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12", "E13", "E14"]},
+  {"name": "control", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E15", "E16", "E17", "E18", "E19", "E20", "E21", "E22", "E23"]},
+  {"name": "serial data", "protocol": "STREAM", "direction": "BIDIR", "member_ids": ["E24", "E25", "E26", "E27", "E28"]}
+ ]
+}

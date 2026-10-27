@@ -1,0 +1,486 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "S1_uart_rx",
+ "tops": [
+  "uart_rx"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "uart_rx": {
+   "source": "teacher",
+   "canonical_instance": "uart_rx",
+   "file": "experiments/e3_perturb_benchmark/data/uart_rx/S1/uart_rx.v",
+   "lines": [
+    3,
+    112
+   ],
+   "summary": "UART receiver with AXI-Stream output: a prescale tick counter and bit counter sample rxd mid-bit, shift bits into a data register, and present bytes with valid/ready plus error flags.",
+   "blocks": [
+    {
+     "name": "Bit timing",
+     "kind": "COUNTER_TIMER",
+     "description": "Prescale timer generating mid-bit sample ticks",
+     "anchors": [
+      {
+       "id": "E12",
+       "name": "tk",
+       "role": "COUNTER",
+       "importance": "critical",
+       "score": 87.7,
+       "struct_score": 68.6,
+       "trace": "control_backward",
+       "why": "Prescale baud timer reloaded per bit, timing mid-bit sampling",
+       "lines": [
+        26,
+        63,
+        68
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "prescale",
+       "role": "CONFIG_REG",
+       "importance": "major",
+       "score": 56.7,
+       "struct_score": 57.7,
+       "trace": "interface",
+       "why": "Baud prescale setting used to reload the bit timer",
+       "lines": [
+        21,
+        45,
+        46
+       ]
+      },
+      {
+       "id": "E26",
+       "name": "step",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 18.8,
+       "struct_score": 19.7,
+       "trace": "control_backward",
+       "why": "Bit-time tick: timer expired while frame active, advances ph",
+       "lines": [
+        41,
+        80,
+        89
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E21",
+       "name": "tk_live",
+       "kind": "wire"
+      },
+      {
+       "id": "E30",
+       "name": "rl_long",
+       "kind": "wire"
+      },
+      {
+       "id": "E31",
+       "name": "rl_short",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Frame sequencer",
+     "kind": "CONTROLLER",
+     "description": "Bit counter tracking start, data and stop phases of a frame",
+     "anchors": [
+      {
+       "id": "E11",
+       "name": "ph",
+       "role": "COUNTER",
+       "importance": "critical",
+       "score": 88.4,
+       "struct_score": 70.6,
+       "trace": "control_backward",
+       "why": "Bit/phase counter sequencing start, data and stop bits of a frame",
+       "lines": [
+        25,
+        81,
+        83
+       ]
+      },
+      {
+       "id": "E27",
+       "name": "park",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 19.6,
+       "struct_score": 23.0,
+       "trace": "control_backward",
+       "why": "Idle flag: no frame active; enables start-bit detection and busy update",
+       "lines": [
+        42,
+        82,
+        108
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "mid",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 19.2,
+       "struct_score": 21.3,
+       "trace": "control_backward",
+       "why": "Data-bit phase decode of ph enabling shifts into acc",
+       "lines": [
+        39,
+        67,
+        89
+       ]
+      },
+      {
+       "id": "E28",
+       "name": "fin_ok",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 20.7,
+       "struct_score": 27.4,
+       "trace": "control_backward",
+       "why": "Good stop bit: loads output latch, sets valid, checks overrun",
+       "lines": [
+        43,
+        104,
+        105
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "ph_echo",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 16.7,
+       "struct_score": 11.1,
+       "trace": "none",
+       "why": "Delayed copy of ph with no consumers",
+       "lines": [
+        34,
+        79
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E22",
+       "name": "ph_live",
+       "kind": "wire"
+      },
+      {
+       "id": "E23",
+       "name": "hdr",
+       "kind": "wire"
+      },
+      {
+       "id": "E25",
+       "name": "tail",
+       "kind": "wire"
+      },
+      {
+       "id": "E29",
+       "name": "fin_bad",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Receive shifter",
+     "kind": "SERIALIZER",
+     "description": "Samples rxd and shifts data bits into acc",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "rxd",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 84.4,
+       "struct_score": 56.7,
+       "trace": "interface",
+       "why": "Serial receive line sampled into smp",
+       "lines": [
+        15,
+        56
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "smp",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 22.4,
+       "struct_score": 34.3,
+       "trace": "data_backward",
+       "why": "Registered rxd sample steering start detection and bit shifting",
+       "lines": [
+        27,
+        56,
+        90
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "acc",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 87.9,
+       "struct_score": 69.3,
+       "trace": "data_backward",
+       "why": "Shift register assembling received data bits LSB-first",
+       "lines": [
+        28,
+        90
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "AXI-Stream output",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Output byte latch with valid/ready handshake",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "m_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 90.8,
+       "struct_score": 76.6,
+       "trace": "data_backward",
+       "why": "Received byte output driven from output latch",
+       "lines": [
+        11,
+        48
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "m_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 90.4,
+       "struct_score": 75.8,
+       "trace": "control_backward",
+       "why": "AXI-Stream valid, set on good stop bit, held until tready",
+       "lines": [
+        12,
+        49
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "m_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 83.7,
+       "struct_score": 54.2,
+       "trace": "interface",
+       "why": "Downstream ready clearing the output valid register",
+       "lines": [
+        13,
+        105
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E15",
+       "name": "latch_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E16",
+       "name": "vq",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Status flags",
+     "kind": "OTHER",
+     "description": "Busy, overrun and framing error registers",
+     "anchors": [
+      {
+       "id": "E7",
+       "name": "busy",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 48.1,
+       "struct_score": 25.0,
+       "trace": "control_backward",
+       "why": "Receive-in-progress indication from act register",
+       "lines": [
+        17,
+        50
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "overrun_error",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 48.1,
+       "struct_score": 25.0,
+       "trace": "control_backward",
+       "why": "Pulses when new byte arrives while previous still valid",
+       "lines": [
+        18,
+        51
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "frame_error",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 48.1,
+       "struct_score": 25.0,
+       "trace": "control_backward",
+       "why": "Pulses when stop bit sampled low",
+       "lines": [
+        19,
+        52
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E17",
+       "name": "act",
+       "kind": "reg"
+      },
+      {
+       "id": "E18",
+       "name": "e_ov",
+       "kind": "reg"
+      },
+      {
+       "id": "E19",
+       "name": "e_fr",
+       "kind": "reg"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axis",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "m_axis_tdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E4",
+       "name": "m_axis_tvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "m_axis_tready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "uart_rx_line",
+     "protocol": "SERIAL",
+     "direction": "IN",
+     "member_ids": [
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "rxd",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E7",
+      "E8",
+      "E9"
+     ],
+     "members": [
+      {
+       "id": "E7",
+       "name": "busy",
+       "kind": "port_out"
+      },
+      {
+       "id": "E8",
+       "name": "overrun_error",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "frame_error",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "config",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E10",
+       "name": "prescale",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

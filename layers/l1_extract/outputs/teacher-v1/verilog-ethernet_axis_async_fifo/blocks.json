@@ -1,0 +1,1171 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-ethernet_axis_async_fifo",
+ "tops": [
+  "axis_async_fifo"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "axis_async_fifo": {
+   "source": "teacher",
+   "canonical_instance": "axis_async_fifo",
+   "file": "data/rtl/verilog-ethernet/lib/axis/rtl/axis_async_fifo.v",
+   "lines": [
+    34,
+    908
+   ],
+   "summary": "Dual-clock AXI-Stream FIFO: block RAM written by binary/Gray write pointer, Gray pointers cross domains via two-flop synchronizers for full/empty, with frame drop/commit logic and an output pipeline.",
+   "blocks": [
+    {
+     "name": "Write controller",
+     "kind": "CONTROLLER",
+     "description": "Accepts input beats, writes mem, advances/commits/rolls back write pointer, drops or marks frames.",
+     "anchors": [
+      {
+       "id": "E35",
+       "name": "wr_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "critical",
+       "score": 82.4,
+       "struct_score": 49.2,
+       "trace": "control_backward",
+       "why": "Write-domain binary pointer addressing mem writes, incremented per accepted beat.",
+       "lines": [
+        514,
+        515,
+        516
+       ]
+      },
+      {
+       "id": "E36",
+       "name": "wr_ptr_commit_reg",
+       "role": "FIFO_PTR",
+       "importance": "minor",
+       "score": 24.9,
+       "struct_score": 43.7,
+       "trace": "control_backward",
+       "why": "Committed write pointer at frame end; rollback target for dropped frames.",
+       "lines": [
+        268,
+        423,
+        447
+       ]
+      },
+      {
+       "id": "E69",
+       "name": "full_wr",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.5,
+       "struct_score": 14.4,
+       "trace": "control_backward",
+       "why": "Packet overflow: current frame fills whole FIFO since last commit.",
+       "lines": [
+        268,
+        417
+       ]
+      },
+      {
+       "id": "E75",
+       "name": "drop_frame_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 47.7,
+       "struct_score": 23.2,
+       "trace": "control_backward",
+       "why": "Drop-in-progress flag discarding remaining beats of oversize/full/reset frames.",
+       "lines": [
+        417,
+        420,
+        486
+       ]
+      },
+      {
+       "id": "E76",
+       "name": "mark_frame_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.4,
+       "struct_score": 17.8,
+       "trace": "control_backward",
+       "why": "Marks truncated frame bad when full; forces tlast and bad tuser.",
+       "lines": [
+        313,
+        316,
+        507
+       ]
+      },
+      {
+       "id": "E77",
+       "name": "send_frame_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.7,
+       "struct_score": 18.9,
+       "trace": "control_backward",
+       "why": "Oversize frame being forwarded without drop; forces commits.",
+       "lines": [
+        434,
+        436,
+        467
+       ]
+      },
+      {
+       "id": "E73",
+       "name": "s_frame_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.4,
+       "struct_score": 9.7,
+       "trace": "control_backward",
+       "why": "Tracks input frame in progress for reset/drop handling.",
+       "lines": [
+        400,
+        405
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E43",
+       "name": "wr_ptr_temp",
+       "kind": "reg"
+      },
+      {
+       "id": "E99",
+       "name": "s_axis",
+       "kind": "wire"
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "s_axis_tuser",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "FIFO RAM",
+     "kind": "MEMORY",
+     "description": "Dual-clock RAM storing packed stream words.",
+     "anchors": [
+      {
+       "id": "E63",
+       "name": "mem",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 88.1,
+       "struct_score": 70.0,
+       "trace": "data_backward",
+       "why": "Dual-port RAM holding packed tdata/tlast/tuser words between clock domains.",
+       "lines": [
+        255,
+        514,
+        666
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Pointer CDC and flags",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Gray pointer synchronizers and toggle handshake for commit pointer; full/empty compares.",
+     "anchors": [
+      {
+       "id": "E37",
+       "name": "wr_ptr_gray_reg",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 50.6,
+       "struct_score": 35.0,
+       "trace": "forward",
+       "why": "Gray-coded write pointer crossing into read clock domain; used for full check.",
+       "lines": [
+        264,
+        518,
+        584
+       ]
+      },
+      {
+       "id": "E40",
+       "name": "rd_ptr_gray_reg",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 49.9,
+       "struct_score": 32.1,
+       "trace": "forward",
+       "why": "Gray-coded read pointer crossing into write clock domain; used for empty check.",
+       "lines": [
+        266,
+        570,
+        672
+       ]
+      },
+      {
+       "id": "E46",
+       "name": "wr_ptr_gray_sync2_reg",
+       "role": "FIFO_PTR",
+       "importance": "minor",
+       "score": 20.4,
+       "struct_score": 26.0,
+       "trace": "data_backward",
+       "why": "Write Gray pointer synchronized into read domain for empty and depth.",
+       "lines": [
+        266,
+        585,
+        725
+       ]
+      },
+      {
+       "id": "E49",
+       "name": "rd_ptr_gray_sync2_reg",
+       "role": "FIFO_PTR",
+       "importance": "minor",
+       "score": 20.7,
+       "struct_score": 27.1,
+       "trace": "data_backward",
+       "why": "Read Gray pointer synchronized into write domain for full and depth.",
+       "lines": [
+        264,
+        563,
+        571
+       ]
+      },
+      {
+       "id": "E47",
+       "name": "wr_ptr_commit_sync_reg",
+       "role": "FIFO_PTR",
+       "importance": "minor",
+       "score": 20.8,
+       "struct_score": 27.8,
+       "trace": "data_backward",
+       "why": "Committed write pointer in read domain for frame-mode empty.",
+       "lines": [
+        266,
+        587
+       ]
+      },
+      {
+       "id": "E67",
+       "name": "full",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 45.7,
+       "struct_score": 15.0,
+       "trace": "control_backward",
+       "why": "Full compare of write Gray pointer vs synchronized read pointer; blocks tready.",
+       "lines": [
+        264,
+        306
+       ]
+      },
+      {
+       "id": "E68",
+       "name": "empty",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 44.0,
+       "struct_score": 8.0,
+       "trace": "control_backward",
+       "why": "Empty compare of read pointer vs synchronized write pointer; gates reads.",
+       "lines": [
+        266,
+        667
+       ]
+      },
+      {
+       "id": "E51",
+       "name": "wr_ptr_update_reg",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 21.4,
+       "struct_score": 30.3,
+       "trace": "forward",
+       "why": "Toggle request transferring committed pointer to read domain.",
+       "lines": [
+        450,
+        454,
+        589
+       ]
+      },
+      {
+       "id": "E56",
+       "name": "wr_ptr_update_ack_sync2_reg",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 16.8,
+       "struct_score": 11.2,
+       "trace": "control_backward",
+       "why": "Synchronized ack toggle; equality with request permits next pointer update.",
+       "lines": [
+        390,
+        450,
+        573
+       ]
+      },
+      {
+       "id": "E50",
+       "name": "wr_ptr_update_valid_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.8,
+       "struct_score": 11.2,
+       "trace": "control_backward",
+       "why": "Pending flag: commit pointer update deferred while sync in progress.",
+       "lines": [
+        388,
+        457
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E45",
+       "name": "wr_ptr_gray_sync1_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E48",
+       "name": "rd_ptr_gray_sync1_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E38",
+       "name": "wr_ptr_sync_commit_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E52",
+       "name": "wr_ptr_update_sync1_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E53",
+       "name": "wr_ptr_update_sync2_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E54",
+       "name": "wr_ptr_update_sync3_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E55",
+       "name": "wr_ptr_update_ack_sync1_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E57",
+       "name": "s_rst_sync1_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E58",
+       "name": "s_rst_sync2_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E60",
+       "name": "m_rst_sync1_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E61",
+       "name": "m_rst_sync2_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Read controller",
+     "kind": "CONTROLLER",
+     "description": "Reads mem when not empty, advances read pointer, terminates frames interrupted by source reset.",
+     "anchors": [
+      {
+       "id": "E39",
+       "name": "rd_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "critical",
+       "score": 82.5,
+       "struct_score": 49.6,
+       "trace": "control_backward",
+       "why": "Read-domain binary pointer addressing mem reads, incremented when not empty.",
+       "lines": [
+        666,
+        671
+       ]
+      },
+      {
+       "id": "E81",
+       "name": "m_drop_frame_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.6,
+       "struct_score": 14.8,
+       "trace": "control_backward",
+       "why": "Read-side terminate request after source reset; blocks reads.",
+       "lines": [
+        667,
+        685,
+        704
+       ]
+      },
+      {
+       "id": "E82",
+       "name": "m_terminate_frame_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.8,
+       "struct_score": 11.5,
+       "trace": "forward",
+       "why": "Forces output tlast and bad tuser to close interrupted frame.",
+       "lines": [
+        326,
+        329,
+        689
+       ]
+      },
+      {
+       "id": "E74",
+       "name": "m_frame_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 15.6,
+       "struct_score": 6.6,
+       "trace": "control_backward",
+       "why": "Tracks output frame in progress for reset termination.",
+       "lines": [
+        679,
+        701
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E44",
+       "name": "rd_ptr_temp",
+       "kind": "reg"
+      },
+      {
+       "id": "E117",
+       "name": "pipe_ready",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Output pipeline",
+     "kind": "PIPELINE_STAGE",
+     "description": "RAM read pipeline registers unpacking words onto m_axis outputs.",
+     "anchors": [
+      {
+       "id": "E65",
+       "name": "m_axis_pipe_reg",
+       "role": "PIPELINE_REG",
+       "importance": "major",
+       "score": 52.9,
+       "struct_score": 44.0,
+       "trace": "data_backward",
+       "why": "RAM output pipeline stages carrying read words toward m_axis.",
+       "lines": [
+        259,
+        658,
+        666
+       ]
+      },
+      {
+       "id": "E66",
+       "name": "m_axis_tvalid_pipe_reg",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 17.2,
+       "struct_score": 12.9,
+       "trace": "control_backward",
+       "why": "Per-stage valid bits shifting output pipeline data.",
+       "lines": [
+        655,
+        657,
+        669
+       ]
+      },
+      {
+       "id": "E101",
+       "name": "m_axis_tready_pipe",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.6,
+       "struct_score": 6.6,
+       "trace": "control_backward",
+       "why": "Downstream ready advancing pipeline stages and RAM reads.",
+       "lines": [
+        648,
+        663
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E100",
+       "name": "m_axis",
+       "kind": "wire"
+      },
+      {
+       "id": "E102",
+       "name": "m_axis_tvalid_pipe",
+       "kind": "wire"
+      },
+      {
+       "id": "E103",
+       "name": "m_axis_tdata_pipe",
+       "kind": "wire"
+      },
+      {
+       "id": "E104",
+       "name": "m_axis_tkeep_pipe",
+       "kind": "wire"
+      },
+      {
+       "id": "E105",
+       "name": "m_axis_tlast_pipe",
+       "kind": "wire"
+      },
+      {
+       "id": "E106",
+       "name": "m_axis_tid_pipe",
+       "kind": "wire"
+      },
+      {
+       "id": "E107",
+       "name": "m_axis_tdest_pipe",
+       "kind": "wire"
+      },
+      {
+       "id": "E108",
+       "name": "m_axis_tuser_pipe",
+       "kind": "wire"
+      },
+      {
+       "id": "E109",
+       "name": "m_axis_tready_out",
+       "kind": "wire"
+      },
+      {
+       "id": "E110",
+       "name": "m_axis_tvalid_out",
+       "kind": "wire"
+      },
+      {
+       "id": "E111",
+       "name": "m_axis_tdata_out",
+       "kind": "wire"
+      },
+      {
+       "id": "E112",
+       "name": "m_axis_tkeep_out",
+       "kind": "wire"
+      },
+      {
+       "id": "E113",
+       "name": "m_axis_tlast_out",
+       "kind": "wire"
+      },
+      {
+       "id": "E114",
+       "name": "m_axis_tid_out",
+       "kind": "wire"
+      },
+      {
+       "id": "E115",
+       "name": "m_axis_tdest_out",
+       "kind": "wire"
+      },
+      {
+       "id": "E116",
+       "name": "m_axis_tuser_out",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Status and depth",
+     "kind": "OTHER",
+     "description": "Overflow/bad/good frame pulses with toggle sync, depth counters per domain.",
+     "anchors": [
+      {
+       "id": "E78",
+       "name": "overflow_reg",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 15.2,
+       "struct_score": 4.8,
+       "trace": "control_backward",
+       "why": "Overflow pulse on dropped frame; drives status and toggle sync.",
+       "lines": [
+        345,
+        427,
+        609
+       ]
+      },
+      {
+       "id": "E79",
+       "name": "bad_frame_reg",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 15.2,
+       "struct_score": 4.9,
+       "trace": "control_backward",
+       "why": "Bad frame dropped pulse, reported and synchronized to read side.",
+       "lines": [
+        346,
+        442,
+        610
+       ]
+      },
+      {
+       "id": "E80",
+       "name": "good_frame_reg",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 15.2,
+       "struct_score": 4.9,
+       "trace": "control_backward",
+       "why": "Good frame committed pulse, reported and synchronized to read side.",
+       "lines": [
+        347,
+        460,
+        611
+       ]
+      },
+      {
+       "id": "E83",
+       "name": "s_depth_reg",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 15.4,
+       "struct_score": 5.9,
+       "trace": "data_backward",
+       "why": "Write-side occupancy from write pointer minus converted read pointer.",
+       "lines": [
+        343,
+        564
+       ]
+      },
+      {
+       "id": "E85",
+       "name": "m_depth_reg",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 15.4,
+       "struct_score": 5.9,
+       "trace": "data_backward",
+       "why": "Read-side occupancy from converted write pointer minus read pointer.",
+       "lines": [
+        349,
+        726
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E84",
+       "name": "s_depth_commit_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E86",
+       "name": "m_depth_commit_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E41",
+       "name": "wr_ptr_conv_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E42",
+       "name": "rd_ptr_conv_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E87",
+       "name": "overflow_sync1_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E88",
+       "name": "overflow_sync2_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E89",
+       "name": "overflow_sync3_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E90",
+       "name": "overflow_sync4_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E91",
+       "name": "bad_frame_sync1_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E92",
+       "name": "bad_frame_sync2_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E93",
+       "name": "bad_frame_sync3_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E94",
+       "name": "bad_frame_sync4_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E95",
+       "name": "good_frame_sync1_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E96",
+       "name": "good_frame_sync2_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E97",
+       "name": "good_frame_sync3_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E98",
+       "name": "good_frame_sync4_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Stream interfaces",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "AXI-Stream slave input and master output handshakes.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "s_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 81.1,
+       "struct_score": 44.6,
+       "trace": "interface",
+       "why": "Input stream payload packed into s_axis and written into mem.",
+       "lines": [
+        311
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 88.5,
+       "struct_score": 70.9,
+       "trace": "interface",
+       "why": "Input valid; with tready triggers memory write and pointer advance.",
+       "lines": [
+        398,
+        415,
+        485
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 89.9,
+       "struct_score": 74.5,
+       "trace": "control_backward",
+       "why": "Input ready derived from full flag, drop modes and synced reset.",
+       "lines": [
+        306,
+        398
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "m_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 82.7,
+       "struct_score": 50.4,
+       "trace": "data_backward",
+       "why": "Output stream payload from last output pipeline stage.",
+       "lines": [
+        852,
+        894
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "m_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 82.4,
+       "struct_score": 49.3,
+       "trace": "control_backward",
+       "why": "Output valid from pipeline valid bit, gated by pause.",
+       "lines": [
+        850,
+        892
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "m_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 76.9,
+       "struct_score": 28.1,
+       "trace": "interface",
+       "why": "Output ready advancing output pipeline and FIFO reads.",
+       "lines": [
+        849,
+        891
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E4",
+       "name": "s_axis_tkeep",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_axis_tid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_axis_tdest",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "s_axis_tuser",
+       "kind": "port_in"
+      },
+      {
+       "id": "E14",
+       "name": "m_axis_tkeep",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "m_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "m_axis_tid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "m_axis_tdest",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "m_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clocks_resets",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2",
+      "E11",
+      "E12"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "s_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "s_rst",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "m_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E12",
+       "name": "m_rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axis",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axis_tdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_tkeep",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_tvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_tready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_axis_tid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_axis_tdest",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "s_axis_tuser",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axis",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20"
+     ],
+     "members": [
+      {
+       "id": "E13",
+       "name": "m_axis_tdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "m_axis_tkeep",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "m_axis_tvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "m_axis_tready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E17",
+       "name": "m_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "m_axis_tid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "m_axis_tdest",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "m_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "pause",
+     "protocol": "REQ_ACK",
+     "direction": "IN",
+     "member_ids": [
+      "E21",
+      "E22",
+      "E23",
+      "E24"
+     ],
+     "members": [
+      {
+       "id": "E21",
+       "name": "s_pause_req",
+       "kind": "port_in"
+      },
+      {
+       "id": "E22",
+       "name": "s_pause_ack",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "m_pause_req",
+       "kind": "port_in"
+      },
+      {
+       "id": "E24",
+       "name": "m_pause_ack",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "s_status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E25",
+      "E26",
+      "E27",
+      "E28",
+      "E29"
+     ],
+     "members": [
+      {
+       "id": "E25",
+       "name": "s_status_depth",
+       "kind": "port_out"
+      },
+      {
+       "id": "E26",
+       "name": "s_status_depth_commit",
+       "kind": "port_out"
+      },
+      {
+       "id": "E27",
+       "name": "s_status_overflow",
+       "kind": "port_out"
+      },
+      {
+       "id": "E28",
+       "name": "s_status_bad_frame",
+       "kind": "port_out"
+      },
+      {
+       "id": "E29",
+       "name": "s_status_good_frame",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "m_status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E30",
+      "E31",
+      "E32",
+      "E33",
+      "E34"
+     ],
+     "members": [
+      {
+       "id": "E30",
+       "name": "m_status_depth",
+       "kind": "port_out"
+      },
+      {
+       "id": "E31",
+       "name": "m_status_depth_commit",
+       "kind": "port_out"
+      },
+      {
+       "id": "E32",
+       "name": "m_status_overflow",
+       "kind": "port_out"
+      },
+      {
+       "id": "E33",
+       "name": "m_status_bad_frame",
+       "kind": "port_out"
+      },
+      {
+       "id": "E34",
+       "name": "m_status_good_frame",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

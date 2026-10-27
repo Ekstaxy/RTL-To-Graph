@@ -1,0 +1,750 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-ethernet_axis_eth_fcs_check",
+ "tops": [
+  "axis_eth_fcs_check"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "lfsr": {
+   "source": "heuristic",
+   "canonical_instance": "axis_eth_fcs_check.eth_crc_8",
+   "file": "data/rtl/verilog-ethernet/rtl/lfsr.v",
+   "lines": [
+    34,
+    445
+   ],
+   "summary": "lfsr (heuristic)",
+   "blocks": [],
+   "ungrouped_anchors": [
+    {
+     "id": "E1",
+     "name": "data_in",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 41.8,
+     "struct_score": 94.5,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    },
+    {
+     "id": "E2",
+     "name": "state_in",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 42.8,
+     "struct_score": 97.0,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    },
+    {
+     "id": "E3",
+     "name": "data_out",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 41.9,
+     "struct_score": 94.6,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    },
+    {
+     "id": "E4",
+     "name": "state_out",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 43.6,
+     "struct_score": 99.0,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "data",
+     "protocol": "SIMPLE",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E1",
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "data_in",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "data_out",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "state",
+     "protocol": "SIMPLE",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E2",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E2",
+       "name": "state_in",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "state_out",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "axis_eth_fcs_check": {
+   "source": "teacher",
+   "canonical_instance": "axis_eth_fcs_check",
+   "file": "data/rtl/verilog-ethernet/rtl/axis_eth_fcs_check.v",
+   "lines": [
+    34,
+    343
+   ],
+   "summary": "AXI-stream Ethernet FCS checker: a 2-state FSM delays bytes through a 4-stage shift register, updates a CRC32 LFSR child, strips the FCS and flags mismatches through a skid-buffered output.",
+   "blocks": [
+    {
+     "name": "FCS check controller",
+     "kind": "CONTROLLER",
+     "description": "FSM sequencing delay-line shift, CRC update and end-of-frame comparison",
+     "anchors": [
+      {
+       "id": "E15",
+       "name": "state_reg",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.5,
+       "struct_score": 98.7,
+       "trace": "control_backward",
+       "why": "IDLE/PAYLOAD controller driving shift, CRC update and frame end handling",
+       "lines": [
+        140,
+        227
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "update_crc",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.5,
+       "struct_score": 6.2,
+       "trace": "control_backward",
+       "why": "Enables loading crc_next into crc_state",
+       "lines": [
+        156,
+        237
+       ]
+      },
+      {
+       "id": "E19",
+       "name": "shift_in",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 18.1,
+       "struct_score": 16.7,
+       "trace": "control_backward",
+       "why": "Advances data and valid delay-line registers on accepted beat",
+       "lines": [
+        152,
+        246,
+        254
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E16",
+       "name": "state_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E17",
+       "name": "reset_crc",
+       "kind": "comb"
+      },
+      {
+       "id": "E20",
+       "name": "shift_reset",
+       "kind": "comb"
+      },
+      {
+       "id": "E29",
+       "name": "busy_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E30",
+       "name": "error_bad_fcs_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E31",
+       "name": "error_bad_fcs_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E32",
+       "name": "s_axis_tready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E33",
+       "name": "s_axis_tready_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "CRC datapath",
+     "kind": "DATAPATH",
+     "description": "CRC32 state register with LFSR child computing next CRC per byte",
+     "anchors": [
+      {
+       "id": "E34",
+       "name": "crc_state",
+       "role": "HOLDING_REG",
+       "importance": "critical",
+       "score": 77.0,
+       "struct_score": 28.6,
+       "trace": "data_backward",
+       "why": "Running CRC32 state fed to the LFSR child, reset per frame",
+       "lines": [
+        118,
+        236,
+        238
+       ]
+      },
+      {
+       "id": "E35",
+       "name": "crc_next",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 47.8,
+       "struct_score": 23.7,
+       "trace": "data_backward",
+       "why": "LFSR output compared against received FCS bytes to detect bad frames",
+       "lines": [
+        120,
+        162,
+        238
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "eth_crc_8",
+       "module": "lfsr"
+      }
+     ],
+     "members": []
+    },
+    {
+     "name": "FCS delay line",
+     "kind": "BUFFER",
+     "description": "Four-byte shift register holding candidate FCS bytes",
+     "anchors": [
+      {
+       "id": "E21",
+       "name": "s_axis_tdata_d0",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 55.6,
+       "struct_score": 53.4,
+       "trace": "data_backward",
+       "why": "Representative of 4-byte delay line holding trailing FCS bytes",
+       "lines": [
+        162,
+        255
+       ]
+      },
+      {
+       "id": "E28",
+       "name": "s_axis_tvalid_d3",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 23.2,
+       "struct_score": 37.5,
+       "trace": "control_backward",
+       "why": "Indicates delay line full; gates output valid and CRC update",
+       "lines": [
+        147,
+        154,
+        250
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E22",
+       "name": "s_axis_tdata_d1",
+       "kind": "reg"
+      },
+      {
+       "id": "E23",
+       "name": "s_axis_tdata_d2",
+       "kind": "reg"
+      },
+      {
+       "id": "E24",
+       "name": "s_axis_tdata_d3",
+       "kind": "reg"
+      },
+      {
+       "id": "E25",
+       "name": "s_axis_tvalid_d0",
+       "kind": "reg"
+      },
+      {
+       "id": "E26",
+       "name": "s_axis_tvalid_d1",
+       "kind": "reg"
+      },
+      {
+       "id": "E27",
+       "name": "s_axis_tvalid_d2",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Output skid buffer",
+     "kind": "BUFFER",
+     "description": "Output and temp registers decoupling m_axis ready from input ready",
+     "anchors": [
+      {
+       "id": "E48",
+       "name": "temp_m_axis_tvalid_reg",
+       "role": "STORAGE",
+       "importance": "minor",
+       "score": 25.6,
+       "struct_score": 46.5,
+       "trace": "data_backward",
+       "why": "Skid buffer temp slot valid, holding beat when output stalled",
+       "lines": [
+        284,
+        303,
+        317
+       ]
+      },
+      {
+       "id": "E38",
+       "name": "m_axis_tready_int_reg",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 21.4,
+       "struct_score": 30.2,
+       "trace": "control_backward",
+       "why": "Registered internal ready selecting output or temp store paths",
+       "lines": [
+        295,
+        316
+       ]
+      },
+      {
+       "id": "E52",
+       "name": "store_axis_int_to_output",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 16.4,
+       "struct_score": 9.6,
+       "trace": "control_backward",
+       "why": "Loads internal beat into output registers",
+       "lines": [
+        300,
+        320
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E36",
+       "name": "m_axis_tdata_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E37",
+       "name": "m_axis_tvalid_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E39",
+       "name": "m_axis_tlast_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E40",
+       "name": "m_axis_tuser_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E41",
+       "name": "m_axis_tready_int_early",
+       "kind": "wire"
+      },
+      {
+       "id": "E42",
+       "name": "m_axis_tdata_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E43",
+       "name": "m_axis_tvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E44",
+       "name": "m_axis_tvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E45",
+       "name": "m_axis_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E46",
+       "name": "m_axis_tuser_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E47",
+       "name": "temp_m_axis_tdata_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E49",
+       "name": "temp_m_axis_tvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E50",
+       "name": "temp_m_axis_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E51",
+       "name": "temp_m_axis_tuser_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E53",
+       "name": "store_axis_int_to_temp",
+       "kind": "comb"
+      },
+      {
+       "id": "E54",
+       "name": "store_axis_temp_to_output",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Stream interfaces",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "AXI-stream input and output ports plus status",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "s_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 88.3,
+       "struct_score": 70.5,
+       "trace": "interface",
+       "why": "Input stream byte entering delay line",
+       "lines": [
+        42,
+        255
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 94.1,
+       "struct_score": 85.1,
+       "trace": "interface",
+       "why": "Input beat valid qualifying shift and state transitions",
+       "lines": [
+        43,
+        151
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 93.2,
+       "struct_score": 82.8,
+       "trace": "interface",
+       "why": "Input ready from s_axis_tready_reg, backpressured by output",
+       "lines": [
+        44,
+        102,
+        151
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_tlast",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 59.7,
+       "struct_score": 68.6,
+       "trace": "interface",
+       "why": "End of frame marker triggering FCS comparison and FSM return",
+       "lines": [
+        45,
+        157
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "m_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 87.3,
+       "struct_score": 67.0,
+       "trace": "interface",
+       "why": "Output stream byte with FCS stripped",
+       "lines": [
+        51,
+        278
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "m_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 87.0,
+       "struct_score": 65.9,
+       "trace": "interface",
+       "why": "Output valid from skid buffer register",
+       "lines": [
+        52,
+        279
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "m_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 85.7,
+       "struct_score": 61.3,
+       "trace": "interface",
+       "why": "Downstream ready controlling skid buffer transfers",
+       "lines": [
+        53,
+        284,
+        297
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "m_axis_tuser",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 54.3,
+       "struct_score": 48.8,
+       "trace": "interface",
+       "why": "Output frame error flag, set on bad FCS",
+       "lines": [
+        55,
+        281
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "error_bad_fcs",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 46.1,
+       "struct_score": 16.7,
+       "trace": "interface",
+       "why": "Pulse reporting a frame failed FCS check",
+       "lines": [
+        61,
+        105
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "busy",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 18.1,
+       "struct_score": 16.7,
+       "trace": "interface",
+       "why": "Level indicating frame in progress (state not idle)",
+       "lines": [
+        60,
+        104
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E7",
+       "name": "s_axis_tuser",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "m_axis_tlast",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axis",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axis_tdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_tvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_tready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_tuser",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axis",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12"
+     ],
+     "members": [
+      {
+       "id": "E8",
+       "name": "m_axis_tdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "m_axis_tvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "m_axis_tready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "m_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "m_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E13",
+      "E14"
+     ],
+     "members": [
+      {
+       "id": "E13",
+       "name": "busy",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "error_bad_fcs",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

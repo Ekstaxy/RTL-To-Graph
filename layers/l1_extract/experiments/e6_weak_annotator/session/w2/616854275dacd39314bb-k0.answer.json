@@ -1,0 +1,171 @@
+{
+  "module_summary": "System-on-Chip top: routes data from 4 input channels through FIFOs, arbitrates with round-robin to select a FIFO, multiplexes its data, and transmits via UART.",
+  "anchors": [
+    {
+      "id": "E3",
+      "name": "ch_valid",
+      "role": "HANDSHAKE_VALID",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Input handshake signal indicating valid data on channel.",
+      "lines": [8, 25, 33]
+    },
+    {
+      "id": "E4",
+      "name": "ch_ready",
+      "role": "HANDSHAKE_READY",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Output backpressure signal from FIFO to each input channel.",
+      "lines": [9, 25]
+    },
+    {
+      "id": "E5",
+      "name": "ch_data",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "8-bit data payload from 4 input channels.",
+      "lines": [10, 25]
+    },
+    {
+      "id": "E8",
+      "name": "fifo_valid",
+      "role": "HANDSHAKE_VALID",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Valid signals from all 4 FIFOs requesting arbitration.",
+      "lines": [14, 26, 33]
+    },
+    {
+      "id": "E9",
+      "name": "fifo_pop",
+      "role": "HANDSHAKE_READY",
+      "importance": "major",
+      "trace": "forward",
+      "why": "Read enable to selected FIFO computed from grant and tx handshake.",
+      "lines": [14, 26, 44]
+    },
+    {
+      "id": "E11",
+      "name": "gnt",
+      "role": "ARBITRATION",
+      "importance": "critical",
+      "trace": "control_backward",
+      "why": "One-hot grant vector selecting which FIFO data to send.",
+      "lines": [16, 33, 40, 44]
+    },
+    {
+      "id": "E12",
+      "name": "gnt_valid",
+      "role": "HANDSHAKE_VALID",
+      "importance": "critical",
+      "trace": "control_backward",
+      "why": "Arbitration valid signal indicating a FIFO was selected.",
+      "lines": [17, 34, 43]
+    },
+    {
+      "id": "E14",
+      "name": "tx_valid",
+      "role": "HANDSHAKE_VALID",
+      "importance": "critical",
+      "trace": "forward",
+      "why": "Valid signal to UART indicating data ready to transmit.",
+      "lines": [17, 43, 44, 47]
+    },
+    {
+      "id": "E13",
+      "name": "tx_ready",
+      "role": "HANDSHAKE_READY",
+      "importance": "critical",
+      "trace": "control_backward",
+      "why": "Ready signal from UART indicating ready to accept next byte.",
+      "lines": [17, 47, 44]
+    },
+    {
+      "id": "E15",
+      "name": "tx_byte",
+      "role": "DATAPATH_MAJOR",
+      "importance": "critical",
+      "trace": "data_backward",
+      "why": "Multiplexed data byte selected from granted FIFO.",
+      "lines": [18, 40, 47]
+    },
+    {
+      "id": "E6",
+      "name": "uart_tx",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Serial output to UART transmitter.",
+      "lines": [11, 48]
+    },
+    {
+      "id": "E7",
+      "name": "uart_busy",
+      "role": "STATUS",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Status output indicating UART transmitter busy.",
+      "lines": [12, 48]
+    }
+  ],
+  "groups": [
+    {
+      "name": "Input Channel Interface",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E3", "E4", "E5"],
+      "member_ids": [],
+      "description": "Handshake and data from 4 input channels, routed to FIFOs."
+    },
+    {
+      "name": "FIFO Interconnect",
+      "kind": "OTHER",
+      "anchor_ids": ["E8", "E9"],
+      "member_ids": ["I1"],
+      "description": "Valid and ready signals between FIFOs and arbitrator."
+    },
+    {
+      "name": "Round-Robin Arbitration",
+      "kind": "ARBITER",
+      "anchor_ids": ["E11", "E12"],
+      "member_ids": ["I2"],
+      "description": "Selects one FIFO output per cycle using round-robin priority."
+    },
+    {
+      "name": "TX Handshake",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E14", "E13"],
+      "member_ids": [],
+      "description": "Valid and ready handshake between arbiter and UART."
+    },
+    {
+      "name": "Data Multiplexer",
+      "kind": "DATAPATH",
+      "anchor_ids": ["E15"],
+      "member_ids": [],
+      "description": "One-hot mux selecting data from granted FIFO."
+    },
+    {
+      "name": "UART Output Interface",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E6", "E7"],
+      "member_ids": ["I3"],
+      "description": "Serial transmit output and busy status."
+    }
+  ],
+  "interfaces": [
+    {
+      "name": "Input Channels",
+      "protocol": "VALID_READY",
+      "direction": "IN",
+      "member_ids": ["E3", "E4", "E5"]
+    },
+    {
+      "name": "UART Output",
+      "protocol": "SIMPLE",
+      "direction": "OUT",
+      "member_ids": ["E6", "E7"]
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+ "module_summary": "Round-robin arbiter: a picker sub-module selects the next requester from a rotating token; grant is registered and held until accepted, then token rotates.",
+ "anchors": [
+  {"id": "E8", "name": "token_r", "role": "ARBITRATION", "importance": "critical", "trace": "control_backward", "why": "Round-robin priority pointer, rotated past last grant on release.", "lines": [43, 72, 74]},
+  {"id": "E9", "name": "sel_r", "role": "ARBITRATION", "importance": "critical", "trace": "control_backward", "why": "Registered grant vector captured from picker while idle, cleared on release; drives gnt_o.", "lines": [64, 66, 77]},
+  {"id": "E10", "name": "busy_r", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Two-state idle/granted controller; set on any request, cleared on accept; drives grant valid.", "lines": [54, 56, 78]},
+  {"id": "E3", "name": "req_i", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Request vector from N clients into the picker.", "lines": [29, 42, 47]},
+  {"id": "E5", "name": "accept_i", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Acceptance of current grant; releases arbiter and rotates token.", "lines": [31, 48, 55]},
+  {"id": "E12", "name": "release_now", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Grant accepted this cycle: clears grant register and rotates token.", "lines": [48, 63, 73]},
+  {"id": "E7", "name": "cand", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "One-hot winner computed by picker, loaded into grant register.", "lines": [44, 66]},
+  {"id": "E11", "name": "any_ask", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "OR of requests; moves controller from idle to granted.", "lines": [47, 54]}
+ ],
+ "groups": [
+  {"name": "rr_picker", "kind": "ARBITER", "anchor_ids": ["E8", "E9", "E7"], "member_ids": ["I1", "E4"], "description": "Rotating token and picker produce one-hot grant, latched into grant register."},
+  {"name": "grant_controller", "kind": "CONTROLLER", "anchor_ids": ["E10", "E12", "E11"], "member_ids": ["E6"], "description": "Idle/granted state holds grant until accept, then releases and rotates."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "request_grant", "protocol": "REQ_ACK", "direction": "IN", "member_ids": ["E3", "E4"]},
+  {"name": "grant_accept", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E6", "E5"]}
+ ]
+}

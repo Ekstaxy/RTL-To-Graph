@@ -1,0 +1,25 @@
+digraph "i2c_slave_wbm.state_reg" {
+  rankdir=LR; node [shape=ellipse, fontname="Helvetica", fontsize=10];
+  edge [fontname="Helvetica", fontsize=8];
+  labelloc=t; label="i2c_slave_wbm.state_reg (two-process, 6 states)";
+  __reset [shape=point, width=0.15];
+  __reset -> "STATE_IDLE" [label="reset"];
+  "STATE_IDLE" [peripheries=2, label="STATE_IDLE"];
+  "STATE_ADDRESS" [label="STATE_ADDRESS"];
+  "STATE_READ_1" [label="STATE_READ_1"];
+  "STATE_WRITE_1" [label="STATE_WRITE_1"];
+  "STATE_READ_2" [label="STATE_READ_2"];
+  "STATE_WRITE_2" [label="STATE_WRITE_2"];
+  "__any" [label="any state", shape=box, style="rounded,dashed", color="#e76f51", fontsize=9];
+  "__any" -> "STATE_IDLE" [label="", style=dashed, color="#e76f51"];
+  "STATE_IDLE" -> "STATE_ADDRESS" [label="data_out_valid"];
+  "STATE_IDLE" -> "STATE_READ_1" [label="!data_out_valid && data_in_ready & ~data_in_valid_reg"];
+  "STATE_ADDRESS" -> "STATE_IDLE" [label="data_out_ready_reg & data_out_valid && count_reg == 0 && da… |\ndata_out_ready_reg & data_out_valid && !(count_reg == 0) &&…"];
+  "STATE_ADDRESS" -> "STATE_WRITE_1" [label="data_out_ready_reg & data_out_valid && count_reg == 0 && !d…"];
+  "STATE_READ_1" -> "STATE_READ_2" [label="(wb_ack_i || wb_err_i)"];
+  "STATE_READ_2" -> "STATE_IDLE" [label="data_out_valid | !bus_addressed |\n!(data_out_valid | !bus_addressed) && data_in_ready & ~data…"];
+  "STATE_WRITE_1" -> "STATE_WRITE_2" [label="data_out_ready_reg & data_out_valid && (count_reg == (WB_SE…"];
+  "STATE_WRITE_2" -> "STATE_IDLE" [label="(wb_ack_i || wb_err_i) && last_cycle_reg"];
+  "STATE_WRITE_2" -> "STATE_WRITE_1" [label="(wb_ack_i || wb_err_i) && !last_cycle_reg"];
+  __outs [shape=note, fontsize=9, label="outputs: data_out_ready_next(moore)"];
+}

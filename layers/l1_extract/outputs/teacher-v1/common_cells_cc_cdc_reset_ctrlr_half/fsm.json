@@ -1,0 +1,454 @@
+[
+ {
+  "module": "cc_cdc_4phase_src",
+  "instance": "cc_cdc_reset_ctrlr_half.i_state_transition_cdc_src",
+  "state": "state_q",
+  "next": "state_d",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "IDLE",
+    "value": ""
+   },
+   {
+    "name": "WAIT_ACK_ASSERT",
+    "value": ""
+   },
+   {
+    "name": "WAIT_ACK_DEASSERT",
+    "value": ""
+   }
+  ],
+  "reset_state": "IDLE",
+  "transitions": [
+   {
+    "src": "IDLE",
+    "dst": "WAIT_ACK_ASSERT",
+    "cond": "valid_i"
+   },
+   {
+    "src": "WAIT_ACK_ASSERT",
+    "dst": "WAIT_ACK_DEASSERT",
+    "cond": "ack_synced == 1'b1"
+   },
+   {
+    "src": "WAIT_ACK_DEASSERT",
+    "dst": "IDLE",
+    "cond": "ack_synced == 1'b0"
+   }
+  ],
+  "outputs": [
+   {
+    "signal": "ready_o",
+    "kind": "moore",
+    "port": true
+   }
+  ],
+  "warnings": [],
+  "semantic_check": "consistent"
+ },
+ {
+  "module": "cc_cdc_4phase_dst",
+  "instance": "cc_cdc_reset_ctrlr_half.i_state_transition_cdc_dst",
+  "state": "state_q",
+  "next": "state_d",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "IDLE",
+    "value": ""
+   },
+   {
+    "name": "WAIT_DOWNSTREAM_ACK",
+    "value": ""
+   },
+   {
+    "name": "WAIT_REQ_DEASSERT",
+    "value": ""
+   }
+  ],
+  "reset_state": "IDLE",
+  "transitions": [
+   {
+    "src": "IDLE",
+    "dst": "WAIT_REQ_DEASSERT",
+    "cond": "req_synced == 1'b1 && output_ready == 1'b1"
+   },
+   {
+    "src": "IDLE",
+    "dst": "WAIT_DOWNSTREAM_ACK",
+    "cond": "req_synced == 1'b1 && !(output_ready == 1'b1)"
+   },
+   {
+    "src": "WAIT_DOWNSTREAM_ACK",
+    "dst": "WAIT_REQ_DEASSERT",
+    "cond": "output_ready == 1'b1"
+   },
+   {
+    "src": "WAIT_REQ_DEASSERT",
+    "dst": "IDLE",
+    "cond": "req_synced == 1'b0"
+   }
+  ],
+  "outputs": [],
+  "warnings": [],
+  "semantic_check": "consistent"
+ },
+ {
+  "module": "cc_cdc_reset_ctrlr_half",
+  "instance": "cc_cdc_reset_ctrlr_half",
+  "state": "initiator_state_q",
+  "next": "initiator_state_d",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "IDLE",
+    "value": ""
+   },
+   {
+    "name": "ISOLATE",
+    "value": ""
+   },
+   {
+    "name": "WAIT_ISOLATE_PHASE_ACK",
+    "value": ""
+   },
+   {
+    "name": "WAIT_ISOLATE_ACK",
+    "value": ""
+   },
+   {
+    "name": "CLEAR",
+    "value": ""
+   },
+   {
+    "name": "WAIT_CLEAR_PHASE_ACK",
+    "value": ""
+   },
+   {
+    "name": "WAIT_CLEAR_ACK",
+    "value": ""
+   },
+   {
+    "name": "POST_CLEAR",
+    "value": ""
+   },
+   {
+    "name": "FINISHED",
+    "value": ""
+   },
+   {
+    "name": "InitiatorStateResetValue",
+    "value": "4'b1"
+   }
+  ],
+  "reset_state": "InitiatorStateResetValue",
+  "transitions": [
+   {
+    "src": "ISOLATE",
+    "dst": "CLEAR",
+    "cond": "initiator_phase_transition_ack && isolate_ack_i"
+   },
+   {
+    "src": "ISOLATE",
+    "dst": "WAIT_ISOLATE_ACK",
+    "cond": "!(initiator_phase_transition_ack && isolate_ack_i) && initiator_phase_transition_ack"
+   },
+   {
+    "src": "ISOLATE",
+    "dst": "WAIT_ISOLATE_PHASE_ACK",
+    "cond": "!(initiator_phase_transition_ack && isolate_ack_i) && !initiator_phase_transition_ack && isolate_ack_i"
+   },
+   {
+    "src": "WAIT_ISOLATE_ACK",
+    "dst": "CLEAR",
+    "cond": "isolate_ack_i"
+   },
+   {
+    "src": "WAIT_ISOLATE_PHASE_ACK",
+    "dst": "CLEAR",
+    "cond": "initiator_phase_transition_ack"
+   },
+   {
+    "src": "CLEAR",
+    "dst": "POST_CLEAR",
+    "cond": "initiator_phase_transition_ack && clear_ack_i"
+   },
+   {
+    "src": "CLEAR",
+    "dst": "WAIT_CLEAR_ACK",
+    "cond": "!(initiator_phase_transition_ack && clear_ack_i) && initiator_phase_transition_ack"
+   },
+   {
+    "src": "WAIT_CLEAR_PHASE_ACK",
+    "dst": "POST_CLEAR",
+    "cond": "initiator_phase_transition_ack"
+   },
+   {
+    "src": "POST_CLEAR",
+    "dst": "FINISHED",
+    "cond": "initiator_phase_transition_ack"
+   },
+   {
+    "src": "FINISHED",
+    "dst": "IDLE",
+    "cond": "initiator_phase_transition_ack"
+   },
+   {
+    "src": "InitiatorStateResetValue",
+    "dst": "ISOLATE",
+    "cond": "1"
+   }
+  ],
+  "outputs": [
+   {
+    "signal": "initiator_clear_out",
+    "kind": "moore",
+    "port": false
+   },
+   {
+    "signal": "initiator_clear_seq_phase",
+    "kind": "moore",
+    "port": false
+   },
+   {
+    "signal": "initiator_isolate_out",
+    "kind": "moore",
+    "port": false
+   },
+   {
+    "signal": "initiator_phase_transition_req",
+    "kind": "moore",
+    "port": false
+   }
+  ],
+  "warnings": [
+   "semantic_check: mismatch (syntactic 10 states / 11 edges vs executed 9 / 13); semantic transitions attached"
+  ],
+  "semantic_check": "mismatch",
+  "semantic_transitions": [
+   {
+    "src": "0",
+    "dst": "0",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "0",
+    "dst": "1",
+    "cond": "isolate_ack_i && !clear_ack_i || <datapath condition>"
+   },
+   {
+    "src": "1",
+    "dst": "1",
+    "cond": "!isolate_ack_i && !clear_ack_i"
+   },
+   {
+    "src": "1",
+    "dst": "3",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "1",
+    "dst": "2",
+    "cond": "isolate_ack_i && !clear_ack_i || <datapath condition>"
+   },
+   {
+    "src": "1",
+    "dst": "4",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "2",
+    "dst": "2",
+    "cond": "!isolate_ack_i && clear_ack_i"
+   },
+   {
+    "src": "2",
+    "dst": "4",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "3",
+    "dst": "3",
+    "cond": "!isolate_ack_i"
+   },
+   {
+    "src": "3",
+    "dst": "4",
+    "cond": "isolate_ack_i"
+   },
+   {
+    "src": "4",
+    "dst": "4",
+    "cond": "isolate_ack_i && !clear_ack_i"
+   },
+   {
+    "src": "4",
+    "dst": "6",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "4",
+    "dst": "5",
+    "cond": "!isolate_ack_i && clear_ack_i || <datapath condition>"
+   },
+   {
+    "src": "4",
+    "dst": "7",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "5",
+    "dst": "5",
+    "cond": "(!isolate_ack_i) || (!clear_ack_i)"
+   },
+   {
+    "src": "5",
+    "dst": "7",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "6",
+    "dst": "6",
+    "cond": "!clear_ack_i"
+   },
+   {
+    "src": "6",
+    "dst": "7",
+    "cond": "clear_ack_i"
+   },
+   {
+    "src": "7",
+    "dst": "8",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "7",
+    "dst": "7",
+    "cond": "clear_ack_i"
+   },
+   {
+    "src": "8",
+    "dst": "8",
+    "cond": "!isolate_ack_i && !clear_ack_i"
+   },
+   {
+    "src": "8",
+    "dst": "0",
+    "cond": "<datapath condition>"
+   }
+  ]
+ },
+ {
+  "module": "cc_cdc_reset_ctrlr_half",
+  "instance": "cc_cdc_reset_ctrlr_half",
+  "state": "receiver_phase_q",
+  "next": null,
+  "style": "one-process",
+  "states": [
+   {
+    "name": "CDC_CLEAR_PHASE_IDLE",
+    "value": ""
+   },
+   {
+    "name": "CDC_CLEAR_PHASE_ISOLATE",
+    "value": ""
+   },
+   {
+    "name": "CDC_CLEAR_PHASE_CLEAR",
+    "value": ""
+   },
+   {
+    "name": "CDC_CLEAR_PHASE_POST_CLEAR",
+    "value": ""
+   }
+  ],
+  "reset_state": "CDC_CLEAR_PHASE_IDLE",
+  "transitions": [],
+  "outputs": [
+   {
+    "signal": "receiver_effective_phase",
+    "kind": "moore",
+    "port": false
+   }
+  ],
+  "warnings": [
+   "non-constant next state: (receiver_phase_d)",
+   "no transitions extracted",
+   "semantic_check: mismatch (syntactic 4 states / 0 edges vs executed 4 / 12); semantic transitions attached"
+  ],
+  "semantic_check": "mismatch",
+  "semantic_transitions": [
+   {
+    "src": "0",
+    "dst": "0",
+    "cond": "(receiver_phase_done_q) || (receiver_phase_pending_q) || (!async_next_phase_i[0] && !async_next_phase_i[1])"
+   },
+   {
+    "src": "0",
+    "dst": "2",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "0",
+    "dst": "1",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "0",
+    "dst": "3",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "1",
+    "dst": "0",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "1",
+    "dst": "1",
+    "cond": "(receiver_phase_done_q) || (receiver_phase_pending_q) || (async_next_phase_i[0] && !async_next_phase_i[1])"
+   },
+   {
+    "src": "1",
+    "dst": "2",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "1",
+    "dst": "3",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "2",
+    "dst": "0",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "2",
+    "dst": "2",
+    "cond": "(receiver_phase_pending_q) || (receiver_phase_done_q) || (!async_next_phase_i[0] && async_next_phase_i[1])"
+   },
+   {
+    "src": "2",
+    "dst": "1",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "2",
+    "dst": "3",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "3",
+    "dst": "0",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "3",
+    "dst": "3",
+    "cond": "(receiver_phase_done_q) || (async_next_phase_i[0]) || (async_next_phase_i[1]) || (receiver_phase_pending_q)"
+   }
+  ]
+ }
+]

@@ -1,0 +1,777 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "biriscv_biriscv_exec",
+ "tops": [
+  "biriscv_exec"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "biriscv_alu": {
+   "source": "heuristic",
+   "canonical_instance": "biriscv_exec.u_alu",
+   "file": "data/rtl/biriscv/src/core/biriscv_alu.v",
+   "lines": [
+    25,
+    191
+   ],
+   "summary": "biriscv_alu (heuristic)",
+   "blocks": [],
+   "ungrouped_anchors": [
+    {
+     "id": "E1",
+     "name": "alu_op_i",
+     "role": "COMMAND",
+     "importance": "major",
+     "score": 63.5,
+     "struct_score": 78.6,
+     "trace": "forward",
+     "why": "command input",
+     "lines": []
+    },
+    {
+     "id": "E2",
+     "name": "alu_a_i",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 43.0,
+     "struct_score": 97.5,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    },
+    {
+     "id": "E3",
+     "name": "alu_b_i",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 43.2,
+     "struct_score": 97.9,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    },
+    {
+     "id": "E4",
+     "name": "alu_p_o",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 43.3,
+     "struct_score": 98.2,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "alu",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2",
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "alu_op_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "alu_a_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "alu_b_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "alu_p_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "biriscv_exec": {
+   "source": "teacher",
+   "canonical_instance": "biriscv_exec",
+   "file": "data/rtl/biriscv/src/core/biriscv_exec.v",
+   "lines": [
+    26,
+    405
+   ],
+   "summary": "RISC-V integer execute unit: decodes opcode into ALU function/operands for a child ALU with a flopped result, and resolves branches into registered branch requests plus a same-cycle early branch request.",
+   "blocks": [
+    {
+     "name": "Immediate decode",
+     "kind": "DECODER",
+     "description": "Extracts U/I/B/J immediates and shift amount from the opcode.",
+     "anchors": [
+      {
+       "id": "E26",
+       "name": "imm12_r",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 22.1,
+       "struct_score": 33.0,
+       "trace": "data_backward",
+       "why": "Sign-extended I-type immediate for ALU operand B and jalr target.",
+       "lines": [
+        76,
+        159,
+        322
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E25",
+       "name": "imm20_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E27",
+       "name": "bimm_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E28",
+       "name": "jimm20_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E29",
+       "name": "shamt_r",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "ALU operation decode",
+     "kind": "DECODER",
+     "description": "Opcode mask compare selects ALU function and operand A/B sources.",
+     "anchors": [
+      {
+       "id": "E4",
+       "name": "opcode_opcode_i",
+       "role": "COMMAND",
+       "importance": "critical",
+       "score": 89.6,
+       "struct_score": 73.9,
+       "trace": "interface",
+       "why": "Instruction word decoded to choose ALU op, operands and branch type.",
+       "lines": [
+        75,
+        95,
+        310
+       ]
+      },
+      {
+       "id": "E30",
+       "name": "alu_func_r",
+       "role": "DECODE",
+       "importance": "major",
+       "score": 46.0,
+       "struct_score": 16.4,
+       "trace": "control_backward",
+       "why": "Decoded ALU operation code driving the ALU child.",
+       "lines": [
+        97,
+        235
+       ]
+      },
+      {
+       "id": "E31",
+       "name": "alu_input_a_r",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 19.7,
+       "struct_score": 23.0,
+       "trace": "data_backward",
+       "why": "Selected ALU operand A: register, PC or upper immediate.",
+       "lines": [
+        98,
+        216,
+        236
+       ]
+      },
+      {
+       "id": "E32",
+       "name": "alu_input_b_r",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 20.0,
+       "struct_score": 24.2,
+       "trace": "data_backward",
+       "why": "Selected ALU operand B: register, immediate, shamt or 4.",
+       "lines": [
+        99,
+        159,
+        237
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "ALU and result register",
+     "kind": "DATAPATH",
+     "description": "Child ALU computes result, flopped into result_q unless held.",
+     "anchors": [
+      {
+       "id": "E33",
+       "name": "alu_p_w",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 46.9,
+       "struct_score": 19.8,
+       "trace": "data_backward",
+       "why": "ALU result from child, registered into the writeback result.",
+       "lines": [
+        238,
+        249
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "writeback_value_o",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 92.1,
+       "struct_score": 80.1,
+       "trace": "data_backward",
+       "why": "Writeback value output, copy of flopped ALU result.",
+       "lines": [
+        251
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "hold_i",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 19.4,
+       "struct_score": 22.1,
+       "trace": "interface",
+       "why": "Pipeline stall; blocks update of the flopped ALU result.",
+       "lines": [
+        248
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "opcode_ra_operand_i",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 66.9,
+       "struct_score": 87.0,
+       "trace": "interface",
+       "why": "Source operand A feeding ALU inputs and branch comparisons.",
+       "lines": [
+        98,
+        322,
+        331
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "opcode_rb_operand_i",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 37.6,
+       "struct_score": 83.8,
+       "trace": "interface",
+       "why": "Source operand B feeding ALU input B and branch comparisons.",
+       "lines": [
+        99,
+        331
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "u_alu",
+       "module": "biriscv_alu"
+      }
+     ],
+     "members": [
+      {
+       "id": "E34",
+       "name": "result_q",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Branch resolution",
+     "kind": "DATAPATH",
+     "description": "Evaluates branch conditions, target and call/ret/jmp class.",
+     "anchors": [
+      {
+       "id": "E35",
+       "name": "branch_r",
+       "role": "DECODE",
+       "importance": "major",
+       "score": 49.2,
+       "struct_score": 29.4,
+       "trace": "control_backward",
+       "why": "Decoded is-branch/jump flag qualifying all branch outputs.",
+       "lines": [
+        312,
+        381,
+        399
+       ]
+      },
+      {
+       "id": "E36",
+       "name": "branch_taken_r",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 45.4,
+       "struct_score": 14.0,
+       "trace": "data_backward",
+       "why": "Branch condition result from operand comparisons; selects next PC.",
+       "lines": [
+        331,
+        381,
+        383
+       ]
+      },
+      {
+       "id": "E37",
+       "name": "branch_target_r",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 50.7,
+       "struct_score": 35.3,
+       "trace": "data_backward",
+       "why": "Computed branch/jump target address (PC+imm or rs1+imm).",
+       "lines": [
+        308,
+        383,
+        400
+       ]
+      },
+      {
+       "id": "E38",
+       "name": "branch_call_r",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 19.1,
+       "struct_score": 20.6,
+       "trace": "control_backward",
+       "why": "Classifies jump as call (rd=RA); with ret/jmp flags for predictor.",
+       "lines": [
+        315,
+        325,
+        384
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "opcode_pc_i",
+       "role": "INTERFACE_ADDR",
+       "importance": "minor",
+       "score": 35.0,
+       "struct_score": 77.4,
+       "trace": "interface",
+       "why": "Instruction PC used for auipc/jal operands and branch target computation.",
+       "lines": [
+        216,
+        308,
+        387
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E39",
+       "name": "branch_ret_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E40",
+       "name": "branch_jmp_r",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Branch output registers",
+     "kind": "PIPELINE_STAGE",
+     "description": "Registers branch outcome, next PC and type on valid; early request bypass.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "opcode_valid_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 92.6,
+       "struct_score": 81.3,
+       "trace": "interface",
+       "why": "Issued-instruction valid; enables branch result registers and early branch request.",
+       "lines": [
+        379,
+        399
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "branch_request_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 88.7,
+       "struct_score": 71.4,
+       "trace": "data_backward",
+       "why": "Registered branch-resolved request (taken or not taken) to frontend.",
+       "lines": [
+        390
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "branch_pc_o",
+       "role": "INTERFACE_ADDR",
+       "importance": "critical",
+       "score": 87.1,
+       "struct_score": 66.3,
+       "trace": "data_backward",
+       "why": "Registered next-PC (target or PC+4) for the branch request.",
+       "lines": [
+        394
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "branch_is_taken_o",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 18.6,
+       "struct_score": 18.5,
+       "trace": "data_backward",
+       "why": "Registered taken indication accompanying branch request.",
+       "lines": [
+        391
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "branch_source_o",
+       "role": "INTERFACE_ADDR",
+       "importance": "minor",
+       "score": 31.1,
+       "struct_score": 66.3,
+       "trace": "data_backward",
+       "why": "Registered PC of the resolved branch instruction.",
+       "lines": [
+        393
+       ]
+      },
+      {
+       "id": "E21",
+       "name": "branch_d_request_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 62.1,
+       "struct_score": 74.9,
+       "trace": "control_backward",
+       "why": "Same-cycle early taken-branch request using combinational target.",
+       "lines": [
+        399
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "branch_d_pc_o",
+       "role": "INTERFACE_ADDR",
+       "importance": "minor",
+       "score": 32.5,
+       "struct_score": 70.8,
+       "trace": "data_backward",
+       "why": "Early branch target address output.",
+       "lines": [
+        400
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E41",
+       "name": "branch_taken_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E42",
+       "name": "branch_ntaken_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E43",
+       "name": "pc_x_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E44",
+       "name": "pc_m_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E45",
+       "name": "branch_call_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E46",
+       "name": "branch_ret_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E47",
+       "name": "branch_jmp_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E15",
+       "name": "branch_is_not_taken_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "branch_is_call_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "branch_is_ret_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "branch_is_jmp_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "branch_d_priv_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock/reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "opcode issue",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "opcode_valid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "opcode_opcode_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "opcode_pc_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "opcode_invalid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "opcode_rd_idx_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "opcode_ra_idx_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "opcode_rb_idx_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "opcode_ra_operand_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "opcode_rb_operand_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "pipeline control",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E12"
+     ],
+     "members": [
+      {
+       "id": "E12",
+       "name": "hold_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "branch request",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20"
+     ],
+     "members": [
+      {
+       "id": "E13",
+       "name": "branch_request_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "branch_is_taken_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "branch_is_not_taken_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "branch_source_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "branch_is_call_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "branch_is_ret_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "branch_is_jmp_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "branch_pc_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "early branch request",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E21",
+      "E22",
+      "E23"
+     ],
+     "members": [
+      {
+       "id": "E21",
+       "name": "branch_d_request_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E22",
+       "name": "branch_d_pc_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "branch_d_priv_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "writeback",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E24"
+     ],
+     "members": [
+      {
+       "id": "E24",
+       "name": "writeback_value_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

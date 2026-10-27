@@ -1,0 +1,339 @@
+{
+ "module_summary": "UART receiver with AXI-Stream output: a prescale tick counter and bit counter sample rxd mid-bit, shift bits into a data register, and present bytes with valid/ready plus error flags.",
+ "anchors": [
+  {
+   "id": "E11",
+   "name": "ph",
+   "role": "COUNTER",
+   "importance": "critical",
+   "trace": "control_backward",
+   "why": "Bit/phase counter sequencing start, data and stop bits of a frame",
+   "lines": [
+    25,
+    81,
+    83
+   ]
+  },
+  {
+   "id": "E12",
+   "name": "tk",
+   "role": "COUNTER",
+   "importance": "critical",
+   "trace": "control_backward",
+   "why": "Prescale baud timer reloaded per bit, timing mid-bit sampling",
+   "lines": [
+    26,
+    63,
+    68
+   ]
+  },
+  {
+   "id": "E14",
+   "name": "acc",
+   "role": "STORAGE",
+   "importance": "critical",
+   "trace": "data_backward",
+   "why": "Shift register assembling received data bits LSB-first",
+   "lines": [
+    28,
+    90
+   ]
+  },
+  {
+   "id": "E6",
+   "name": "rxd",
+   "role": "INTERFACE_DATA",
+   "importance": "critical",
+   "trace": "interface",
+   "why": "Serial receive line sampled into smp",
+   "lines": [
+    15,
+    56
+   ]
+  },
+  {
+   "id": "E3",
+   "name": "m_axis_tdata",
+   "role": "INTERFACE_DATA",
+   "importance": "critical",
+   "trace": "data_backward",
+   "why": "Received byte output driven from output latch",
+   "lines": [
+    11,
+    48
+   ]
+  },
+  {
+   "id": "E4",
+   "name": "m_axis_tvalid",
+   "role": "HANDSHAKE_VALID",
+   "importance": "critical",
+   "trace": "control_backward",
+   "why": "AXI-Stream valid, set on good stop bit, held until tready",
+   "lines": [
+    12,
+    49
+   ]
+  },
+  {
+   "id": "E5",
+   "name": "m_axis_tready",
+   "role": "HANDSHAKE_READY",
+   "importance": "critical",
+   "trace": "interface",
+   "why": "Downstream ready clearing the output valid register",
+   "lines": [
+    13,
+    105
+   ]
+  },
+  {
+   "id": "E10",
+   "name": "prescale",
+   "role": "CONFIG_REG",
+   "importance": "major",
+   "trace": "interface",
+   "why": "Baud prescale setting used to reload the bit timer",
+   "lines": [
+    21,
+    45,
+    46
+   ]
+  },
+  {
+   "id": "E7",
+   "name": "busy",
+   "role": "STATUS",
+   "importance": "major",
+   "trace": "control_backward",
+   "why": "Receive-in-progress indication from act register",
+   "lines": [
+    17,
+    50
+   ]
+  },
+  {
+   "id": "E8",
+   "name": "overrun_error",
+   "role": "STATUS",
+   "importance": "major",
+   "trace": "control_backward",
+   "why": "Pulses when new byte arrives while previous still valid",
+   "lines": [
+    18,
+    51
+   ]
+  },
+  {
+   "id": "E9",
+   "name": "frame_error",
+   "role": "STATUS",
+   "importance": "major",
+   "trace": "control_backward",
+   "why": "Pulses when stop bit sampled low",
+   "lines": [
+    19,
+    52
+   ]
+  },
+  {
+   "id": "E13",
+   "name": "smp",
+   "role": "PIPELINE_REG",
+   "importance": "minor",
+   "trace": "data_backward",
+   "why": "Registered rxd sample steering start detection and bit shifting",
+   "lines": [
+    27,
+    56,
+    90
+   ]
+  },
+  {
+   "id": "E26",
+   "name": "step",
+   "role": "ENABLE",
+   "importance": "minor",
+   "trace": "control_backward",
+   "why": "Bit-time tick: timer expired while frame active, advances ph",
+   "lines": [
+    41,
+    80,
+    89
+   ]
+  },
+  {
+   "id": "E27",
+   "name": "park",
+   "role": "CONTROL_FLAG",
+   "importance": "minor",
+   "trace": "control_backward",
+   "why": "Idle flag: no frame active; enables start-bit detection and busy update",
+   "lines": [
+    42,
+    82,
+    108
+   ]
+  },
+  {
+   "id": "E28",
+   "name": "fin_ok",
+   "role": "CONTROL_FLAG",
+   "importance": "minor",
+   "trace": "control_backward",
+   "why": "Good stop bit: loads output latch, sets valid, checks overrun",
+   "lines": [
+    43,
+    104,
+    105
+   ]
+  },
+  {
+   "id": "E24",
+   "name": "mid",
+   "role": "DECODE",
+   "importance": "minor",
+   "trace": "control_backward",
+   "why": "Data-bit phase decode of ph enabling shifts into acc",
+   "lines": [
+    39,
+    67,
+    89
+   ]
+  },
+  {
+   "id": "E20",
+   "name": "ph_echo",
+   "role": "HOLDING_REG",
+   "importance": "minor",
+   "trace": "none",
+   "why": "Delayed copy of ph with no consumers",
+   "lines": [
+    34,
+    79
+   ]
+  }
+ ],
+ "groups": [
+  {
+   "name": "Bit timing",
+   "kind": "COUNTER_TIMER",
+   "anchor_ids": [
+    "E12",
+    "E10",
+    "E26"
+   ],
+   "member_ids": [
+    "E21",
+    "E30",
+    "E31"
+   ],
+   "description": "Prescale timer generating mid-bit sample ticks"
+  },
+  {
+   "name": "Frame sequencer",
+   "kind": "CONTROLLER",
+   "anchor_ids": [
+    "E11",
+    "E27",
+    "E24",
+    "E28",
+    "E20"
+   ],
+   "member_ids": [
+    "E22",
+    "E23",
+    "E25",
+    "E29"
+   ],
+   "description": "Bit counter tracking start, data and stop phases of a frame"
+  },
+  {
+   "name": "Receive shifter",
+   "kind": "SERIALIZER",
+   "anchor_ids": [
+    "E6",
+    "E13",
+    "E14"
+   ],
+   "member_ids": [],
+   "description": "Samples rxd and shifts data bits into acc"
+  },
+  {
+   "name": "AXI-Stream output",
+   "kind": "INTERFACE_ADAPTER",
+   "anchor_ids": [
+    "E3",
+    "E4",
+    "E5"
+   ],
+   "member_ids": [
+    "E15",
+    "E16"
+   ],
+   "description": "Output byte latch with valid/ready handshake"
+  },
+  {
+   "name": "Status flags",
+   "kind": "OTHER",
+   "anchor_ids": [
+    "E7",
+    "E8",
+    "E9"
+   ],
+   "member_ids": [
+    "E17",
+    "E18",
+    "E19"
+   ],
+   "description": "Busy, overrun and framing error registers"
+  }
+ ],
+ "interfaces": [
+  {
+   "name": "clock_reset",
+   "protocol": "CLOCK_RESET",
+   "direction": "IN",
+   "member_ids": [
+    "E1",
+    "E2"
+   ]
+  },
+  {
+   "name": "m_axis",
+   "protocol": "VALID_READY",
+   "direction": "OUT",
+   "member_ids": [
+    "E3",
+    "E4",
+    "E5"
+   ]
+  },
+  {
+   "name": "uart_rx_line",
+   "protocol": "SERIAL",
+   "direction": "IN",
+   "member_ids": [
+    "E6"
+   ]
+  },
+  {
+   "name": "status",
+   "protocol": "SIMPLE",
+   "direction": "OUT",
+   "member_ids": [
+    "E7",
+    "E8",
+    "E9"
+   ]
+  },
+  {
+   "name": "config",
+   "protocol": "SIMPLE",
+   "direction": "IN",
+   "member_ids": [
+    "E10"
+   ]
+  }
+ ]
+}

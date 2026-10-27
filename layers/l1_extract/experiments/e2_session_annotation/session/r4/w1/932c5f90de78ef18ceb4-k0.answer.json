@@ -1,0 +1,26 @@
+{
+ "module_summary": "Destination side of a 4-phase CDC handshake: synchronizes async request, a 3-state FSM issues valid downstream and a glitch-free registered ack, with an optional spill register decoupling output data.",
+ "anchors": [
+  {"id": "E15", "name": "state_q", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Handshake FSM IDLE/WAIT_DOWNSTREAM_ACK/WAIT_REQ_DEASSERT controlling data_valid and ack.", "lines": [237, 256, 274]},
+  {"id": "E6", "name": "async_req_i", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Asynchronous request from source domain, synchronized into req_synced.", "lines": [221, 249]},
+  {"id": "E7", "name": "async_ack_o", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Asynchronous acknowledge to source domain from registered ack_dst_q.", "lines": [222, 336]},
+  {"id": "E8", "name": "async_data_i", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Data bus from source domain, captured into spill register or passed through.", "lines": [223, 324, 332]},
+  {"id": "E11", "name": "req_synced", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Synchronized request driving FSM transitions and data_valid.", "lines": [229, 250, 277]},
+  {"id": "E10", "name": "ack_dst_q", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Glitch-filtered ack register driving async_ack_o.", "lines": [227, 310, 336]},
+  {"id": "E12", "name": "data_valid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "FSM-decoded valid into spill register or valid_o.", "lines": [231, 258, 322]},
+  {"id": "E13", "name": "output_ready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Downstream/spill ready steering FSM to WAIT_REQ_DEASSERT.", "lines": [233, 278, 323]},
+  {"id": "E4", "name": "valid_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "data_backward", "why": "Destination-domain valid output.", "lines": [219, 330]},
+  {"id": "E5", "name": "ready_i", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Destination-domain ready input.", "lines": [220, 331]},
+  {"id": "E3", "name": "data_o", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Destination-domain data output.", "lines": [218, 332]}
+ ],
+ "groups": [
+  {"name": "Handshake FSM", "kind": "CONTROLLER", "anchor_ids": ["E15", "E11", "E10", "E12"], "member_ids": ["E14", "E9"], "description": "Synchronized request handling and ack generation."},
+  {"name": "Async interface", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E6", "E7", "E8"], "member_ids": [], "description": "4-phase req/ack and data from source clock domain."},
+  {"name": "Output decoupling", "kind": "BUFFER", "anchor_ids": ["E13", "E4", "E5", "E3"], "member_ids": [], "description": "Spill register or pass-through to destination valid/ready."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "async_in", "protocol": "REQ_ACK", "direction": "IN", "member_ids": ["E6", "E7", "E8"]},
+  {"name": "dst_out", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E3", "E4", "E5"]}
+ ]
+}

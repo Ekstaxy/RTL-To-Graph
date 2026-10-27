@@ -1,0 +1,269 @@
+{
+ "module_summary": "Ring buffer with register-array storage: valid/ready writes advance a wrap-bit write pointer, random-access reads are range-checked between pointers, and the read pointer advances by a variable step.",
+ "anchors": [
+  {
+   "id": "E18",
+   "name": "mem_q",
+   "role": "STORAGE",
+   "importance": "critical",
+   "trace": "data_backward",
+   "why": "Depth-entry register array holding buffered data.",
+   "lines": [
+    69,
+    118
+   ]
+  },
+  {
+   "id": "E22",
+   "name": "wptr_q",
+   "role": "FIFO_PTR",
+   "importance": "critical",
+   "trace": "control_backward",
+   "why": "Write pointer with wrap bit; addresses writes, increments per write.",
+   "lines": [
+    85,
+    86
+   ]
+  },
+  {
+   "id": "E20",
+   "name": "rptr_q",
+   "role": "FIFO_PTR",
+   "importance": "critical",
+   "trace": "control_backward",
+   "why": "Read pointer with wrap bit; advanced by step_i.",
+   "lines": [
+    91,
+    102
+   ]
+  },
+  {
+   "id": "E4",
+   "name": "wvalid_i",
+   "role": "HANDSHAKE_VALID",
+   "importance": "critical",
+   "trace": "interface",
+   "why": "Write request valid; with ready stores wdata and bumps wptr.",
+   "lines": [
+    84
+   ]
+  },
+  {
+   "id": "E5",
+   "name": "wready_o",
+   "role": "HANDSHAKE_READY",
+   "importance": "critical",
+   "trace": "control_backward",
+   "why": "Write ready when buffer not full.",
+   "lines": [
+    84,
+    117
+   ]
+  },
+  {
+   "id": "E6",
+   "name": "wdata_i",
+   "role": "INTERFACE_DATA",
+   "importance": "critical",
+   "trace": "interface",
+   "why": "Write data stored at write pointer.",
+   "lines": [
+    85
+   ]
+  },
+  {
+   "id": "E9",
+   "name": "raddr_i",
+   "role": "INTERFACE_ADDR",
+   "importance": "critical",
+   "trace": "interface",
+   "why": "Random-access read address, range-checked against pointers.",
+   "lines": [
+    113,
+    118
+   ]
+  },
+  {
+   "id": "E10",
+   "name": "rdata_o",
+   "role": "INTERFACE_DATA",
+   "importance": "critical",
+   "trace": "data_backward",
+   "why": "Read data from mem_q at raddr.",
+   "lines": [
+    118
+   ]
+  },
+  {
+   "id": "E8",
+   "name": "rready_o",
+   "role": "HANDSHAKE_READY",
+   "importance": "major",
+   "trace": "control_backward",
+   "why": "Read ready only when raddr lies between read and write pointers.",
+   "lines": [
+    113
+   ]
+  },
+  {
+   "id": "E11",
+   "name": "advance_i",
+   "role": "COMMAND",
+   "importance": "major",
+   "trace": "interface",
+   "why": "Command to advance read pointer by step.",
+   "lines": [
+    90
+   ]
+  },
+  {
+   "id": "E12",
+   "name": "step_i",
+   "role": "INTERFACE_DATA",
+   "importance": "major",
+   "trace": "interface",
+   "why": "Read pointer increment amount.",
+   "lines": [
+    91
+   ]
+  },
+  {
+   "id": "E15",
+   "name": "full_o",
+   "role": "STATUS",
+   "importance": "major",
+   "trace": "control_backward",
+   "why": "Full when pointers equal except wrap bit; blocks writes.",
+   "lines": [
+    103,
+    117
+   ]
+  },
+  {
+   "id": "E16",
+   "name": "empty_o",
+   "role": "STATUS",
+   "importance": "major",
+   "trace": "control_backward",
+   "why": "Empty when write and read pointers equal.",
+   "lines": [
+    102
+   ]
+  },
+  {
+   "id": "E13",
+   "name": "wptr_o",
+   "role": "STATUS",
+   "importance": "minor",
+   "trace": "data_backward",
+   "why": "Exported write pointer index.",
+   "lines": [
+    99
+   ]
+  },
+  {
+   "id": "E14",
+   "name": "rptr_o",
+   "role": "STATUS",
+   "importance": "minor",
+   "trace": "data_backward",
+   "why": "Exported read pointer index.",
+   "lines": [
+    100
+   ]
+  }
+ ],
+ "groups": [
+  {
+   "name": "Ring storage",
+   "kind": "MEMORY",
+   "anchor_ids": [
+    "E18",
+    "E6",
+    "E9",
+    "E10"
+   ],
+   "member_ids": [
+    "E17"
+   ],
+   "description": "Register array written at wptr, read randomly at raddr."
+  },
+  {
+   "name": "Pointer and status logic",
+   "kind": "BUFFER",
+   "anchor_ids": [
+    "E22",
+    "E20",
+    "E4",
+    "E5",
+    "E8",
+    "E11",
+    "E12",
+    "E15",
+    "E16",
+    "E13",
+    "E14"
+   ],
+   "member_ids": [
+    "E19",
+    "E21",
+    "E7",
+    "E23"
+   ],
+   "description": "Write/read pointers, full/empty, and read range check."
+  }
+ ],
+ "interfaces": [
+  {
+   "name": "clock_reset",
+   "protocol": "CLOCK_RESET",
+   "direction": "IN",
+   "member_ids": [
+    "E1",
+    "E2",
+    "E3"
+   ]
+  },
+  {
+   "name": "write",
+   "protocol": "VALID_READY",
+   "direction": "IN",
+   "member_ids": [
+    "E4",
+    "E5",
+    "E6"
+   ]
+  },
+  {
+   "name": "random_read",
+   "protocol": "VALID_READY",
+   "direction": "OUT",
+   "member_ids": [
+    "E7",
+    "E8",
+    "E9",
+    "E10"
+   ]
+  },
+  {
+   "name": "read_advance",
+   "protocol": "SIMPLE",
+   "direction": "IN",
+   "member_ids": [
+    "E11",
+    "E12"
+   ]
+  },
+  {
+   "name": "status",
+   "protocol": "SIMPLE",
+   "direction": "OUT",
+   "member_ids": [
+    "E13",
+    "E14",
+    "E15",
+    "E16"
+   ]
+  }
+ ]
+}

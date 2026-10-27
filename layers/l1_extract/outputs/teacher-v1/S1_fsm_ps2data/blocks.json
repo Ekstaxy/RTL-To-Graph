@@ -1,0 +1,196 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "S1_fsm_ps2data",
+ "tops": [
+  "RefModule"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "RefModule": {
+   "source": "teacher",
+   "canonical_instance": "RefModule",
+   "file": "experiments/e3_perturb_benchmark/data/fsm_ps2data/S1/Prob154_fsm_ps2data_ref.sv",
+   "lines": [
+    2,
+    42
+   ],
+   "summary": "PS/2-style 3-byte packet framer: a one-hot FSM syncs on bytes with bit3 set, a 24-bit byte shift window captures the packet, and done qualifies the output.",
+   "blocks": [
+    {
+     "name": "Packet FSM",
+     "kind": "CONTROLLER",
+     "description": "One-hot framer FSM detecting start byte and counting three bytes",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "oh",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.7,
+       "struct_score": 99.3,
+       "trace": "control_backward",
+       "why": "One-hot state (hunt, byte2, byte3, done) sequencing packet reception",
+       "lines": [
+        15,
+        31,
+        34
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "go_mid",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 24.7,
+       "struct_score": 43.2,
+       "trace": "control_backward",
+       "why": "Packet-start condition: marker bit seen in HUNT or FIN state",
+       "lines": [
+        18,
+        21,
+        31
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "done",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 97.8,
+       "struct_score": 94.3,
+       "trace": "control_backward",
+       "why": "One-cycle pulse from FIN state qualifying out_bytes",
+       "lines": [
+        7,
+        38,
+        40
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E8",
+       "name": "mk",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Byte window",
+     "kind": "BUFFER",
+     "description": "Shift window of the last three input bytes driving out_bytes",
+     "anchors": [
+      {
+       "id": "E7",
+       "name": "win",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 95.2,
+       "struct_score": 87.8,
+       "trace": "data_backward",
+       "why": "24-bit shift window holding last three received bytes",
+       "lines": [
+        16,
+        24,
+        40
+       ]
+      },
+      {
+       "id": "E2",
+       "name": "in",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 97.1,
+       "struct_score": 92.7,
+       "trace": "interface",
+       "why": "Byte stream input shifted into window; bit3 marks packet start",
+       "lines": [
+        4,
+        20,
+        24
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "out_bytes",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 98.7,
+       "struct_score": 96.8,
+       "trace": "data_backward",
+       "why": "Assembled 3-byte packet output, valid only when done",
+       "lines": [
+        6,
+        40
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "reset",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "byte_in",
+     "protocol": "STREAM",
+     "direction": "IN",
+     "member_ids": [
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E2",
+       "name": "in",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "packet_out",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "out_bytes",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "done",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

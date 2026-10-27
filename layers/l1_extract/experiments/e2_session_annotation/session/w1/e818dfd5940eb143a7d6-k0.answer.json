@@ -1,0 +1,20 @@
+{
+ "module_summary": "8-to-16-bit width converter: a toggle flag tracks byte parity, the first byte is held in a buffer, and the second byte completes a registered 16-bit output with valid.",
+ "anchors": [
+  {"id": "E8", "name": "flag", "role": "CONTROL_FLAG", "importance": "critical", "trace": "control_backward", "why": "Toggles per valid byte; selects buffering first byte versus emitting concatenated word."},
+  {"id": "E7", "name": "data_lock", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "Holds first byte, becomes upper half of data_out."},
+  {"id": "E6", "name": "data_out", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Registered 16-bit word of buffered byte and current data_in."},
+  {"id": "E5", "name": "valid_out", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "One-cycle pulse when second byte arrives and data_out updates."},
+  {"id": "E3", "name": "valid_in", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "forward", "why": "Input byte valid; toggles flag and gates buffer and output loads."},
+  {"id": "E4", "name": "data_in", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "8-bit input byte, buffered or used as lower output half."}
+ ],
+ "groups": [
+  {"name": "byte_tracker", "kind": "CONTROLLER", "anchor_ids": ["E8", "E3"], "member_ids": [], "description": "Flag toggling on each valid byte to pair bytes."},
+  {"name": "packer", "kind": "SERIALIZER", "anchor_ids": ["E7", "E6", "E5", "E4"], "member_ids": [], "description": "Buffers first byte and concatenates with second into 16-bit output."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "byte_in", "protocol": "STREAM", "direction": "IN", "member_ids": ["E3", "E4"]},
+  {"name": "word_out", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E5", "E6"]}
+ ]
+}

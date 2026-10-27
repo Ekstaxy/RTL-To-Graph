@@ -1,0 +1,275 @@
+[
+ {
+  "module": "axi_vfifo_enc",
+  "instance": "axi_vfifo.axi_vfifo_enc_inst",
+  "state": "frame_reg",
+  "next": "frame_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "1",
+    "value": "1"
+   },
+   {
+    "name": "0",
+    "value": "0"
+   }
+  ],
+  "reset_state": null,
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "1",
+    "cond": "cycle_valid_reg && !frame_reg"
+   },
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "cycle_valid_reg && !frame_reg && cycle_last_reg"
+   },
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "cycle_valid_reg && frame_reg && cycle_meta_reg != hdr_meta_reg && cycle_last_reg"
+   },
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "cycle_valid_reg && frame_reg && !(cycle_meta_reg != hdr_meta_reg) && (cycle_last_reg || len_next >= MAX_BLOCK_LEN)"
+   },
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "(rst || fifo_rst_in)"
+   }
+  ],
+  "outputs": [],
+  "warnings": [
+   "semantic_check: mismatch (syntactic 2 states / 2 edges vs executed 2 / 2); semantic transitions attached"
+  ],
+  "semantic_check": "mismatch",
+  "semantic_transitions": [
+   {
+    "src": "0",
+    "dst": "0",
+    "cond": "(!cycle_valid_reg) || (cycle_last_reg) || (rst_sync_3_reg)"
+   },
+   {
+    "src": "0",
+    "dst": "1",
+    "cond": "cycle_valid_reg && !cycle_last_reg && !rst_sync_3_reg"
+   },
+   {
+    "src": "1",
+    "dst": "1",
+    "cond": "(!cycle_valid_reg && !rst_sync_3_reg) || (!cycle_last_reg && !cycle_meta_reg && hdr_meta_reg && !rst_sync_3_reg) || (!cycle_last_reg && cycle_meta_reg && !hdr_meta_reg && !rst_sync_3_reg)"
+   },
+   {
+    "src": "1",
+    "dst": "0",
+    "cond": "(rst_sync_3_reg) || (cycle_valid_reg && cycle_last_reg) || <datapath condition>"
+   }
+  ]
+ },
+ {
+  "module": "axi_vfifo_enc",
+  "instance": "axi_vfifo.axi_vfifo_enc_inst",
+  "state": "out_frame_reg",
+  "next": "out_frame_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "0",
+    "value": "0"
+   }
+  ],
+  "reset_state": null,
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "!fifo_watermark_in && out_frame_reg && !(out_seg_cnt_in_next >= SEG_CNT_INT)"
+   },
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "!fifo_watermark_in && !out_frame_reg && hdr_mem_rd_data_valid_reg && !(out_seg_cnt_in_next >= SEG_CNT_INT)"
+   },
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "(rst || fifo_rst_in)"
+   }
+  ],
+  "outputs": [],
+  "warnings": [
+   "non-constant next state: out_seg_last_straddle_next || out_seg_cnt_in_next > SEG_CNT_INT",
+   "semantic_check: mismatch (syntactic 1 states / 0 edges vs executed 2 / 2); semantic transitions attached"
+  ],
+  "semantic_check": "mismatch",
+  "semantic_transitions": [
+   {
+    "src": "0",
+    "dst": "0",
+    "cond": "(!hdr_mem_rd_data_valid_reg) || (rst_sync_3_reg)"
+   },
+   {
+    "src": "0",
+    "dst": "1",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "1",
+    "dst": "0",
+    "cond": "rst_sync_3_reg || <datapath condition>"
+   },
+   {
+    "src": "1",
+    "dst": "1",
+    "cond": "out_seg_last_straddle_reg && !rst_sync_3_reg"
+   }
+  ]
+ },
+ {
+  "module": "axi_vfifo_raw_wr",
+  "instance": "axi_vfifo.axi_ch[0].axi_vfifo_raw_inst.axi_vfifo_raw_wr_inst",
+  "state": "wr_burst_reg",
+  "next": "wr_burst_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "1",
+    "value": "1"
+   },
+   {
+    "name": "0",
+    "value": "0"
+   }
+  ],
+  "reset_state": "0",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "1",
+    "cond": "!m_axi_awvalid_reg && !wr_burst_reg && cfg_enable && input_valid_int_reg && !fifo_full_wr_blk_adj_reg && ((write_fifo_occupancy_reg) >> WRITE_BURST_LEN_WIDTH != 0 || wr_timeout_reg)"
+   }
+  ],
+  "outputs": [
+   {
+    "signal": "sts_write_active",
+    "kind": "moore",
+    "port": true
+   }
+  ],
+  "warnings": [
+   "non-constant next state: wr_burst_len_reg != 0",
+   "semantic_check: mismatch (syntactic 2 states / 1 edges vs executed 2 / 2); semantic transitions attached"
+  ],
+  "semantic_check": "mismatch",
+  "semantic_transitions": [
+   {
+    "src": "0",
+    "dst": "0",
+    "cond": "(fifo_full_wr_blk_adj_reg) || (!input_valid_int_reg) || (!fifo_enable_reg) || (m_axi_awvalid_reg)"
+   },
+   {
+    "src": "0",
+    "dst": "1",
+    "cond": "!fifo_full_wr_blk_adj_reg && !m_axi_awvalid_reg && input_valid_int_reg && wr_timeout_reg && fifo_enable_reg || <datapath condition>"
+   },
+   {
+    "src": "1",
+    "dst": "1",
+    "cond": "(m_axi_wvalid_reg && !m_axi_wready) || (m_axi_awvalid_reg && !input_valid_int_reg && m_axi_wready) || (m_axi_awvalid_reg && input_valid_int_reg && !wr_timeout_reg && !fifo_enable_reg) || (m_axi_awvalid_reg && !input_valid_int_reg && fifo_enable_reg) || (!fifo_full_wr_blk_adj_reg && !m_axi_awvalid_reg && !fifo_enable_reg && !m_axi_wready) || (!m_axi_awvalid_reg && input_valid_int_reg && wr_timeout_reg && m_axi_wvalid_reg) || (fifo_full_wr_blk_adj_reg && !input_valid_int_reg && !wr_timeout_reg && !m_axi_wready) || (!fifo_full_wr_blk_adj_reg && input_valid_int_reg && !wr_timeout_reg && !m_axi_wready) || (!fifo_full_wr_blk_adj_reg && !input_valid_int_reg && !wr_timeout_reg && m_axi_wvalid_reg) || (!fifo_full_wr_blk_adj_reg && !input_valid_int_reg && wr_timeout_reg && !m_axi_wready) || (fifo_full_wr_blk_adj_reg && !wr_timeout_reg && m_axi_wvalid_reg && !fifo_enable_reg) || (fifo_full_wr_blk_adj_reg && !m_axi_awvalid_reg && input_valid_int_reg && wr_timeout_reg && !m_axi_wready) || (fifo_full_wr_blk_adj_reg && m_axi_awvalid_reg && wr_timeout_reg && !m_axi_wvalid_reg && m_axi_wready) || (!fifo_full_wr_blk_adj_reg && m_axi_awvalid_reg && !wr_timeout_reg && m_axi_wvalid_reg) || (fifo_full_wr_blk_adj_reg && !input_valid_int_reg && fifo_enable_reg && !m_axi_wready) || (m_axi_awvalid_reg && input_valid_int_reg && !wr_timeout_reg && !m_axi_wready) || (!fifo_full_wr_blk_adj_reg && !input_valid_int_reg && m_axi_wvalid_reg && fifo_enable_reg) || (!fifo_full_wr_blk_adj_reg && input_valid_int_reg && !wr_timeout_reg && !m_axi_wvalid_reg && !fifo_enable_reg) || (fifo_full_wr_blk_adj_reg && !input_valid_int_reg && wr_timeout_reg && !m_axi_wvalid_reg && !fifo_enable_reg && m_axi_wready) || (fifo_full_wr_blk_adj_reg && !m_axi_awvalid_reg && input_valid_int_reg && !wr_timeout_reg && !m_axi_wvalid_reg && fifo_enable_reg && m_axi_wready)"
+   },
+   {
+    "src": "1",
+    "dst": "0",
+    "cond": "<datapath condition>"
+   }
+  ]
+ },
+ {
+  "module": "axi_vfifo_dec",
+  "instance": "axi_vfifo.axi_vfifo_dec_inst",
+  "state": "frame_reg",
+  "next": null,
+  "style": "one-process",
+  "states": [
+   {
+    "name": "0",
+    "value": "0"
+   }
+  ],
+  "reset_state": null,
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "(rst || fifo_rst_in)"
+   }
+  ],
+  "outputs": [],
+  "warnings": [
+   "non-constant next state: frame_next",
+   "semantic_check: mismatch (syntactic 1 states / 0 edges vs executed 2 / 2); semantic transitions attached"
+  ],
+  "semantic_check": "mismatch",
+  "semantic_transitions": [
+   {
+    "src": "0",
+    "dst": "0",
+    "cond": "(!seg_output_valid_reg) || (rst_sync_3_reg) || (seg_half_full_reg)"
+   },
+   {
+    "src": "0",
+    "dst": "1",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "1",
+    "dst": "1",
+    "cond": "(!extra_cycle_reg && !rst_sync_3_reg) || (!rst_sync_3_reg && !seg_output_valid_reg) || (seg_half_full_reg && !rst_sync_3_reg)"
+   },
+   {
+    "src": "1",
+    "dst": "0",
+    "cond": "rst_sync_3_reg || <datapath condition>"
+   }
+  ]
+ },
+ {
+  "module": "axi_vfifo_dec",
+  "instance": "axi_vfifo.axi_vfifo_dec_inst",
+  "state": "out_frame_reg",
+  "next": null,
+  "style": "one-process",
+  "states": [
+   {
+    "name": "0",
+    "value": "0"
+   }
+  ],
+  "reset_state": null,
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "(rst || fifo_rst_in)"
+   }
+  ],
+  "outputs": [],
+  "warnings": [
+   "non-constant next state: out_frame_next",
+   "semantic_check: mismatch (syntactic 1 states / 0 edges vs executed 1 / 0); semantic transitions attached"
+  ],
+  "semantic_check": "mismatch",
+  "semantic_transitions": [
+   {
+    "src": "0",
+    "dst": "0",
+    "cond": "1"
+   }
+  ]
+ }
+]

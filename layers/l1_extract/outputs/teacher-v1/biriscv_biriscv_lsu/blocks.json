@@ -1,0 +1,1305 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "biriscv_biriscv_lsu",
+ "tops": [
+  "biriscv_lsu"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "biriscv_lsu_fifo": {
+   "source": "teacher",
+   "canonical_instance": "biriscv_lsu.u_lsu_request",
+   "file": "data/rtl/biriscv/src/core/biriscv_lsu.v",
+   "lines": [
+    422,
+    511
+   ],
+   "summary": "Small synchronous FIFO: register array with read/write pointers and an occupancy counter deriving valid (not empty) and accept (not full).",
+   "blocks": [
+    {
+     "name": "FIFO storage",
+     "kind": "BUFFER",
+     "description": "Register array holding queued entries",
+     "anchors": [
+      {
+       "id": "E9",
+       "name": "ram_q",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 99.2,
+       "struct_score": 97.9,
+       "trace": "data_backward",
+       "why": "FIFO entry array written at wr_ptr_q, read at rd_ptr_q",
+       "lines": [
+        456,
+        483,
+        507
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "data_in_i",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 96.9,
+       "struct_score": 92.3,
+       "trace": "interface",
+       "why": "Push data written into ram_q",
+       "lines": [
+        438,
+        483
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "data_out_o",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 98.0,
+       "struct_score": 95.1,
+       "trace": "data_backward",
+       "why": "Head entry ram_q[rd_ptr_q] output",
+       "lines": [
+        443,
+        507
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Pointer and occupancy control",
+     "kind": "CONTROLLER",
+     "description": "Pointers and count managing push/pop and full/empty",
+     "anchors": [
+      {
+       "id": "E12",
+       "name": "count_q",
+       "role": "FIFO_PTR",
+       "importance": "critical",
+       "score": 88.6,
+       "struct_score": 71.1,
+       "trace": "control_backward",
+       "why": "Occupancy count up/down on push/pop; derives valid_o and accept_o",
+       "lines": [
+        493,
+        496,
+        503
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "wr_ptr_q",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 57.3,
+       "struct_score": 59.9,
+       "trace": "control_backward",
+       "why": "Write pointer addressing ram_q, increments on accepted push",
+       "lines": [
+        483,
+        484
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "rd_ptr_q",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 57.6,
+       "struct_score": 61.0,
+       "trace": "control_backward",
+       "why": "Read pointer selecting data_out_o, increments on pop",
+       "lines": [
+        489,
+        507
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "accept_o",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 96.2,
+       "struct_score": 90.4,
+       "trace": "control_backward",
+       "why": "Not-full flag from count_q, gating pushes",
+       "lines": [
+        481,
+        504
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "valid_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 97.6,
+       "struct_score": 94.0,
+       "trace": "control_backward",
+       "why": "Not-empty flag from count_q, gating pops",
+       "lines": [
+        488,
+        503
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E4",
+     "name": "push_i",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 95.9,
+     "struct_score": 89.7,
+     "trace": "interface",
+     "why": "Write request; with accept_o stores data and advances pointer",
+     "lines": [
+      481,
+      492
+     ]
+    },
+    {
+     "id": "E5",
+     "name": "pop_i",
+     "role": "HANDSHAKE_READY",
+     "importance": "critical",
+     "score": 90.9,
+     "struct_score": 76.9,
+     "trace": "interface",
+     "why": "Read acknowledge; with valid_o advances rd_ptr_q",
+     "lines": [
+      488,
+      495
+     ]
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "push_port",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "data_in_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "push_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "accept_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "pop_port",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E5",
+      "E6",
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "pop_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "data_out_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E8",
+       "name": "valid_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "biriscv_lsu": {
+   "source": "teacher",
+   "canonical_instance": "biriscv_lsu",
+   "file": "data/rtl/biriscv/src/core/biriscv_lsu.v",
+   "lines": [
+    26,
+    420
+   ],
+   "summary": "RISC-V load/store unit: decodes load/store/CSR-cache ops, computes address and byte-lane write data into an E1 request register, tracks one outstanding access, and aligns/sign-extends load responses using a request-info FIFO.",
+   "blocks": [
+    {
+     "name": "Opcode decode",
+     "kind": "DECODER",
+     "description": "Decodes load/store sizes, signedness and CSR cache maintenance ops",
+     "anchors": [
+      {
+       "id": "E4",
+       "name": "opcode_opcode_i",
+       "role": "COMMAND",
+       "importance": "major",
+       "score": 60.3,
+       "struct_score": 70.5,
+       "trace": "interface",
+       "why": "Instruction word decoded into load/store size and cache ops",
+       "lines": [
+        133,
+        175,
+        237
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "opcode_valid_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 62.7,
+       "struct_score": 76.6,
+       "trace": "interface",
+       "why": "Issue valid qualifying address, read and write request generation",
+       "lines": [
+        172,
+        184,
+        292
+       ]
+      },
+      {
+       "id": "E51",
+       "name": "load_inst_w",
+       "role": "DECODE",
+       "importance": "major",
+       "score": 45.3,
+       "struct_score": 13.3,
+       "trace": "control_backward",
+       "why": "Load instruction decode selecting address form and read request",
+       "lines": [
+        133,
+        174,
+        184
+       ]
+      },
+      {
+       "id": "E52",
+       "name": "load_signed_inst_w",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 15.8,
+       "struct_score": 7.4,
+       "trace": "control_backward",
+       "why": "Signed load decode stored for response sign extension",
+       "lines": [
+        140,
+        295
+       ]
+      },
+      {
+       "id": "E54",
+       "name": "req_lb_w",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 15.8,
+       "struct_score": 7.4,
+       "trace": "control_backward",
+       "why": "Byte access decode; representative of size decodes",
+       "lines": [
+        148,
+        293
+       ]
+      },
+      {
+       "id": "E60",
+       "name": "req_sw_lw_w",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 15.9,
+       "struct_score": 7.6,
+       "trace": "control_backward",
+       "why": "Word access decode for misalignment check",
+       "lines": [
+        155,
+        179
+       ]
+      },
+      {
+       "id": "E67",
+       "name": "dcache_flush_w",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 16.7,
+       "struct_score": 10.8,
+       "trace": "control_backward",
+       "why": "CSR write to DFLUSH decoded into cache flush request",
+       "lines": [
+        237,
+        306
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E53",
+       "name": "store_inst_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E55",
+       "name": "req_lh_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E56",
+       "name": "req_lw_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E57",
+       "name": "req_sb_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E58",
+       "name": "req_sh_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E59",
+       "name": "req_sw_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E61",
+       "name": "req_sh_lh_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E68",
+       "name": "dcache_writeback_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E69",
+       "name": "dcache_invalidate_w",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Address and store data generation",
+     "kind": "DATAPATH",
+     "description": "Effective address adder, misalignment check, byte-lane store data and strobes",
+     "anchors": [
+      {
+       "id": "E62",
+       "name": "mem_addr_r",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 48.3,
+       "struct_score": 25.7,
+       "trace": "data_backward",
+       "why": "Effective address: base plus load/store immediate",
+       "lines": [
+        175,
+        177,
+        307
+       ]
+      },
+      {
+       "id": "E63",
+       "name": "mem_unaligned_r",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.1,
+       "struct_score": 12.5,
+       "trace": "control_backward",
+       "why": "Misalignment detect suppressing read/write request",
+       "lines": [
+        180,
+        184,
+        291
+       ]
+      },
+      {
+       "id": "E64",
+       "name": "mem_data_r",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 18.0,
+       "struct_score": 16.4,
+       "trace": "data_backward",
+       "why": "Store data shifted into byte lanes",
+       "lines": [
+        196,
+        211,
+        284
+       ]
+      },
+      {
+       "id": "E66",
+       "name": "mem_wr_r",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.9,
+       "struct_score": 7.6,
+       "trace": "control_backward",
+       "why": "Computed byte write enables for store size and offset",
+       "lines": [
+        189,
+        197,
+        286
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "opcode_ra_operand_i",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 32.1,
+       "struct_score": 69.9,
+       "trace": "interface",
+       "why": "Base register operand for effective address",
+       "lines": [
+        173,
+        175
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "opcode_rb_operand_i",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 31.6,
+       "struct_score": 68.0,
+       "trace": "interface",
+       "why": "Store data operand placed into byte lanes",
+       "lines": [
+        188,
+        196,
+        211
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E65",
+       "name": "mem_rd_r",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "E1 request register",
+     "kind": "PIPELINE_STAGE",
+     "description": "Registered memory request driving the data memory/cache bus",
+     "anchors": [
+      {
+       "id": "E19",
+       "name": "mem_addr_o",
+       "role": "INTERFACE_ADDR",
+       "importance": "critical",
+       "score": 84.0,
+       "struct_score": 55.0,
+       "trace": "data_backward",
+       "why": "Word-aligned memory request address from mem_addr_q",
+       "lines": [
+        310
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "mem_data_wr_o",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 60.7,
+       "struct_score": 71.5,
+       "trace": "data_backward",
+       "why": "Memory write data from request register",
+       "lines": [
+        311
+       ]
+      },
+      {
+       "id": "E21",
+       "name": "mem_rd_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 96.5,
+       "struct_score": 91.3,
+       "trace": "control_backward",
+       "why": "Memory read request, masked while a response is late",
+       "lines": [
+        105,
+        312,
+        321
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "mem_wr_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 97.7,
+       "struct_score": 94.2,
+       "trace": "control_backward",
+       "why": "Byte write strobes issuing store request, masked on delay",
+       "lines": [
+        105,
+        313,
+        321
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "mem_accept_i",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 87.7,
+       "struct_score": 68.5,
+       "trace": "interface",
+       "why": "Memory accept; issues request and frees request register",
+       "lines": [
+        105,
+        281,
+        321
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "mem_invalidate_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 39.9,
+       "struct_score": 89.6,
+       "trace": "control_backward",
+       "why": "Cache invalidate request from CSR op",
+       "lines": [
+        105,
+        316
+       ]
+      },
+      {
+       "id": "E26",
+       "name": "mem_writeback_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 39.9,
+       "struct_score": 89.6,
+       "trace": "control_backward",
+       "why": "Cache writeback request from CSR op",
+       "lines": [
+        105,
+        317
+       ]
+      },
+      {
+       "id": "E27",
+       "name": "mem_flush_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 39.9,
+       "struct_score": 89.6,
+       "trace": "control_backward",
+       "why": "Cache flush request from CSR op",
+       "lines": [
+        105,
+        318
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "mem_cacheable_o",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 16.9,
+       "struct_score": 11.6,
+       "trace": "data_backward",
+       "why": "Cacheable attribute from address range compare",
+       "lines": [
+        314
+       ]
+      },
+      {
+       "id": "E42",
+       "name": "mem_load_q",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 16.3,
+       "struct_score": 9.2,
+       "trace": "data_backward",
+       "why": "Load/size/sign request attributes pushed into response FIFO",
+       "lines": [
+        292,
+        341
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E32",
+       "name": "mem_addr_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E33",
+       "name": "mem_data_wr_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E34",
+       "name": "mem_rd_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E35",
+       "name": "mem_wr_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E36",
+       "name": "mem_cacheable_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E37",
+       "name": "mem_invalidate_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E38",
+       "name": "mem_writeback_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E39",
+       "name": "mem_flush_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E43",
+       "name": "mem_xb_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E44",
+       "name": "mem_xh_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E45",
+       "name": "mem_ls_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E24",
+       "name": "mem_req_tag_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "Outstanding access control",
+     "kind": "CONTROLLER",
+     "description": "Tracks pending access, delays issue, squashes on faults, generates stall",
+     "anchors": [
+      {
+       "id": "E46",
+       "name": "pending_lsu_e2_q",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 45.6,
+       "struct_score": 14.7,
+       "trace": "control_backward",
+       "why": "Outstanding access flag set on issue, cleared on ack",
+       "lines": [
+        113,
+        115,
+        118
+       ]
+      },
+      {
+       "id": "E50",
+       "name": "delay_lsu_e2_w",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 20.7,
+       "struct_score": 27.4,
+       "trace": "control_backward",
+       "why": "Late response stall holding request register and masking requests",
+       "lines": [
+        118,
+        279,
+        312
+       ]
+      },
+      {
+       "id": "E47",
+       "name": "issue_lsu_e1_w",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.3,
+       "struct_score": 5.2,
+       "trace": "control_backward",
+       "why": "Request accepted; sets pending flag",
+       "lines": [
+        105,
+        112
+       ]
+      },
+      {
+       "id": "E49",
+       "name": "complete_err_e2_w",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 19.4,
+       "struct_score": 21.8,
+       "trace": "control_backward",
+       "why": "Error completion squashing next request",
+       "lines": [
+        107,
+        263
+       ]
+      },
+      {
+       "id": "E40",
+       "name": "mem_unaligned_e1_q",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 52.6,
+       "struct_score": 42.7,
+       "trace": "control_backward",
+       "why": "Misaligned access in E1; stalls and generates dummy ack",
+       "lines": [
+        127,
+        291,
+        321
+       ]
+      },
+      {
+       "id": "E41",
+       "name": "mem_unaligned_e2_q",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 22.7,
+       "struct_score": 35.5,
+       "trace": "control_backward",
+       "why": "Dummy ack for misaligned access raising alignment exception",
+       "lines": [
+        127,
+        401,
+        404
+       ]
+      },
+      {
+       "id": "E31",
+       "name": "stall_o",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 46.5,
+       "struct_score": 18.3,
+       "trace": "control_backward",
+       "why": "Pipeline stall when memory busy, response late or misaligned",
+       "lines": [
+        321
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E48",
+       "name": "complete_ok_e2_w",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Load response",
+     "kind": "DATAPATH",
+     "description": "Request-info FIFO plus load alignment, sign extension and exception encoding",
+     "anchors": [
+      {
+       "id": "E14",
+       "name": "mem_ack_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 89.2,
+       "struct_score": 72.8,
+       "trace": "interface",
+       "why": "Memory response; completes access and pops request FIFO",
+       "lines": [
+        106,
+        346,
+        401
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "mem_data_rd_i",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 31.7,
+       "struct_score": 68.4,
+       "trace": "interface",
+       "why": "Read data aligned and extended for writeback",
+       "lines": [
+        377,
+        389,
+        397
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "mem_error_i",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 20.1,
+       "struct_score": 24.7,
+       "trace": "interface",
+       "why": "Bus error response causing squash and fault exception",
+       "lines": [
+        107,
+        406,
+        408
+       ]
+      },
+      {
+       "id": "E70",
+       "name": "resp_load_w",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.1,
+       "struct_score": 12.6,
+       "trace": "control_backward",
+       "why": "Popped request type selecting load result and fault kind",
+       "lines": [
+        372,
+        404,
+        406
+       ]
+      },
+      {
+       "id": "E71",
+       "name": "resp_addr_w",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 17.9,
+       "struct_score": 15.9,
+       "trace": "data_backward",
+       "why": "Popped request address for lane select and bad address",
+       "lines": [
+        363,
+        370
+       ]
+      },
+      {
+       "id": "E79",
+       "name": "wb_result_r",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 46.8,
+       "struct_score": 19.6,
+       "trace": "data_backward",
+       "why": "Load result lane-selected and sign-extended, or fault address",
+       "lines": [
+        377,
+        384,
+        402
+       ]
+      },
+      {
+       "id": "E28",
+       "name": "writeback_valid_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 56.8,
+       "struct_score": 57.9,
+       "trace": "control_backward",
+       "why": "Writeback valid on memory ack or misaligned dummy ack",
+       "lines": [
+        401
+       ]
+      },
+      {
+       "id": "E30",
+       "name": "writeback_exception_o",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 20.2,
+       "struct_score": 25.2,
+       "trace": "control_backward",
+       "why": "Exception code from alignment, page and bus faults",
+       "lines": [
+        412
+       ]
+      },
+      {
+       "id": "E80",
+       "name": "fault_load_align_w",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 15.4,
+       "struct_score": 5.5,
+       "trace": "control_backward",
+       "why": "Representative fault-class flag selecting exception code",
+       "lines": [
+        404,
+        412
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "u_lsu_request",
+       "module": "biriscv_lsu_fifo"
+      }
+     ],
+     "members": [
+      {
+       "id": "E72",
+       "name": "resp_byte_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E73",
+       "name": "resp_half_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E74",
+       "name": "resp_signed_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E75",
+       "name": "addr_lsb_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E76",
+       "name": "load_byte_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E77",
+       "name": "load_half_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E78",
+       "name": "load_signed_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E81",
+       "name": "fault_store_align_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E82",
+       "name": "fault_load_bus_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E83",
+       "name": "fault_store_bus_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E84",
+       "name": "fault_load_page_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E85",
+       "name": "fault_store_page_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E29",
+       "name": "writeback_value_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "opcode_issue",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "opcode_valid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "opcode_opcode_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "opcode_pc_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "opcode_invalid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "opcode_rd_idx_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "opcode_ra_idx_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "opcode_rb_idx_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "opcode_ra_operand_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "opcode_rb_operand_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "memory_bus",
+     "protocol": "MEMORY_BUS",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E19",
+      "E20",
+      "E21",
+      "E22",
+      "E23",
+      "E24",
+      "E25",
+      "E26",
+      "E27",
+      "E12",
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18"
+     ],
+     "members": [
+      {
+       "id": "E19",
+       "name": "mem_addr_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "mem_data_wr_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E21",
+       "name": "mem_rd_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E22",
+       "name": "mem_wr_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "mem_cacheable_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E24",
+       "name": "mem_req_tag_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E25",
+       "name": "mem_invalidate_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E26",
+       "name": "mem_writeback_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E27",
+       "name": "mem_flush_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "mem_data_rd_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "mem_accept_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E14",
+       "name": "mem_ack_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "mem_error_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E16",
+       "name": "mem_resp_tag_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E17",
+       "name": "mem_load_fault_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "mem_store_fault_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "writeback",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E28",
+      "E29",
+      "E30"
+     ],
+     "members": [
+      {
+       "id": "E28",
+       "name": "writeback_valid_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E29",
+       "name": "writeback_value_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E30",
+       "name": "writeback_exception_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "pipeline_control",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E31"
+     ],
+     "members": [
+      {
+       "id": "E31",
+       "name": "stall_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

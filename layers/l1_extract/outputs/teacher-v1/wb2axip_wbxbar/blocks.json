@@ -1,0 +1,1466 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "wb2axip_wbxbar",
+ "tops": [
+  "wbxbar"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "skidbuffer": {
+   "source": "teacher",
+   "canonical_instance": "wbxbar.DECODE_REQUEST[0].iskid",
+   "file": "data/rtl/wb2axip/rtl/skidbuffer.v",
+   "lines": [
+    81,
+    501
+   ],
+   "summary": "Valid/ready skid buffer: a one-entry side register (r_data/r_valid) captures input when output stalls, with optional registered output stage.",
+   "blocks": [
+    {
+     "name": "skid_register",
+     "kind": "BUFFER",
+     "description": "One-entry overflow buffer capturing input while downstream stalls.",
+     "anchors": [
+      {
+       "id": "E10",
+       "name": "LOGIC.r_valid",
+       "role": "CONTROL_FLAG",
+       "importance": "critical",
+       "score": 87.4,
+       "struct_score": 67.3,
+       "trace": "control_backward",
+       "why": "Skid-full flag; set when input accepted while output stalled, deasserts o_ready, selects r_data to output.",
+       "lines": [
+        128,
+        137,
+        160
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "LOGIC.r_data",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 98.7,
+       "struct_score": 96.6,
+       "trace": "data_backward",
+       "why": "One-entry skid register holding input data while downstream is stalled.",
+       "lines": [
+        129,
+        153,
+        213
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "w_data",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 27.6,
+       "struct_score": 53.7,
+       "trace": "none",
+       "why": "Debug/formal view of skid register contents r_data.",
+       "lines": [
+        102,
+        155
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "output_stage",
+     "kind": "PIPELINE_STAGE",
+     "description": "Registered output valid/data, muxing skid data or fresh input.",
+     "anchors": [
+      {
+       "id": "E8",
+       "name": "o_data",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 99.1,
+       "struct_score": 97.7,
+       "trace": "data_backward",
+       "why": "Output payload register, chooses r_data when skid full else i_data.",
+       "lines": [
+        98,
+        213,
+        215
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "i_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 63.8,
+       "struct_score": 79.3,
+       "trace": "interface",
+       "why": "Downstream ready; clears skid flag and advances output register.",
+       "lines": [
+        97,
+        140,
+        209
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E6",
+       "name": "o_valid",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "input_handshake",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Upstream valid/ready/data interface.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "i_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 97.4,
+       "struct_score": 93.3,
+       "trace": "interface",
+       "why": "Upstream valid; with o_ready accepts data into skid or output register.",
+       "lines": [
+        93,
+        137,
+        198
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "o_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 95.9,
+       "struct_score": 89.6,
+       "trace": "interface",
+       "why": "Upstream ready, inverse of skid-full flag r_valid.",
+       "lines": [
+        94,
+        160
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "i_data",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 98.5,
+       "struct_score": 96.3,
+       "trace": "interface",
+       "why": "Incoming payload loaded into r_data or directly into o_data.",
+       "lines": [
+        95,
+        153,
+        215
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "i_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "i_reset",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "slave_stream",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "i_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "o_ready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "i_data",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "master_stream",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E6",
+      "E7",
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "o_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "i_ready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "o_data",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "addrdecode": {
+   "source": "teacher",
+   "canonical_instance": "wbxbar.DECODE_REQUEST[0].adcd",
+   "file": "data/rtl/wb2axip/rtl/addrdecode.v",
+   "lines": [
+    66,
+    464
+   ],
+   "summary": "Combinational slave address decoder: masked compares of the address against per-slave base/mask parameters produce a one-hot select (plus no-slave error bit), optionally registered with valid/stall handshake.",
+   "blocks": [
+    {
+     "name": "Address compare",
+     "kind": "DECODER",
+     "description": "Masked address match per slave, valid-qualified, with none-selected error bit.",
+     "anchors": [
+      {
+       "id": "E5",
+       "name": "i_addr",
+       "role": "INTERFACE_ADDR",
+       "importance": "critical",
+       "score": 93.9,
+       "struct_score": 84.6,
+       "trace": "interface",
+       "why": "Incoming request address compared against every slave address/mask.",
+       "lines": [
+        147,
+        254
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "prerequest",
+       "role": "DECODE",
+       "importance": "major",
+       "score": 53.8,
+       "struct_score": 47.2,
+       "trace": "data_backward",
+       "why": "Per-slave address match vector from masked address compare and access permission.",
+       "lines": [
+        147,
+        164
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "request",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 27.4,
+       "struct_score": 52.9,
+       "trace": "data_backward",
+       "why": "Valid-qualified one-hot slave request including no-slave error bit.",
+       "lines": [
+        169,
+        271
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "GENERATE_NONSEL_SLAVE.r_none_sel",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 21.5,
+       "struct_score": 30.6,
+       "trace": "control_backward",
+       "why": "Flags valid request matching no slave; becomes bus-error decode bit.",
+       "lines": [
+        212,
+        218
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E14",
+       "name": "NO_DEFAULT_REQUEST.r_request",
+       "kind": "comb"
+      },
+      {
+       "id": "E15",
+       "name": "GENERATE_NONSEL_SLAVE.r_request_NS",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Output stage",
+     "kind": "PIPELINE_STAGE",
+     "description": "Optional register stage for decode, address, data with valid/stall handshake.",
+     "anchors": [
+      {
+       "id": "E9",
+       "name": "o_decode",
+       "role": "DECODE",
+       "importance": "critical",
+       "score": 96.5,
+       "struct_score": 91.1,
+       "trace": "data_backward",
+       "why": "One-hot slave select output steering downstream crossbar.",
+       "lines": [
+        271,
+        290
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "o_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 99.3,
+       "struct_score": 98.3,
+       "trace": "control_backward",
+       "why": "Output request valid, registered when not stalled.",
+       "lines": [
+        239,
+        285
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "o_stall",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 65.6,
+       "struct_score": 83.8,
+       "trace": "control_backward",
+       "why": "Backpressure to upstream when output valid and downstream stalled.",
+       "lines": [
+        279,
+        286
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "o_addr",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 68.0,
+       "struct_score": 90.0,
+       "trace": "data_backward",
+       "why": "Registered address forwarded with the decoded select.",
+       "lines": [
+        254,
+        287
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "o_data",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 42.6,
+       "struct_score": 96.4,
+       "trace": "data_backward",
+       "why": "Registered request payload forwarded with decode.",
+       "lines": [
+        255,
+        288
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "i_data",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 40.3,
+       "struct_score": 90.6,
+       "trace": "interface",
+       "why": "Incoming request payload passed through to output.",
+       "lines": [
+        255,
+        288
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E3",
+       "name": "i_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "i_stall",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "i_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "i_reset",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "request_in",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "i_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "o_stall",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "i_addr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "i_data",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "decoded_out",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11"
+     ],
+     "members": [
+      {
+       "id": "E7",
+       "name": "o_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E8",
+       "name": "i_stall",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "o_decode",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "o_addr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E11",
+       "name": "o_data",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "wbxbar": {
+   "source": "teacher",
+   "canonical_instance": "wbxbar",
+   "file": "data/rtl/wb2axip/rtl/wbxbar.v",
+   "lines": [
+    76,
+    1820
+   ],
+   "summary": "Wishbone NM-by-NS crossbar: per-master skid buffer and address decoder form requests, a fixed-priority arbiter grants slave channels, index LUTs route requests and returns, and pending counters hold grants.",
+   "blocks": [
+    {
+     "name": "Master request decode",
+     "kind": "DECODER",
+     "description": "Per-master skid buffer and address decoder producing one-hot slave requests",
+     "anchors": [
+      {
+       "id": "E4",
+       "name": "i_mstb",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 58.1,
+       "struct_score": 62.6,
+       "trace": "interface",
+       "why": "Per-master Wishbone strobe entering the request skid buffers",
+       "lines": [
+        267
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "i_maddr",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 58.9,
+       "struct_score": 65.7,
+       "trace": "interface",
+       "why": "Master addresses buffered then decoded into slave requests",
+       "lines": [
+        268
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "i_mdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 92.0,
+       "struct_score": 79.9,
+       "trace": "interface",
+       "why": "Master write data routed to the granted slave port",
+       "lines": [
+        269
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "o_mstall",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 54.2,
+       "struct_score": 48.5,
+       "trace": "interface",
+       "why": "Per-master stall from skid buffer ready",
+       "lines": [
+        276
+       ]
+      },
+      {
+       "id": "E46",
+       "name": "dcd_stb",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 20.3,
+       "struct_score": 25.5,
+       "trace": "control_backward",
+       "why": "Decoder output valid qualifying each master's request vector",
+       "lines": [
+        295,
+        301
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "request",
+       "role": "DECODE",
+       "importance": "major",
+       "score": 57.3,
+       "struct_score": 59.6,
+       "trace": "control_backward",
+       "why": "Per-master one-hot decoded slave request (plus no-slave bit) feeding arbitration",
+       "lines": [
+        301,
+        340
+       ]
+      },
+      {
+       "id": "E36",
+       "name": "m_stb",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 25.2,
+       "struct_score": 45.0,
+       "trace": "control_backward",
+       "why": "Decoded master strobe gated by pending-full; counts pending transactions",
+       "lines": [
+        304,
+        1039
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "DECODE_REQUEST[*].iskid",
+       "module": "skidbuffer"
+      },
+      {
+       "id": "I2",
+       "instance": "DECODE_REQUEST[*].adcd",
+       "module": "addrdecode"
+      }
+     ],
+     "members": [
+      {
+       "id": "E47",
+       "name": "DECODE_REQUEST[*].skd_stb",
+       "kind": "wire"
+      },
+      {
+       "id": "E48",
+       "name": "DECODE_REQUEST[*].skd_stall",
+       "kind": "wire"
+      },
+      {
+       "id": "E49",
+       "name": "DECODE_REQUEST[*].skd_we",
+       "kind": "wire"
+      },
+      {
+       "id": "E50",
+       "name": "DECODE_REQUEST[*].skd_addr",
+       "kind": "wire"
+      },
+      {
+       "id": "E51",
+       "name": "DECODE_REQUEST[*].skd_data",
+       "kind": "wire"
+      },
+      {
+       "id": "E52",
+       "name": "DECODE_REQUEST[*].skd_sel",
+       "kind": "wire"
+      },
+      {
+       "id": "E53",
+       "name": "DECODE_REQUEST[*].decoded",
+       "kind": "wire"
+      },
+      {
+       "id": "E54",
+       "name": "DECODE_REQUEST[*].iskd_ready",
+       "kind": "wire"
+      },
+      {
+       "id": "E35",
+       "name": "m_cyc",
+       "kind": "wire"
+      },
+      {
+       "id": "E37",
+       "name": "m_we",
+       "kind": "wire"
+      },
+      {
+       "id": "E38",
+       "name": "m_addr",
+       "kind": "mem"
+      },
+      {
+       "id": "E39",
+       "name": "m_data",
+       "kind": "mem"
+      },
+      {
+       "id": "E40",
+       "name": "m_sel",
+       "kind": "mem"
+      },
+      {
+       "id": "E5",
+       "name": "i_mwe",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "i_msel",
+       "kind": "port_in"
+      },
+      {
+       "id": "E41",
+       "name": "m_stall",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Priority arbiter",
+     "kind": "ARBITER",
+     "description": "Fixed-priority grant of slave channels to masters with hold while pending",
+     "anchors": [
+      {
+       "id": "E24",
+       "name": "requested",
+       "role": "ARBITRATION",
+       "importance": "minor",
+       "score": 34.1,
+       "struct_score": 75.0,
+       "trace": "control_backward",
+       "why": "Priority mask: slave already requested by a lower-numbered master",
+       "lines": [
+        335,
+        343
+       ]
+      },
+      {
+       "id": "E59",
+       "name": "ARBITRATE_REQUESTS[*].stay_on_channel",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.1,
+       "struct_score": 8.4,
+       "trace": "control_backward",
+       "why": "Holds current grant while requests or pending transactions remain",
+       "lines": [
+        480,
+        514
+       ]
+      },
+      {
+       "id": "E60",
+       "name": "ARBITRATE_REQUESTS[*].requested_channel_is_available",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.2,
+       "struct_score": 8.8,
+       "trace": "control_backward",
+       "why": "Requested slave free and unclaimed by higher priority, enabling new grant",
+       "lines": [
+        491,
+        516
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "grant",
+       "role": "ARBITRATION",
+       "importance": "critical",
+       "score": 92.0,
+       "struct_score": 79.7,
+       "trace": "control_backward",
+       "why": "Per-master grant vector over slave channels from registered r_grant",
+       "lines": [
+        341,
+        528
+       ]
+      },
+      {
+       "id": "E26",
+       "name": "mgrant",
+       "role": "ARBITRATION",
+       "importance": "major",
+       "score": 54.4,
+       "struct_score": 49.3,
+       "trace": "control_backward",
+       "why": "Master N holds some channel; gates acks, errors and return data",
+       "lines": [
+        482,
+        527
+       ]
+      },
+      {
+       "id": "E55",
+       "name": "SLAVE_GRANT[*].drop_sgrant",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.0,
+       "struct_score": 8.0,
+       "trace": "control_backward",
+       "why": "Releases a slave grant when owning master drops cycle or moves on",
+       "lines": [
+        361,
+        383
+       ]
+      },
+      {
+       "id": "E27",
+       "name": "sgrant",
+       "role": "ARBITRATION",
+       "importance": "critical",
+       "score": 86.2,
+       "struct_score": 63.1,
+       "trace": "control_backward",
+       "why": "Per-slave busy grant; gates slave cyc/stb and new grants",
+       "lines": [
+        387,
+        750
+       ]
+      },
+      {
+       "id": "E64",
+       "name": "ARBITRATE_REQUESTS[*].MINDEX_MULTIPLE_SLAVES.r_regrant",
+       "role": "ARBITRATION",
+       "importance": "minor",
+       "score": 23.8,
+       "struct_score": 39.7,
+       "trace": "control_backward",
+       "why": "Candidate slave channels for master regrant computing next mindex",
+       "lines": [
+        561,
+        586
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E56",
+       "name": "SLAVE_GRANT[*].r_sgrant",
+       "kind": "reg"
+      },
+      {
+       "id": "E57",
+       "name": "ARBITRATE_REQUESTS[*].regrant",
+       "kind": "wire"
+      },
+      {
+       "id": "E58",
+       "name": "ARBITRATE_REQUESTS[*].reindex",
+       "kind": "wire"
+      },
+      {
+       "id": "E61",
+       "name": "ARBITRATE_REQUESTS[*].r_mgrant",
+       "kind": "reg"
+      },
+      {
+       "id": "E62",
+       "name": "ARBITRATE_REQUESTS[*].r_grant",
+       "kind": "reg"
+      },
+      {
+       "id": "E65",
+       "name": "ARBITRATE_REQUESTS[*].MINDEX_MULTIPLE_SLAVES.r_reindex",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Routing index tables",
+     "kind": "OTHER",
+     "description": "Registered master-to-slave and slave-to-master indices steering forward and return muxes",
+     "anchors": [
+      {
+       "id": "E33",
+       "name": "mindex",
+       "role": "MUX_SELECT",
+       "importance": "major",
+       "score": 61.4,
+       "struct_score": 73.3,
+       "trace": "control_backward",
+       "why": "Slave index granted to each master; selects return data, ack, stall",
+       "lines": [
+        625,
+        990
+       ]
+      },
+      {
+       "id": "E34",
+       "name": "sindex",
+       "role": "MUX_SELECT",
+       "importance": "major",
+       "score": 62.9,
+       "struct_score": 77.0,
+       "trace": "control_backward",
+       "why": "Master index owning each slave; selects forwarded address, data, strobe",
+       "lines": [
+        694,
+        852
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E63",
+       "name": "ARBITRATE_REQUESTS[*].MINDEX_MULTIPLE_SLAVES.r_mindex",
+       "kind": "reg"
+      },
+      {
+       "id": "E66",
+       "name": "GEN_SINDEX[*].SINDEX_MORE_THAN_ONE_MASTER.r_sindex",
+       "kind": "reg"
+      },
+      {
+       "id": "E67",
+       "name": "GEN_SINDEX[*].SINDEX_MORE_THAN_ONE_MASTER.regrant",
+       "kind": "comb"
+      },
+      {
+       "id": "E68",
+       "name": "GEN_SINDEX[*].SINDEX_MORE_THAN_ONE_MASTER.reindex",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Slave port drivers",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Registered cyc/stb/we/addr/data/sel per slave selected from owning master",
+     "anchors": [
+      {
+       "id": "E42",
+       "name": "s_stall",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 22.0,
+       "struct_score": 32.3,
+       "trace": "control_backward",
+       "why": "Slave stall while strobing; holds slave outputs and master stall",
+       "lines": [
+        410,
+        850
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "o_scyc",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 39.4,
+       "struct_score": 88.3,
+       "trace": "interface",
+       "why": "Per-slave bus cycle from r_scyc while granted master holds cyc",
+       "lines": [
+        776
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "o_sstb",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 66.0,
+       "struct_score": 84.7,
+       "trace": "interface",
+       "why": "Per-slave strobe from r_sstb carrying routed requests",
+       "lines": [
+        777
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "o_saddr",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 62.1,
+       "struct_score": 75.1,
+       "trace": "interface",
+       "why": "Registered slave address selected from master via sindex",
+       "lines": [
+        861
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "o_sdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 94.8,
+       "struct_score": 86.9,
+       "trace": "interface",
+       "why": "Registered slave write data routed from owning master",
+       "lines": [
+        862
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E69",
+       "name": "GEN_CYC_STB[*].r_scyc",
+       "kind": "reg"
+      },
+      {
+       "id": "E70",
+       "name": "GEN_CYC_STB[*].r_sstb",
+       "kind": "reg"
+      },
+      {
+       "id": "E71",
+       "name": "J.GEN_DOWNSTREAM[*].r_swe",
+       "kind": "reg"
+      },
+      {
+       "id": "E72",
+       "name": "J.GEN_DOWNSTREAM[*].r_saddr",
+       "kind": "reg"
+      },
+      {
+       "id": "E73",
+       "name": "J.GEN_DOWNSTREAM[*].r_sdata",
+       "kind": "reg"
+      },
+      {
+       "id": "E74",
+       "name": "J.GEN_DOWNSTREAM[*].r_ssel",
+       "kind": "reg"
+      },
+      {
+       "id": "E15",
+       "name": "o_swe",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "o_ssel",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "Return path",
+     "kind": "DATAPATH",
+     "description": "Muxes slave data, ack and error back to each master by mindex",
+     "anchors": [
+      {
+       "id": "E21",
+       "name": "i_sdata",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 65.9,
+       "struct_score": 84.7,
+       "trace": "interface",
+       "why": "Slave read data returned to the granted master",
+       "lines": [
+        409
+       ]
+      },
+      {
+       "id": "E44",
+       "name": "s_ack",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 19.8,
+       "struct_score": 23.6,
+       "trace": "control_backward",
+       "why": "Slave ack qualified by cyc, routed to master via mindex",
+       "lines": [
+        411,
+        985
+       ]
+      },
+      {
+       "id": "E45",
+       "name": "s_err",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 19.9,
+       "struct_score": 24.1,
+       "trace": "control_backward",
+       "why": "Slave bus error; aborts slave cycle and returns master error",
+       "lines": [
+        412,
+        769
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "o_mdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 93.9,
+       "struct_score": 84.6,
+       "trace": "interface",
+       "why": "Per-master read data muxed from slave data by mindex",
+       "lines": [
+        990
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "o_mack",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 62.0,
+       "struct_score": 74.7,
+       "trace": "interface",
+       "why": "Per-master acknowledge routed from granted slave",
+       "lines": [
+        1014
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "o_merr",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 23.9,
+       "struct_score": 40.1,
+       "trace": "interface",
+       "why": "Per-master bus error from slave error, no-slave decode or timeout",
+       "lines": [
+        1015
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E43",
+       "name": "s_data",
+       "kind": "mem"
+      },
+      {
+       "id": "E75",
+       "name": "SINGLE_BUFFER_STALL.FOREACH_MASTER_PORT[*].r_mack",
+       "kind": "comb"
+      },
+      {
+       "id": "E76",
+       "name": "SINGLE_BUFFER_STALL.FOREACH_MASTER_PORT[*].r_merr",
+       "kind": "comb"
+      },
+      {
+       "id": "E19",
+       "name": "i_sstall",
+       "kind": "port_in"
+      },
+      {
+       "id": "E20",
+       "name": "i_sack",
+       "kind": "port_in"
+      },
+      {
+       "id": "E22",
+       "name": "i_serr",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Pending transaction counters",
+     "kind": "COUNTER_TIMER",
+     "description": "Per-master outstanding count with empty/full flags gating grant changes and strobes",
+     "anchors": [
+      {
+       "id": "E77",
+       "name": "COUNT_PENDING_TRANSACTIONS[*].lclpending",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 54.4,
+       "struct_score": 49.2,
+       "trace": "control_backward",
+       "why": "Outstanding transactions per master; keeps grant until all acked",
+       "lines": [
+        1041,
+        1047
+       ]
+      },
+      {
+       "id": "E31",
+       "name": "mempty",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.5,
+       "struct_score": 18.3,
+       "trace": "control_backward",
+       "why": "No pending transactions; allows master to switch channel",
+       "lines": [
+        482,
+        1056
+       ]
+      },
+      {
+       "id": "E29",
+       "name": "mfull",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.4,
+       "struct_score": 17.8,
+       "trace": "control_backward",
+       "why": "Pending counter full; blocks master strobe and forces stall",
+       "lines": [
+        304,
+        1057
+       ]
+      },
+      {
+       "id": "E32",
+       "name": "timed_out",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.0,
+       "struct_score": 12.3,
+       "trace": "control_backward",
+       "why": "Optional deadlock timeout forcing bus error; disabled when OPT_TIMEOUT=0",
+       "lines": [
+        1000,
+        1093
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E78",
+       "name": "COUNT_PENDING_TRANSACTIONS[*].r_empty",
+       "kind": "reg"
+      },
+      {
+       "id": "E79",
+       "name": "COUNT_PENDING_TRANSACTIONS[*].r_nearfull",
+       "kind": "reg"
+      },
+      {
+       "id": "E80",
+       "name": "COUNT_PENDING_TRANSACTIONS[*].r_full",
+       "kind": "reg"
+      },
+      {
+       "id": "E30",
+       "name": "mnearfull",
+       "kind": "wire"
+      },
+      {
+       "id": "E28",
+       "name": "w_mpending",
+       "kind": "mem"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "i_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "i_reset",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "master_request",
+     "protocol": "REQ_ACK",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "i_mcyc",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "i_mstb",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "i_mwe",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "i_maddr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "i_mdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "i_msel",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "master_response",
+     "protocol": "REQ_ACK",
+     "direction": "OUT",
+     "member_ids": [
+      "E9",
+      "E10",
+      "E11",
+      "E12"
+     ],
+     "members": [
+      {
+       "id": "E9",
+       "name": "o_mstall",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "o_mack",
+       "kind": "port_out"
+      },
+      {
+       "id": "E11",
+       "name": "o_mdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "o_merr",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "slave_request",
+     "protocol": "REQ_ACK",
+     "direction": "OUT",
+     "member_ids": [
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18"
+     ],
+     "members": [
+      {
+       "id": "E13",
+       "name": "o_scyc",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "o_sstb",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "o_swe",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "o_saddr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "o_sdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "o_ssel",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "slave_response",
+     "protocol": "REQ_ACK",
+     "direction": "IN",
+     "member_ids": [
+      "E19",
+      "E20",
+      "E21",
+      "E22"
+     ],
+     "members": [
+      {
+       "id": "E19",
+       "name": "i_sstall",
+       "kind": "port_in"
+      },
+      {
+       "id": "E20",
+       "name": "i_sack",
+       "kind": "port_in"
+      },
+      {
+       "id": "E21",
+       "name": "i_sdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E22",
+       "name": "i_serr",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

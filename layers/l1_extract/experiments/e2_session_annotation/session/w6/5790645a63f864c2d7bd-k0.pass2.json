@@ -1,0 +1,30 @@
+{
+  "module_summary": "Synchronous valid/ready FIFO: flat register array indexed by head/tail pointers with an occupancy counter producing full/empty, plus synchronous flush.",
+  "anchors": [
+    {"id": "E14", "name": "bank", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "DEPTH x WIDTH flattened entry array written at tail, read at head.", "lines": [21, 32, 56]},
+    {"id": "E13", "name": "tl", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "Write pointer selecting slot for in_data; increments on push, cleared by flush.", "lines": [32, 36, 37]},
+    {"id": "E12", "name": "hd", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "Read pointer selecting out_data slot; increments on pop, cleared by flush.", "lines": [41, 42, 56]},
+    {"id": "E11", "name": "lvl", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "Occupancy count; drives full/empty flags and count output.", "lines": [25, 50, 52]},
+    {"id": "E4", "name": "in_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Push request; with not-full enables write.", "lines": [8, 27]},
+    {"id": "E5", "name": "in_ready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Asserted while FIFO is not full.", "lines": [9, 58]},
+    {"id": "E6", "name": "in_data", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Write payload stored into bank at tail.", "lines": [10, 32]},
+    {"id": "E7", "name": "out_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Asserted while FIFO is not empty.", "lines": [11, 59]},
+    {"id": "E8", "name": "out_ready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Consumer ready; with non-empty pops the head entry.", "lines": [12, 28]},
+    {"id": "E9", "name": "out_data", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Read payload: bank entry at head pointer.", "lines": [13, 56]},
+    {"id": "E3", "name": "flush_i", "role": "COMMAND", "importance": "major", "trace": "forward", "why": "Flush request clearing head, tail and occupancy count.", "lines": [36, 41, 47]},
+    {"id": "E15", "name": "ins", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Push enable: writes bank, advances tail, increments level.", "lines": [27, 32, 37]},
+    {"id": "E16", "name": "rem", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Pop enable: advances head and decrements level.", "lines": [28, 42]}
+  ],
+  "groups": [
+    {"name": "fifo_storage", "kind": "MEMORY", "anchor_ids": ["E14"], "member_ids": [], "description": "Flattened register array holding DEPTH entries."},
+    {"name": "pointer_control", "kind": "CONTROLLER", "anchor_ids": ["E13", "E12", "E11", "E15", "E16", "E3"], "member_ids": ["E17", "E18", "E19", "E10"], "description": "Head/tail pointers, occupancy counter, full/empty flags and flush."},
+    {"name": "write_port", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E4", "E5", "E6"], "member_ids": ["E17"], "description": "Valid/ready push interface gated by not-full."},
+    {"name": "read_port", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E7", "E8", "E9"], "member_ids": ["E18"], "description": "Valid/ready pop interface gated by not-empty."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "push", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E4", "E5", "E6"]},
+    {"name": "pop", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E7", "E8", "E9"]},
+    {"name": "control_status", "protocol": "SIMPLE", "direction": "BIDIR", "member_ids": ["E3", "E10"]}
+  ]
+}

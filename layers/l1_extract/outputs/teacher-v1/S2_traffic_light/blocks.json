@@ -1,0 +1,429 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "S2_traffic_light",
+ "tops": [
+  "verified_traffic_light"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "tl_timer": {
+   "source": "teacher",
+   "canonical_instance": "verified_traffic_light.u_timer",
+   "file": "experiments/e3_perturb_benchmark/data/traffic_light/S2/verified_traffic_light.v",
+   "lines": [
+    3,
+    36
+   ],
+   "summary": "Traffic-light phase timer: a down-counter reloaded with per-phase durations on detected light falling edges, shortened by a pedestrian request during green.",
+   "blocks": [
+    {
+     "name": "phase_timer",
+     "kind": "COUNTER_TIMER",
+     "description": "Edge detectors and pedestrian override select reload value of the countdown timer.",
+     "anchors": [
+      {
+       "id": "E10",
+       "name": "ticks",
+       "role": "COUNTER",
+       "importance": "critical",
+       "score": 99.6,
+       "struct_score": 99.1,
+       "trace": "control_backward",
+       "why": "Down-counter output, reloaded with phase duration on light transitions, decremented otherwise.",
+       "lines": [
+        14,
+        31,
+        34
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "cut_short",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 54.7,
+       "struct_score": 50.5,
+       "trace": "control_backward",
+       "why": "Pedestrian request during long green; reloads counter with short value, top priority.",
+       "lines": [
+        20,
+        30
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "g_fall",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 54.0,
+       "struct_score": 47.8,
+       "trace": "control_backward",
+       "why": "Representative light falling-edge detect; selects reload duration for next phase.",
+       "lines": [
+        21,
+        31
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E13",
+       "name": "y_fall",
+       "kind": "wire"
+      },
+      {
+       "id": "E14",
+       "name": "r_fall",
+       "kind": "wire"
+      },
+      {
+       "id": "E3",
+       "name": "ped",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "ck",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "nrst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "light_status",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "ped",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "g_now",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "y_now",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "r_now",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "g_pre",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "y_pre",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "r_pre",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "timer_out",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E10",
+       "name": "ticks",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "verified_traffic_light": {
+   "source": "teacher",
+   "canonical_instance": "verified_traffic_light",
+   "file": "experiments/e3_perturb_benchmark/data/traffic_light/S2/verified_traffic_light.v",
+   "lines": [
+    38,
+    105
+   ],
+   "summary": "Traffic-light controller: a one-hot phase FSM advances stop/go/warn when a child phase down-timer reaches 3; phase bits pass through two register stages to the lamp outputs, which the timer watches to reload.",
+   "blocks": [
+    {
+     "name": "phase_fsm",
+     "kind": "CONTROLLER",
+     "description": "One-hot phase register and next-state logic driven by timer expiry.",
+     "anchors": [
+      {
+       "id": "E8",
+       "name": "lamp_sel",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.4,
+       "struct_score": 98.6,
+       "trace": "control_backward",
+       "why": "One-hot phase register (off/stop/go/warn) advanced on timer expiry.",
+       "lines": [
+        54,
+        77,
+        94
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "expired",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 48.1,
+       "struct_score": 25.0,
+       "trace": "control_backward",
+       "why": "Phase-timeout flag gating every FSM phase transition.",
+       "lines": [
+        59,
+        79,
+        83
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E9",
+       "name": "lamp_sel_nx",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "phase_timer",
+     "kind": "COUNTER_TIMER",
+     "description": "tl_timer child down-counter reloaded per phase, shortened by pedestrian request.",
+     "anchors": [
+      {
+       "id": "E13",
+       "name": "remain",
+       "role": "COUNTER",
+       "importance": "critical",
+       "score": 85.3,
+       "struct_score": 59.6,
+       "trace": "data_backward",
+       "why": "Remaining phase time from the child down-counter; decoded into expiry and exported.",
+       "lines": [
+        56,
+        59,
+        72
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "pass_request",
+       "role": "COMMAND",
+       "importance": "major",
+       "score": 52.2,
+       "struct_score": 41.4,
+       "trace": "interface",
+       "why": "Pedestrian request input shortening the green phase in the timer.",
+       "lines": [
+        42,
+        65
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "clock",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 27.7,
+       "struct_score": 54.0,
+       "trace": "data_backward",
+       "why": "Countdown display output, copy of remain.",
+       "lines": [
+        43,
+        104
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "u_timer",
+       "module": "tl_timer"
+      }
+     ],
+     "members": []
+    },
+    {
+     "name": "lamp_outputs",
+     "kind": "PIPELINE_STAGE",
+     "description": "Two register stages carrying phase bits to the red/yellow/green outputs.",
+     "anchors": [
+      {
+       "id": "E7",
+       "name": "green",
+       "role": "STATUS",
+       "importance": "critical",
+       "score": 86.9,
+       "struct_score": 65.7,
+       "trace": "data_backward",
+       "why": "Registered lamp output (representative of red/yellow/green), fed back to the timer.",
+       "lines": [
+        46,
+        66,
+        102
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "ahead_g",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 28.1,
+       "struct_score": 55.3,
+       "trace": "data_backward",
+       "why": "Stage register of phase bits before lamp outputs; timer uses it for edge detect.",
+       "lines": [
+        55,
+        69,
+        95
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E5",
+       "name": "red",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "yellow",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "ahead_r",
+       "kind": "reg"
+      },
+      {
+       "id": "E11",
+       "name": "ahead_y",
+       "kind": "reg"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "rst_n",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "clk",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "pedestrian",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "pass_request",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "lights",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E4",
+      "E5",
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "clock",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "red",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "yellow",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "green",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

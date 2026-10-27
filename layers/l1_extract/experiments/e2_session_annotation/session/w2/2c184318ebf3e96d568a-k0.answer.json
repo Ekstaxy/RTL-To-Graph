@@ -1,0 +1,29 @@
+{
+  "module_summary": "Multi-cycle IEEE-754 single-precision multiplier sequenced by a free-running 3-bit phase counter: unpack, special cases, normalize, multiply mantissas, round, pack into z.",
+  "anchors": [
+    {"id": "E6", "name": "counter", "role": "COUNTER", "importance": "critical", "trace": "control_backward", "why": "Phase counter sequencing unpack, special-case, normalize, multiply, round and pack steps."},
+    {"id": "E3", "name": "a", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "First IEEE-754 operand unpacked into sign, exponent, mantissa."},
+    {"id": "E4", "name": "b", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Second IEEE-754 operand unpacked into sign, exponent, mantissa."},
+    {"id": "E16", "name": "product", "role": "DATAPATH_MAJOR", "importance": "critical", "trace": "data_backward", "why": "Mantissa product feeding result mantissa and guard/round/sticky bits."},
+    {"id": "E5", "name": "z", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Packed IEEE-754 result, or NaN/Inf/zero special-case value."},
+    {"id": "E7", "name": "a_mantissa", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Operand mantissa held and normalized across phases; b_mantissa is its twin."},
+    {"id": "E10", "name": "a_exponent", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Unbiased operand exponent held, adjusted on denormal/normalize; b_exponent twin."},
+    {"id": "E9", "name": "z_mantissa", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Result mantissa normalized and rounded before packing into z."},
+    {"id": "E12", "name": "z_exponent", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Result exponent sum, adjusted for underflow/normalize/round, checked for overflow."},
+    {"id": "E13", "name": "a_sign", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Operand sign bit held; b_sign is its twin."},
+    {"id": "E15", "name": "z_sign", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Result sign, XOR of operand signs, packed into z[31]."},
+    {"id": "E17", "name": "guard_bit", "role": "CONTROL_FLAG", "importance": "minor", "trace": "data_backward", "why": "Guard bit with round/sticky deciding round-up of z_mantissa."}
+  ],
+  "groups": [
+    {"name": "phase_sequencer", "kind": "CONTROLLER", "anchor_ids": ["E6"], "member_ids": [], "description": "Free-running counter selecting which computation phase executes."},
+    {"name": "operand_unpack", "kind": "DATAPATH", "anchor_ids": ["E7", "E10", "E13"], "member_ids": ["E8", "E11", "E14"], "description": "Unpacks, denormalizes and normalizes operand fields."},
+    {"name": "mantissa_multiply", "kind": "DATAPATH", "anchor_ids": ["E16", "E15"], "member_ids": [], "description": "Multiplies mantissas, adds exponents, XORs signs."},
+    {"name": "round_normalize", "kind": "DATAPATH", "anchor_ids": ["E9", "E12", "E17"], "member_ids": ["E18", "E19"], "description": "Normalizes and rounds result using guard/round/sticky bits."},
+    {"name": "result_pack", "kind": "DATAPATH", "anchor_ids": ["E5"], "member_ids": [], "description": "Packs result or special-case value into IEEE-754 z."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "operands", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E3", "E4"]},
+    {"name": "result", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E5"]}
+  ]
+}

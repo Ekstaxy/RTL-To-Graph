@@ -1,0 +1,31 @@
+{
+ "module_summary": "Inserts a PTP tag into AXI-Stream tuser: a tag register is loaded from a tag valid/ready input and held for one frame, gating stream flow until a tag is available.",
+ "anchors": [
+  {"id": "E5", "name": "s_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Input beat valid, forwarded when a tag is held.", "lines": [51, 83]},
+  {"id": "E6", "name": "s_axis_tready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Input ready gated by downstream ready and tag_valid_reg.", "lines": [52, 79]},
+  {"id": "E3", "name": "s_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Stream payload passed straight through to m_axis_tdata.", "lines": [49, 81]},
+  {"id": "E7", "name": "s_axis_tlast", "role": "CONTROL_FLAG", "importance": "major", "trace": "forward", "why": "Frame end; releases held tag after last beat.", "lines": [53, 96]},
+  {"id": "E8", "name": "s_axis_tuser", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Input sideband merged with tag into user.", "lines": [54, 90]},
+  {"id": "E11", "name": "m_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Output valid when input valid and tag held.", "lines": [61, 83]},
+  {"id": "E12", "name": "m_axis_tready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Downstream ready propagated to s_axis_tready.", "lines": [62, 79]},
+  {"id": "E9", "name": "m_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Output payload, pass-through of s_axis_tdata.", "lines": [59, 81]},
+  {"id": "E14", "name": "m_axis_tuser", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Output tuser carrying inserted tag field.", "lines": [64, 85]},
+  {"id": "E20", "name": "user", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "tuser with tag_reg overwritten at TAG_OFFSET.", "lines": [77, 90, 91]},
+  {"id": "E15", "name": "s_axis_tag", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Incoming PTP tag value loaded into tag_reg.", "lines": [69, 100]},
+  {"id": "E16", "name": "s_axis_tag_valid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Tag valid; sets tag_valid_reg when idle.", "lines": [70, 101]},
+  {"id": "E17", "name": "s_axis_tag_ready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "Tag ready while no tag is held.", "lines": [71, 87]},
+  {"id": "E18", "name": "tag_reg", "role": "HOLDING_REG", "importance": "critical", "trace": "data_backward", "why": "Holds the tag for the whole frame being forwarded.", "lines": [74, 91, 100]},
+  {"id": "E19", "name": "tag_valid_reg", "role": "CONTROL_FLAG", "importance": "critical", "trace": "control_backward", "why": "Tag-held flag gating stream ready/valid and tag acceptance.", "lines": [75, 79, 95]}
+ ],
+ "groups": [
+  {"name": "Tag holding", "kind": "CONTROLLER", "anchor_ids": ["E18", "E19", "E16", "E17", "E15", "E7"], "member_ids": [], "description": "Accepts one tag, holds it until frame tlast transfers."},
+  {"name": "Stream pass-through", "kind": "DATAPATH", "anchor_ids": ["E5", "E6", "E3", "E11", "E12", "E9"], "member_ids": ["E4", "E10", "E13"], "description": "Data/keep/last forwarded, handshake gated by tag-held flag."},
+  {"name": "User merge", "kind": "DATAPATH", "anchor_ids": ["E20", "E14", "E8"], "member_ids": [], "description": "Overwrites tuser tag field with held tag."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "s_axis", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8"]},
+  {"name": "m_axis", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E9", "E10", "E11", "E12", "E13", "E14"]},
+  {"name": "s_axis_tag", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E15", "E16", "E17"]}
+ ]
+}

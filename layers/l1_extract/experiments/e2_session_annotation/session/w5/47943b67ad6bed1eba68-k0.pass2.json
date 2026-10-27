@@ -1,0 +1,32 @@
+{
+ "module_summary": "AXI-stream pipeline: LENGTH register stages forward data/valid and pipeline ready backward, terminated by a small output FIFO whose half-full flag provides ready so in-flight beats are absorbed.",
+ "anchors": [
+  {"id": "E3", "name": "s_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Input payload entering the first pipeline stage.", "lines": [66, 153]},
+  {"id": "E5", "name": "s_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Input valid qualified by ready into the valid pipeline.", "lines": [68, 155]},
+  {"id": "E6", "name": "s_axis_tready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Input ready taken from the head of the delayed ready pipeline.", "lines": [69, 160]},
+  {"id": "E11", "name": "m_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Output payload from the FIFO output register.", "lines": [78, 204]},
+  {"id": "E13", "name": "m_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Output valid from m_axis_tvalid_reg, set when FIFO non-empty.", "lines": [80, 206]},
+  {"id": "E14", "name": "m_axis_tready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Downstream ready; clears output valid and permits FIFO reads.", "lines": [81, 213, 227]},
+  {"id": "E27", "name": "stage[*].axis_tdata_reg", "role": "PIPELINE_REG", "importance": "critical", "trace": "data_backward", "why": "Per-stage data register; representative of forwarded tdata/tkeep/tlast/tuser stage registers.", "lines": [106, 133]},
+  {"id": "E29", "name": "stage[*].axis_tvalid_reg", "role": "PIPELINE_REG", "importance": "minor", "trace": "control_backward", "why": "Per-stage valid register carrying beat validity forward.", "lines": [110, 135]},
+  {"id": "E30", "name": "stage[*].axis_tready_reg", "role": "PIPELINE_REG", "importance": "major", "trace": "control_backward", "why": "Per-stage ready register delaying FIFO ready backward to s_axis_tready.", "lines": [112, 141]},
+  {"id": "E55", "name": "fifo.out_fifo_tdata", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "Output FIFO data RAM absorbing beats in flight in the pipeline.", "lines": [190, 218, 228]},
+  {"id": "E50", "name": "fifo.out_fifo_wr_ptr_reg", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "FIFO write pointer addressing out_fifo arrays on pipeline output valid.", "lines": [182, 218, 224]},
+  {"id": "E51", "name": "fifo.out_fifo_rd_ptr_reg", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "FIFO read pointer addressing out_fifo arrays into the output register.", "lines": [183, 228, 235]},
+  {"id": "E52", "name": "fifo.out_fifo_half_full_reg", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Half-full flag; its inverse is ready fed into the ready pipeline.", "lines": [184, 202, 215]},
+  {"id": "E53", "name": "fifo.out_fifo_full", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Full flag blocking FIFO writes.", "lines": [186, 217]},
+  {"id": "E54", "name": "fifo.out_fifo_empty", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Empty flag blocking FIFO reads into output register.", "lines": [187, 227]},
+  {"id": "E37", "name": "fifo.m_axis_tvalid_int", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Last-stage valid acting as FIFO write enable.", "lines": [164, 217]}
+ ],
+ "groups": [
+  {"name": "register_pipeline", "kind": "PIPELINE_STAGE", "anchor_ids": ["E27", "E29", "E30"], "member_ids": ["E19", "E20", "E21", "E22", "E23", "E24", "E25", "E26", "E28", "E31", "E32", "E33", "E34"], "description": "LENGTH stages registering forward payload/valid and backward ready."},
+  {"name": "output_fifo", "kind": "BUFFER", "anchor_ids": ["E55", "E50", "E51", "E52", "E53", "E54", "E37"], "member_ids": ["E56", "E57", "E58", "E59", "E60", "E35", "E36", "E38", "E39", "E40", "E41", "E42"], "description": "Distributed-RAM FIFO with pointers and half-full ready generation."},
+  {"name": "input_port", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E3", "E5", "E6"], "member_ids": ["E4", "E7", "E8", "E9", "E10"], "description": "AXI-stream input driving pipeline stage 0."},
+  {"name": "output_register", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E11", "E13", "E14"], "member_ids": ["E43", "E44", "E45", "E46", "E47", "E48", "E49", "E12", "E15", "E16", "E17", "E18"], "description": "Output registers loaded from FIFO driving AXI-stream output."}
+ ],
+ "interfaces": [
+  {"name": "clk_rst", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "s_axis", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10"]},
+  {"name": "m_axis", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E11", "E12", "E13", "E14", "E15", "E16", "E17", "E18"]}
+ ]
+}

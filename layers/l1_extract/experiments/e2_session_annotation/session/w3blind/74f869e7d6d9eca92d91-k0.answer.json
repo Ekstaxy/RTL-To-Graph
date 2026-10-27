@@ -1,0 +1,39 @@
+{
+  "module_summary": "Direct-mapped 16-line write-through cache: a 5-state FSM latches a CPU request, compares tag/valid arrays, serves read hits from the data array, fills on read miss and writes through to memory, updating the line on write hit.",
+  "anchors": [
+    {"id": "E17", "name": "n12_921", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Idle/lookup/write-through/miss-fill/done controller driving array writes, memory requests and responses."},
+    {"id": "E20", "name": "n31_888", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "Data array of 16 words, filled on miss and updated on write hit."},
+    {"id": "E19", "name": "n39_a69", "role": "STORAGE", "importance": "major", "trace": "data_backward", "why": "Tag array per line, written on miss fill, compared during lookup."},
+    {"id": "E21", "name": "n29_9d9", "role": "STORAGE", "importance": "major", "trace": "control_backward", "why": "Per-line valid bits, set when a line is filled."},
+    {"id": "E27", "name": "n17_859", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Hit: valid and tag match; steers lookup to done vs miss and gates write-hit update."},
+    {"id": "E3", "name": "n27_004", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "CPU request valid; in idle latches address, data and rw."},
+    {"id": "E6", "name": "n8_7ee", "role": "INTERFACE_ADDR", "importance": "critical", "trace": "interface", "why": "CPU request address providing tag and index."},
+    {"id": "E9", "name": "n13_d2c", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "CPU read data from response register (hit data or filled memory word)."},
+    {"id": "E8", "name": "n36_7c3", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Response valid pulse in the done state."},
+    {"id": "E5", "name": "n1_748", "role": "COMMAND", "importance": "major", "trace": "interface", "why": "Read/write select latched with the request; write takes the write-through path."},
+    {"id": "E22", "name": "n33_76d", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Latched request address; supplies index/tag and the memory address."},
+    {"id": "E11", "name": "n3_06e", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Memory request asserted in miss-fill and write-through states."},
+    {"id": "E15", "name": "n4_85c", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Memory acknowledge completing fill or write-through, advancing FSM."},
+    {"id": "E16", "name": "n14_e12", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Memory read data written into the data array and response register on fill."},
+    {"id": "E4", "name": "n0_398", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Request ready, high while FSM idle."},
+    {"id": "E7", "name": "n34_97e", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "CPU write data latched for write-through."},
+    {"id": "E23", "name": "n35_aa0", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Latched write data, sent to memory and written into array on hit."},
+    {"id": "E24", "name": "n28_2be", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Latched write flag choosing write-through path from lookup."},
+    {"id": "E28", "name": "n19_55e", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Response data register loaded from array hit, memory fill, or write data."},
+    {"id": "E25", "name": "n2_598", "role": "INDEX", "importance": "minor", "trace": "data_backward", "why": "Line index from latched address addressing tag, data and valid arrays."},
+    {"id": "E12", "name": "n25_790", "role": "COMMAND", "importance": "minor", "trace": "control_backward", "why": "Memory write enable, asserted in write-through state."},
+    {"id": "E10", "name": "n38_84e", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Busy indication while a request is in progress."}
+  ],
+  "groups": [
+    {"name": "cache_controller", "kind": "CONTROLLER", "anchor_ids": ["E17", "E24", "E4", "E8", "E10"], "member_ids": ["E18"], "description": "Request FSM and its decoded ready/valid/busy outputs."},
+    {"name": "cache_arrays", "kind": "MEMORY", "anchor_ids": ["E20", "E19", "E21"], "member_ids": [], "description": "Data, tag and valid arrays for 16 direct-mapped lines."},
+    {"name": "hit_logic", "kind": "DATAPATH", "anchor_ids": ["E27", "E25"], "member_ids": ["E26"], "description": "Index/tag split of latched address and tag compare."},
+    {"name": "request_latch", "kind": "PIPELINE_STAGE", "anchor_ids": ["E22", "E23", "E28"], "member_ids": [], "description": "Latched address, write data and response data held across the operation."},
+    {"name": "memory_port", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E11", "E12", "E15", "E16"], "member_ids": ["E13", "E14"], "description": "Downstream memory request/ack bus for fills and write-through."}
+  ],
+  "interfaces": [
+    {"name": "clk_rst", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "cpu_side", "protocol": "REQ_ACK", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10"]},
+    {"name": "mem_side", "protocol": "MEMORY_BUS", "direction": "OUT", "member_ids": ["E11", "E12", "E13", "E14", "E15", "E16"]}
+  ]
+}

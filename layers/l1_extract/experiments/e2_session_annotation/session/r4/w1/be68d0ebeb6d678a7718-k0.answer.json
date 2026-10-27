@@ -1,0 +1,33 @@
+{"module_summary": "AXI-stream protocol firewall: an input skid buffer feeds a registered output stage, while fault detectors (stalled-data change, optional packet length and stall timeout) latch o_fault, which drops input and cleanly terminates output packets.",
+"anchors": [
+{"id": "E1", "name": "o_fault", "role": "CONTROL_FLAG", "importance": "critical", "trace": "control_backward", "why": "Sticky fault flag; once set, drains input and forces output packet termination.", "lines": [87, 275, 366]},
+{"id": "E4", "name": "S_AXIS_TVALID", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Incoming stream valid into skid buffer and stall detection.", "lines": [92, 144, 179]},
+{"id": "E5", "name": "S_AXIS_TREADY", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Incoming ready, low while skid register holds data.", "lines": [93, 163]},
+{"id": "E6", "name": "S_AXIS_TDATA", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Incoming stream data packed into idata.", "lines": [94, 138]},
+{"id": "E9", "name": "M_AXIS_TVALID", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Outgoing valid from skid output, suppressed or completed on fault.", "lines": [100, 367, 375]},
+{"id": "E10", "name": "M_AXIS_TREADY", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Outgoing ready enabling output register updates.", "lines": [101, 295, 363]},
+{"id": "E11", "name": "M_AXIS_TDATA", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Outgoing data from skid buffer, zeroed on fault.", "lines": [102, 389, 394]},
+{"id": "E12", "name": "M_AXIS_TLAST", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Output last, forced high to terminate a packet after fault.", "lines": [103, 397, 399]},
+{"id": "E18", "name": "skdr_data", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Skid buffer register holding input beat when downstream stalls.", "lines": [115, 152, 158]},
+{"id": "E14", "name": "skdr_valid", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Skid register occupied flag; deasserts S_AXIS_TREADY.", "lines": [113, 145, 163]},
+{"id": "E16", "name": "skd_ready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "Internal ready from output stage, forced by fault conditions.", "lines": [113, 295, 299]},
+{"id": "E15", "name": "skd_valid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "Internal skid output valid from input or skid register.", "lines": [113, 161, 367]},
+{"id": "E19", "name": "skd_data", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Skid buffer output data muxed from input or register.", "lines": [116, 156, 394]},
+{"id": "E24", "name": "change_fault", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Detects input data change while stalled; triggers o_fault.", "lines": [121, 189, 275]},
+{"id": "E22", "name": "r_stalled", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Registers previous-cycle stall for change detection.", "lines": [120, 179, 189]},
+{"id": "E26", "name": "past_data", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Previous input beat compared for stability check.", "lines": [122, 185, 189]},
+{"id": "E23", "name": "packet_fault", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Packet length violation; disabled when OPT_PACKET_LENGTH is zero.", "lines": [121, 217, 227]},
+{"id": "E25", "name": "stall_fault", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Stall timeout fault; disabled when OPT_MAX_STALL is zero.", "lines": [121, 255, 260]},
+{"id": "E31", "name": "m_idle", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Output between packets; controls fault packet termination and self-reset.", "lines": [128, 278, 370]}
+],
+"groups": [
+{"name": "Input skid buffer", "kind": "BUFFER", "anchor_ids": ["E18", "E14", "E15", "E19", "E4", "E5", "E6"], "member_ids": ["E17", "E20", "E21", "E7", "E8"], "description": "Two-entry skid buffer decoupling input ready from output stall."},
+{"name": "Fault detector", "kind": "CONTROLLER", "anchor_ids": ["E1", "E24", "E22", "E26", "E23", "E25"], "member_ids": ["E27", "E28", "E32"], "description": "Detects protocol violations and latches sticky o_fault."},
+{"name": "Output stage", "kind": "PIPELINE_STAGE", "anchor_ids": ["E9", "E10", "E11", "E12", "E16", "E31"], "member_ids": ["E13", "E29", "E30", "E33"], "description": "Registered master stream, terminating packets cleanly on fault."}
+],
+"interfaces": [
+{"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E2", "E3"]},
+{"name": "s_axis", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E4", "E5", "E6", "E7", "E8"]},
+{"name": "m_axis", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E9", "E10", "E11", "E12", "E13"]},
+{"name": "fault", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E1"]}
+]}

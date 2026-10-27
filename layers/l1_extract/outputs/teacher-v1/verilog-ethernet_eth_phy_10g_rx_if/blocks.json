@@ -1,0 +1,1447 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-ethernet_eth_phy_10g_rx_if",
+ "tops": [
+  "eth_phy_10g_rx_if"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "lfsr": {
+   "source": "heuristic",
+   "canonical_instance": "eth_phy_10g_rx_if.descrambler_inst",
+   "file": "data/rtl/verilog-ethernet/rtl/lfsr.v",
+   "lines": [
+    34,
+    445
+   ],
+   "summary": "lfsr (heuristic)",
+   "blocks": [],
+   "ungrouped_anchors": [
+    {
+     "id": "E1",
+     "name": "data_in",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 43.1,
+     "struct_score": 97.8,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    },
+    {
+     "id": "E2",
+     "name": "state_in",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 43.1,
+     "struct_score": 97.7,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    },
+    {
+     "id": "E3",
+     "name": "data_out",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 43.5,
+     "struct_score": 98.8,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    },
+    {
+     "id": "E4",
+     "name": "state_out",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 43.5,
+     "struct_score": 98.6,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "data",
+     "protocol": "SIMPLE",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E1",
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "data_in",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "data_out",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "state",
+     "protocol": "SIMPLE",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E2",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E2",
+       "name": "state_in",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "state_out",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "eth_phy_10g_rx_frame_sync": {
+   "source": "teacher",
+   "canonical_instance": "eth_phy_10g_rx_if.eth_phy_10g_rx_frame_sync_inst",
+   "file": "data/rtl/verilog-ethernet/rtl/eth_phy_10g_rx_frame_sync.v",
+   "lines": [
+    34,
+    144
+   ],
+   "summary": "10GBASE-R block sync: counts valid and invalid 2-bit sync headers over 64-block windows to acquire or lose block lock, pulsing SERDES bitslip with hold-off timing until aligned.",
+   "blocks": [
+    {
+     "name": "Block lock controller",
+     "kind": "CONTROLLER",
+     "description": "Lock state machine driven by sync header validity",
+     "anchors": [
+      {
+       "id": "E14",
+       "name": "rx_block_lock_reg",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.6,
+       "struct_score": 99.1,
+       "trace": "control_backward",
+       "why": "Lock state: set after clean window, cleared on excess invalid headers",
+       "lines": [
+        77,
+        111,
+        133
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "rx_block_lock",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 51.7,
+       "struct_score": 39.2,
+       "trace": "control_backward",
+       "why": "Block lock status output",
+       "lines": [
+        53,
+        80
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "serdes_rx_hdr",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 95.7,
+       "struct_score": 89.2,
+       "trace": "interface",
+       "why": "Received sync header checked for valid 01/10 patterns",
+       "lines": [
+        47,
+        96
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E15",
+       "name": "rx_block_lock_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Header counters",
+     "kind": "COUNTER_TIMER",
+     "description": "Window and invalid-header counters deciding lock acquisition and loss",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "sh_count_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 63.0,
+       "struct_score": 77.2,
+       "trace": "control_backward",
+       "why": "Sync header window counter; overflow evaluates lock",
+       "lines": [
+        71,
+        98,
+        99
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "sh_invalid_count_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 64.6,
+       "struct_score": 81.4,
+       "trace": "control_backward",
+       "why": "Invalid header counter; overflow drops lock and triggers bitslip",
+       "lines": [
+        72,
+        110,
+        111
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E7",
+       "name": "sh_count_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E9",
+       "name": "sh_invalid_count_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Bitslip control",
+     "kind": "COUNTER_TIMER",
+     "description": "Generates bitslip pulse and enforces high/low hold-off timing",
+     "anchors": [
+      {
+       "id": "E4",
+       "name": "serdes_rx_bitslip",
+       "role": "ENABLE",
+       "importance": "critical",
+       "score": 82.5,
+       "struct_score": 49.6,
+       "trace": "control_backward",
+       "why": "Bitslip command pulse to SERDES on lost alignment",
+       "lines": [
+        48,
+        79
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "bitslip_count_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 63.5,
+       "struct_score": 78.6,
+       "trace": "control_backward",
+       "why": "Timer for bitslip high and low hold-off cycles",
+       "lines": [
+        73,
+        91,
+        92
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E11",
+       "name": "bitslip_count_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E12",
+       "name": "serdes_rx_bitslip_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E13",
+       "name": "serdes_rx_bitslip_next",
+       "kind": "comb"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "serdes",
+     "protocol": "SIMPLE",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "serdes_rx_hdr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "serdes_rx_bitslip",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "rx_block_lock",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "eth_phy_10g_rx_ber_mon": {
+   "source": "teacher",
+   "canonical_instance": "eth_phy_10g_rx_if.eth_phy_10g_rx_ber_mon_inst",
+   "file": "data/rtl/verilog-ethernet/rtl/eth_phy_10g_rx_ber_mon.v",
+   "lines": [
+    34,
+    122
+   ],
+   "summary": "10G PHY bit-error-rate monitor counting invalid sync headers per 125us window and flagging high BER when 16 errors occur.",
+   "blocks": [
+    {
+     "name": "ber_monitor",
+     "kind": "COUNTER_TIMER",
+     "description": "Window timer and error counter deciding the high BER flag.",
+     "anchors": [
+      {
+       "id": "E5",
+       "name": "time_count_reg",
+       "role": "COUNTER",
+       "importance": "critical",
+       "score": 93.3,
+       "struct_score": 83.1,
+       "trace": "control_backward",
+       "why": "125us window timer; expiry resets error count and clears flag.",
+       "lines": [
+        68,
+        76,
+        103
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "ber_count_reg",
+       "role": "COUNTER",
+       "importance": "critical",
+       "score": 90.8,
+       "struct_score": 76.9,
+       "trace": "control_backward",
+       "why": "Counts invalid headers in window; reaching 15 sets high BER.",
+       "lines": [
+        69,
+        94,
+        97
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "rx_high_ber",
+       "role": "STATUS",
+       "importance": "critical",
+       "score": 82.0,
+       "struct_score": 47.7,
+       "trace": "data_backward",
+       "why": "High BER indication output, copy of rx_high_ber_reg.",
+       "lines": [
+        51,
+        73
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E6",
+       "name": "time_count_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E8",
+       "name": "ber_count_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E9",
+       "name": "rx_high_ber_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E10",
+       "name": "rx_high_ber_next",
+       "kind": "comb"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E3",
+     "name": "serdes_rx_hdr",
+     "role": "INTERFACE_DATA",
+     "importance": "critical",
+     "score": 94.8,
+     "struct_score": 86.8,
+     "trace": "interface",
+     "why": "Received sync header checked against SYNC_CTRL/SYNC_DATA to detect errors.",
+     "lines": [
+      46,
+      85
+     ]
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "serdes_rx",
+     "protocol": "STREAM",
+     "direction": "IN",
+     "member_ids": [
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "serdes_rx_hdr",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "rx_high_ber",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "eth_phy_10g_rx_watchdog": {
+   "source": "teacher",
+   "canonical_instance": "eth_phy_10g_rx_if.eth_phy_10g_rx_watchdog_inst",
+   "file": "data/rtl/verilog-ethernet/rtl/eth_phy_10g_rx_watchdog.v",
+   "lines": [
+    34,
+    170
+   ],
+   "summary": "10GBASE-R receive watchdog: a 125us interval timer evaluates control-header sightings and block-error counts, counting bad/good intervals to request SERDES reset or assert rx_status.",
+   "blocks": [
+    {
+     "name": "Interval timer",
+     "kind": "COUNTER_TIMER",
+     "description": "125us periodic evaluation timer",
+     "anchors": [
+      {
+       "id": "E10",
+       "name": "time_count_reg",
+       "role": "COUNTER",
+       "importance": "critical",
+       "score": 90.8,
+       "struct_score": 76.7,
+       "trace": "control_backward",
+       "why": "125us interval down-counter; expiry triggers evaluation of all counters",
+       "lines": [
+        77,
+        115,
+        145
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E11",
+       "name": "time_count_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Interval monitor",
+     "kind": "DATAPATH",
+     "description": "Collects header sightings and block errors within an interval",
+     "anchors": [
+      {
+       "id": "E16",
+       "name": "saw_ctrl_sh_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 51.9,
+       "struct_score": 40.1,
+       "trace": "control_backward",
+       "why": "Records a control sync header seen during current interval",
+       "lines": [
+        81,
+        105,
+        120
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "block_error_count_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 59.6,
+       "struct_score": 68.0,
+       "trace": "control_backward",
+       "why": "Saturating count of bad blocks/sequence errors per interval",
+       "lines": [
+        82,
+        108,
+        120
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "serdes_rx_hdr",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 58.4,
+       "struct_score": 63.9,
+       "trace": "interface",
+       "why": "Sync header compared with SYNC_CTRL to set saw_ctrl_sh",
+       "lines": [
+        46,
+        104
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "rx_bad_block",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 19.6,
+       "struct_score": 22.6,
+       "trace": "interface",
+       "why": "Bad block indication incrementing block_error_count",
+       "lines": [
+        52,
+        107
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "rx_sequence_error",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 19.6,
+       "struct_score": 22.6,
+       "trace": "interface",
+       "why": "Sequence error indication incrementing block_error_count",
+       "lines": [
+        53,
+        107
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "rx_block_lock",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 58.3,
+       "struct_score": 63.3,
+       "trace": "interface",
+       "why": "Block lock input gating header/error monitoring and clearing status",
+       "lines": [
+        54,
+        103
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E17",
+       "name": "saw_ctrl_sh_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E19",
+       "name": "block_error_count_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E8",
+       "name": "rx_high_ber",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Health decision",
+     "kind": "CONTROLLER",
+     "description": "Bad/good interval counters producing reset request and status",
+     "anchors": [
+      {
+       "id": "E12",
+       "name": "error_count_reg",
+       "role": "COUNTER",
+       "importance": "critical",
+       "score": 84.3,
+       "struct_score": 56.0,
+       "trace": "control_backward",
+       "why": "Counts consecutive bad intervals; saturation requests SERDES reset",
+       "lines": [
+        78,
+        121,
+        130
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "status_count_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 56.6,
+       "struct_score": 57.3,
+       "trace": "control_backward",
+       "why": "Counts consecutive good intervals; saturation asserts rx_status",
+       "lines": [
+        79,
+        126,
+        135
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "serdes_rx_reset_req",
+       "role": "STATUS",
+       "importance": "critical",
+       "score": 77.5,
+       "struct_score": 30.4,
+       "trace": "control_backward",
+       "why": "Reset request pulse to SERDES after repeated bad intervals",
+       "lines": [
+        47,
+        88
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "rx_status",
+       "role": "STATUS",
+       "importance": "critical",
+       "score": 77.5,
+       "struct_score": 30.4,
+       "trace": "control_backward",
+       "why": "Link-good status output from rx_status_reg",
+       "lines": [
+        60,
+        90
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E13",
+       "name": "error_count_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E15",
+       "name": "status_count_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E20",
+       "name": "serdes_rx_reset_req_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E21",
+       "name": "serdes_rx_reset_req_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E22",
+       "name": "rx_status_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E23",
+       "name": "rx_status_next",
+       "kind": "comb"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "serdes",
+     "protocol": "SIMPLE",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "serdes_rx_hdr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "serdes_rx_reset_req",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "monitor_inputs",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E5",
+      "E6",
+      "E7",
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "rx_bad_block",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "rx_sequence_error",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "rx_block_lock",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "rx_high_ber",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E9"
+     ],
+     "members": [
+      {
+       "id": "E9",
+       "name": "rx_status",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "eth_phy_10g_rx_if": {
+   "source": "teacher",
+   "canonical_instance": "eth_phy_10g_rx_if",
+   "file": "data/rtl/verilog-ethernet/rtl/eth_phy_10g_rx_if.v",
+   "lines": [
+    34,
+    276
+   ],
+   "summary": "10GBASE-R PHY receive interface: optionally bit-reverses and pipelines SERDES blocks, descrambles them with a 58-bit LFSR into registered encoded output, while frame-sync, BER-monitor and watchdog children supervise lock and optional PRBS31 checking counts errors.",
+   "blocks": [
+    {
+     "name": "serdes_input_conditioning",
+     "kind": "DATAPATH",
+     "description": "Optional bit reversal and pipeline registers on SERDES data and header.",
+     "anchors": [
+      {
+       "id": "E5",
+       "name": "serdes_rx_data",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 94.4,
+       "struct_score": 85.8,
+       "trace": "interface",
+       "why": "Raw 64-bit scrambled block payload from SERDES.",
+       "lines": [
+        59,
+        101,
+        108
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "serdes_rx_hdr",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 85.2,
+       "struct_score": 59.4,
+       "trace": "interface",
+       "why": "2-bit sync header from SERDES, used for lock and BER monitoring.",
+       "lines": [
+        60,
+        105,
+        109
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "serdes_rx_data_int",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 25.0,
+       "struct_score": 44.2,
+       "trace": "data_backward",
+       "why": "Bit-reversed, optionally pipelined SERDES data feeding descrambler and PRBS checker.",
+       "lines": [
+        93,
+        133,
+        168
+       ]
+      },
+      {
+       "id": "E19",
+       "name": "serdes_rx_hdr_int",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 47.3,
+       "struct_score": 21.7,
+       "trace": "data_backward",
+       "why": "Conditioned header fanned out to frame sync, BER monitor and watchdog.",
+       "lines": [
+        94,
+        134,
+        244
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E16",
+       "name": "serdes_rx_data_rev",
+       "kind": "wire"
+      },
+      {
+       "id": "E18",
+       "name": "serdes_rx_hdr_rev",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "descrambler",
+     "kind": "DATAPATH",
+     "description": "58-bit self-synchronous LFSR descrambler of block payload.",
+     "anchors": [
+      {
+       "id": "E20",
+       "name": "descrambled_rx_data",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 49.4,
+       "struct_score": 30.0,
+       "trace": "data_backward",
+       "why": "Self-synchronous descrambler output registered into encoded data.",
+       "lines": [
+        139,
+        170,
+        207
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "scrambler_state_reg",
+       "role": "STORAGE",
+       "importance": "minor",
+       "score": 32.0,
+       "struct_score": 69.5,
+       "trace": "data_backward",
+       "why": "58-bit descrambler LFSR state updated every block.",
+       "lines": [
+        144,
+        169,
+        205
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "descrambler_inst",
+       "module": "lfsr"
+      }
+     ],
+     "members": [
+      {
+       "id": "E24",
+       "name": "scrambler_state",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "encoded_output",
+     "kind": "PIPELINE_STAGE",
+     "description": "Registers descrambled data and header onto the encoded interface.",
+     "anchors": [
+      {
+       "id": "E21",
+       "name": "encoded_rx_data_reg",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 27.4,
+       "struct_score": 52.9,
+       "trace": "data_backward",
+       "why": "Output register selecting descrambled or raw data per SCRAMBLER_DISABLE.",
+       "lines": [
+        141,
+        207,
+        226
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "encoded_rx_data",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 95.1,
+       "struct_score": 87.5,
+       "trace": "interface",
+       "why": "Descrambled 64-bit block output to PCS decoder.",
+       "lines": [
+        53,
+        226
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "encoded_rx_hdr",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 58.5,
+       "struct_score": 64.1,
+       "trace": "interface",
+       "why": "Registered sync header output alongside encoded data.",
+       "lines": [
+        54,
+        227
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E22",
+       "name": "encoded_rx_hdr_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "frame_sync",
+     "kind": "CONTROLLER",
+     "description": "Child block-sync controller driving bitslip and block lock.",
+     "anchors": [
+      {
+       "id": "E7",
+       "name": "serdes_rx_bitslip",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 51.0,
+       "struct_score": 36.5,
+       "trace": "control_backward",
+       "why": "Bitslip request from frame sync to SERDES, masked during PRBS31 test.",
+       "lines": [
+        61,
+        233
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "rx_block_lock",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 50.0,
+       "struct_score": 32.4,
+       "trace": "control_backward",
+       "why": "Block lock from frame sync; also feeds watchdog.",
+       "lines": [
+        70,
+        246,
+        271
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I3",
+       "instance": "eth_phy_10g_rx_frame_sync_inst",
+       "module": "eth_phy_10g_rx_frame_sync"
+      }
+     ],
+     "members": [
+      {
+       "id": "E34",
+       "name": "serdes_rx_bitslip_int",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "ber_monitor",
+     "kind": "COUNTER_TIMER",
+     "description": "Child monitor flagging high BER from invalid headers.",
+     "anchors": [
+      {
+       "id": "E13",
+       "name": "rx_high_ber",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 50.0,
+       "struct_score": 32.4,
+       "trace": "control_backward",
+       "why": "High bit-error-rate flag from BER monitor; also feeds watchdog.",
+       "lines": [
+        71,
+        257,
+        272
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I4",
+       "instance": "eth_phy_10g_rx_ber_mon_inst",
+       "module": "eth_phy_10g_rx_ber_mon"
+      }
+     ],
+     "members": []
+    },
+    {
+     "name": "rx_watchdog",
+     "kind": "COUNTER_TIMER",
+     "description": "Child watchdog generating SERDES reset request and rx_status.",
+     "anchors": [
+      {
+       "id": "E8",
+       "name": "serdes_rx_reset_req",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 48.1,
+       "struct_score": 24.8,
+       "trace": "control_backward",
+       "why": "Watchdog SERDES reset request, masked during PRBS31 test.",
+       "lines": [
+        62,
+        234
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "rx_status",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 47.5,
+       "struct_score": 22.2,
+       "trace": "control_backward",
+       "why": "Overall receive link status from watchdog.",
+       "lines": [
+        72,
+        273
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I5",
+       "instance": "eth_phy_10g_rx_watchdog_inst",
+       "module": "eth_phy_10g_rx_watchdog"
+      }
+     ],
+     "members": [
+      {
+       "id": "E35",
+       "name": "serdes_rx_reset_req_int",
+       "kind": "wire"
+      },
+      {
+       "id": "E9",
+       "name": "rx_bad_block",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "rx_sequence_error",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "prbs31_checker",
+     "kind": "DATAPATH",
+     "description": "Parameter-gated PRBS31 pattern checker counting bit errors per block.",
+     "anchors": [
+      {
+       "id": "E15",
+       "name": "cfg_rx_prbs31_enable",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 23.6,
+       "struct_score": 39.1,
+       "trace": "forward",
+       "why": "Enables PRBS31 checking and masks bitslip/reset requests.",
+       "lines": [
+        77,
+        211,
+        233
+       ]
+      },
+      {
+       "id": "E28",
+       "name": "prbs31_data_reg",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 26.7,
+       "struct_score": 50.3,
+       "trace": "data_backward",
+       "why": "PRBS31 checker error bits per block, popcounted for errors.",
+       "lines": [
+        150,
+        197,
+        213
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "prbs31_state_reg",
+       "role": "STORAGE",
+       "importance": "minor",
+       "score": 30.8,
+       "struct_score": 65.3,
+       "trace": "data_backward",
+       "why": "31-bit PRBS checker LFSR state.",
+       "lines": [
+        147,
+        185,
+        212
+       ]
+      },
+      {
+       "id": "E29",
+       "name": "rx_error_count_reg",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 25.3,
+       "struct_score": 45.3,
+       "trace": "data_backward",
+       "why": "Per-block PRBS31 bit-error count summed from two partial counts.",
+       "lines": [
+        152,
+        220,
+        229
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "rx_error_count",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 22.6,
+       "struct_score": 34.9,
+       "trace": "interface",
+       "why": "Reports PRBS31 error count output.",
+       "lines": [
+        69,
+        229
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I2",
+       "instance": "prbs31_check_inst",
+       "module": "lfsr"
+      }
+     ],
+     "members": [
+      {
+       "id": "E26",
+       "name": "prbs31_state",
+       "kind": "wire"
+      },
+      {
+       "id": "E27",
+       "name": "prbs31_data",
+       "kind": "wire"
+      },
+      {
+       "id": "E30",
+       "name": "rx_error_count_1_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E31",
+       "name": "rx_error_count_2_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E32",
+       "name": "rx_error_count_1_temp",
+       "kind": "comb"
+      },
+      {
+       "id": "E33",
+       "name": "rx_error_count_2_temp",
+       "kind": "comb"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "serdes_rx",
+     "protocol": "STREAM",
+     "direction": "IN",
+     "member_ids": [
+      "E5",
+      "E6",
+      "E7",
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "serdes_rx_data",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "serdes_rx_hdr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "serdes_rx_bitslip",
+       "kind": "port_out"
+      },
+      {
+       "id": "E8",
+       "name": "serdes_rx_reset_req",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "encoded_rx",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "encoded_rx_data",
+       "kind": "port_out"
+      },
+      {
+       "id": "E4",
+       "name": "encoded_rx_hdr",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E9",
+      "E10",
+      "E11",
+      "E12",
+      "E13",
+      "E14"
+     ],
+     "members": [
+      {
+       "id": "E9",
+       "name": "rx_bad_block",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "rx_sequence_error",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "rx_error_count",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "rx_block_lock",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "rx_high_ber",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "rx_status",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "config",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E15"
+     ],
+     "members": [
+      {
+       "id": "E15",
+       "name": "cfg_rx_prbs31_enable",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,287 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "uart_tx",
+ "tops": [
+  "uart_tx"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "uart_tx": {
+   "source": "teacher",
+   "canonical_instance": "uart_tx",
+   "file": "examples/rtl/uart_tx.sv",
+   "lines": [
+    2,
+    66
+   ],
+   "summary": "UART transmitter: a 4-state FSM loads a byte into a shift register and serializes start, 8 data and stop bits paced by a baud counter.",
+   "blocks": [
+    {
+     "name": "tx_controller",
+     "kind": "CONTROLLER",
+     "description": "Transmit FSM sequencing start, data and stop bits; produces busy status.",
+     "anchors": [
+      {
+       "id": "E8",
+       "name": "state_q",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.9,
+       "struct_score": 99.8,
+       "trace": "control_backward",
+       "why": "IDLE/START/DATA/STOP controller; drives tx_o mux, ready/busy and shift loading.",
+       "lines": [
+        31,
+        45,
+        60
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "busy_o",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 52.4,
+       "struct_score": 42.2,
+       "trace": "control_backward",
+       "why": "Level busy indication decoded from FSM not IDLE.",
+       "lines": [
+        57
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E9",
+       "name": "state_d",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "baud_and_bit_counters",
+     "kind": "COUNTER_TIMER",
+     "description": "Baud-rate divider producing bit tick and data bit index counter.",
+     "anchors": [
+      {
+       "id": "E10",
+       "name": "baud_cnt_q",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 58.8,
+       "struct_score": 65.3,
+       "trace": "control_backward",
+       "why": "Baud divider counter, cleared in IDLE or at baud_tick.",
+       "lines": [
+        25,
+        26
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "baud_tick",
+       "role": "CLOCK_GEN",
+       "importance": "minor",
+       "score": 25.1,
+       "struct_score": 44.7,
+       "trace": "forward",
+       "why": "Bit-period clock-enable from baud counter; advances FSM, shift and bit index.",
+       "lines": [
+        21,
+        33,
+        49
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "bit_idx_q",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 58.6,
+       "struct_score": 64.5,
+       "trace": "control_backward",
+       "why": "Counts transmitted data bits; at 7 moves FSM to STOP.",
+       "lines": [
+        34,
+        51
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "tx_serializer",
+     "kind": "SERIALIZER",
+     "description": "Shift register and output mux producing the serial line.",
+     "anchors": [
+      {
+       "id": "E13",
+       "name": "shift_q",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 94.1,
+       "struct_score": 85.1,
+       "trace": "data_backward",
+       "why": "Shift register holding the byte, shifted right each data-bit baud tick.",
+       "lines": [
+        47,
+        50,
+        62
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "tx_o",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 93.0,
+       "struct_score": 82.2,
+       "trace": "data_backward",
+       "why": "Serial line output: start bit, shift_q LSB, or idle/stop high.",
+       "lines": [
+        61,
+        62,
+        63
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "tx_input_handshake",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Valid/ready byte input accepted when FSM is idle.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "tx_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 95.9,
+       "struct_score": 89.6,
+       "trace": "interface",
+       "why": "Request input that starts a transmission and loads shift register in IDLE.",
+       "lines": [
+        32,
+        46
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "tx_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 91.0,
+       "struct_score": 77.3,
+       "trace": "interface",
+       "why": "Ready output, high when FSM is IDLE and can accept a byte.",
+       "lines": [
+        56
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "tx_data",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 94.2,
+       "struct_score": 85.4,
+       "trace": "interface",
+       "why": "Parallel byte payload loaded into the shift register.",
+       "lines": [
+        47
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_n",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "tx_byte_in",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "tx_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "tx_ready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "tx_data",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "serial_out",
+     "protocol": "SERIAL",
+     "direction": "OUT",
+     "member_ids": [
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "tx_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E7",
+       "name": "busy_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

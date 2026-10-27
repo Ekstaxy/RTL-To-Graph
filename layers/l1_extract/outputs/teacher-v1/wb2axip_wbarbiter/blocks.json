@@ -1,0 +1,626 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "wb2axip_wbarbiter",
+ "tops": [
+  "wbarbiter"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "wbarbiter": {
+   "source": "teacher",
+   "canonical_instance": "wbarbiter",
+   "file": "data/rtl/wb2axip/rtl/wbarbiter.v",
+   "lines": [
+    59,
+    399
+   ],
+   "summary": "Two-master Wishbone arbiter: a single owner register (priority, alternating or last scheme) muxes master A or B request signals onto the shared bus and routes ack/stall/err back only to the owner.",
+   "blocks": [
+    {
+     "name": "Ownership arbiter",
+     "kind": "ARBITER",
+     "description": "Grant register updated by priority/alternating/last scheme from cyc/stb requests",
+     "anchors": [
+      {
+       "id": "E30",
+       "name": "r_a_owner",
+       "role": "ARBITRATION",
+       "importance": "critical",
+       "score": 94.3,
+       "struct_score": 85.6,
+       "trace": "control_backward",
+       "why": "Grant register: 1 selects master A, 0 master B for all bus muxes",
+       "lines": [
+        114,
+        116,
+        143
+       ]
+      },
+      {
+       "id": "E31",
+       "name": "ALT.last_owner",
+       "role": "ARBITRATION",
+       "importance": "major",
+       "score": 52.9,
+       "struct_score": 43.8,
+       "trace": "control_backward",
+       "why": "Alternating-scheme memory of last owner, flips grant when bus idle",
+       "lines": [
+        133,
+        137,
+        143
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Request mux",
+     "kind": "DATAPATH",
+     "description": "Muxes owning master's cyc/stb/we/adr/dat/sel onto the shared bus",
+     "anchors": [
+      {
+       "id": "E21",
+       "name": "o_cyc",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 91.6,
+       "struct_score": 78.8,
+       "trace": "control_backward",
+       "why": "Arbitrated bus cycle from owning master",
+       "lines": [
+        89,
+        116
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "o_stb",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 63.6,
+       "struct_score": 78.8,
+       "trace": "control_backward",
+       "why": "Arbitrated strobe from owning master",
+       "lines": [
+        89,
+        200
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "o_we",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 22.7,
+       "struct_score": 35.4,
+       "trace": "control_backward",
+       "why": "Arbitrated write enable from owning master",
+       "lines": [
+        89,
+        173
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "o_adr",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 62.4,
+       "struct_score": 75.7,
+       "trace": "data_backward",
+       "why": "Arbitrated bus address muxed by r_a_owner",
+       "lines": [
+        90,
+        201
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "o_dat",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 67.0,
+       "struct_score": 87.5,
+       "trace": "data_backward",
+       "why": "Arbitrated write data muxed by r_a_owner",
+       "lines": [
+        91,
+        202
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "i_a_adr",
+       "role": "INTERFACE_ADDR",
+       "importance": "minor",
+       "score": 32.1,
+       "struct_score": 70.1,
+       "trace": "interface",
+       "why": "Master A address muxed to o_adr",
+       "lines": [
+        74,
+        201
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "i_a_dat",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 37.1,
+       "struct_score": 82.7,
+       "trace": "interface",
+       "why": "Master A write data muxed to o_dat",
+       "lines": [
+        75,
+        202
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "i_b_adr",
+       "role": "INTERFACE_ADDR",
+       "importance": "minor",
+       "score": 32.1,
+       "struct_score": 70.1,
+       "trace": "interface",
+       "why": "Master B address muxed to o_adr",
+       "lines": [
+        82,
+        201
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "i_b_dat",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 37.1,
+       "struct_score": 82.7,
+       "trace": "interface",
+       "why": "Master B write data muxed to o_dat",
+       "lines": [
+        83,
+        202
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E26",
+       "name": "o_sel",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "i_a_we",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "i_a_sel",
+       "kind": "port_in"
+      },
+      {
+       "id": "E14",
+       "name": "i_b_we",
+       "kind": "port_in"
+      },
+      {
+       "id": "E17",
+       "name": "i_b_sel",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Response demux",
+     "kind": "DATAPATH",
+     "description": "Routes ack/stall/err to owner, stalls the non-owner",
+     "anchors": [
+      {
+       "id": "E27",
+       "name": "i_ack",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 58.5,
+       "struct_score": 64.2,
+       "trace": "interface",
+       "why": "Slave ack routed only to the owning master",
+       "lines": [
+        93,
+        208,
+        209
+       ]
+      },
+      {
+       "id": "E28",
+       "name": "i_stall",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 30.5,
+       "struct_score": 64.2,
+       "trace": "interface",
+       "why": "Slave stall routed to owner; non-owner always stalled",
+       "lines": [
+        93,
+        213,
+        214
+       ]
+      },
+      {
+       "id": "E29",
+       "name": "i_err",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 20.9,
+       "struct_score": 28.0,
+       "trace": "interface",
+       "why": "Slave bus error routed to owning master",
+       "lines": [
+        93,
+        218,
+        219
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "o_a_ack",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 29.8,
+       "struct_score": 61.5,
+       "trace": "control_backward",
+       "why": "Ack to master A gated by ownership",
+       "lines": [
+        77,
+        208
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "o_a_stall",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 29.8,
+       "struct_score": 61.5,
+       "trace": "control_backward",
+       "why": "Stall to master A, forced high when not owner",
+       "lines": [
+        77,
+        213
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "o_b_ack",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 29.8,
+       "struct_score": 61.5,
+       "trace": "control_backward",
+       "why": "Ack to master B gated by ownership",
+       "lines": [
+        85,
+        209
+       ]
+      },
+      {
+       "id": "E19",
+       "name": "o_b_stall",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 29.8,
+       "struct_score": 61.5,
+       "trace": "control_backward",
+       "why": "Stall to master B, forced high when not owner",
+       "lines": [
+        85,
+        214
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E11",
+       "name": "o_a_err",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "o_b_err",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "Master request inputs",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Bus cycle and strobe requests from masters A and B",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "i_a_cyc",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 91.0,
+       "struct_score": 77.3,
+       "trace": "interface",
+       "why": "Master A bus cycle request; held owner while asserted",
+       "lines": [
+        73,
+        116,
+        136
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "i_a_stb",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 61.8,
+       "struct_score": 74.2,
+       "trace": "interface",
+       "why": "Master A strobe; claims bus when B idle",
+       "lines": [
+        73,
+        153,
+        200
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "i_b_cyc",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 91.0,
+       "struct_score": 77.3,
+       "trace": "interface",
+       "why": "Master B bus cycle request",
+       "lines": [
+        81,
+        116,
+        138
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "i_b_stb",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 61.8,
+       "struct_score": 74.2,
+       "trace": "interface",
+       "why": "Master B strobe; claims bus when A idle",
+       "lines": [
+        81,
+        147,
+        200
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "i_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "i_reset",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "wb_master_a",
+     "protocol": "MEMORY_BUS",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "i_a_cyc",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "i_a_stb",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "i_a_we",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "i_a_adr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "i_a_dat",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "i_a_sel",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "o_a_ack",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "o_a_stall",
+       "kind": "port_out"
+      },
+      {
+       "id": "E11",
+       "name": "o_a_err",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "wb_master_b",
+     "protocol": "MEMORY_BUS",
+     "direction": "IN",
+     "member_ids": [
+      "E12",
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20"
+     ],
+     "members": [
+      {
+       "id": "E12",
+       "name": "i_b_cyc",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "i_b_stb",
+       "kind": "port_in"
+      },
+      {
+       "id": "E14",
+       "name": "i_b_we",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "i_b_adr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E16",
+       "name": "i_b_dat",
+       "kind": "port_in"
+      },
+      {
+       "id": "E17",
+       "name": "i_b_sel",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "o_b_ack",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "o_b_stall",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "o_b_err",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "wb_arbitrated",
+     "protocol": "MEMORY_BUS",
+     "direction": "OUT",
+     "member_ids": [
+      "E21",
+      "E22",
+      "E23",
+      "E24",
+      "E25",
+      "E26",
+      "E27",
+      "E28",
+      "E29"
+     ],
+     "members": [
+      {
+       "id": "E21",
+       "name": "o_cyc",
+       "kind": "port_out"
+      },
+      {
+       "id": "E22",
+       "name": "o_stb",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "o_we",
+       "kind": "port_out"
+      },
+      {
+       "id": "E24",
+       "name": "o_adr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E25",
+       "name": "o_dat",
+       "kind": "port_out"
+      },
+      {
+       "id": "E26",
+       "name": "o_sel",
+       "kind": "port_out"
+      },
+      {
+       "id": "E27",
+       "name": "i_ack",
+       "kind": "port_in"
+      },
+      {
+       "id": "E28",
+       "name": "i_stall",
+       "kind": "port_in"
+      },
+      {
+       "id": "E29",
+       "name": "i_err",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

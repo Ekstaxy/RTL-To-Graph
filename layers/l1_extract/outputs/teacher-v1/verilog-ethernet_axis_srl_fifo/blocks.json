@@ -1,0 +1,423 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-ethernet_axis_srl_fifo",
+ "tops": [
+  "axis_srl_fifo"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "axis_srl_fifo": {
+   "source": "teacher",
+   "canonical_instance": "axis_srl_fifo",
+   "file": "data/rtl/verilog-ethernet/lib/axis/rtl/axis_srl_fifo.v",
+   "lines": [
+    34,
+    197
+   ],
+   "summary": "AXI-stream SRL FIFO: input beats (data plus enabled sidebands) shift into a shift-register array; an occupancy pointer selects the oldest entry for output, with registered full/empty flags driving ready/valid.",
+   "blocks": [
+    {
+     "name": "SRL storage",
+     "kind": "BUFFER",
+     "description": "Shift-register array with input packing and pointer-indexed output",
+     "anchors": [
+      {
+       "id": "E20",
+       "name": "data_reg",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 95.9,
+       "struct_score": 89.7,
+       "trace": "data_backward",
+       "why": "shift-register array of packed beats; shifts in s_axis on shift",
+       "lines": [
+        100,
+        184,
+        186
+       ]
+      },
+      {
+       "id": "E32",
+       "name": "shift",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 45.1,
+       "struct_score": 12.8,
+       "trace": "control_backward",
+       "why": "shift enable for data_reg on accepted input beat",
+       "lines": [
+        136,
+        156,
+        183
+       ]
+      },
+      {
+       "id": "E27",
+       "name": "m_axis",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 25.0,
+       "struct_score": 44.3,
+       "trace": "data_backward",
+       "why": "oldest packed entry data_reg[ptr_reg-1], unpacked to outputs",
+       "lines": [
+        107,
+        122,
+        124
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E26",
+       "name": "s_axis",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Occupancy control",
+     "kind": "CONTROLLER",
+     "description": "Pointer inc/dec and full/empty flags producing ready/valid",
+     "anchors": [
+      {
+       "id": "E21",
+       "name": "ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "critical",
+       "score": 90.7,
+       "struct_score": 76.4,
+       "trace": "control_backward",
+       "why": "occupancy count; indexes oldest entry and drives count",
+       "lines": [
+        101,
+        107,
+        173
+       ]
+      },
+      {
+       "id": "E33",
+       "name": "inc",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 17.0,
+       "struct_score": 12.2,
+       "trace": "control_backward",
+       "why": "increments ptr_reg occupancy",
+       "lines": [
+        137,
+        165,
+        172
+       ]
+      },
+      {
+       "id": "E34",
+       "name": "dec",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 16.7,
+       "struct_score": 11.1,
+       "trace": "control_backward",
+       "why": "decrements ptr_reg occupancy on output pop",
+       "lines": [
+        138,
+        160,
+        174
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 92.7,
+       "struct_score": 81.7,
+       "trace": "control_backward",
+       "why": "input ready, inverse of full_reg",
+       "lines": [
+        69,
+        109
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "m_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 96.1,
+       "struct_score": 90.1,
+       "trace": "control_backward",
+       "why": "output valid, inverse of empty_reg",
+       "lines": [
+        80,
+        120
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E22",
+       "name": "full_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E23",
+       "name": "full_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E24",
+       "name": "empty_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E25",
+       "name": "empty_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E28",
+       "name": "ptr_empty",
+       "kind": "wire"
+      },
+      {
+       "id": "E29",
+       "name": "ptr_empty1",
+       "kind": "wire"
+      },
+      {
+       "id": "E30",
+       "name": "ptr_full",
+       "kind": "wire"
+      },
+      {
+       "id": "E31",
+       "name": "ptr_full1",
+       "kind": "wire"
+      },
+      {
+       "id": "E19",
+       "name": "count",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E3",
+     "name": "s_axis_tdata",
+     "role": "INTERFACE_DATA",
+     "importance": "critical",
+     "score": 89.1,
+     "struct_score": 72.4,
+     "trace": "interface",
+     "why": "input payload packed into s_axis word",
+     "lines": [
+      66,
+      112
+     ]
+    },
+    {
+     "id": "E5",
+     "name": "s_axis_tvalid",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 92.7,
+     "struct_score": 81.5,
+     "trace": "interface",
+     "why": "input beat valid; with tready triggers shift/inc",
+     "lines": [
+      68,
+      155,
+      163
+     ]
+    },
+    {
+     "id": "E11",
+     "name": "m_axis_tdata",
+     "role": "INTERFACE_DATA",
+     "importance": "critical",
+     "score": 90.9,
+     "struct_score": 76.9,
+     "trace": "data_backward",
+     "why": "output payload from selected entry m_axis",
+     "lines": [
+      78,
+      122
+     ]
+    },
+    {
+     "id": "E14",
+     "name": "m_axis_tready",
+     "role": "HANDSHAKE_READY",
+     "importance": "critical",
+     "score": 88.0,
+     "struct_score": 69.6,
+     "trace": "interface",
+     "why": "output ready; with valid decrements pointer",
+     "lines": [
+      81,
+      155,
+      159
+     ]
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock/reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "AXI-stream input",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axis_tdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_tkeep",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_tvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_tready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_axis_tid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_axis_tdest",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "s_axis_tuser",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "AXI-stream output",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "m_axis_tdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "m_axis_tkeep",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "m_axis_tvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "m_axis_tready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "m_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "m_axis_tid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "m_axis_tdest",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "m_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E19"
+     ],
+     "members": [
+      {
+       "id": "E19",
+       "name": "count",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

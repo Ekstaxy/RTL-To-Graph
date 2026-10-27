@@ -1,0 +1,26 @@
+{
+ "module_summary": "UART transmitter: a 4-state FSM sequences start, 8 data, and stop bits, shifting a loaded byte out LSB-first at a baud-counter tick rate.",
+ "anchors": [
+  {"id":"E8","name":"state_q","role":"FSM_STATE","importance":"critical","trace":"control_backward","why":"IDLE/START/DATA/STOP controller; drives tx_o mux, ready/busy, shift load and baud reset."},
+  {"id":"E13","name":"shift_q","role":"STORAGE","importance":"critical","trace":"data_backward","why":"Shift register loaded from tx_data, shifted right each data-bit tick; LSB feeds tx_o."},
+  {"id":"E10","name":"baud_cnt_q","role":"COUNTER","importance":"major","trace":"control_backward","why":"Clock divider counting to CLK_DIV-1, cleared in IDLE; produces baud_tick."},
+  {"id":"E11","name":"baud_tick","role":"ENABLE","importance":"major","trace":"forward","why":"Baud-period strobe advancing FSM, shifting data, and incrementing bit index."},
+  {"id":"E12","name":"bit_idx_q","role":"COUNTER","importance":"major","trace":"control_backward","why":"Counts transmitted data bits; reaching 7 moves FSM from DATA to STOP."},
+  {"id":"E3","name":"tx_valid","role":"HANDSHAKE_VALID","importance":"critical","trace":"interface","why":"Input request starting a frame and loading the shift register in IDLE."},
+  {"id":"E4","name":"tx_ready","role":"HANDSHAKE_READY","importance":"critical","trace":"interface","why":"Ready asserted when FSM idle, accepting a new byte."},
+  {"id":"E5","name":"tx_data","role":"INTERFACE_DATA","importance":"critical","trace":"interface","why":"Byte payload loaded into shift_q on accepted request."},
+  {"id":"E6","name":"tx_o","role":"INTERFACE_DATA","importance":"critical","trace":"control_backward","why":"Serial line output muxed by state: start 0, data shift_q[0], else idle 1."},
+  {"id":"E7","name":"busy_o","role":"CONTROL_FLAG","importance":"minor","trace":"control_backward","why":"Status flag high whenever FSM not idle."}
+ ],
+ "groups": [
+  {"name":"tx_fsm","kind":"CONTROLLER","anchor_ids":["E8","E7"],"member_ids":["E9"],"description":"Frame sequencer through start, data, stop states; generates ready/busy."},
+  {"name":"baud_gen","kind":"COUNTER_TIMER","anchor_ids":["E10","E11"],"member_ids":[],"description":"Divides clock to bit period and emits baud_tick."},
+  {"name":"tx_shifter","kind":"SERIALIZER","anchor_ids":["E13","E12","E6"],"member_ids":[],"description":"Loads byte, shifts out LSB-first, counts bits, drives serial line."}
+ ],
+ "interfaces": [
+  {"name":"clk_rst","protocol":"CLOCK_RESET","direction":"IN","member_ids":["E1","E2"]},
+  {"name":"tx_in","protocol":"VALID_READY","direction":"IN","member_ids":["E3","E4","E5"]},
+  {"name":"serial_out","protocol":"SERIAL","direction":"OUT","member_ids":["E6"]},
+  {"name":"status","protocol":"SIMPLE","direction":"OUT","member_ids":["E7"]}
+ ]
+}

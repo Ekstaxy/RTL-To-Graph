@@ -1,0 +1,671 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "common_cells_cc_clk_int_div_static",
+ "tops": [
+  "cc_clk_int_div_static"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "cc_clk_int_div": {
+   "source": "teacher",
+   "canonical_instance": "cc_clk_int_div_static.i_clk_int_div",
+   "file": "data/rtl/common_cells/src/cc_clk_int_div.sv",
+   "lines": [
+    72,
+    383
+   ],
+   "summary": "Glitch-free runtime-configurable integer clock divider: a load FSM gates the clock while a cycle counter drives toggle flip-flops whose outputs are XORed/muxed for odd/even division, with bypass and an output clock gate.",
+   "blocks": [
+    {
+     "name": "Divider load FSM",
+     "kind": "CONTROLLER",
+     "description": "Handshakes new divider, gates clock, loads div_q and mode flags.",
+     "anchors": [
+      {
+       "id": "E37",
+       "name": "clk_gate_state_q",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.7,
+       "struct_score": 99.3,
+       "trace": "control_backward",
+       "why": "IDLE/LOAD_DIV/WAIT_END_PERIOD controller sequencing safe divider reload and gating.",
+       "lines": [
+        148,
+        169,
+        235
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "div_valid_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 93.4,
+       "struct_score": 83.3,
+       "trace": "interface",
+       "why": "New divider value request; starts reload when value differs.",
+       "lines": [
+        173
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "div_ready_o",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 88.0,
+       "struct_score": 69.4,
+       "trace": "control_backward",
+       "why": "Accepts divider value when unchanged or after loading in LOAD_DIV.",
+       "lines": [
+        175,
+        202
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "div_i",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 57.8,
+       "struct_score": 61.5,
+       "trace": "interface",
+       "why": "Requested division factor, normalized then loaded into divider register.",
+       "lines": [
+        153
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "div_i_normalized",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 18.9,
+       "struct_score": 19.9,
+       "trace": "data_backward",
+       "why": "div_i with 0 mapped to 1; compared and loaded into div_q.",
+       "lines": [
+        153,
+        174,
+        201
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "div_q",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 50.8,
+       "struct_score": 35.6,
+       "trace": "data_backward",
+       "why": "Current divider value setting counter wrap and toggle points.",
+       "lines": [
+        218,
+        234,
+        251
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E36",
+       "name": "clk_gate_state_d",
+       "kind": "comb"
+      },
+      {
+       "id": "E11",
+       "name": "div_d",
+       "kind": "comb"
+      },
+      {
+       "id": "E29",
+       "name": "use_odd_division_d",
+       "kind": "comb"
+      },
+      {
+       "id": "E23",
+       "name": "clk_div_bypass_en_d",
+       "kind": "comb"
+      },
+      {
+       "id": "E31",
+       "name": "gate_en_d",
+       "kind": "comb"
+      },
+      {
+       "id": "E34",
+       "name": "clear_cycle_counter",
+       "kind": "comb"
+      },
+      {
+       "id": "E35",
+       "name": "clear_toggle_flops",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Cycle counter",
+     "kind": "COUNTER_TIMER",
+     "description": "Counts input cycles modulo div_q, cleared on reload.",
+     "anchors": [
+      {
+       "id": "E21",
+       "name": "cycle_cntr_q",
+       "role": "COUNTER",
+       "importance": "critical",
+       "score": 83.7,
+       "struct_score": 54.0,
+       "trace": "control_backward",
+       "why": "Input-clock cycle counter wrapping at div-1; times toggle flip-flops.",
+       "lines": [
+        251,
+        254,
+        319
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "cycle_counter_en",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 16.4,
+       "struct_score": 9.6,
+       "trace": "control_backward",
+       "why": "FSM enable stopping counter when output disabled.",
+       "lines": [
+        183,
+        247
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "cycl_count_o",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 19.5,
+       "struct_score": 22.5,
+       "trace": "data_backward",
+       "why": "Exposes internal cycle counter for phase alignment.",
+       "lines": [
+        262
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E20",
+       "name": "cycle_cntr_d",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Toggle flip-flop clock generator",
+     "kind": "DATAPATH",
+     "description": "Toggle FFs at counter points, XOR for odd, mux odd/even clock.",
+     "anchors": [
+      {
+       "id": "E15",
+       "name": "t_ff1_q",
+       "role": "CLOCK_GEN",
+       "importance": "major",
+       "score": 49.9,
+       "struct_score": 32.2,
+       "trace": "control_backward",
+       "why": "Posedge toggle flip-flop forming even divided clock.",
+       "lines": [
+        282,
+        327,
+        331
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "t_ff2_q",
+       "role": "CLOCK_GEN",
+       "importance": "minor",
+       "score": 20.4,
+       "struct_score": 25.8,
+       "trace": "control_backward",
+       "why": "Negedge toggle flip-flop XORed with t_ff1 for odd division.",
+       "lines": [
+        296,
+        332
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "t_ff1_en",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 17.4,
+       "struct_score": 14.0,
+       "trace": "control_backward",
+       "why": "Toggle enable at counter compare points for first T-FF.",
+       "lines": [
+        280,
+        319,
+        322
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "toggle_ffs_en",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 17.6,
+       "struct_score": 14.5,
+       "trace": "control_backward",
+       "why": "FSM enable gating both toggle flip-flops during reload.",
+       "lines": [
+        172,
+        317
+       ]
+      },
+      {
+       "id": "E30",
+       "name": "use_odd_division_q",
+       "role": "MUX_SELECT",
+       "importance": "major",
+       "score": 52.8,
+       "struct_score": 43.5,
+       "trace": "control_backward",
+       "why": "Selects odd (XOR of T-FFs) or even clock and toggle timing.",
+       "lines": [
+        318,
+        340
+       ]
+      },
+      {
+       "id": "E27",
+       "name": "generated_clock",
+       "role": "CLOCK_GEN",
+       "importance": "minor",
+       "score": 15.4,
+       "struct_score": 5.9,
+       "trace": "data_backward",
+       "why": "Odd/even mux output feeding the bypass mux.",
+       "lines": [
+        341,
+        346
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E14",
+       "name": "t_ff1_d",
+       "kind": "comb"
+      },
+      {
+       "id": "E17",
+       "name": "t_ff2_d",
+       "kind": "comb"
+      },
+      {
+       "id": "E19",
+       "name": "t_ff2_en",
+       "kind": "comb"
+      },
+      {
+       "id": "E25",
+       "name": "odd_clk",
+       "kind": "wire"
+      },
+      {
+       "id": "E26",
+       "name": "even_clk",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Bypass and clock gate",
+     "kind": "OTHER",
+     "description": "Bypass mux to clk_i and glitch-free gate driving clk_o.",
+     "anchors": [
+      {
+       "id": "E24",
+       "name": "clk_div_bypass_en_q",
+       "role": "MUX_SELECT",
+       "importance": "major",
+       "score": 57.7,
+       "struct_score": 61.2,
+       "trace": "control_backward",
+       "why": "Divide-by-1 bypass: selects clk_i at output mux, disables counter/T-FFs.",
+       "lines": [
+        251,
+        317,
+        348
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "test_mode_en_i",
+       "role": "MUX_SELECT",
+       "importance": "minor",
+       "score": 24.5,
+       "struct_score": 42.2,
+       "trace": "interface",
+       "why": "Test mode forces bypass mux to pass input clock and gate test enable.",
+       "lines": [
+        348,
+        378
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "en_i",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 51.7,
+       "struct_score": 39.5,
+       "trace": "interface",
+       "why": "Output clock enable into glitch-free gate; idles counter when off.",
+       "lines": [
+        182,
+        367,
+        377
+       ]
+      },
+      {
+       "id": "E32",
+       "name": "gate_en_q",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 17.6,
+       "struct_score": 14.8,
+       "trace": "control_backward",
+       "why": "Registered FSM gate enable, ANDed with en_i at clock gate.",
+       "lines": [
+        236,
+        367,
+        377
+       ]
+      },
+      {
+       "id": "E33",
+       "name": "gate_is_open_q",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 53.4,
+       "struct_score": 45.6,
+       "trace": "control_backward",
+       "why": "Output-clock-domain gate state; FSM waits for gate closed before reload.",
+       "lines": [
+        182,
+        195,
+        367
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "clk_o",
+       "role": "CLOCK_GEN",
+       "importance": "critical",
+       "score": 80.3,
+       "struct_score": 41.8,
+       "trace": "data_backward",
+       "why": "Gated divided output clock from clock gate cell.",
+       "lines": [
+        106,
+        379
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E28",
+       "name": "ungated_output_clock",
+       "kind": "wire"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock/reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_ni",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "divider config",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E5",
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "div_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "div_valid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "div_ready_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "control",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "en_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "test_mode_en_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "clock output",
+     "protocol": "OTHER",
+     "direction": "OUT",
+     "member_ids": [
+      "E8",
+      "E9"
+     ],
+     "members": [
+      {
+       "id": "E8",
+       "name": "clk_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "cycl_count_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "cc_clk_int_div_static": {
+   "source": "teacher",
+   "canonical_instance": "cc_clk_int_div_static",
+   "file": "data/rtl/common_cells/src/cc_clk_int_div_static.sv",
+   "lines": [
+    60,
+    95
+   ],
+   "summary": "Static integer clock divider wrapper: ties a constant DivValue into the runtime-configurable cc_clk_int_div with its config handshake disabled.",
+   "blocks": [
+    {
+     "name": "Integer clock divider",
+     "kind": "COUNTER_TIMER",
+     "description": "cc_clk_int_div instance dividing clk_i by constant DivValue with enable gating.",
+     "anchors": [
+      {
+       "id": "E5",
+       "name": "clk_o",
+       "role": "CLOCK_GEN",
+       "importance": "critical",
+       "score": 91.1,
+       "struct_score": 77.6,
+       "trace": "interface",
+       "why": "Divided output clock produced by the inner divider instance.",
+       "lines": [
+        68,
+        91
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "en_i",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 57.2,
+       "struct_score": 59.5,
+       "trace": "interface",
+       "why": "Enables the divided output clock via the child clock gate.",
+       "lines": [
+        66,
+        86
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "div_value",
+       "role": "CONFIG_REG",
+       "importance": "minor",
+       "score": 20.0,
+       "struct_score": 24.3,
+       "trace": "data_backward",
+       "why": "Constant division ratio from DivValue fed to divider div_i.",
+       "lines": [
+        77,
+        88
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "test_mode_en_i",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 29.1,
+       "struct_score": 59.0,
+       "trace": "interface",
+       "why": "Test-mode control passed to divider (bypass during test).",
+       "lines": [
+        67,
+        87
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "i_clk_int_div",
+       "module": "cc_clk_int_div"
+      }
+     ],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_ni",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "control",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "en_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "test_mode_en_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "clock_output",
+     "protocol": "OTHER",
+     "direction": "OUT",
+     "member_ids": [
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "clk_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}
