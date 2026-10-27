@@ -1,0 +1,172 @@
+[
+ {
+  "module": "axis_cobs_encode",
+  "instance": "axis_cobs_encode",
+  "state": "input_state_reg",
+  "next": "input_state_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "INPUT_STATE_IDLE",
+    "value": "2'b0"
+   },
+   {
+    "name": "INPUT_STATE_FINAL_ZERO",
+    "value": "2'b10"
+   },
+   {
+    "name": "INPUT_STATE_APPEND_ZERO",
+    "value": "2'b11"
+   },
+   {
+    "name": "INPUT_STATE_SEGMENT",
+    "value": "2'b1"
+   }
+  ],
+  "reset_state": "INPUT_STATE_IDLE",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "INPUT_STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "INPUT_STATE_IDLE",
+    "dst": "INPUT_STATE_FINAL_ZERO",
+    "cond": "s_axis_tready && s_axis_tvalid && (s_axis_tdata == 8'd0 || s_axis_tlast && s_axis_tuser) && s_axis_tlast"
+   },
+   {
+    "src": "INPUT_STATE_IDLE",
+    "dst": "INPUT_STATE_IDLE",
+    "cond": "s_axis_tready && s_axis_tvalid && (s_axis_tdata == 8'd0 || s_axis_tlast && s_axis_tuser) && !s_axis_tlast"
+   },
+   {
+    "src": "INPUT_STATE_IDLE",
+    "dst": "INPUT_STATE_APPEND_ZERO",
+    "cond": "s_axis_tready && s_axis_tvalid && !(s_axis_tdata == 8'd0 || s_axis_tlast && s_axis_tuser) && s_axis_tlast"
+   },
+   {
+    "src": "INPUT_STATE_IDLE",
+    "dst": "INPUT_STATE_SEGMENT",
+    "cond": "s_axis_tready && s_axis_tvalid && !(s_axis_tdata == 8'd0 || s_axis_tlast && s_axis_tuser) && !s_axis_tlast"
+   },
+   {
+    "src": "INPUT_STATE_IDLE",
+    "dst": "INPUT_STATE_IDLE",
+    "cond": "!(s_axis_tready && s_axis_tvalid)"
+   },
+   {
+    "src": "INPUT_STATE_SEGMENT",
+    "dst": "INPUT_STATE_FINAL_ZERO",
+    "cond": "s_axis_tready && s_axis_tvalid && (s_axis_tdata == 8'd0 || s_axis_tlast && s_axis_tuser) && s_axis_tlast"
+   },
+   {
+    "src": "INPUT_STATE_SEGMENT",
+    "dst": "INPUT_STATE_IDLE",
+    "cond": "s_axis_tready && s_axis_tvalid && (s_axis_tdata == 8'd0 || s_axis_tlast && s_axis_tuser) && !s_axis_tlast"
+   },
+   {
+    "src": "INPUT_STATE_SEGMENT",
+    "dst": "INPUT_STATE_APPEND_ZERO",
+    "cond": "s_axis_tready && s_axis_tvalid && !(s_axis_tdata == 8'd0 || s_axis_tlast && s_axis_tuser) && s_axis_tlast"
+   },
+   {
+    "src": "INPUT_STATE_SEGMENT",
+    "dst": "INPUT_STATE_SEGMENT",
+    "cond": "s_axis_tready && s_axis_tvalid && !(s_axis_tdata == 8'd0 || s_axis_tlast && s_axis_tuser) && !s_axis_tlast"
+   },
+   {
+    "src": "INPUT_STATE_SEGMENT",
+    "dst": "INPUT_STATE_SEGMENT",
+    "cond": "!(s_axis_tready && s_axis_tvalid)"
+   },
+   {
+    "src": "INPUT_STATE_FINAL_ZERO",
+    "dst": "INPUT_STATE_APPEND_ZERO",
+    "cond": "code_fifo_in_tready"
+   },
+   {
+    "src": "INPUT_STATE_FINAL_ZERO",
+    "dst": "INPUT_STATE_FINAL_ZERO",
+    "cond": "!code_fifo_in_tready"
+   },
+   {
+    "src": "INPUT_STATE_APPEND_ZERO",
+    "dst": "INPUT_STATE_IDLE",
+    "cond": "code_fifo_in_tready"
+   },
+   {
+    "src": "INPUT_STATE_APPEND_ZERO",
+    "dst": "INPUT_STATE_APPEND_ZERO",
+    "cond": "!code_fifo_in_tready"
+   }
+  ],
+  "outputs": [
+   {
+    "signal": "s_axis_tready_mask",
+    "kind": "moore",
+    "port": false
+   }
+  ],
+  "warnings": [],
+  "semantic_check": "consistent-subset"
+ },
+ {
+  "module": "axis_cobs_encode",
+  "instance": "axis_cobs_encode",
+  "state": "output_state_reg",
+  "next": "output_state_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "OUTPUT_STATE_IDLE",
+    "value": "1'b0"
+   },
+   {
+    "name": "OUTPUT_STATE_SEGMENT",
+    "value": "1'b1"
+   }
+  ],
+  "reset_state": "OUTPUT_STATE_IDLE",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "OUTPUT_STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "OUTPUT_STATE_IDLE",
+    "dst": "OUTPUT_STATE_IDLE",
+    "cond": "m_axis_tready_int_reg && code_fifo_out_tvalid && ((code_fifo_out_tdata == 8'd0 || code_fifo_out_tdata == 8'd1) || code_fifo_out_tuser)"
+   },
+   {
+    "src": "OUTPUT_STATE_IDLE",
+    "dst": "OUTPUT_STATE_SEGMENT",
+    "cond": "m_axis_tready_int_reg && code_fifo_out_tvalid && !((code_fifo_out_tdata == 8'd0 || code_fifo_out_tdata == 8'd1) || code_fifo_out_tuser)"
+   },
+   {
+    "src": "OUTPUT_STATE_IDLE",
+    "dst": "OUTPUT_STATE_IDLE",
+    "cond": "!(m_axis_tready_int_reg && code_fifo_out_tvalid)"
+   },
+   {
+    "src": "OUTPUT_STATE_SEGMENT",
+    "dst": "OUTPUT_STATE_IDLE",
+    "cond": "m_axis_tready_int_reg && data_fifo_out_tvalid && output_count_reg == 1'b1"
+   },
+   {
+    "src": "OUTPUT_STATE_SEGMENT",
+    "dst": "OUTPUT_STATE_SEGMENT",
+    "cond": "m_axis_tready_int_reg && data_fifo_out_tvalid && !(output_count_reg == 1'b1)"
+   },
+   {
+    "src": "OUTPUT_STATE_SEGMENT",
+    "dst": "OUTPUT_STATE_SEGMENT",
+    "cond": "!(m_axis_tready_int_reg && data_fifo_out_tvalid)"
+   }
+  ],
+  "outputs": [],
+  "warnings": [],
+  "semantic_check": "consistent"
+ }
+]

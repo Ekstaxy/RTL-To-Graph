@@ -1,0 +1,23 @@
+{
+  "module_summary": "Destination data side of a gray-code CDC FIFO: muxes the async storage array by read index and passes the word through a spill register to a valid/ready output.",
+  "anchors": [
+    {"id": "E6", "name": "dst_valid_i", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Not-empty valid from the pointer logic into the spill register.", "lines": [422, 439]},
+    {"id": "E7", "name": "dst_ready_o", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Spill register ready back to the pointer logic, advancing the read pointer.", "lines": [423, 440]},
+    {"id": "E4", "name": "dst_valid_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Destination stream valid driven by the spill register.", "lines": [420, 442]},
+    {"id": "E5", "name": "dst_ready_i", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Downstream ready popping words from the spill register.", "lines": [421, 443]},
+    {"id": "E3", "name": "dst_data_o", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Registered FIFO word output from the spill register.", "lines": [419, 444]},
+    {"id": "E9", "name": "async_data_i", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Asynchronous FIFO storage array from the source domain, read by index.", "lines": [425, 430]},
+    {"id": "E8", "name": "dst_ridx_i", "role": "INTERFACE_ADDR", "importance": "major", "trace": "interface", "why": "Read index selecting the storage word from async_data_i.", "lines": [424, 430]},
+    {"id": "E10", "name": "dst_data", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Muxed storage word feeding the spill register data input.", "lines": [428, 430, 441]}
+  ],
+  "groups": [
+    {"name": "storage_read_mux", "kind": "DATAPATH", "anchor_ids": ["E9", "E8", "E10"], "member_ids": [], "description": "Indexes the async storage array with the read index."},
+    {"name": "output_spill_register", "kind": "BUFFER", "anchor_ids": ["E6", "E7", "E4", "E5", "E3"], "member_ids": ["I1"], "description": "Spill register cutting valid/ready/data paths between FIFO read and output stream."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "fifo_read", "protocol": "MEMORY_BUS", "direction": "IN", "member_ids": ["E8", "E9"]},
+    {"name": "fifo_handshake", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E6", "E7"]},
+    {"name": "dst_out", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E3", "E4", "E5"]}
+  ]
+}

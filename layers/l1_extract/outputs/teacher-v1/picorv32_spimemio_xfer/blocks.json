@@ -1,0 +1,657 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "picorv32_spimemio_xfer",
+ "tops": [
+  "spimemio_xfer"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "spimemio_xfer": {
+   "source": "teacher",
+   "canonical_instance": "spimemio_xfer",
+   "file": "data/rtl/picorv32/picosoc/spimemio.v",
+   "lines": [
+    378,
+    579
+   ],
+   "summary": "SPI flash byte transfer engine: latches a byte command, then shifts obuffer/ibuffer over 1/2/4-bit (optionally DDR) flash IO under bit and dummy-cycle counters, returning tagged read bytes.",
+   "blocks": [
+    {
+     "name": "Request intake",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Accepts byte command and latches mode, tag and read flags.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "din_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 94.0,
+       "struct_score": 84.8,
+       "trace": "interface",
+       "why": "Byte request valid; with din_ready latches transfer parameters and starts shifting.",
+       "lines": [
+        381,
+        441,
+        562
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "din_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 95.7,
+       "struct_score": 89.2,
+       "trace": "control_backward",
+       "why": "Accepts new byte when previous transfer finishes (next_fetch).",
+       "lines": [
+        382,
+        441,
+        562
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "din_data",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 89.8,
+       "struct_score": 74.2,
+       "trace": "interface",
+       "why": "Byte to transmit, loaded into obuffer; dummy cycle count on reads.",
+       "lines": [
+        383,
+        567,
+        568
+       ]
+      },
+      {
+       "id": "E36",
+       "name": "xfer_ddr",
+       "role": "MUX_SELECT",
+       "importance": "major",
+       "score": 59.7,
+       "struct_score": 68.5,
+       "trace": "control_backward",
+       "why": "Latched DDR mode selecting shift case and dout_valid timing.",
+       "lines": [
+        422,
+        464,
+        551
+       ]
+      },
+      {
+       "id": "E35",
+       "name": "xfer_qspi",
+       "role": "MUX_SELECT",
+       "importance": "major",
+       "score": 59.1,
+       "struct_score": 66.3,
+       "trace": "control_backward",
+       "why": "Latched quad mode selecting 4-bit IO shift case; xfer_dspi sibling.",
+       "lines": [
+        421,
+        464,
+        573
+       ]
+      },
+      {
+       "id": "E38",
+       "name": "xfer_rd",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 23.3,
+       "struct_score": 38.0,
+       "trace": "control_backward",
+       "why": "Read flag disabling IO output enables in multi-bit modes.",
+       "lines": [
+        424,
+        479,
+        575
+       ]
+      },
+      {
+       "id": "E39",
+       "name": "xfer_tag",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 18.8,
+       "struct_score": 19.5,
+       "trace": "data_backward",
+       "why": "Holds request tag returned as dout_tag after delay.",
+       "lines": [
+        425,
+        438,
+        570
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E6",
+       "name": "din_tag",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "din_cont",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "din_dspi",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "din_qspi",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "din_ddr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "din_rd",
+       "kind": "port_in"
+      },
+      {
+       "id": "E33",
+       "name": "xfer_cont",
+       "kind": "reg"
+      },
+      {
+       "id": "E34",
+       "name": "xfer_dspi",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Shift datapath",
+     "kind": "SERIALIZER",
+     "description": "Shifts obuffer out and ibuffer in over 1/2/4 IO lines.",
+     "anchors": [
+      {
+       "id": "E29",
+       "name": "obuffer",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 91.9,
+       "struct_score": 79.6,
+       "trace": "data_backward",
+       "why": "Output shift register driving flash IO data bits MSB first.",
+       "lines": [
+        413,
+        467,
+        568
+       ]
+      },
+      {
+       "id": "E30",
+       "name": "ibuffer",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 87.1,
+       "struct_score": 66.2,
+       "trace": "data_backward",
+       "why": "Input shift register collecting flash IO sample bits.",
+       "lines": [
+        414,
+        473,
+        559
+       ]
+      },
+      {
+       "id": "E21",
+       "name": "flash_io0_do",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 57.9,
+       "struct_score": 62.0,
+       "trace": "data_backward",
+       "why": "Flash IO data out bit from obuffer; io1-3 do/oe replicate.",
+       "lines": [
+        403,
+        467
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E41",
+       "name": "next_obuffer",
+       "kind": "comb"
+      },
+      {
+       "id": "E42",
+       "name": "next_ibuffer",
+       "kind": "comb"
+      },
+      {
+       "id": "E17",
+       "name": "flash_io0_oe",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "flash_io1_oe",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "flash_io2_oe",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "flash_io3_oe",
+       "kind": "port_out"
+      },
+      {
+       "id": "E22",
+       "name": "flash_io1_do",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "flash_io2_do",
+       "kind": "port_out"
+      },
+      {
+       "id": "E24",
+       "name": "flash_io3_do",
+       "kind": "port_out"
+      },
+      {
+       "id": "E25",
+       "name": "flash_io0_di",
+       "kind": "port_in"
+      },
+      {
+       "id": "E26",
+       "name": "flash_io1_di",
+       "kind": "port_in"
+      },
+      {
+       "id": "E27",
+       "name": "flash_io2_di",
+       "kind": "port_in"
+      },
+      {
+       "id": "E28",
+       "name": "flash_io3_di",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Transfer sequencing",
+     "kind": "COUNTER_TIMER",
+     "description": "Bit and dummy counters, SPI clock and fetch completion.",
+     "anchors": [
+      {
+       "id": "E31",
+       "name": "count",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 55.7,
+       "struct_score": 53.9,
+       "trace": "control_backward",
+       "why": "Remaining bit counter decremented per shift; zero completes byte.",
+       "lines": [
+        416,
+        556,
+        566
+       ]
+      },
+      {
+       "id": "E32",
+       "name": "dummy_count",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 62.2,
+       "struct_score": 75.2,
+       "trace": "control_backward",
+       "why": "Dummy clock cycle counter that suspends shifting while nonzero.",
+       "lines": [
+        417,
+        463,
+        554
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "flash_clk",
+       "role": "CLOCK_GEN",
+       "importance": "critical",
+       "score": 93.9,
+       "struct_score": 84.6,
+       "trace": "control_backward",
+       "why": "Generated SPI clock toggled while counting; edges select shift vs sample.",
+       "lines": [
+        396,
+        469,
+        557
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "flash_csb",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 53.4,
+       "struct_score": 45.8,
+       "trace": "control_backward",
+       "why": "Flash chip select, asserted low on accepted request.",
+       "lines": [
+        395,
+        539,
+        563
+       ]
+      },
+      {
+       "id": "E45",
+       "name": "next_fetch",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 48.2,
+       "struct_score": 25.4,
+       "trace": "control_backward",
+       "why": "Byte-complete flag gating din_ready and dout_valid.",
+       "lines": [
+        433,
+        441,
+        476
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E43",
+       "name": "next_count",
+       "kind": "comb"
+      },
+      {
+       "id": "E44",
+       "name": "fetch",
+       "kind": "reg"
+      },
+      {
+       "id": "E46",
+       "name": "last_fetch",
+       "kind": "reg"
+      },
+      {
+       "id": "E37",
+       "name": "xfer_ddr_q",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Response output",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Presents received byte and tag with valid pulse.",
+     "anchors": [
+      {
+       "id": "E12",
+       "name": "dout_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 92.2,
+       "struct_score": 80.2,
+       "trace": "control_backward",
+       "why": "Pulse marking received byte ready, DDR-aware timing from fetch.",
+       "lines": [
+        391,
+        443
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "dout_data",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 88.3,
+       "struct_score": 70.5,
+       "trace": "data_backward",
+       "why": "Received byte output driven from ibuffer.",
+       "lines": [
+        392,
+        444
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E14",
+       "name": "dout_tag",
+       "kind": "port_out"
+      },
+      {
+       "id": "E40",
+       "name": "xfer_tag_q",
+       "kind": "reg"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "resetn",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "din",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "din_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "din_ready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "din_data",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "din_tag",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "din_cont",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "din_dspi",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "din_qspi",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "din_ddr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "din_rd",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "dout",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E12",
+      "E13",
+      "E14"
+     ],
+     "members": [
+      {
+       "id": "E12",
+       "name": "dout_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "dout_data",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "dout_tag",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "flash_spi",
+     "protocol": "SERIAL",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E15",
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20",
+      "E21",
+      "E22",
+      "E23",
+      "E24",
+      "E25",
+      "E26",
+      "E27",
+      "E28"
+     ],
+     "members": [
+      {
+       "id": "E15",
+       "name": "flash_csb",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "flash_clk",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "flash_io0_oe",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "flash_io1_oe",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "flash_io2_oe",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "flash_io3_oe",
+       "kind": "port_out"
+      },
+      {
+       "id": "E21",
+       "name": "flash_io0_do",
+       "kind": "port_out"
+      },
+      {
+       "id": "E22",
+       "name": "flash_io1_do",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "flash_io2_do",
+       "kind": "port_out"
+      },
+      {
+       "id": "E24",
+       "name": "flash_io3_do",
+       "kind": "port_out"
+      },
+      {
+       "id": "E25",
+       "name": "flash_io0_di",
+       "kind": "port_in"
+      },
+      {
+       "id": "E26",
+       "name": "flash_io1_di",
+       "kind": "port_in"
+      },
+      {
+       "id": "E27",
+       "name": "flash_io2_di",
+       "kind": "port_in"
+      },
+      {
+       "id": "E28",
+       "name": "flash_io3_di",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

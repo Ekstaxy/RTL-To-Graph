@@ -1,0 +1,41 @@
+{
+ "module_summary": "APB clock-domain crossing bridge: a slave-side request is synchronized through two-flop request/ack handshake registers into the master clock, replayed as an APB master transaction, and read data returned with PREADY.",
+ "anchors": [
+  {"id": "E3", "name": "S_APB_PSEL", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Slave APB select; with !PENABLE starts a new cross-domain request.", "lines": [46, 115, 128]},
+  {"id": "E4", "name": "S_APB_PENABLE", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Slave APB access phase; setup detection uses its absence.", "lines": [47, 115]},
+  {"id": "E5", "name": "S_APB_PREADY", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Slave ready pulse when synchronized ack returns; clears request regs.", "lines": [48, 187, 113]},
+  {"id": "E6", "name": "S_APB_PADDR", "role": "INTERFACE_ADDR", "importance": "major", "trace": "interface", "why": "Slave address forwarded to M_APB_PADDR.", "lines": [49, 266]},
+  {"id": "E7", "name": "S_APB_PWRITE", "role": "COMMAND", "importance": "minor", "trace": "interface", "why": "Read/write direction forwarded to master side.", "lines": [50, 267]},
+  {"id": "E8", "name": "S_APB_PWDATA", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Slave write data forwarded to M_APB_PWDATA.", "lines": [51, 268]},
+  {"id": "E11", "name": "S_APB_PRDATA", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Read data returned to slave from m_prdata.", "lines": [54, 272]},
+  {"id": "E12", "name": "S_APB_PSLVERR", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "Slave error response from m_pslverr gated by PREADY.", "lines": [55, 273]},
+  {"id": "E15", "name": "M_APB_PSEL", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Master APB select asserted from synchronized m_request until ack.", "lines": [59, 150]},
+  {"id": "E16", "name": "M_APB_PENABLE", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Master APB access phase following PSEL.", "lines": [60, 152]},
+  {"id": "E17", "name": "M_APB_PREADY", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Master completion; sets m_ack and captures read data.", "lines": [61, 166, 193]},
+  {"id": "E18", "name": "M_APB_PADDR", "role": "INTERFACE_ADDR", "importance": "minor", "trace": "data_backward", "why": "Master address, pass-through or registered copy of slave address.", "lines": [62, 266]},
+  {"id": "E20", "name": "M_APB_PWDATA", "role": "INTERFACE_DATA", "importance": "minor", "trace": "data_backward", "why": "Master write data copied from slave side.", "lines": [64, 268]},
+  {"id": "E23", "name": "M_APB_PRDATA", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Master read data captured into m_prdata.", "lines": [67, 194]},
+  {"id": "E28", "name": "s_request", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Registered pending slave request, held until PREADY.", "lines": [76, 116, 128]},
+  {"id": "E29", "name": "s_tfr_request", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Request crossing to master clock; gated by full_reset and s_ack.", "lines": [76, 129, 139]},
+  {"id": "E30", "name": "m_request", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Request synchronized into master domain, launches M_APB_PSEL.", "lines": [77, 139, 150]},
+  {"id": "E32", "name": "m_ack", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "Master-domain ack set on transfer completion, cleared when request drops.", "lines": [79, 167, 178]},
+  {"id": "E33", "name": "s_ack", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "Ack synchronized back to slave clock, produces S_APB_PREADY.", "lines": [80, 178, 187]},
+  {"id": "E35", "name": "m_prdata", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Holds master read data across the clock crossing.", "lines": [81, 194, 272]},
+  {"id": "E36", "name": "m_pslverr", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Holds master error response for slave side.", "lines": [82, 203, 273]},
+  {"id": "E27", "name": "full_reset", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Slave-domain sync of master reset release; enables request transfer.", "lines": [74, 99, 129]}
+ ],
+ "groups": [
+  {"name": "Slave-side request", "kind": "CONTROLLER", "anchor_ids": ["E28", "E29", "E5", "E33"], "member_ids": ["E34"], "description": "Registers slave request, forwards across domain, issues PREADY on synchronized ack."},
+  {"name": "Master-side transaction", "kind": "CONTROLLER", "anchor_ids": ["E30", "E32", "E15", "E16"], "member_ids": ["E31"], "description": "Synchronizes request, drives APB master PSEL/PENABLE, generates ack."},
+  {"name": "Response data crossing", "kind": "DATAPATH", "anchor_ids": ["E35", "E36", "E11", "E12", "E23"], "member_ids": ["E24"], "description": "Captures master read data/error and presents them to slave port."},
+  {"name": "Request payload forwarding", "kind": "DATAPATH", "anchor_ids": ["E6", "E7", "E8", "E18", "E20"], "member_ids": ["E9", "E10", "E19", "E21", "E22"], "description": "Address, write data, strobes and prot passed to master port."},
+  {"name": "Reset synchronizers", "kind": "OTHER", "anchor_ids": ["E27"], "member_ids": ["E25", "E26", "E14"], "description": "Cross-domain reset synchronization gating request transfer."},
+  {"name": "Slave APB handshake", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E3", "E4", "E17"], "member_ids": [], "description": "APB select/enable inputs and master ready input."}
+ ],
+ "interfaces": [
+  {"name": "slave_clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "master_clock_reset", "protocol": "CLOCK_RESET", "direction": "BIDIR", "member_ids": ["E13", "E14"]},
+  {"name": "s_apb", "protocol": "REQ_ACK", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12"]},
+  {"name": "m_apb", "protocol": "REQ_ACK", "direction": "OUT", "member_ids": ["E15", "E16", "E17", "E18", "E19", "E20", "E21", "E22", "E23", "E24"]}
+ ]
+}

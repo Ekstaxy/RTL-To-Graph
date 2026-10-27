@@ -1,0 +1,26 @@
+{
+  "module_summary": "Destination half of a clearable gray-code CDC FIFO: a pointer child synchronizes the write pointer and produces valid/read index, a data child muxes the async array through a spill register.",
+  "anchors": [
+    {"id": "E5", "name": "dst_valid_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Output valid of the destination stream, driven by the data child's spill register.", "lines": [478, 511]},
+    {"id": "E6", "name": "dst_ready_i", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Downstream ready accepting words from the destination stream.", "lines": [479, 512]},
+    {"id": "E4", "name": "dst_data_o", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Data word read out of the CDC FIFO to the destination domain.", "lines": [477, 510]},
+    {"id": "E7", "name": "async_data_i", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Asynchronous FIFO storage array from the source side, indexed by the read index.", "lines": [481, 516]},
+    {"id": "E8", "name": "async_wptr_i", "role": "FIFO_PTR", "importance": "major", "trace": "interface", "why": "Gray-coded write pointer from source domain, synchronized for empty detection.", "lines": [482, 499]},
+    {"id": "E9", "name": "async_rptr_o", "role": "FIFO_PTR", "importance": "major", "trace": "interface", "why": "Gray-coded read pointer sent back to the source domain for full detection.", "lines": [483, 500]},
+    {"id": "E12", "name": "dst_ridx", "role": "INDEX", "importance": "major", "trace": "data_backward", "why": "Binary read index from pointer child selecting the async storage word.", "lines": [487, 498, 515]},
+    {"id": "E3", "name": "dst_clear_i", "role": "COMMAND", "importance": "minor", "trace": "forward", "why": "Synchronous clear request flushing read pointer and spill register in both children.", "lines": [476, 495, 509]},
+    {"id": "E10", "name": "dst_valid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "Internal not-empty valid from pointer child into the data child's spill register.", "lines": [486, 497, 513]},
+    {"id": "E11", "name": "dst_ready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Internal ready from data child advancing the read pointer.", "lines": [486, 496, 514]}
+  ],
+  "groups": [
+    {"name": "read_pointer", "kind": "CONTROLLER", "anchor_ids": ["E8", "E9", "E12", "E10", "E3"], "member_ids": ["I1"], "description": "Gray read pointer, write-pointer synchronizer and empty comparison producing valid and read index."},
+    {"name": "read_data_path", "kind": "DATAPATH", "anchor_ids": ["E7", "E4", "E5", "E6", "E11"], "member_ids": ["I2"], "description": "Muxes async storage by read index and buffers the word in a spill register to the output."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "clear", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E3"]},
+    {"name": "dst_stream", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E4", "E5", "E6"]},
+    {"name": "async_fifo_data", "protocol": "MEMORY_BUS", "direction": "IN", "member_ids": ["E7"]},
+    {"name": "async_pointers", "protocol": "OTHER", "direction": "BIDIR", "member_ids": ["E8", "E9"]}
+  ]
+}

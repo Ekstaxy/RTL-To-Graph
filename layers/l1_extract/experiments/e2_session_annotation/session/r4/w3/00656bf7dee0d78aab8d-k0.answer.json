@@ -1,0 +1,43 @@
+{
+ "module_summary": "Wishbone clock-domain crossing bridge: requests are pushed into an async request FIFO and replayed as a master on the second clock, with returns crossing back through an async ack FIFO and abort/reset synchronizers.",
+ "anchors": [
+  {"id": "E3", "name": "i_wb_cyc", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Upstream bus cycle; dropping it aborts and clears outstanding counters", "lines": [131, 140]},
+  {"id": "E4", "name": "i_wb_stb", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Upstream request strobe writing a request into reqfifo", "lines": [133, 164]},
+  {"id": "E5", "name": "i_wb_we", "role": "COMMAND", "importance": "minor", "trace": "interface", "why": "Read/write command carried through request FIFO", "lines": [165]},
+  {"id": "E6", "name": "i_wb_addr", "role": "INTERFACE_ADDR", "importance": "major", "trace": "interface", "why": "Upstream request address pushed into reqfifo", "lines": [165]},
+  {"id": "E7", "name": "i_wb_data", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Upstream write data pushed into reqfifo", "lines": [165]},
+  {"id": "E9", "name": "o_wb_stall", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "Stall when ack count full, aborting, or request FIFO full", "lines": [270, 133]},
+  {"id": "E10", "name": "o_wb_ack", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "data_backward", "why": "Upstream ack from ack FIFO output, decrements outstanding count", "lines": [306, 244]},
+  {"id": "E11", "name": "o_wb_data", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Returned read data from ack FIFO", "lines": [309]},
+  {"id": "E12", "name": "o_wb_err", "role": "HANDSHAKE_READY", "importance": "major", "trace": "data_backward", "why": "Upstream bus error; triggers bus_abort and counter clear", "lines": [306, 142]},
+  {"id": "E14", "name": "o_xclk_cyc", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Downstream cycle line from FIFO strobe/drop-cycle entries", "lines": [207, 197]},
+  {"id": "E15", "name": "o_xclk_stb", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Downstream request strobe replaying FIFO requests", "lines": [214, 213]},
+  {"id": "E16", "name": "o_xclk_we", "role": "COMMAND", "importance": "minor", "trace": "data_backward", "why": "Downstream write enable from FIFO", "lines": [218]},
+  {"id": "E17", "name": "o_xclk_addr", "role": "INTERFACE_ADDR", "importance": "major", "trace": "data_backward", "why": "Downstream address registered from request FIFO", "lines": [223]},
+  {"id": "E18", "name": "o_xclk_data", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Downstream write data registered from request FIFO", "lines": [224]},
+  {"id": "E19", "name": "o_xclk_sel", "role": "INTERFACE_DATA", "importance": "minor", "trace": "data_backward", "why": "Downstream byte selects from request FIFO", "lines": [225]},
+  {"id": "E20", "name": "i_xclk_stall", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Downstream stall gating FIFO reads and strobe", "lines": [213, 169]},
+  {"id": "E21", "name": "i_xclk_ack", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Downstream ack written into ack FIFO", "lines": [284, 285]},
+  {"id": "E22", "name": "i_xclk_data", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Downstream read data written into ack FIFO", "lines": [285]},
+  {"id": "E23", "name": "i_xclk_err", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Downstream error setting xclk_err_state and dropping cycle", "lines": [197, 284]},
+  {"id": "E24", "name": "wb_active", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Marks active upstream cycle, pushes drop-cycle entry when cyc falls", "lines": [132, 134, 164]},
+  {"id": "E26", "name": "acks_outstanding", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Counts requests awaiting acks on upstream clock", "lines": [246, 252]},
+  {"id": "E28", "name": "ackfifo_empty", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "No outstanding acks; releases bus_abort pipeline", "lines": [247, 140]},
+  {"id": "E29", "name": "ackfifo_full", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Outstanding count full, stalls upstream", "lines": [249, 270]},
+  {"id": "E38", "name": "xclk_err_state", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Downstream error state suppressing cyc/stb until cycle restarts", "lines": [198, 206]},
+  {"id": "E36", "name": "req_stb", "role": "CONTROL_FLAG", "importance": "minor", "trace": "data_backward", "why": "FIFO entry type: strobe request vs drop-cycle marker", "lines": [207, 214]},
+  {"id": "E37", "name": "req_fifo_empty", "role": "CONTROL_FLAG", "importance": "minor", "trace": "data_backward", "why": "Request FIFO empty gating downstream issue", "lines": [204, 214]},
+  {"id": "E34", "name": "no_returns", "role": "CONTROL_FLAG", "importance": "minor", "trace": "data_backward", "why": "Ack FIFO empty; gates reads and upstream ack", "lines": [289, 303]}
+ ],
+ "groups": [
+  {"name": "Upstream request intake", "kind": "BUFFER", "anchor_ids": ["E3", "E4", "E5", "E6", "E7", "E9", "E24"], "member_ids": ["I1", "E8", "E33", "E35", "E25"], "description": "Upstream Wishbone slave pushing requests into async request FIFO"},
+  {"name": "Downstream master", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E14", "E15", "E16", "E17", "E18", "E19", "E20", "E36", "E37", "E38"], "member_ids": ["E40", "E41", "E42", "E43", "E44", "E45"], "description": "Replays FIFO requests as Wishbone master on the second clock"},
+  {"name": "Return path", "kind": "BUFFER", "anchor_ids": ["E21", "E22", "E23", "E34", "E10", "E11", "E12"], "member_ids": ["I2", "E30", "E31", "E32", "E39"], "description": "Async ack FIFO carrying acks, errors and data back upstream"},
+  {"name": "Outstanding ack counter", "kind": "COUNTER_TIMER", "anchor_ids": ["E26", "E28", "E29"], "member_ids": ["E27"], "description": "Tracks outstanding requests for stall and abort control"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2", "E13"]},
+  {"name": "wb_slave", "protocol": "MEMORY_BUS", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12"]},
+  {"name": "xclk_master", "protocol": "MEMORY_BUS", "direction": "OUT", "member_ids": ["E14", "E15", "E16", "E17", "E18", "E19", "E20", "E21", "E22", "E23"]}
+ ]
+}

@@ -1,0 +1,793 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "common_cells_cc_cdc_2phase",
+ "tops": [
+  "cc_cdc_2phase"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "cc_cdc_2phase_src": {
+   "source": "teacher",
+   "canonical_instance": "cc_cdc_2phase.i_src",
+   "file": "data/rtl/common_cells/src/cc_cdc_2phase.sv",
+   "lines": [
+    104,
+    149
+   ],
+   "summary": "Source half of a two-phase CDC: on valid/ready accept it toggles a request register and latches data, ready when synchronized ack phase matches request.",
+   "blocks": [
+    {
+     "name": "Two-phase request/ack control",
+     "kind": "CONTROLLER",
+     "description": "Toggle request register and ack synchronizer deciding source readiness.",
+     "anchors": [
+      {
+       "id": "E4",
+       "name": "valid_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 94.6,
+       "struct_score": 86.3,
+       "trace": "interface",
+       "why": "Source-side valid; with ready_o forms src_accept to launch a transfer.",
+       "lines": [
+        111,
+        124
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "ready_o",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 96.0,
+       "struct_score": 89.8,
+       "trace": "control_backward",
+       "why": "Ready when request phase equals synchronized ack phase (no transfer in flight).",
+       "lines": [
+        124,
+        145
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "src_accept",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 51.0,
+       "struct_score": 36.6,
+       "trace": "control_backward",
+       "why": "Load enable toggling req_src_q and capturing data_src_q.",
+       "lines": [
+        124,
+        141,
+        142
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "async_req_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 95.3,
+       "struct_score": 88.1,
+       "trace": "control_backward",
+       "why": "Two-phase request toggle driven by req_src_q toward destination domain.",
+       "lines": [
+        113,
+        146
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "async_ack_i",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 85.6,
+       "struct_score": 60.8,
+       "trace": "interface",
+       "why": "Asynchronous two-phase ack from destination, synchronized by tc_sync.",
+       "lines": [
+        114,
+        136
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "ack_synced",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 22.7,
+       "struct_score": 35.3,
+       "trace": "control_backward",
+       "why": "Synchronized ack phase compared with req_src_q to produce ready_o.",
+       "lines": [
+        137,
+        145
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E9",
+       "name": "req_src_q",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "CDC data holding",
+     "kind": "DATAPATH",
+     "description": "data_src_q holds payload stable while request is outstanding.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "data_i",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 62.7,
+       "struct_score": 76.6,
+       "trace": "interface",
+       "why": "Source data payload latched into data_src_q on accept.",
+       "lines": [
+        110,
+        142
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "async_data_o",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 92.2,
+       "struct_score": 80.3,
+       "trace": "data_backward",
+       "why": "Data held stable in data_src_q crossing to destination domain.",
+       "lines": [
+        115,
+        147
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E11",
+       "name": "data_src_q",
+       "kind": "reg"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "rst_ni",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "clk_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "src_stream",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "data_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "valid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "ready_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "async_link",
+     "protocol": "REQ_ACK",
+     "direction": "OUT",
+     "member_ids": [
+      "E6",
+      "E7",
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "async_req_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "async_ack_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "async_data_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "cc_cdc_2phase_dst": {
+   "source": "teacher",
+   "canonical_instance": "cc_cdc_2phase.i_dst",
+   "file": "data/rtl/common_cells/src/cc_cdc_2phase.sv",
+   "lines": [
+    154,
+    206
+   ],
+   "summary": "Destination half of a 2-phase CDC: synchronizes the toggling async request, captures async data on a request edge, and toggles an ack register when the local valid/ready handshake completes.",
+   "blocks": [
+    {
+     "name": "req_sync",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Synchronizes async request and delays it for transition detection",
+     "anchors": [
+      {
+       "id": "E9",
+       "name": "req_synced",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 55.5,
+       "struct_score": 53.2,
+       "trace": "control_backward",
+       "why": "Async request after tc_sync synchronizer, edge triggers data capture",
+       "lines": [
+        175,
+        188,
+        199
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "req_synced_q1",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 53.1,
+       "struct_score": 44.6,
+       "trace": "control_backward",
+       "why": "Delayed synchronized request for edge detection; compared for data load and valid",
+       "lines": [
+        175,
+        199,
+        202
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E6",
+       "name": "async_req_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "data_capture",
+     "kind": "DATAPATH",
+     "description": "Loads async data on request edge and presents it as data_o",
+     "anchors": [
+      {
+       "id": "E12",
+       "name": "data_dst_q",
+       "role": "HOLDING_REG",
+       "importance": "critical",
+       "score": 79.6,
+       "struct_score": 38.9,
+       "trace": "data_backward",
+       "why": "Captures async_data_i on request transition, held until consumed, drives data_o",
+       "lines": [
+        171,
+        196,
+        203
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "dst_data_load",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 20.1,
+       "struct_score": 24.8,
+       "trace": "control_backward",
+       "why": "Load enable for data_dst_q on request transition when not already valid",
+       "lines": [
+        175,
+        196
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "data_o",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 91.2,
+       "struct_score": 77.9,
+       "trace": "interface",
+       "why": "Synchronous-side data output copied from data_dst_q",
+       "lines": [
+        160,
+        203
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E8",
+       "name": "async_data_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "ack_handshake",
+     "kind": "CONTROLLER",
+     "description": "Valid/ready handshake toggling 2-phase ack back to the source",
+     "anchors": [
+      {
+       "id": "E11",
+       "name": "ack_dst_q",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 87.0,
+       "struct_score": 65.9,
+       "trace": "control_backward",
+       "why": "Phase-toggle ack register flipped on each accepted item, drives async_ack_o",
+       "lines": [
+        192,
+        202,
+        204
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "valid_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 98.3,
+       "struct_score": 95.7,
+       "trace": "interface",
+       "why": "Valid when synchronized request phase differs from ack phase",
+       "lines": [
+        161,
+        174,
+        202
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "ready_i",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 61.0,
+       "struct_score": 72.2,
+       "trace": "interface",
+       "why": "Downstream ready; with valid_o forms dst_accept to toggle ack",
+       "lines": [
+        162,
+        174
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "dst_accept",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 19.9,
+       "struct_score": 24.0,
+       "trace": "control_backward",
+       "why": "Accept handshake strobe enabling ack_dst_q toggle",
+       "lines": [
+        174,
+        192
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E7",
+       "name": "async_ack_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "rst_ni",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "clk_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "dst_stream",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "data_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E4",
+       "name": "valid_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "ready_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "async_link",
+     "protocol": "REQ_ACK",
+     "direction": "IN",
+     "member_ids": [
+      "E6",
+      "E7",
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "async_req_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "async_ack_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E8",
+       "name": "async_data_i",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  },
+  "cc_cdc_2phase": {
+   "source": "teacher",
+   "canonical_instance": "cc_cdc_2phase",
+   "file": "data/rtl/common_cells/src/cc_cdc_2phase.sv",
+   "lines": [
+    44,
+    100
+   ],
+   "summary": "Two-phase clock-domain-crossing stream: a source-domain sender toggles an async request with held data and a destination-domain receiver synchronizes it and toggles an async acknowledge.",
+   "blocks": [
+    {
+     "name": "Source-domain sender",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Accepts source valid/ready transfer, toggles request and holds data.",
+     "anchors": [
+      {
+       "id": "E4",
+       "name": "src_valid_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 94.4,
+       "struct_score": 85.9,
+       "trace": "interface",
+       "why": "Source-domain valid launching a transfer into the sender.",
+       "lines": [
+        78
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "src_ready_o",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 63.1,
+       "struct_score": 77.5,
+       "trace": "interface",
+       "why": "Source ready when previous transfer acknowledged.",
+       "lines": [
+        79
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "src_data_i",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 90.9,
+       "struct_score": 77.0,
+       "trace": "interface",
+       "why": "Source payload latched by sender for crossing.",
+       "lines": [
+        77
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "i_src",
+       "module": "cc_cdc_2phase_src"
+      }
+     ],
+     "members": []
+    },
+    {
+     "name": "Destination-domain receiver",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Synchronizes request, presents data valid, toggles ack on accept.",
+     "anchors": [
+      {
+       "id": "E9",
+       "name": "dst_valid_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 95.0,
+       "struct_score": 87.3,
+       "trace": "interface",
+       "why": "Destination-domain valid after synchronized request toggle.",
+       "lines": [
+        93
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "dst_ready_i",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 62.2,
+       "struct_score": 75.1,
+       "trace": "interface",
+       "why": "Destination ready completing handshake and toggling ack.",
+       "lines": [
+        94
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "dst_data_o",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 91.8,
+       "struct_score": 79.2,
+       "trace": "interface",
+       "why": "Payload delivered in destination domain.",
+       "lines": [
+        92
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I2",
+       "instance": "i_dst",
+       "module": "cc_cdc_2phase_dst"
+      }
+     ],
+     "members": []
+    },
+    {
+     "name": "Async two-phase link",
+     "kind": "OTHER",
+     "description": "Request/ack toggles and stable data crossing clock domains.",
+     "anchors": [
+      {
+       "id": "E11",
+       "name": "async_req",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 82.8,
+       "struct_score": 50.8,
+       "trace": "forward",
+       "why": "Toggling request crossing from source to destination domain.",
+       "lines": [
+        80,
+        95
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "async_ack",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 78.4,
+       "struct_score": 34.0,
+       "trace": "control_backward",
+       "why": "Toggling acknowledge crossing back to the source domain.",
+       "lines": [
+        81,
+        96
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "async_data",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 50.7,
+       "struct_score": 35.5,
+       "trace": "data_backward",
+       "why": "Data held stable by sender across the asynchronous boundary.",
+       "lines": [
+        82,
+        97
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "i_src",
+       "module": "cc_cdc_2phase_src"
+      },
+      {
+       "id": "I2",
+       "instance": "i_dst",
+       "module": "cc_cdc_2phase_dst"
+      }
+     ],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "src_clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "src_rst_ni",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "src_clk_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "dst_clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "dst_rst_ni",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "dst_clk_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "src_stream",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "src_data_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "src_valid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "src_ready_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "dst_stream",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E8",
+       "name": "dst_data_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "dst_valid_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "dst_ready_i",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

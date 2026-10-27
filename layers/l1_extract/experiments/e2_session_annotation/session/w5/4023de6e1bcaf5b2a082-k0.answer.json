@@ -1,0 +1,29 @@
+{
+  "module_summary": "UART receiver: a prescale down-counter times oversampled bit periods, a bit counter sequences start/data/stop, a shift register deserializes rxd into an AXI-stream output register.",
+  "anchors": [
+    {"id": "E3", "name": "m_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Received byte presented on AXI-stream output, copied from m_axis_tdata_reg.", "lines": [43, 79]},
+    {"id": "E4", "name": "m_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "AXI-stream valid; set when stop bit received, cleared on accept.", "lines": [44, 80, 101]},
+    {"id": "E5", "name": "m_axis_tready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Downstream ready; with tvalid clears the output valid register.", "lines": [45, 101]},
+    {"id": "E6", "name": "rxd", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Serial UART input line, sampled into rxd_reg each cycle.", "lines": [50, 97]},
+    {"id": "E17", "name": "data_reg", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "Shift register assembling received data bits LSB first before output.", "lines": [119, 123]},
+    {"id": "E19", "name": "bit_cnt", "role": "COUNTER", "importance": "critical", "trace": "control_backward", "why": "Counts remaining start/data/stop bits; sequences reception phases.", "lines": [107, 116, 134]},
+    {"id": "E18", "name": "prescale_reg", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Baud prescale down-counter timing each bit sample point.", "lines": [105, 106, 118]},
+    {"id": "E10", "name": "prescale", "role": "CONFIG_REG", "importance": "major", "trace": "interface", "why": "Configured baud divisor reloading the prescale counter.", "lines": [62, 118, 133]},
+    {"id": "E7", "name": "busy", "role": "STATUS", "importance": "major", "trace": "interface", "why": "Level busy indication while a frame is being received.", "lines": [55, 82]},
+    {"id": "E8", "name": "overrun_error", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "Pulses when new byte arrives while previous output still valid.", "lines": [56, 83]},
+    {"id": "E9", "name": "frame_error", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "Pulses when stop bit sampled low.", "lines": [57, 84]}
+  ],
+  "groups": [
+    {"name": "AXI-stream output", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E3", "E4", "E5"], "member_ids": ["E11", "E12"], "description": "Output data/valid registers with ready-based valid clear."},
+    {"name": "Deserializer", "kind": "SERIALIZER", "anchor_ids": ["E6", "E17"], "member_ids": ["E13"], "description": "Synchronizes rxd and shifts sampled bits into data_reg."},
+    {"name": "Bit timing", "kind": "COUNTER_TIMER", "anchor_ids": ["E18", "E19", "E10"], "member_ids": [], "description": "Prescale timer and bit counter sequencing start, data and stop bits."},
+    {"name": "Status flags", "kind": "OTHER", "anchor_ids": ["E7", "E8", "E9"], "member_ids": ["E14", "E15", "E16"], "description": "Busy level and overrun/frame error pulses."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "m_axis", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E3", "E4", "E5"]},
+    {"name": "uart_rx", "protocol": "SERIAL", "direction": "IN", "member_ids": ["E6"]},
+    {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E7", "E8", "E9"]},
+    {"name": "config", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E10"]}
+  ]
+}

@@ -1,0 +1,20 @@
+{
+ "module_summary": "Serial accumulator: a 2-bit counter tracks four accepted 8-bit inputs summed into a 10-bit register, pulsing valid_out for one cycle when the fourth arrives.",
+ "anchors": [
+  {"id": "E7", "name": "count", "role": "COUNTER", "importance": "critical", "trace": "control_backward", "why": "Counts accepted inputs 0-3; selects load vs accumulate and triggers end_cnt."},
+  {"id": "E6", "name": "data_out", "role": "DATAPATH_MAJOR", "importance": "critical", "trace": "data_backward", "why": "10-bit running sum register, loaded at count 0 then accumulates data_in; output."},
+  {"id": "E5", "name": "valid_out", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "One-cycle output valid pulse after fourth input accumulated."},
+  {"id": "E9", "name": "ready_add", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Accept condition (valid_in or not valid_out) enabling count and accumulate."},
+  {"id": "E10", "name": "end_cnt", "role": "CONTROL_FLAG", "importance": "minor", "trace": "forward", "why": "Fourth-input event: wraps counter and sets valid_out."},
+  {"id": "E11", "name": "data_out_reg", "role": "STORAGE", "importance": "minor", "trace": "none", "why": "Unused duplicate of the accumulator register; no fanout."}
+ ],
+ "groups": [
+  {"name": "accept_counter", "kind": "COUNTER_TIMER", "anchor_ids": ["E7", "E9", "E10", "E5"], "member_ids": ["E8"], "description": "Input accept logic, group-of-four counter and output valid pulse."},
+  {"name": "accumulator", "kind": "DATAPATH", "anchor_ids": ["E6", "E11"], "member_ids": [], "description": "Adder and 10-bit sum register(s) accumulating data_in."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "data_in_stream", "protocol": "STREAM", "direction": "IN", "member_ids": ["E3", "E4"]},
+  {"name": "sum_out", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E5", "E6"]}
+ ]
+}

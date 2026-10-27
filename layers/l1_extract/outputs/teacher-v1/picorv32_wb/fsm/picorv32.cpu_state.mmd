@@ -1,0 +1,29 @@
+stateDiagram-v2
+    ANY_STATE --> cpu_state_fetch : !resetn
+    cpu_state_fetch --> cpu_state_ld_rs1 : resetn && decoder_trigger && !instr_jal
+    cpu_state_ld_rs1 --> cpu_state_trap : resetn && instr_trap
+    cpu_state_ld_rs1 --> cpu_state_fetch : resetn && is_rdcycle_rdcycleh_rdinstr_rdinstrh
+    cpu_state_ld_rs1 --> cpu_state_exec : resetn && is_lui_auipc_jal
+    cpu_state_ld_rs1 --> cpu_state_ldmem : resetn && is_lb_lh_lw_lbu_lhu && !instr_trap
+    cpu_state_ld_rs1 --> cpu_state_shift : resetn && is_slli_srli_srai
+    cpu_state_ld_rs1 --> cpu_state_exec : resetn && is_jalr_addi_slti_sltiu_xori_ori_andi
+    cpu_state_ld_rs1 --> cpu_state_stmem : resetn && else && is_sb_sh_sw
+    cpu_state_ld_rs1 --> cpu_state_shift : resetn && else && is_sll_srl_sra
+    cpu_state_ld_rs1 --> cpu_state_exec : resetn && else
+    cpu_state_ld_rs2 --> cpu_state_stmem : resetn && is_sb_sh_sw
+    cpu_state_ld_rs2 --> cpu_state_shift : resetn && is_sll_srl_sra
+    cpu_state_ld_rs2 --> cpu_state_exec : resetn && else
+    cpu_state_exec --> cpu_state_fetch : resetn && is_beq_bne_blt_bge_bltu_bgeu && mem_done
+    cpu_state_exec --> cpu_state_fetch : resetn && !is_beq_bne_blt_bge_bltu_bgeu
+    cpu_state_shift --> cpu_state_fetch : resetn && reg_sh == 0
+    cpu_state_stmem --> cpu_state_fetch : resetn && (!mem_do_prefetch || mem_done) && !mem_do_prefetch && mem_done
+    cpu_state_ldmem --> cpu_state_fetch : resetn && (!mem_do_prefetch || mem_done) && !mem_do_prefetch && mem_done
+    ANY_STATE --> cpu_state_trap : resetn && (mem_do_rdata || mem_do_wdata) && mem_wordsize == 0 && reg_op1[1∶0] != 0
+    ANY_STATE --> cpu_state_trap : resetn && (mem_do_rdata || mem_do_wdata) && mem_wordsize == 1 && reg_op1[0] != 0
+    ANY_STATE --> cpu_state_trap : resetn && mem_do_rinst && (COMPRESSED_ISA ? reg_pc[0] ∶ |reg_pc[1∶0])
+    %% output eoi (moore)
+    %% output pcpi_valid (moore)
+    %% output trace_data (moore)
+    %% output trace_valid (moore)
+    %% output trap (moore)
+    %% output dbg_ascii_state (moore)

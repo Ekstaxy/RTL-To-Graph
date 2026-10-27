@@ -1,0 +1,1286 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "common_cells_cc_mem_to_banks_detailed",
+ "tops": [
+  "cc_mem_to_banks_detailed"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "cc_fifo": {
+   "source": "teacher",
+   "canonical_instance": "cc_mem_to_banks_detailed.gen_reqs[0].i_ft_reg.fifo_i",
+   "file": "data/rtl/common_cells/src/cc_fifo.sv",
+   "lines": [
+    16,
+    138
+   ],
+   "summary": "Synchronous circular-buffer FIFO: register-array memory indexed by wrapping read/write pointers, an occupancy counter producing full/empty/usage, optional fall-through bypass and clock-gated memory writes.",
+   "blocks": [
+    {
+     "name": "FIFO storage",
+     "kind": "BUFFER",
+     "description": "Register array storing queue entries with gated writes",
+     "anchors": [
+      {
+       "id": "E20",
+       "name": "mem_q",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 94.0,
+       "struct_score": 84.8,
+       "trace": "data_backward",
+       "why": "FIFO storage array written at write pointer, read at read pointer",
+       "lines": [
+        53,
+        72,
+        126
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "gate_clock",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 17.6,
+       "struct_score": 14.7,
+       "trace": "control_backward",
+       "why": "Memory write enable (clock gate) active only on push",
+       "lines": [
+        81,
+        126
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "data_i",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 94.8,
+       "struct_score": 86.9,
+       "trace": "interface",
+       "why": "Data pushed into the FIFO",
+       "lines": [
+        35,
+        79
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "data_o",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 96.2,
+       "struct_score": 90.5,
+       "trace": "data_backward",
+       "why": "Head-of-queue output data or fall-through input",
+       "lines": [
+        38,
+        72,
+        110
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E19",
+       "name": "mem_n",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Pointer and occupancy control",
+     "kind": "CONTROLLER",
+     "description": "Wrapping read/write pointers and counter generating full/empty/usage",
+     "anchors": [
+      {
+       "id": "E16",
+       "name": "write_pointer_q",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 56.9,
+       "struct_score": 58.2,
+       "trace": "control_backward",
+       "why": "Write pointer, wraps at depth, addresses memory on push",
+       "lines": [
+        79,
+        87,
+        123
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "read_pointer_q",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 57.8,
+       "struct_score": 61.7,
+       "trace": "control_backward",
+       "why": "Read pointer, wraps at depth, selects output data",
+       "lines": [
+        72,
+        99,
+        122
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "status_cnt_q",
+       "role": "FIFO_PTR",
+       "importance": "critical",
+       "score": 88.6,
+       "struct_score": 71.2,
+       "trace": "control_backward",
+       "why": "Occupancy counter driving full, empty and usage",
+       "lines": [
+        55,
+        61,
+        62
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "push_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 96.6,
+       "struct_score": 91.5,
+       "trace": "interface",
+       "why": "Push request writing data when not full",
+       "lines": [
+        36,
+        77
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "pop_i",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 89.5,
+       "struct_score": 73.5,
+       "trace": "interface",
+       "why": "Pop request advancing read pointer when not empty",
+       "lines": [
+        39,
+        92
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "full_o",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 56.4,
+       "struct_score": 56.5,
+       "trace": "control_backward",
+       "why": "Full flag blocks pushes",
+       "lines": [
+        31,
+        61,
+        77
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "empty_o",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 55.0,
+       "struct_score": 51.5,
+       "trace": "control_backward",
+       "why": "Empty flag blocks pops",
+       "lines": [
+        32,
+        62,
+        92
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "usage_o",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 21.9,
+       "struct_score": 32.2,
+       "trace": "data_backward",
+       "why": "Fill level output from occupancy counter",
+       "lines": [
+        33,
+        55
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "flush_i",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 22.8,
+       "struct_score": 35.8,
+       "trace": "interface",
+       "why": "Flush command clearing pointers and counter",
+       "lines": [
+        28,
+        121
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E13",
+       "name": "read_pointer_n",
+       "kind": "comb"
+      },
+      {
+       "id": "E15",
+       "name": "write_pointer_n",
+       "kind": "comb"
+      },
+      {
+       "id": "E17",
+       "name": "status_cnt_n",
+       "kind": "comb"
+      },
+      {
+       "id": "E21",
+       "name": "clr_or_flush",
+       "kind": "wire"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2",
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_ni",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "clr_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "control_status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E4",
+      "E5",
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "flush_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "full_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "empty_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "usage_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "push",
+     "protocol": "STREAM",
+     "direction": "IN",
+     "member_ids": [
+      "E8",
+      "E9"
+     ],
+     "members": [
+      {
+       "id": "E8",
+       "name": "data_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "push_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "pop",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E10",
+      "E11"
+     ],
+     "members": [
+      {
+       "id": "E10",
+       "name": "data_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E11",
+       "name": "pop_i",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  },
+  "cc_stream_fifo": {
+   "source": "teacher",
+   "canonical_instance": "cc_mem_to_banks_detailed.gen_reqs[0].i_ft_reg",
+   "file": "data/rtl/common_cells/src/cc_stream_fifo.sv",
+   "lines": [
+    13,
+    69
+   ],
+   "summary": "Valid/ready stream wrapper around a synchronous FIFO child: push and pop are gated by full and empty, which also generate ready_o and valid_o.",
+   "blocks": [
+    {
+     "name": "handshake_logic",
+     "kind": "CONTROLLER",
+     "description": "Converts valid/ready handshakes to FIFO push/pop using full/empty.",
+     "anchors": [
+      {
+       "id": "E7",
+       "name": "valid_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 93.0,
+       "struct_score": 82.3,
+       "trace": "interface",
+       "why": "Input stream valid; with not-full forms the FIFO push.",
+       "lines": [
+        34,
+        45
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "ready_o",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 90.1,
+       "struct_score": 74.9,
+       "trace": "control_backward",
+       "why": "Input ready, asserted when FIFO is not full.",
+       "lines": [
+        35,
+        47
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "valid_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 94.3,
+       "struct_score": 85.6,
+       "trace": "control_backward",
+       "why": "Output valid, asserted when FIFO is not empty.",
+       "lines": [
+        38,
+        48
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "ready_i",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 88.2,
+       "struct_score": 70.3,
+       "trace": "interface",
+       "why": "Output ready; with not-empty forms the FIFO pop.",
+       "lines": [
+        39,
+        46
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "push",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 18.8,
+       "struct_score": 19.6,
+       "trace": "control_backward",
+       "why": "FIFO write enable: valid_i and not full.",
+       "lines": [
+        45,
+        64
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "pop",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 18.8,
+       "struct_score": 19.6,
+       "trace": "control_backward",
+       "why": "FIFO read enable: ready_i and not empty.",
+       "lines": [
+        46,
+        66
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "full",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 50.2,
+       "struct_score": 33.2,
+       "trace": "control_backward",
+       "why": "FIFO full flag; blocks push and deasserts ready_o.",
+       "lines": [
+        45,
+        47,
+        60
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "empty",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 50.2,
+       "struct_score": 33.2,
+       "trace": "control_backward",
+       "why": "FIFO empty flag; blocks pop and deasserts valid_o.",
+       "lines": [
+        46,
+        48,
+        61
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "fifo",
+     "kind": "BUFFER",
+     "description": "Synchronous FIFO child storing stream data.",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "data_i",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 94.2,
+       "struct_score": 85.3,
+       "trace": "interface",
+       "why": "Input payload written into the FIFO.",
+       "lines": [
+        33,
+        63
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "data_o",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 94.8,
+       "struct_score": 86.9,
+       "trace": "data_backward",
+       "why": "Head-of-FIFO output payload.",
+       "lines": [
+        37,
+        65
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "usage_o",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 23.1,
+       "struct_score": 37.1,
+       "trace": "data_backward",
+       "why": "FIFO fill level output from child.",
+       "lines": [
+        31,
+        62
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "flush_i",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 23.8,
+       "struct_score": 40.0,
+       "trace": "interface",
+       "why": "Flush request clearing FIFO pointers.",
+       "lines": [
+        28,
+        59
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "fifo_i",
+       "module": "cc_fifo"
+      }
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "clr_i",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_ni",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "control_status",
+     "protocol": "SIMPLE",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "clr_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "flush_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "usage_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "input_stream",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E6",
+      "E7",
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "data_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "valid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "ready_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "output_stream",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E9",
+      "E10",
+      "E11"
+     ],
+     "members": [
+      {
+       "id": "E9",
+       "name": "data_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "valid_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E11",
+       "name": "ready_i",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  },
+  "cc_mem_to_banks_detailed": {
+   "source": "teacher",
+   "canonical_instance": "cc_mem_to_banks_detailed",
+   "file": "data/rtl/common_cells/src/cc_mem_to_banks_detailed.sv",
+   "lines": [
+    17,
+    249
+   ],
+   "summary": "Splits one wide memory request into per-bank requests through fall-through request FIFOs, and recombines per-bank responses via response FIFOs, granting only when all bank FIFOs can accept.",
+   "blocks": [
+    {
+     "name": "Request split FIFOs",
+     "kind": "BUFFER",
+     "description": "Per-bank fall-through FIFOs holding sliced address, data, strobe and we.",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "addr_i",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 51.5,
+       "struct_score": 38.7,
+       "trace": "interface",
+       "why": "Byte address aligned and offset per bank.",
+       "lines": [
+        62,
+        131
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "wdata_i",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 88.4,
+       "struct_score": 70.7,
+       "trace": "interface",
+       "why": "Wide write data sliced into per-bank write data.",
+       "lines": [
+        64,
+        132
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "we_i",
+       "role": "COMMAND",
+       "importance": "major",
+       "score": 47.7,
+       "struct_score": 23.3,
+       "trace": "interface",
+       "why": "Write enable carried into every bank request.",
+       "lines": [
+        70,
+        135,
+        189
+       ]
+      },
+      {
+       "id": "E28",
+       "name": "bank_req",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 20.9,
+       "struct_score": 27.9,
+       "trace": "data_backward",
+       "why": "Per-bank request struct built from address, data slice and strobe.",
+       "lines": [
+        131,
+        132,
+        147
+       ]
+      },
+      {
+       "id": "E29",
+       "name": "bank_oup",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 23.4,
+       "struct_score": 38.4,
+       "trace": "data_backward",
+       "why": "Per-bank request struct at request FIFO output.",
+       "lines": [
+        150,
+        154,
+        163
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "req_valid",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 16.4,
+       "struct_score": 9.9,
+       "trace": "control_backward",
+       "why": "Accepted request pushes all bank request FIFOs.",
+       "lines": [
+        129,
+        148
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "req_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 18.3,
+       "struct_score": 17.4,
+       "trace": "forward",
+       "why": "Per-bank request FIFO ready combined into gnt_o.",
+       "lines": [
+        149,
+        174
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "bank_req_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 61.5,
+       "struct_score": 73.5,
+       "trace": "control_backward",
+       "why": "Per-bank request valid from request FIFO output.",
+       "lines": [
+        163,
+        168
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "bank_gnt_i",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 54.5,
+       "struct_score": 49.8,
+       "trace": "interface",
+       "why": "Per-bank grant popping the request FIFO.",
+       "lines": [
+        166,
+        169
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "bank_addr_o",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 53.1,
+       "struct_score": 44.6,
+       "trace": "data_backward",
+       "why": "Per-bank address from request FIFO.",
+       "lines": [
+        154
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "bank_wdata_o",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 61.9,
+       "struct_score": 74.4,
+       "trace": "data_backward",
+       "why": "Per-bank write data slice from request FIFO.",
+       "lines": [
+        155
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "gen_reqs[*].i_ft_reg",
+       "module": "cc_stream_fifo"
+      }
+     ],
+     "members": [
+      {
+       "id": "E30",
+       "name": "bank_req_internal",
+       "kind": "wire"
+      },
+      {
+       "id": "E31",
+       "name": "bank_gnt_internal",
+       "kind": "wire"
+      },
+      {
+       "id": "E18",
+       "name": "bank_strb_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "bank_wuser_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "bank_we_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E8",
+       "name": "strb_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "wuser_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Response merge FIFOs",
+     "kind": "BUFFER",
+     "description": "Per-bank response FIFOs reassembled into one wide response.",
+     "anchors": [
+      {
+       "id": "E22",
+       "name": "bank_rdata_i",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 60.4,
+       "struct_score": 70.7,
+       "trace": "interface",
+       "why": "Per-bank read data pushed into response FIFO.",
+       "lines": [
+        94,
+        214
+       ]
+      },
+      {
+       "id": "E21",
+       "name": "bank_rvalid_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 32.1,
+       "struct_score": 69.8,
+       "trace": "interface",
+       "why": "Per-bank response valid pushing response FIFO.",
+       "lines": [
+        92,
+        215
+       ]
+      },
+      {
+       "id": "E26",
+       "name": "resp_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 21.5,
+       "struct_score": 30.6,
+       "trace": "forward",
+       "why": "Per-bank response available, ANDed into rvalid_o.",
+       "lines": [
+        218,
+        222
+       ]
+      },
+      {
+       "id": "E27",
+       "name": "resp_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 18.3,
+       "struct_score": 17.4,
+       "trace": "forward",
+       "why": "Per-bank response FIFO ready combined into gnt_o.",
+       "lines": [
+        174,
+        216
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "rvalid_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 65.7,
+       "struct_score": 84.1,
+       "trace": "control_backward",
+       "why": "Response valid when all bank responses (or dead responses) present.",
+       "lines": [
+        219,
+        222
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "rdata_o",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 89.5,
+       "struct_score": 73.5,
+       "trace": "data_backward",
+       "why": "Wide read data reassembled from bank response FIFOs.",
+       "lines": [
+        74,
+        217
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I2",
+       "instance": "gen_resp_regs[*].i_ft_reg",
+       "module": "cc_stream_fifo"
+      }
+     ],
+     "members": [
+      {
+       "id": "E13",
+       "name": "ruser_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "bank_ruser_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Grant and dead-write control",
+     "kind": "CONTROLLER",
+     "description": "Grants request when all FIFOs ready; tracks hidden zero-strobe writes.",
+     "anchors": [
+      {
+       "id": "E4",
+       "name": "req_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 88.1,
+       "struct_score": 69.8,
+       "trace": "interface",
+       "why": "Wide memory request valid; with gnt_o pushes all bank FIFOs.",
+       "lines": [
+        58,
+        129
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "gnt_o",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 89.9,
+       "struct_score": 74.5,
+       "trace": "control_backward",
+       "why": "Grant when all request and response FIFOs have space.",
+       "lines": [
+        129,
+        174
+       ]
+      },
+      {
+       "id": "E33",
+       "name": "dead_response",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.1,
+       "struct_score": 16.6,
+       "trace": "control_backward",
+       "why": "Marks hidden zero-strobe writes completed internally; disabled unless HideStrb.",
+       "lines": [
+        194,
+        219,
+        222
+       ]
+      },
+      {
+       "id": "E35",
+       "name": "dead_write_fifo_full",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.1,
+       "struct_score": 12.7,
+       "trace": "control_backward",
+       "why": "Dead write FIFO full blocks gnt_o; tied off unless HideStrb.",
+       "lines": [
+        174,
+        186
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E34",
+       "name": "dead_response_unmasked",
+       "kind": "wire"
+      },
+      {
+       "id": "E36",
+       "name": "dead_write_fifo_empty",
+       "kind": "wire"
+      },
+      {
+       "id": "E32",
+       "name": "zero_strobe",
+       "kind": "wire"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_ni",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "control",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "clr_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "mem_request",
+     "protocol": "REQ_ACK",
+     "direction": "IN",
+     "member_ids": [
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "req_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "gnt_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "addr_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "wdata_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "strb_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "wuser_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "we_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "mem_response",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E11",
+      "E12",
+      "E13"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "rvalid_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "rdata_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "ruser_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "bank_request",
+     "protocol": "REQ_ACK",
+     "direction": "OUT",
+     "member_ids": [
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20"
+     ],
+     "members": [
+      {
+       "id": "E14",
+       "name": "bank_req_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "bank_gnt_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E16",
+       "name": "bank_addr_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "bank_wdata_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "bank_strb_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "bank_wuser_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "bank_we_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "bank_response",
+     "protocol": "STREAM",
+     "direction": "IN",
+     "member_ids": [
+      "E21",
+      "E22",
+      "E23"
+     ],
+     "members": [
+      {
+       "id": "E21",
+       "name": "bank_rvalid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E22",
+       "name": "bank_rdata_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E23",
+       "name": "bank_ruser_i",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

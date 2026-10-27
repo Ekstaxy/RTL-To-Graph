@@ -1,0 +1,33 @@
+{
+ "module_summary": "Simple UART with a programmable baud divider register, a counter-driven receive state machine shifting into a one-byte buffer, and a shift-register transmitter with bit counter.",
+ "anchors": [
+  {"id": "E13", "name": "cfg_divider", "role": "CONFIG_REG", "importance": "critical", "trace": "data_backward", "why": "Byte-writable baud divider compared by both RX and TX counters", "lines": [37, 59, 84]},
+  {"id": "E14", "name": "recv_state", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Receive controller: idle, start-bit half wait, data bits, stop", "lines": [39, 77, 99]},
+  {"id": "E15", "name": "recv_divcnt", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Receive baud counter timing bit sampling against divider", "lines": [40, 84, 97]},
+  {"id": "E16", "name": "recv_pattern", "role": "STORAGE", "importance": "major", "trace": "data_backward", "why": "Receive shift register collecting serial bits LSB first", "lines": [41, 98]},
+  {"id": "E17", "name": "recv_buf_data", "role": "HOLDING_REG", "importance": "critical", "trace": "data_backward", "why": "Received byte buffer read through reg_dat_do", "lines": [42, 53, 91]},
+  {"id": "E18", "name": "recv_buf_valid", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Buffer full flag, set on byte receipt, cleared by read", "lines": [43, 53, 76]},
+  {"id": "E19", "name": "send_pattern", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "TX shift register with start/stop framing driving ser_tx", "lines": [45, 107, 126]},
+  {"id": "E20", "name": "send_bitcnt", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Remaining TX bits; busy indication for wait and new writes", "lines": [46, 52, 132]},
+  {"id": "E21", "name": "send_divcnt", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "TX baud counter timing bit shifts against divider", "lines": [47, 130]},
+  {"id": "E22", "name": "send_dummy", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Pending idle-frame flag after reset or divider write", "lines": [48, 111, 119]},
+  {"id": "E3", "name": "ser_tx", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Serial transmit line from TX shift register LSB", "lines": [24, 107]},
+  {"id": "E4", "name": "ser_rx", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Serial receive line detected for start bit and shifted in", "lines": [25, 79, 98]},
+  {"id": "E8", "name": "reg_dat_we", "role": "COMMAND", "importance": "major", "trace": "forward", "why": "Data write command loading TX frame", "lines": [31, 52, 125]},
+  {"id": "E9", "name": "reg_dat_re", "role": "COMMAND", "importance": "minor", "trace": "forward", "why": "Data read command clearing receive buffer valid", "lines": [32, 75]},
+  {"id": "E12", "name": "reg_dat_wait", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "Stalls data writes while transmitter busy", "lines": [35, 52]},
+  {"id": "E5", "name": "reg_div_we", "role": "ENABLE", "importance": "minor", "trace": "interface", "why": "Per-byte write enables for divider register", "lines": [27, 59, 110]}
+ ],
+ "groups": [
+  {"name": "Baud divider config", "kind": "REGISTER_BANK", "anchor_ids": ["E13", "E5"], "member_ids": ["E6", "E7"], "description": "Programmable divider register read back on reg_div_do"},
+  {"name": "Receiver", "kind": "SERIALIZER", "anchor_ids": ["E14", "E15", "E16", "E4"], "member_ids": [], "description": "Start-bit detection and timed sampling into shift register"},
+  {"name": "Receive buffer", "kind": "BUFFER", "anchor_ids": ["E17", "E18", "E9"], "member_ids": ["E11"], "description": "One-byte RX buffer with valid flag, read via data register"},
+  {"name": "Transmitter", "kind": "SERIALIZER", "anchor_ids": ["E19", "E20", "E21", "E22", "E3", "E8", "E12"], "member_ids": ["E10"], "description": "Framed TX shift register clocked by divider counter"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "serial", "protocol": "SERIAL", "direction": "BIDIR", "member_ids": ["E3", "E4"]},
+  {"name": "div_reg", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E5", "E6", "E7"]},
+  {"name": "dat_reg", "protocol": "OTHER", "direction": "BIDIR", "member_ids": ["E8", "E9", "E10", "E11", "E12"]}
+ ]
+}

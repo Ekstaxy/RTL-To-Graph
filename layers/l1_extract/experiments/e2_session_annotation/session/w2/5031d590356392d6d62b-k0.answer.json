@@ -1,0 +1,26 @@
+{
+  "module_summary": "Pipelined unsigned 8x8 multiplier: registered operands, eight shifted partial products summed pairwise into registers, final sum register, gated output aligned by a 3-bit valid shift chain.",
+  "anchors": [
+    {"id": "E4", "name": "mul_a", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "8-bit multiplicand captured into mul_a_reg."},
+    {"id": "E5", "name": "mul_b", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "8-bit multiplier captured into mul_b_reg."},
+    {"id": "E3", "name": "mul_en_in", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "forward", "why": "Input valid gating operand capture and entering the valid chain."},
+    {"id": "E7", "name": "mul_out", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Registered product, mul_out_reg when valid else zero."},
+    {"id": "E6", "name": "mul_en_out", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Output valid, mul_en_in delayed through valid shift chain."},
+    {"id": "E8", "name": "mul_en_out_reg", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Valid shift chain; MSB gates mul_out load and drives mul_en_out."},
+    {"id": "E9", "name": "mul_a_reg", "role": "PIPELINE_REG", "importance": "major", "trace": "data_backward", "why": "Input-stage operand register; mul_b_reg is its twin."},
+    {"id": "E11", "name": "temp", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Eight partial products: shifted mul_a_reg gated by mul_b_reg bits."},
+    {"id": "E12", "name": "sum", "role": "PIPELINE_REG", "importance": "major", "trace": "data_backward", "why": "Stage registers holding pairwise partial-product sums."},
+    {"id": "E13", "name": "mul_out_reg", "role": "PIPELINE_REG", "importance": "major", "trace": "data_backward", "why": "Stage register holding total of partial sums before output gating."}
+  ],
+  "groups": [
+    {"name": "valid_pipeline", "kind": "CONTROLLER", "anchor_ids": ["E3", "E8", "E6"], "member_ids": [], "description": "Shift chain aligning enable with product latency."},
+    {"name": "input_stage", "kind": "PIPELINE_STAGE", "anchor_ids": ["E4", "E5", "E9"], "member_ids": ["E10"], "description": "Registers operands when mul_en_in, else zero."},
+    {"name": "partial_products", "kind": "DATAPATH", "anchor_ids": ["E11", "E12"], "member_ids": [], "description": "Generates partial products and registers pairwise sums."},
+    {"name": "final_sum_output", "kind": "PIPELINE_STAGE", "anchor_ids": ["E13", "E7"], "member_ids": [], "description": "Accumulates partial sums and gates product output."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "operand_in", "protocol": "STREAM", "direction": "IN", "member_ids": ["E3", "E4", "E5"]},
+    {"name": "product_out", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E6", "E7"]}
+  ]
+}

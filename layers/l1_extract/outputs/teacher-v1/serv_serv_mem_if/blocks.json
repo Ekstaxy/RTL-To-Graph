@@ -1,0 +1,322 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "serv_serv_mem_if",
+ "tops": [
+  "serv_mem_if"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "serv_mem_if": {
+   "source": "teacher",
+   "canonical_instance": "serv_mem_if",
+   "file": "data/rtl/serv/rtl/serv_mem_if.v",
+   "lines": [
+    8,
+    59
+   ],
+   "summary": "SERV bit-serial memory interface helper that generates Wishbone byte selects, misalignment flag, and sign/zero-extends load data via a sticky sign-bit register.",
+   "blocks": [
+    {
+     "name": "Load data extension",
+     "kind": "DATAPATH",
+     "description": "Passes valid load bits to rd else sign/zero extension from signbit.",
+     "anchors": [
+      {
+       "id": "E9",
+       "name": "i_bufreg2_q",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 92.5,
+       "struct_score": 81.2,
+       "trace": "interface",
+       "why": "Serial load data from bufreg2; source of o_rd and sign bit.",
+       "lines": [
+        27,
+        40,
+        49
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "o_rd",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 96.7,
+       "struct_score": 91.7,
+       "trace": "data_backward",
+       "why": "Serial rd write data: load bit or sign/zero extension.",
+       "lines": [
+        28,
+        40
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "dat_valid",
+       "role": "MUX_SELECT",
+       "importance": "major",
+       "score": 57.3,
+       "struct_score": 59.8,
+       "trace": "control_backward",
+       "why": "Selects load data vs sign extension for o_rd; enables signbit capture.",
+       "lines": [
+        34,
+        40,
+        48
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "signbit",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 51.6,
+       "struct_score": 39.2,
+       "trace": "data_backward",
+       "why": "Holds last valid data bit for sign extension of narrow loads.",
+       "lines": [
+        32,
+        40,
+        49
+       ]
+      },
+      {
+       "id": "E2",
+       "name": "i_bytecnt",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 35.3,
+       "struct_score": 77.9,
+       "trace": "interface",
+       "why": "External byte counter input deciding when data bits are valid.",
+       "lines": [
+        17,
+        37
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "i_signed",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 25.0,
+       "struct_score": 44.3,
+       "trace": "forward",
+       "why": "Selects sign vs zero extension of loaded data.",
+       "lines": [
+        21,
+        40
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E8",
+       "name": "i_mdu_op",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Byte select and alignment",
+     "kind": "DECODER",
+     "description": "Decodes address LSBs and size into wb_sel and misalignment flag.",
+     "anchors": [
+      {
+       "id": "E11",
+       "name": "o_wb_sel",
+       "role": "ENABLE",
+       "importance": "critical",
+       "score": 86.8,
+       "struct_score": 65.2,
+       "trace": "control_backward",
+       "why": "Wishbone byte-lane select decoded from address LSBs and access size.",
+       "lines": [
+        30,
+        42,
+        45
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "o_misalign",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 54.1,
+       "struct_score": 48.0,
+       "trace": "control_backward",
+       "why": "Reports misaligned word/half access from address LSBs.",
+       "lines": [
+        19,
+        57
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "i_lsb",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 60.8,
+       "struct_score": 71.8,
+       "trace": "interface",
+       "why": "Address low bits deciding byte lanes and misalignment.",
+       "lines": [
+        18,
+        42,
+        57
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "i_word",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 29.9,
+       "struct_score": 62.1,
+       "trace": "forward",
+       "why": "Word-size access command affecting byte selects and data validity.",
+       "lines": [
+        22,
+        36,
+        43
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "i_half",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 29.9,
+       "struct_score": 62.1,
+       "trace": "forward",
+       "why": "Halfword access command affecting byte selects and data validity.",
+       "lines": [
+        23,
+        38,
+        44
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "i_clk",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "state",
+     "protocol": "SIMPLE",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E2",
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E2",
+       "name": "i_bytecnt",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "i_lsb",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "o_misalign",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "control",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E5",
+      "E6",
+      "E7",
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "i_signed",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "i_word",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "i_half",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "i_mdu_op",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "data",
+     "protocol": "STREAM",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E9",
+       "name": "i_bufreg2_q",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "o_rd",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "wishbone_sel",
+     "protocol": "MEMORY_BUS",
+     "direction": "OUT",
+     "member_ids": [
+      "E11"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "o_wb_sel",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

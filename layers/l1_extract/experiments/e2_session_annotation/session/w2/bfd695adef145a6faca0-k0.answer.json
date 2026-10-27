@@ -1,0 +1,21 @@
+{
+  "module_summary": "Sequential 8-bit signed shift-and-add multiplier: operands sign-extended at reset, then over 16 counted cycles the shifted multiplicand is accumulated into p when the multiplier bit is set, then rdy rises.",
+  "anchors": [
+    {"id": "E5", "name": "p", "role": "DATAPATH_MAJOR", "importance": "critical", "trace": "data_backward", "why": "16-bit product accumulator adding shifted multiplicand when multiplier[ctr] is 1."},
+    {"id": "E9", "name": "ctr", "role": "COUNTER", "importance": "critical", "trace": "control_backward", "why": "Step counter selecting multiplier bit, gating accumulation and asserting rdy at 16."},
+    {"id": "E8", "name": "rdy", "role": "STATUS", "importance": "critical", "trace": "control_backward", "why": "Level completion flag set once ctr reaches 16, held until reset."},
+    {"id": "E7", "name": "multiplicand", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Sign-extended b, left-shifted each step and added into p."},
+    {"id": "E6", "name": "multiplier", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Sign-extended a; bit multiplier[ctr] gates each accumulate."},
+    {"id": "E3", "name": "a", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Operand captured into multiplier during reset."},
+    {"id": "E4", "name": "b", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Operand captured into multiplicand during reset."}
+  ],
+  "groups": [
+    {"name": "step_control", "kind": "COUNTER_TIMER", "anchor_ids": ["E9", "E8"], "member_ids": [], "description": "Step counter sequencing 16 iterations and raising rdy."},
+    {"name": "shift_add_datapath", "kind": "DATAPATH", "anchor_ids": ["E5", "E6", "E7", "E3", "E4"], "member_ids": [], "description": "Operand registers, shifting multiplicand and product accumulator."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "operands", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E3", "E4"]},
+    {"name": "product_out", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E5", "E8"]}
+  ]
+}

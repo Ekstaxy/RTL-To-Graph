@@ -1,0 +1,133 @@
+[
+ {
+  "module": "udp_ip_rx_64",
+  "instance": "udp_ip_rx_64",
+  "state": "state_reg",
+  "next": "state_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "STATE_IDLE",
+    "value": "3'b0"
+   },
+   {
+    "name": "STATE_READ_HEADER",
+    "value": "3'b1"
+   },
+   {
+    "name": "STATE_READ_PAYLOAD",
+    "value": "3'b10"
+   },
+   {
+    "name": "STATE_READ_PAYLOAD_LAST",
+    "value": "3'b11"
+   },
+   {
+    "name": "STATE_WAIT_LAST",
+    "value": "3'b100"
+   }
+  ],
+  "reset_state": "STATE_IDLE",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_READ_HEADER",
+    "cond": "s_ip_hdr_ready && s_ip_hdr_valid"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_IDLE",
+    "cond": "!(s_ip_hdr_ready && s_ip_hdr_valid)"
+   },
+   {
+    "src": "STATE_READ_HEADER",
+    "dst": "STATE_READ_HEADER",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid"
+   },
+   {
+    "src": "STATE_READ_HEADER",
+    "dst": "STATE_READ_PAYLOAD",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid"
+   },
+   {
+    "src": "STATE_READ_HEADER",
+    "dst": "STATE_IDLE",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && s_ip_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_READ_HEADER",
+    "dst": "STATE_READ_HEADER",
+    "cond": "!(s_ip_payload_axis_tready && s_ip_payload_axis_tvalid)"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD",
+    "dst": "STATE_IDLE",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && word_count_reg <= 8 && s_ip_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD",
+    "dst": "STATE_READ_PAYLOAD_LAST",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && word_count_reg <= 8 && !s_ip_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD",
+    "dst": "STATE_IDLE",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && !(word_count_reg <= 8) && s_ip_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD",
+    "dst": "STATE_READ_PAYLOAD",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && !(word_count_reg <= 8) && !s_ip_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD",
+    "dst": "STATE_READ_PAYLOAD",
+    "cond": "!(s_ip_payload_axis_tready && s_ip_payload_axis_tvalid)"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD_LAST",
+    "dst": "STATE_IDLE",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && s_ip_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD_LAST",
+    "dst": "STATE_READ_PAYLOAD_LAST",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && !s_ip_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD_LAST",
+    "dst": "STATE_READ_PAYLOAD_LAST",
+    "cond": "!(s_ip_payload_axis_tready && s_ip_payload_axis_tvalid)"
+   },
+   {
+    "src": "STATE_WAIT_LAST",
+    "dst": "STATE_IDLE",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && s_ip_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_WAIT_LAST",
+    "dst": "STATE_WAIT_LAST",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && !s_ip_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_WAIT_LAST",
+    "dst": "STATE_WAIT_LAST",
+    "cond": "!(s_ip_payload_axis_tready && s_ip_payload_axis_tvalid)"
+   }
+  ],
+  "outputs": [
+   {
+    "signal": "store_last_word",
+    "kind": "moore",
+    "port": false
+   }
+  ],
+  "warnings": [],
+  "semantic_check": "consistent-subset"
+ }
+]

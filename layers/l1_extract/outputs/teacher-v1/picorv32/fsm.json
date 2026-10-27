@@ -1,0 +1,299 @@
+[
+ {
+  "module": "picorv32",
+  "instance": "picorv32",
+  "state": "mem_state",
+  "next": null,
+  "style": "one-process",
+  "states": [
+   {
+    "name": "0",
+    "value": "0"
+   },
+   {
+    "name": "1",
+    "value": "1"
+   },
+   {
+    "name": "2",
+    "value": "2"
+   },
+   {
+    "name": "3",
+    "value": "3"
+   }
+  ],
+  "reset_state": "0",
+  "transitions": [
+   {
+    "src": "0",
+    "dst": "1",
+    "cond": "!(!resetn || trap) && ((mem_do_prefetch || mem_do_rinst) || mem_do_rdata)"
+   },
+   {
+    "src": "0",
+    "dst": "2",
+    "cond": "!(!resetn || trap) && mem_do_wdata"
+   },
+   {
+    "src": "1",
+    "dst": "0",
+    "cond": "!(!resetn || trap) && mem_xfer && (mem_do_rinst || mem_do_rdata)"
+   },
+   {
+    "src": "1",
+    "dst": "3",
+    "cond": "!(!resetn || trap) && mem_xfer && !(mem_do_rinst || mem_do_rdata)"
+   },
+   {
+    "src": "2",
+    "dst": "0",
+    "cond": "!(!resetn || trap) && mem_xfer"
+   },
+   {
+    "src": "3",
+    "dst": "0",
+    "cond": "!(!resetn || trap) && mem_do_rinst"
+   }
+  ],
+  "outputs": [
+   {
+    "signal": "mem_instr",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "mem_la_read",
+    "kind": "mealy",
+    "port": true
+   },
+   {
+    "signal": "mem_la_write",
+    "kind": "mealy",
+    "port": true
+   },
+   {
+    "signal": "mem_valid",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "mem_wstrb",
+    "kind": "moore",
+    "port": true
+   }
+  ],
+  "warnings": [],
+  "semantic_check": "consistent"
+ },
+ {
+  "module": "picorv32",
+  "instance": "picorv32",
+  "state": "cpu_state",
+  "next": null,
+  "style": "one-process",
+  "states": [
+   {
+    "name": "cpu_state_trap",
+    "value": "8'd128"
+   },
+   {
+    "name": "cpu_state_fetch",
+    "value": "8'd64"
+   },
+   {
+    "name": "cpu_state_ld_rs1",
+    "value": "8'd32"
+   },
+   {
+    "name": "cpu_state_ld_rs2",
+    "value": "8'd16"
+   },
+   {
+    "name": "cpu_state_exec",
+    "value": "8'd8"
+   },
+   {
+    "name": "cpu_state_shift",
+    "value": "8'd4"
+   },
+   {
+    "name": "cpu_state_stmem",
+    "value": "8'd2"
+   },
+   {
+    "name": "cpu_state_ldmem",
+    "value": "8'd1"
+   }
+  ],
+  "reset_state": "cpu_state_fetch",
+  "transitions": [
+   {
+    "src": "cpu_state_fetch",
+    "dst": "cpu_state_ld_rs1",
+    "cond": "decoder_trigger && !instr_jal"
+   },
+   {
+    "src": "cpu_state_ld_rs1",
+    "dst": "cpu_state_trap",
+    "cond": "instr_trap"
+   },
+   {
+    "src": "cpu_state_ld_rs1",
+    "dst": "cpu_state_fetch",
+    "cond": "is_rdcycle_rdcycleh_rdinstr_rdinstrh"
+   },
+   {
+    "src": "cpu_state_ld_rs1",
+    "dst": "cpu_state_exec",
+    "cond": "is_lui_auipc_jal"
+   },
+   {
+    "src": "cpu_state_ld_rs1",
+    "dst": "cpu_state_ldmem",
+    "cond": "is_lb_lh_lw_lbu_lhu && !instr_trap"
+   },
+   {
+    "src": "cpu_state_ld_rs1",
+    "dst": "cpu_state_shift",
+    "cond": "is_slli_srli_srai"
+   },
+   {
+    "src": "cpu_state_ld_rs1",
+    "dst": "cpu_state_exec",
+    "cond": "is_jalr_addi_slti_sltiu_xori_ori_andi"
+   },
+   {
+    "src": "cpu_state_ld_rs1",
+    "dst": "cpu_state_stmem",
+    "cond": "else && is_sb_sh_sw"
+   },
+   {
+    "src": "cpu_state_ld_rs1",
+    "dst": "cpu_state_shift",
+    "cond": "else && is_sll_srl_sra"
+   },
+   {
+    "src": "cpu_state_ld_rs1",
+    "dst": "cpu_state_exec",
+    "cond": "else"
+   },
+   {
+    "src": "cpu_state_ld_rs2",
+    "dst": "cpu_state_stmem",
+    "cond": "is_sb_sh_sw"
+   },
+   {
+    "src": "cpu_state_ld_rs2",
+    "dst": "cpu_state_shift",
+    "cond": "is_sll_srl_sra"
+   },
+   {
+    "src": "cpu_state_ld_rs2",
+    "dst": "cpu_state_exec",
+    "cond": "else"
+   },
+   {
+    "src": "cpu_state_exec",
+    "dst": "cpu_state_fetch",
+    "cond": "is_beq_bne_blt_bge_bltu_bgeu && mem_done"
+   },
+   {
+    "src": "cpu_state_exec",
+    "dst": "cpu_state_fetch",
+    "cond": "!is_beq_bne_blt_bge_bltu_bgeu"
+   },
+   {
+    "src": "cpu_state_shift",
+    "dst": "cpu_state_fetch",
+    "cond": "reg_sh == 0"
+   },
+   {
+    "src": "cpu_state_stmem",
+    "dst": "cpu_state_fetch",
+    "cond": "(!mem_do_prefetch || mem_done) && !mem_do_prefetch && mem_done"
+   },
+   {
+    "src": "cpu_state_ldmem",
+    "dst": "cpu_state_fetch",
+    "cond": "(!mem_do_prefetch || mem_done) && !mem_do_prefetch && mem_done"
+   },
+   {
+    "src": "*",
+    "dst": "cpu_state_trap",
+    "cond": "resetn && (mem_do_rdata || mem_do_wdata) && mem_wordsize == 0 && reg_op1[1:0] != 0"
+   },
+   {
+    "src": "*",
+    "dst": "cpu_state_trap",
+    "cond": "resetn && (mem_do_rdata || mem_do_wdata) && mem_wordsize == 1 && reg_op1[0] != 0"
+   },
+   {
+    "src": "*",
+    "dst": "cpu_state_trap",
+    "cond": "resetn && mem_do_rinst && (COMPRESSED_ISA ? reg_pc[0] : |reg_pc[1:0])"
+   }
+  ],
+  "outputs": [
+   {
+    "signal": "eoi",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "pcpi_valid",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "trace_data",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "trace_valid",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "trap",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "dbg_ascii_state",
+    "kind": "moore",
+    "port": false
+   }
+  ],
+  "warnings": [],
+  "semantic_check": "consistent-subset"
+ },
+ {
+  "module": "picorv32",
+  "instance": "picorv32",
+  "state": "irq_state",
+  "next": null,
+  "style": "one-process",
+  "states": [
+   {
+    "name": "0",
+    "value": "0"
+   }
+  ],
+  "reset_state": "0",
+  "transitions": [],
+  "outputs": [
+   {
+    "signal": "eoi",
+    "kind": "moore",
+    "port": true
+   }
+  ],
+  "warnings": [
+   "one-hot `case (1'b1)` style not extracted",
+   "no transitions extracted"
+  ],
+  "semantic_check": "consistent"
+ }
+]

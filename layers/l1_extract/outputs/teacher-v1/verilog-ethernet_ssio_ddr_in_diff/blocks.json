@@ -1,0 +1,610 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-ethernet_ssio_ddr_in_diff",
+ "tops": [
+  "ssio_ddr_in_diff"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "iddr": {
+   "source": "teacher",
+   "canonical_instance": "ssio_ddr_in_diff.ssio_ddr_in_inst.data_iddr_inst",
+   "file": "data/rtl/verilog-ethernet/rtl/iddr.v",
+   "lines": [
+    34,
+    162
+   ],
+   "summary": "Generic input DDR register: samples d on rising and falling clock edges into two registers, then re-registers both on the rising edge to output aligned q1/q2.",
+   "blocks": [
+    {
+     "name": "Edge capture",
+     "kind": "PIPELINE_STAGE",
+     "description": "Posedge and negedge capture registers for d.",
+     "anchors": [
+      {
+       "id": "E5",
+       "name": "genblk1.d_reg_1",
+       "role": "PIPELINE_REG",
+       "importance": "major",
+       "score": 52.8,
+       "struct_score": 43.7,
+       "trace": "data_backward",
+       "why": "Captures d on rising edge.",
+       "lines": [
+        137,
+        144,
+        152
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "genblk1.d_reg_2",
+       "role": "PIPELINE_REG",
+       "importance": "major",
+       "score": 52.8,
+       "struct_score": 43.7,
+       "trace": "data_backward",
+       "why": "Captures d on falling edge.",
+       "lines": [
+        138,
+        148,
+        153
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Output realign",
+     "kind": "PIPELINE_STAGE",
+     "description": "Re-registers both samples on rising edge for q1/q2.",
+     "anchors": [
+      {
+       "id": "E7",
+       "name": "genblk1.q_reg_1",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 25.6,
+       "struct_score": 46.4,
+       "trace": "data_backward",
+       "why": "Rising-edge realign register driving q1.",
+       "lines": [
+        140,
+        152,
+        156
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "genblk1.q_reg_2",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 25.6,
+       "struct_score": 46.4,
+       "trace": "data_backward",
+       "why": "Rising-edge realign register for falling-edge data driving q2.",
+       "lines": [
+        141,
+        153,
+        157
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "q1",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 94.0,
+       "struct_score": 84.9,
+       "trace": "data_backward",
+       "why": "Output of rising-edge sampled data.",
+       "lines": [
+        50,
+        156
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "q2",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 94.0,
+       "struct_score": 84.9,
+       "trace": "data_backward",
+       "why": "Output of falling-edge sampled data.",
+       "lines": [
+        51,
+        157
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E2",
+     "name": "d",
+     "role": "INTERFACE_DATA",
+     "importance": "critical",
+     "score": 94.5,
+     "struct_score": 86.1,
+     "trace": "interface",
+     "why": "DDR input sampled on both clock edges.",
+     "lines": [
+      48,
+      144,
+      148
+     ]
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "ddr_in",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E2",
+       "name": "d",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "sdr_out",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "q1",
+       "kind": "port_out"
+      },
+      {
+       "id": "E4",
+       "name": "q2",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "ssio_ddr_in": {
+   "source": "teacher",
+   "canonical_instance": "ssio_ddr_in_diff.ssio_ddr_in_inst",
+   "file": "data/rtl/verilog-ethernet/rtl/ssio_ddr_in.v",
+   "lines": [
+    34,
+    149
+   ],
+   "summary": "Source-synchronous DDR input: buffers the received clock via target-specific primitives and captures input_d on both edges with an iddr child into two SDR outputs.",
+   "blocks": [
+    {
+     "name": "clock_buffering",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Target-specific BUFG/BUFIO/BUFR or passthrough distribution of the input clock.",
+     "anchors": [
+      {
+       "id": "E1",
+       "name": "input_clk",
+       "role": "CLOCK_GEN",
+       "importance": "major",
+       "score": 63.5,
+       "struct_score": 78.7,
+       "trace": "forward",
+       "why": "Received forwarded clock buffered into clk_io and output_clk.",
+       "lines": [
+        50,
+        127,
+        130
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "output_clk",
+       "role": "CLOCK_GEN",
+       "importance": "major",
+       "score": 64.5,
+       "struct_score": 81.1,
+       "trace": "control_backward",
+       "why": "Buffered receive clock forwarded to downstream logic.",
+       "lines": [
+        54,
+        80,
+        131
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "clk_int",
+       "role": "CLOCK_GEN",
+       "importance": "minor",
+       "score": 24.6,
+       "struct_score": 42.9,
+       "trace": "control_backward",
+       "why": "Internal buffered clock feeding output_clk to logic.",
+       "lines": [
+        60,
+        130,
+        131
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E7",
+       "name": "clk_io",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "ddr_capture",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "iddr capturing input_d on both clock edges into q1/q2.",
+     "anchors": [
+      {
+       "id": "E2",
+       "name": "input_d",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 92.7,
+       "struct_score": 81.5,
+       "trace": "interface",
+       "why": "DDR input data sampled on both edges of the I/O clock by the iddr.",
+       "lines": [
+        52,
+        144
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "output_q1",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 93.4,
+       "struct_score": 83.4,
+       "trace": "data_backward",
+       "why": "Rising-edge captured data output from the iddr.",
+       "lines": [
+        56,
+        145
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "output_q2",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 93.4,
+       "struct_score": 83.4,
+       "trace": "data_backward",
+       "why": "Falling-edge captured data output from the iddr.",
+       "lines": [
+        57,
+        146
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "data_iddr_inst",
+       "module": "iddr"
+      }
+     ],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock",
+     "protocol": "CLOCK_RESET",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E1",
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "input_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "output_clk",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "ddr_in",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E2",
+       "name": "input_d",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "sdr_out",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "output_q1",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "output_q2",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "ssio_ddr_in_diff": {
+   "source": "teacher",
+   "canonical_instance": "ssio_ddr_in_diff",
+   "file": "data/rtl/verilog-ethernet/rtl/ssio_ddr_in_diff.v",
+   "lines": [
+    34,
+    120
+   ],
+   "summary": "Differential source-synchronous DDR input: target-specific differential buffers convert clock and data pairs to single-ended, then an ssio_ddr_in child captures data on both edges into two SDR outputs.",
+   "blocks": [
+    {
+     "name": "diff_input_buffers",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "IBUFDS/ALT_INBUF_DIFF or direct assigns converting differential clock and data to single-ended.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "input_d_p",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 90.9,
+       "struct_score": 77.0,
+       "trace": "interface",
+       "why": "Positive leg of differential DDR data input, buffered into input_d.",
+       "lines": [
+        53,
+        79,
+        101
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "input_d",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 19.5,
+       "struct_score": 22.2,
+       "trace": "data_backward",
+       "why": "Single-ended DDR data after differential buffer, fed to the DDR capture child.",
+       "lines": [
+        63,
+        81,
+        114
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "input_clk",
+       "role": "CLOCK_GEN",
+       "importance": "minor",
+       "score": 21.5,
+       "struct_score": 30.3,
+       "trace": "data_backward",
+       "why": "Single-ended received clock after differential buffer, fed to the child.",
+       "lines": [
+        62,
+        74,
+        113
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E1",
+       "name": "input_clk_p",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "input_clk_n",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "input_d_n",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "ddr_capture",
+     "kind": "SERIALIZER",
+     "description": "DDR input child buffers the clock and splits DDR data into two SDR words.",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "output_q1",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 91.8,
+       "struct_score": 79.2,
+       "trace": "data_backward",
+       "why": "SDR data captured on the first clock edge by the DDR input child.",
+       "lines": [
+        58,
+        116
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "output_q2",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 91.8,
+       "struct_score": 79.2,
+       "trace": "data_backward",
+       "why": "SDR data captured on the second clock edge by the DDR input child.",
+       "lines": [
+        59,
+        117
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "output_clk",
+       "role": "CLOCK_GEN",
+       "importance": "major",
+       "score": 59.7,
+       "struct_score": 68.6,
+       "trace": "data_backward",
+       "why": "Buffered received clock output from the child, clocking the captured data.",
+       "lines": [
+        56,
+        115
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "ssio_ddr_in_inst",
+       "module": "ssio_ddr_in"
+      }
+     ],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "diff_clock_in",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "input_clk_p",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "input_clk_n",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "diff_ddr_data_in",
+     "protocol": "STREAM",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "input_d_p",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "input_d_n",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "clock_out",
+     "protocol": "CLOCK_RESET",
+     "direction": "OUT",
+     "member_ids": [
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "output_clk",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "sdr_out",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "output_q1",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "output_q2",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

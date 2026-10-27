@@ -1,0 +1,866 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-ethernet_axis_baser_rx_64",
+ "tops": [
+  "axis_baser_rx_64"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "lfsr": {
+   "source": "heuristic",
+   "canonical_instance": "axis_baser_rx_64.eth_crc",
+   "file": "data/rtl/verilog-ethernet/rtl/lfsr.v",
+   "lines": [
+    34,
+    445
+   ],
+   "summary": "lfsr (heuristic)",
+   "blocks": [],
+   "ungrouped_anchors": [
+    {
+     "id": "E1",
+     "name": "data_in",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 43.1,
+     "struct_score": 97.8,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    },
+    {
+     "id": "E2",
+     "name": "state_in",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 42.8,
+     "struct_score": 97.0,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    },
+    {
+     "id": "E3",
+     "name": "data_out",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 43.6,
+     "struct_score": 99.1,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    },
+    {
+     "id": "E4",
+     "name": "state_out",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 43.1,
+     "struct_score": 97.7,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "data",
+     "protocol": "SIMPLE",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E1",
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "data_in",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "data_out",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "state",
+     "protocol": "SIMPLE",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E2",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E2",
+       "name": "state_in",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "state_out",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "axis_baser_rx_64": {
+   "source": "teacher",
+   "canonical_instance": "axis_baser_rx_64",
+   "file": "data/rtl/verilog-ethernet/rtl/axis_baser_rx_64.v",
+   "lines": [
+    34,
+    558
+   ],
+   "summary": "10GBASE-R 64b/66b block decoder to AXI-Stream: classifies blocks into types, realigns lane-swapped starts, pipelines two stages, and a 3-state FSM frames packets with LFSR CRC check.",
+   "blocks": [
+    {
+     "name": "Frame FSM",
+     "kind": "CONTROLLER",
+     "description": "IDLE/PAYLOAD/LAST controller producing stream framing and error flags",
+     "anchors": [
+      {
+       "id": "E16",
+       "name": "state_reg",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.0,
+       "struct_score": 97.5,
+       "trace": "control_backward",
+       "why": "IDLE/PAYLOAD/LAST frame FSM driving tvalid, tkeep, tlast, CRC reset and errors",
+       "lines": [
+        166,
+        286,
+        387
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E17",
+       "name": "state_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E18",
+       "name": "reset_crc",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Block decoder and lane alignment",
+     "kind": "DECODER",
+     "description": "Classifies 64b/66b block types and realigns lane-4 starts",
+     "anchors": [
+      {
+       "id": "E26",
+       "name": "input_type_d0",
+       "role": "DECODE",
+       "importance": "major",
+       "score": 53.3,
+       "struct_score": 45.4,
+       "trace": "data_backward",
+       "why": "Decoded block type (data/start/term/error) steering FSM transitions and tkeep",
+       "lines": [
+        182,
+        316,
+        446
+       ]
+      },
+      {
+       "id": "E19",
+       "name": "lanes_swapped",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 48.2,
+       "struct_score": 25.2,
+       "trace": "control_backward",
+       "why": "Start on lane 4 detected; selects swapped data assembly and type remap",
+       "lines": [
+        171,
+        417,
+        426
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "encoded_rx_data_masked",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 22.2,
+       "struct_score": 33.5,
+       "trace": "data_backward",
+       "why": "Input data with control bytes zeroed before staging",
+       "lines": [
+        177,
+        252,
+        415
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "swap_data",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 20.1,
+       "struct_score": 24.6,
+       "trace": "data_backward",
+       "why": "Upper half of previous block used to realign swapped lanes",
+       "lines": [
+        172,
+        402,
+        425
+       ]
+      },
+      {
+       "id": "E21",
+       "name": "delay_type_valid",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 19.7,
+       "struct_score": 23.1,
+       "trace": "control_backward",
+       "why": "Selects delayed block type when lanes swapped; triggers start_packet",
+       "lines": [
+        174,
+        420,
+        507
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "delay_type",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 21.4,
+       "struct_score": 30.1,
+       "trace": "data_backward",
+       "why": "Remapped block type for half-block-shifted lane alignment",
+       "lines": [
+        175,
+        489,
+        507
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "encoded_rx_hdr",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 59.6,
+       "struct_score": 68.1,
+       "trace": "interface",
+       "why": "2-bit sync header distinguishing data vs control blocks",
+       "lines": [
+        52,
+        251,
+        412
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Input pipeline",
+     "kind": "PIPELINE_STAGE",
+     "description": "Two-stage data/type delay line feeding output and CRC",
+     "anchors": [
+      {
+       "id": "E24",
+       "name": "input_data_d0",
+       "role": "PIPELINE_REG",
+       "importance": "major",
+       "score": 55.4,
+       "struct_score": 53.0,
+       "trace": "data_backward",
+       "why": "First pipeline stage of aligned payload; fed to CRC LFSR",
+       "lines": [
+        179,
+        240,
+        415
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "input_data_d1",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 23.6,
+       "struct_score": 38.9,
+       "trace": "data_backward",
+       "why": "Second-stage payload feeding m_axis_tdata_next",
+       "lines": [
+        180,
+        276,
+        525
+       ]
+      },
+      {
+       "id": "E27",
+       "name": "input_type_d1",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 21.3,
+       "struct_score": 29.6,
+       "trace": "data_backward",
+       "why": "Second-stage block type used for start detect and LAST tkeep",
+       "lines": [
+        183,
+        291,
+        524
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "CRC checker",
+     "kind": "DATAPATH",
+     "description": "LFSR-based CRC32 accumulation with residue match per terminate offset",
+     "anchors": [
+      {
+       "id": "E47",
+       "name": "crc_state",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 48.7,
+       "struct_score": 27.1,
+       "trace": "data_backward",
+       "why": "Running Ethernet CRC32 state, reset by FSM, updated from LFSR",
+       "lines": [
+        200,
+        241,
+        530
+       ]
+      },
+      {
+       "id": "E49",
+       "name": "crc_valid",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 20.1,
+       "struct_score": 24.6,
+       "trace": "data_backward",
+       "why": "Per-byte-offset CRC residue match flags checked at terminate",
+       "lines": [
+        204,
+        207,
+        331
+       ]
+      },
+      {
+       "id": "E50",
+       "name": "crc_valid_save",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 20.5,
+       "struct_score": 26.6,
+       "trace": "data_backward",
+       "why": "Delayed CRC match flags used for late terminates",
+       "lines": [
+        205,
+        330,
+        533
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "eth_crc",
+       "module": "lfsr"
+      }
+     ],
+     "members": [
+      {
+       "id": "E48",
+       "name": "crc_next",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "AXI-Stream output",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Registered tdata/tkeep/tvalid/tlast/tuser outputs",
+     "anchors": [
+      {
+       "id": "E5",
+       "name": "m_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 93.4,
+       "struct_score": 83.2,
+       "trace": "interface",
+       "why": "AXI-Stream output data from m_axis_tdata_reg",
+       "lines": [
+        57,
+        219
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "m_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 87.2,
+       "struct_score": 66.8,
+       "trace": "control_backward",
+       "why": "AXI-Stream valid asserted in PAYLOAD/LAST states",
+       "lines": [
+        59,
+        221
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "m_axis_tlast",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 54.5,
+       "struct_score": 49.7,
+       "trace": "control_backward",
+       "why": "End-of-frame marker set on terminate or error",
+       "lines": [
+        60,
+        222
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "m_axis_tkeep",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 59.5,
+       "struct_score": 67.9,
+       "trace": "control_backward",
+       "why": "Byte-valid mask derived from terminate block type",
+       "lines": [
+        58,
+        220
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "m_axis_tuser",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 26.5,
+       "struct_score": 49.7,
+       "trace": "control_backward",
+       "why": "User sideband: bad-frame bit plus optional PTP timestamp",
+       "lines": [
+        61,
+        223
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E28",
+       "name": "m_axis_tdata_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E29",
+       "name": "m_axis_tdata_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E30",
+       "name": "m_axis_tkeep_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E31",
+       "name": "m_axis_tkeep_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E32",
+       "name": "m_axis_tvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E33",
+       "name": "m_axis_tvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E34",
+       "name": "m_axis_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E35",
+       "name": "m_axis_tlast_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E36",
+       "name": "m_axis_tuser_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E37",
+       "name": "m_axis_tuser_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Status flags",
+     "kind": "OTHER",
+     "description": "Registered start, bad frame, bad FCS and bad block pulses",
+     "anchors": [
+      {
+       "id": "E13",
+       "name": "error_bad_frame",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 46.2,
+       "struct_score": 17.1,
+       "trace": "control_backward",
+       "why": "Pulse reporting bad frame (CRC fail or control char in payload)",
+       "lines": [
+        77,
+        226
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "error_bad_fcs",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 18.2,
+       "struct_score": 17.1,
+       "trace": "control_backward",
+       "why": "Pulse reporting CRC/FCS mismatch",
+       "lines": [
+        78,
+        227
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "start_packet",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 18.9,
+       "struct_score": 19.8,
+       "trace": "control_backward",
+       "why": "Start-of-packet pulse indicating lane 0 or lane 4 start",
+       "lines": [
+        76,
+        225
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "rx_bad_block",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 18.2,
+       "struct_score": 17.1,
+       "trace": "control_backward",
+       "why": "Pulse on invalid block header or block type",
+       "lines": [
+        79,
+        228
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E38",
+       "name": "start_packet_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E39",
+       "name": "error_bad_frame_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E40",
+       "name": "error_bad_frame_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E41",
+       "name": "error_bad_fcs_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E42",
+       "name": "error_bad_fcs_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E43",
+       "name": "rx_bad_block_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "PTP timestamp",
+     "kind": "DATAPATH",
+     "description": "Captures and adjusts start-of-packet timestamp for tuser",
+     "anchors": [
+      {
+       "id": "E44",
+       "name": "ptp_ts_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 27.7,
+       "struct_score": 54.0,
+       "trace": "data_backward",
+       "why": "Captured PTP timestamp at packet start for tuser",
+       "lines": [
+        196,
+        510,
+        520
+       ]
+      },
+      {
+       "id": "E52",
+       "name": "ts_inc_reg",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 19.4,
+       "struct_score": 22.0,
+       "trace": "data_backward",
+       "why": "Timestamp increment per cycle used for half-cycle start correction",
+       "lines": [
+        217,
+        510,
+        536
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "ptp_ts",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 40.3,
+       "struct_score": 90.6,
+       "trace": "interface",
+       "why": "Incoming PTP time captured into ptp_ts_reg",
+       "lines": [
+        66,
+        520
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E45",
+       "name": "ptp_ts_adj_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E46",
+       "name": "ptp_ts_borrow_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E51",
+       "name": "last_ts_reg",
+       "kind": "reg"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E3",
+     "name": "encoded_rx_data",
+     "role": "INTERFACE_DATA",
+     "importance": "critical",
+     "score": 95.6,
+     "struct_score": 88.9,
+     "trace": "interface",
+     "why": "64-bit encoded block payload; decoded for block type and masked into datapath",
+     "lines": [
+      51,
+      252,
+      412
+     ]
+    },
+    {
+     "id": "E11",
+     "name": "cfg_rx_enable",
+     "role": "ENABLE",
+     "importance": "minor",
+     "score": 20.2,
+     "struct_score": 25.4,
+     "trace": "interface",
+     "why": "Enables packet start acceptance in IDLE state",
+     "lines": [
+      71,
+      291
+     ]
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "Clock and reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "BASE-R encoded input",
+     "protocol": "STREAM",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "encoded_rx_data",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "encoded_rx_hdr",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "AXI-Stream output",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "m_axis_tdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "m_axis_tkeep",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "m_axis_tvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E8",
+       "name": "m_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "m_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "PTP time",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E10",
+       "name": "ptp_ts",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Configuration",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E11"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "cfg_rx_enable",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E12",
+      "E13",
+      "E14",
+      "E15"
+     ],
+     "members": [
+      {
+       "id": "E12",
+       "name": "start_packet",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "error_bad_frame",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "error_bad_fcs",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "rx_bad_block",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

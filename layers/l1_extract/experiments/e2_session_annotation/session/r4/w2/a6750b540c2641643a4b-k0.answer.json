@@ -1,0 +1,37 @@
+{
+ "module_summary": "AXI-Stream N:1 switch: each input stream passes through a skid buffer, an AXI-lite programmed index selects which one is muxed to a registered output, switching only between packets.",
+ "anchors": [
+  {"id": "E40", "name": "r_index", "role": "CONFIG_REG", "importance": "critical", "trace": "data_backward", "why": "AXI-lite written register holding requested input stream index; read back over RDATA.", "lines": [240, 252, 343]},
+  {"id": "E43", "name": "switch_index", "role": "MUX_SELECT", "importance": "critical", "trace": "control_backward", "why": "Active stream select, updated from r_index only between packets; muxes skid data to output.", "lines": [343, 367, 368]},
+  {"id": "E26", "name": "M_AXIS_TVALID", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Registered output stream valid from selected skid buffer valid.", "lines": [353]},
+  {"id": "E28", "name": "M_AXIS_TDATA", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Registered output data muxed from skd_data by switch_index.", "lines": [367]},
+  {"id": "E27", "name": "M_AXIS_TREADY", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Downstream ready; stalls output registers and blocks skid buffer reads.", "lines": [313, 352]},
+  {"id": "E29", "name": "M_AXIS_TLAST", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Output packet-end marker; drives mid_packet tracking.", "lines": [368, 327, 331]},
+  {"id": "E22", "name": "S_AXIS_TVALID", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Per-stream input valid vector feeding the per-stream skid buffers.", "lines": [296]},
+  {"id": "E24", "name": "S_AXIS_TDATA", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Concatenated input stream data sliced into per-stream skid buffers.", "lines": [297]},
+  {"id": "E42", "name": "skd_switch_ready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "One-hot ready to skid buffers; only selected stream drains, blocked on stall or pending switch.", "lines": [312, 314, 299]},
+  {"id": "E47", "name": "mid_packet", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Indicates a packet is in progress; prevents switch_index change until TLAST.", "lines": [315, 331, 342]},
+  {"id": "E31", "name": "axil_write_ready", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "AXI-lite write accept: loads r_index and raises BVALID.", "lines": [168, 175, 239]},
+  {"id": "E45", "name": "skd_valid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "data_backward", "why": "Per-stream skid buffer output valids, gated by skd_switch_ready into M_AXIS_TVALID.", "lines": [299, 353]},
+  {"id": "E44", "name": "skd_data", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Per-stream skid buffer output data array, mux inputs for M_AXIS_TDATA.", "lines": [300, 367]},
+  {"id": "E36", "name": "axil_read_ready", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "AXI-lite read accept: sets read valid for r_index readback.", "lines": [201, 208]},
+  {"id": "E11", "name": "S_AXI_BVALID", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "AXI-lite write response valid copied from axil_bvalid.", "lines": [180, 169]},
+  {"id": "E18", "name": "S_AXI_RVALID", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "AXI-lite read data valid copied from axil_read_valid.", "lines": [213, 249]},
+  {"id": "E38", "name": "axil_read_data", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Read data register holding r_index for AXI-lite readback.", "lines": [252, 214]},
+  {"id": "E41", "name": "wskd_index", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Byte-strobe merged write data used to update r_index.", "lines": [230, 240]},
+  {"id": "E9", "name": "S_AXI_WDATA", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "AXI-lite write data carrying the new stream index.", "lines": [164]}
+ ],
+ "groups": [
+  {"name": "AXI-lite control registers", "kind": "REGISTER_BANK", "anchor_ids": ["E40", "E31", "E36", "E11", "E18", "E38", "E41", "E9"], "member_ids": ["I1", "I2", "I3", "E35", "E39", "E49", "E50", "E51", "E33", "E34", "E20", "E32", "E37"], "description": "Skid-buffered AXI-lite slave writing and reading back the requested stream index r_index."},
+  {"name": "Input stream skid buffers", "kind": "BUFFER", "anchor_ids": ["E22", "E24", "E45", "E44"], "member_ids": ["I4", "E23", "E25", "E46"], "description": "One skid buffer per input stream holding data until selected by the switch."},
+  {"name": "Switch control", "kind": "CONTROLLER", "anchor_ids": ["E43", "E47", "E42"], "member_ids": ["E48"], "description": "Tracks packet boundaries and updates switch_index; generates one-hot ready for selected stream."},
+  {"name": "Output stream register", "kind": "DATAPATH", "anchor_ids": ["E26", "E28", "E29", "E27"], "member_ids": [], "description": "Registered output mux of selected stream data, last and valid with backpressure."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "axil_write", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12", "E13"]},
+  {"name": "axil_read", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E14", "E15", "E16", "E17", "E18", "E19", "E20", "E21"]},
+  {"name": "s_axis_inputs", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E22", "E23", "E24", "E25"]},
+  {"name": "m_axis_output", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E26", "E27", "E28", "E29"]}
+ ]
+}

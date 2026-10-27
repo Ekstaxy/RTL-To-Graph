@@ -1,0 +1,32 @@
+{
+ "module_summary": "Two-entry spill register (A slice + B spill) decoupling valid/ready handshakes, with flush draining both entries and output muxed from B first.",
+ "anchors": [
+  {"id": "E4", "name": "valid_i", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Upstream valid; with ready_o fills register A.", "lines": [27, 60]},
+  {"id": "E6", "name": "ready_o", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Upstream ready, high while A or B register is empty.", "lines": [30, 72]},
+  {"id": "E7", "name": "data_i", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Input payload captured into register A.", "lines": [31, 47]},
+  {"id": "E8", "name": "valid_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Downstream valid, asserted when either register is full.", "lines": [32, 75]},
+  {"id": "E9", "name": "ready_i", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Downstream ready; drains B or prevents B fill.", "lines": [33, 66, 67]},
+  {"id": "E10", "name": "data_o", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Output payload muxed from B register if full, else A.", "lines": [34, 78]},
+  {"id": "E5", "name": "flush_i", "role": "COMMAND", "importance": "major", "trace": "forward", "why": "Flush request draining both registers and blocking fills.", "lines": [28, 61, 67]},
+  {"id": "E11", "name": "gen_spill_reg.a_data_q", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "Register A data slice loaded from data_i on a_fill.", "lines": [43, 47, 55]},
+  {"id": "E12", "name": "gen_spill_reg.a_full_q", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "A-register occupancy flag; gates ready_o, valid_o, a_drain.", "lines": [44, 48, 61]},
+  {"id": "E15", "name": "gen_spill_reg.b_data_q", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "Spill register B data, loaded from A when downstream stalls.", "lines": [51, 55, 78]},
+  {"id": "E16", "name": "gen_spill_reg.b_full_q", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "B occupancy flag; selects data_o source, gates ready_o and a_drain.", "lines": [52, 56, 78]},
+  {"id": "E13", "name": "gen_spill_reg.a_fill", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Load enable for A data and full flag.", "lines": [47, 60]},
+  {"id": "E14", "name": "gen_spill_reg.a_drain", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Clears A full flag and triggers B fill.", "lines": [61, 66]},
+  {"id": "E17", "name": "gen_spill_reg.b_fill", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Load enable moving A data into B register.", "lines": [55, 66]},
+  {"id": "E18", "name": "gen_spill_reg.b_drain", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Clears B full flag when consumed or flushed.", "lines": [56, 67]}
+ ],
+ "groups": [
+  {"name": "A slice register", "kind": "BUFFER", "anchor_ids": ["E11", "E12", "E13", "E14"], "member_ids": [], "description": "First stage holding register with full flag and fill/drain controls."},
+  {"name": "B spill register", "kind": "BUFFER", "anchor_ids": ["E15", "E16", "E17", "E18"], "member_ids": [], "description": "Spill entry absorbing data when downstream not ready."},
+  {"name": "Handshake control", "kind": "CONTROLLER", "anchor_ids": ["E6", "E8", "E5"], "member_ids": ["E4", "E9"], "description": "Derives ready/valid from occupancy flags; flush drains entries."},
+  {"name": "Output mux", "kind": "DATAPATH", "anchor_ids": ["E10"], "member_ids": ["E7"], "description": "Selects B data when B full, else A data."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2", "E3"]},
+  {"name": "upstream", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E4", "E6", "E7"]},
+  {"name": "downstream", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E8", "E9", "E10"]},
+  {"name": "flush", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E5"]}
+ ]
+}

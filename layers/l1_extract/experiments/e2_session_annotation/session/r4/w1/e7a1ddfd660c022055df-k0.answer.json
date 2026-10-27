@@ -1,0 +1,35 @@
+{
+ "module_summary": "Asynchronous dual-clock FIFO: memory array addressed by binary write/read pointers, Gray-coded pointers crossed via NFF synchronizers to generate full and empty flags, with optional registered read output.",
+ "anchors": [
+  {"id": "E11", "name": "mem", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "FIFO data array written from i_wr_data at wr_addr, read at rd_addr", "lines": [98, 151, 172]},
+  {"id": "E13", "name": "wr_addr", "role": "FIFO_PTR", "importance": "critical", "trace": "control_backward", "why": "Binary write pointer, increments on accepted write, addresses memory write", "lines": [138, 142, 151]},
+  {"id": "E12", "name": "rd_addr", "role": "FIFO_PTR", "importance": "critical", "trace": "control_backward", "why": "Binary read pointer, increments on local read, addresses memory read", "lines": [160, 164, 172]},
+  {"id": "E19", "name": "wgray", "role": "FIFO_PTR", "importance": "major", "trace": "forward", "why": "Gray-coded write pointer sent to read clock domain synchronizer", "lines": [143, 198, 211]},
+  {"id": "E18", "name": "rgray", "role": "FIFO_PTR", "importance": "major", "trace": "forward", "why": "Gray-coded read pointer sent to write clock domain; compared for empty", "lines": [165, 189, 214]},
+  {"id": "E15", "name": "wr_rgray", "role": "FIFO_PTR", "importance": "major", "trace": "data_backward", "why": "Read Gray pointer synchronized into write domain, compared for full flag", "lines": [187, 189, 211]},
+  {"id": "E14", "name": "rd_wgray", "role": "FIFO_PTR", "importance": "major", "trace": "data_backward", "why": "Write Gray pointer synchronized into read domain, compared for empty flag", "lines": [196, 198, 214]},
+  {"id": "E21", "name": "wgray_cross", "role": "PIPELINE_REG", "importance": "minor", "trace": "data_backward", "why": "Intermediate synchronizer flops carrying wgray into read clock domain", "lines": [196, 198]},
+  {"id": "E20", "name": "rgray_cross", "role": "PIPELINE_REG", "importance": "minor", "trace": "data_backward", "why": "Intermediate synchronizer flops carrying rgray into write clock domain", "lines": [187, 189]},
+  {"id": "E5", "name": "o_wr_full", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Full flag back-pressures writer; blocks pointer increment and memory write", "lines": [140, 150, 211]},
+  {"id": "E10", "name": "o_rd_empty", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Empty flag to reader, registered from lcl_rd_empty; inverse of read data valid", "lines": [222, 226, 228]},
+  {"id": "E3", "name": "i_wr", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Write request; with !o_wr_full enables memory write and pointer advance", "lines": [140, 150]},
+  {"id": "E4", "name": "i_wr_data", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Incoming write data stored into mem", "lines": [79, 151]},
+  {"id": "E8", "name": "i_rd", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Reader acknowledge/pop that drives lcl_read", "lines": [222, 237]},
+  {"id": "E9", "name": "o_rd_data", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Read data output, registered from memory read on lcl_read", "lines": [84, 232, 243]},
+  {"id": "E24", "name": "lcl_read", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Local read enable advancing rd_addr and loading output registers", "lines": [162, 222, 231]},
+  {"id": "E25", "name": "lcl_rd_empty", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Combinational empty compare gating read pointer advance", "lines": [162, 214, 228]},
+  {"id": "E23", "name": "lcl_rd_data", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Asynchronous memory read value feeding o_rd_data", "lines": [172, 232]}
+ ],
+ "groups": [
+  {"name": "FIFO memory", "kind": "MEMORY", "anchor_ids": ["E11", "E23"], "member_ids": [], "description": "Dual-clock storage array written in write domain, read in read domain"},
+  {"name": "Write pointer and full logic", "kind": "CONTROLLER", "anchor_ids": ["E13", "E19", "E5"], "member_ids": ["E17", "E22"], "description": "Write-domain binary/Gray pointer and full comparison against synchronized read pointer"},
+  {"name": "Read pointer and empty logic", "kind": "CONTROLLER", "anchor_ids": ["E12", "E18", "E25", "E24", "E10", "E9"], "member_ids": ["E16"], "description": "Read-domain pointer, empty compare and registered read output stage"},
+  {"name": "Clock domain crossing synchronizers", "kind": "PIPELINE_STAGE", "anchor_ids": ["E15", "E14", "E21", "E20"], "member_ids": [], "description": "NFF-stage synchronizers crossing Gray pointers between write and read clocks"}
+ ],
+ "interfaces": [
+  {"name": "write_clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "read_clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E6", "E7"]},
+  {"name": "write_port", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5"]},
+  {"name": "read_port", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E8", "E9", "E10"]}
+ ]
+}

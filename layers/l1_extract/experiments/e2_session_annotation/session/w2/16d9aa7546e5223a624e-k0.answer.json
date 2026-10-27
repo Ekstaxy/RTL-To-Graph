@@ -1,0 +1,27 @@
+{
+ "module_summary": "Sequential 16x16 shift-and-add multiplier: a 3-state FSM loads operands, accumulates shifted multiplicand over 16 cycles, then pulses done.",
+ "anchors": [
+  {"id": "E8", "name": "m", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Idle/Run/Finish state register sequencing operand load, 16 accumulate cycles and done pulse."},
+  {"id": "E3", "name": "s", "role": "COMMAND", "importance": "critical", "trace": "forward", "why": "Start input; in idle it loads operands and launches the multiply."},
+  {"id": "E10", "name": "acc", "role": "HOLDING_REG", "importance": "critical", "trace": "data_backward", "why": "Partial-product accumulator held across the 16-cycle operation; drives product output p."},
+  {"id": "E13", "name": "d", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "One-cycle done pulse in Finish state signalling product p is valid."},
+  {"id": "E15", "name": "t", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Adder result acc+x when multiplier LSB is set, next accumulator value."},
+  {"id": "E9", "name": "x", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Multiplicand latched from a, shifted left each run cycle."},
+  {"id": "E11", "name": "y", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Multiplier latched from b, shifted right; LSB gates the add."},
+  {"id": "E12", "name": "k", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Iteration counter of run cycles; reaching 16 ends the multiply."},
+  {"id": "E4", "name": "a", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Multiplicand operand input loaded into x on start."},
+  {"id": "E5", "name": "b", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Multiplier operand input loaded into y on start."},
+  {"id": "E6", "name": "bz", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Busy level decoded from FSM being in Run state."},
+  {"id": "E14", "name": "z", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Terminal-count flag k==16 moving FSM from Run to Finish."}
+ ],
+ "groups": [
+  {"name": "Multiply controller", "kind": "CONTROLLER", "anchor_ids": ["E8", "E3", "E13", "E6", "E14"], "member_ids": [], "description": "FSM sequencing load, iterate and done pulse; outputs busy and done."},
+  {"name": "Shift-add datapath", "kind": "DATAPATH", "anchor_ids": ["E10", "E15", "E9", "E11", "E4", "E5"], "member_ids": ["E7"], "description": "Shifting multiplicand/multiplier registers and conditional adder into accumulator driving p."},
+  {"name": "Iteration counter", "kind": "COUNTER_TIMER", "anchor_ids": ["E12"], "member_ids": ["E14"], "description": "Counts 16 run cycles for the FSM."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "operand_in", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E3", "E4", "E5"]},
+  {"name": "result_out", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E7", "E13", "E6"]}
+ ]
+}

@@ -1,0 +1,262 @@
+{
+  "module_summary": "Round-robin arbiter tree: binary tree of 2:1 select nodes steered by a fair round-robin priority register picks one request, forwarding its data/index and routing grant back.",
+  "anchors": [
+    {
+      "id": "E5",
+      "name": "req_i",
+      "role": "HANDSHAKE_VALID",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Per-input request vector arbitrated by the tree.",
+      "lines": [
+        98,
+        168
+      ]
+    },
+    {
+      "id": "E6",
+      "name": "gnt_o",
+      "role": "ARBITRATION",
+      "importance": "critical",
+      "trace": "control_backward",
+      "why": "One-hot grant vector back to the winning input.",
+      "lines": [
+        100,
+        237,
+        238
+      ]
+    },
+    {
+      "id": "E7",
+      "name": "data_i",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Per-input payloads muxed through the tree.",
+      "lines": [
+        102,
+        236
+      ]
+    },
+    {
+      "id": "E8",
+      "name": "req_o",
+      "role": "HANDSHAKE_VALID",
+      "importance": "critical",
+      "trace": "control_backward",
+      "why": "Output request from tree root, any input requesting.",
+      "lines": [
+        104,
+        135
+      ]
+    },
+    {
+      "id": "E9",
+      "name": "gnt_i",
+      "role": "HANDSHAKE_READY",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Downstream grant; propagated down tree, advances round-robin.",
+      "lines": [
+        106,
+        205,
+        215
+      ]
+    },
+    {
+      "id": "E10",
+      "name": "data_o",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "data_backward",
+      "why": "Arbitrated payload from tree root.",
+      "lines": [
+        108,
+        136
+      ]
+    },
+    {
+      "id": "E11",
+      "name": "idx_o",
+      "role": "INTERFACE_ADDR",
+      "importance": "major",
+      "trace": "data_backward",
+      "why": "Index of winning input from root index node.",
+      "lines": [
+        110,
+        137
+      ]
+    },
+    {
+      "id": "E16",
+      "name": "gen_arbiter.rr_q",
+      "role": "ARBITRATION",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Round-robin priority register; its bits steer each tree level select.",
+      "lines": [
+        131,
+        212,
+        233
+      ]
+    },
+    {
+      "id": "E26",
+      "name": "gen_arbiter.gen_levels[*].gen_level[*].sel",
+      "role": "MUX_SELECT",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Per-node select choosing data, index and grant direction.",
+      "lines": [
+        221,
+        233,
+        236
+      ]
+    },
+    {
+      "id": "E23",
+      "name": "gen_arbiter.gen_int_rr.gen_fair_arb.next_idx",
+      "role": "ARBITRATION",
+      "importance": "minor",
+      "trace": "control_backward",
+      "why": "Fair next priority from masked trailing-zero counts.",
+      "lines": [
+        173,
+        204,
+        205
+      ]
+    },
+    {
+      "id": "E13",
+      "name": "gen_arbiter.data_nodes",
+      "role": "DATAPATH_MAJOR",
+      "importance": "minor",
+      "trace": "data_backward",
+      "why": "Data mux tree nodes; root drives data_o.",
+      "lines": [
+        125,
+        265,
+        136
+      ]
+    },
+    {
+      "id": "E14",
+      "name": "gen_arbiter.gnt_nodes",
+      "role": "ARBITRATION",
+      "importance": "minor",
+      "trace": "control_backward",
+      "why": "Grant propagation nodes from root down to inputs.",
+      "lines": [
+        126,
+        266,
+        267
+      ]
+    },
+    {
+      "id": "E15",
+      "name": "gen_arbiter.req_nodes",
+      "role": "HANDSHAKE_VALID",
+      "importance": "minor",
+      "trace": "control_backward",
+      "why": "OR-reduced request nodes; root drives req_o.",
+      "lines": [
+        127,
+        256,
+        135
+      ]
+    },
+    {
+      "id": "E12",
+      "name": "gen_arbiter.index_nodes",
+      "role": "INDEX",
+      "importance": "minor",
+      "trace": "data_backward",
+      "why": "Winning-index nodes assembled per level; root drives idx_o.",
+      "lines": [
+        124,
+        261,
+        137
+      ]
+    }
+  ],
+  "groups": [
+    {
+      "name": "Round-robin priority",
+      "kind": "ARBITER",
+      "anchor_ids": [
+        "E16",
+        "E23"
+      ],
+      "member_ids": [
+        "E19",
+        "E18",
+        "E20",
+        "E21",
+        "E22",
+        "E24",
+        "E25",
+        "E17",
+        "E4"
+      ],
+      "description": "Fair priority update via masked LZCs, stored in rr_q on accepted grant."
+    },
+    {
+      "name": "Arbiter tree",
+      "kind": "ARBITER",
+      "anchor_ids": [
+        "E26",
+        "E13",
+        "E14",
+        "E15",
+        "E12",
+        "E6",
+        "E8",
+        "E10",
+        "E11"
+      ],
+      "member_ids": [],
+      "description": "Binary 2:1 node tree forwarding request, data, index and back-routing grants."
+    }
+  ],
+  "interfaces": [
+    {
+      "name": "clock_reset",
+      "protocol": "CLOCK_RESET",
+      "direction": "IN",
+      "member_ids": [
+        "E1",
+        "E2",
+        "E3"
+      ]
+    },
+    {
+      "name": "external_priority",
+      "protocol": "SIMPLE",
+      "direction": "IN",
+      "member_ids": [
+        "E4"
+      ]
+    },
+    {
+      "name": "input_requests",
+      "protocol": "REQ_ACK",
+      "direction": "IN",
+      "member_ids": [
+        "E5",
+        "E6",
+        "E7"
+      ]
+    },
+    {
+      "name": "output_request",
+      "protocol": "REQ_ACK",
+      "direction": "OUT",
+      "member_ids": [
+        "E8",
+        "E9",
+        "E10",
+        "E11"
+      ]
+    }
+  ]
+}

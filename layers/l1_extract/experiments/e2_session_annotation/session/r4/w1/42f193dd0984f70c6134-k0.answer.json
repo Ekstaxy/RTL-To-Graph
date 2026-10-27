@@ -1,0 +1,22 @@
+{
+ "module_summary": "Stream fork replicating one valid/ready input to NumOup outputs, using an input READY/WAIT FSM and per-output FSMs so the input handshakes only after every output has handshaked.",
+ "anchors": [
+  {"id": "E11", "name": "inp_state_q", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Input FSM waiting until all outputs handshake before ready_o", "lines": [38, 45, 75]},
+  {"id": "E13", "name": "gen_oup_state[*].oup_state_q", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Per-output FSM remembering completed output handshake", "lines": [79, 86, 110]},
+  {"id": "E4", "name": "valid_i", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Input valid broadcast to all output valids", "lines": [28, 47, 88]},
+  {"id": "E5", "name": "ready_o", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Input ready asserted when all outputs have handshaked", "lines": [29, 50, 62]},
+  {"id": "E6", "name": "valid_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Per-output valid vector, dropped after that output handshaked", "lines": [30, 48, 89]},
+  {"id": "E7", "name": "ready_i", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Per-output ready vector completing output handshakes", "lines": [31, 48, 90]},
+  {"id": "E8", "name": "oup_ready", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Per-output done flags; all ones releases input in WAIT", "lines": [36, 61, 95]}
+ ],
+ "groups": [
+  {"name": "Input controller", "kind": "CONTROLLER", "anchor_ids": ["E11", "E5", "E8"], "member_ids": ["E10", "E9"], "description": "Joins output handshakes into a single input handshake"},
+  {"name": "Output controllers", "kind": "CONTROLLER", "anchor_ids": ["E13", "E6"], "member_ids": ["E12"], "description": "Replicated per-output FSMs generating valid_o bits"},
+  {"name": "Handshake ports", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E4", "E7"], "member_ids": [], "description": "Input valid and output readies feeding the FSMs"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2", "E3"]},
+  {"name": "stream_in", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E4", "E5"]},
+  {"name": "stream_out", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E6", "E7"]}
+ ]
+}

@@ -1,0 +1,35 @@
+{
+  "module_summary": "Source side of a clearable two-phase CDC: a two-phase source half transfers payload while a reset-controller half sequences isolate/clear phases across domains, gating valid/ready during isolation.",
+  "anchors": [
+    {"id": "E5", "name": "src_data_i", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Source-domain payload forwarded to the two-phase CDC source.", "lines": [276, 336]},
+    {"id": "E6", "name": "src_valid_i", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Source valid, gated by isolate request before CDC source.", "lines": [277, 337]},
+    {"id": "E7", "name": "src_ready_o", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Source ready from CDC source, masked during isolation.", "lines": [278, 344]},
+    {"id": "E8", "name": "async_payload_req_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Two-phase request toggle to the destination domain.", "lines": [279, 339]},
+    {"id": "E9", "name": "async_payload_ack_i", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Two-phase acknowledge toggle from destination domain.", "lines": [280, 340]},
+    {"id": "E10", "name": "async_payload_data_o", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Latched payload crossing to destination domain.", "lines": [281, 341]},
+    {"id": "E3", "name": "src_clear_i", "role": "COMMAND", "importance": "major", "trace": "forward", "why": "Requests a synchronized clear sequence of the CDC.", "lines": [274, 316]},
+    {"id": "E20", "name": "src_isolate_req", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Isolation request gating valid and ready during clear sequence.", "lines": [319, 337, 344]},
+    {"id": "E17", "name": "src_clear_req", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Clear request from reset controller clearing the CDC source.", "lines": [317, 335]},
+    {"id": "E21", "name": "src_isolate_ack_q", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "One-cycle-delayed acknowledge of isolate request.", "lines": [320, 347]},
+    {"id": "E18", "name": "src_clear_ack_q", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "One-cycle-delayed acknowledge of clear request.", "lines": [318, 348]},
+    {"id": "E4", "name": "src_clear_pending_o", "role": "STATUS", "importance": "major", "trace": "data_backward", "why": "Indicates clear sequence in progress (isolate asserted).", "lines": [275, 350]},
+    {"id": "E11", "name": "async_reset_next_phase_o", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Clear-sequence phase sent to destination reset controller.", "lines": [282, 321]},
+    {"id": "E12", "name": "async_reset_req_o", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Request for clear-phase transfer to destination.", "lines": [283, 322]},
+    {"id": "E13", "name": "async_reset_ack_i", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Acknowledge of outgoing clear-phase transfer.", "lines": [284, 323]},
+    {"id": "E14", "name": "async_reset_next_phase_i", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Clear-sequence phase received from destination controller.", "lines": [285, 324]},
+    {"id": "E15", "name": "async_reset_req_i", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Incoming clear-phase request from destination.", "lines": [286, 325]},
+    {"id": "E16", "name": "async_reset_ack_o", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Acknowledge for incoming clear-phase transfer.", "lines": [287, 326]}
+  ],
+  "groups": [
+    {"name": "payload_cdc_src", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E5", "E6", "E7", "E8", "E9", "E10"], "member_ids": ["I2", "E19"], "description": "Two-phase CDC source latching payload and toggling request."},
+    {"name": "clear_controller", "kind": "CONTROLLER", "anchor_ids": ["E3", "E20", "E17", "E21", "E18", "E4", "E11", "E12", "E13", "E14", "E15", "E16"], "member_ids": ["I1"], "description": "Reset-controller half sequencing isolate and clear phases across domains."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "clear", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E3", "E4"]},
+    {"name": "src_stream", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E5", "E6", "E7"]},
+    {"name": "async_payload", "protocol": "REQ_ACK", "direction": "OUT", "member_ids": ["E8", "E9", "E10"]},
+    {"name": "async_reset_tx", "protocol": "REQ_ACK", "direction": "OUT", "member_ids": ["E11", "E12", "E13"]},
+    {"name": "async_reset_rx", "protocol": "REQ_ACK", "direction": "IN", "member_ids": ["E14", "E15", "E16"]}
+  ]
+}

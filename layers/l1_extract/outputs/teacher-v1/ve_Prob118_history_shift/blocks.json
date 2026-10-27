@@ -1,0 +1,216 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "ve_Prob118_history_shift",
+ "tops": [
+  "RefModule"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "RefModule": {
+   "source": "teacher",
+   "canonical_instance": "RefModule",
+   "file": "data/rtl/verilog-eval/dataset_spec-to-rtl/Prob118_history_shift_ref.sv",
+   "lines": [
+    2,
+    24
+   ],
+   "summary": "32-bit global branch history shift register: shifts in predictions on predict_valid and reloads train_history plus outcome on misprediction.",
+   "blocks": [
+    {
+     "name": "History shift register",
+     "kind": "REGISTER_BANK",
+     "description": "32-bit branch history register with shift and parallel-load paths.",
+     "anchors": [
+      {
+       "id": "E5",
+       "name": "predict_history",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 99.9,
+       "struct_score": 99.7,
+       "trace": "data_backward",
+       "why": "Global history shift register; shifts in predict_taken or reloads from train history on mispredict.",
+       "lines": [
+        19,
+        21
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Predict port",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Prediction-side update: valid plus taken bit shifted in.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "predict_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 97.8,
+       "struct_score": 94.4,
+       "trace": "forward",
+       "why": "Prediction valid; enables shifting predict_taken into the history register.",
+       "lines": [
+        20
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "predict_taken",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 66.1,
+       "struct_score": 85.2,
+       "trace": "interface",
+       "why": "Predicted branch direction bit shifted into history LSB.",
+       "lines": [
+        21
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Train rollback port",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Misprediction rollback loading train_history concatenated with train_taken.",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "train_mispredicted",
+       "role": "COMMAND",
+       "importance": "critical",
+       "score": 88.1,
+       "struct_score": 69.9,
+       "trace": "forward",
+       "why": "Misprediction rollback command; takes precedence and loads history from train_history.",
+       "lines": [
+        18
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "train_history",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 70.3,
+       "struct_score": 95.6,
+       "trace": "interface",
+       "why": "Pre-mispredict history restored into the register on rollback.",
+       "lines": [
+        19
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "train_taken",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 38.1,
+       "struct_score": 85.2,
+       "trace": "interface",
+       "why": "Actual branch outcome appended to train_history on rollback.",
+       "lines": [
+        19
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "Clock/reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "areset",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Predict",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "predict_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "predict_taken",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Train",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E6",
+      "E7",
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "train_mispredicted",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "train_taken",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "train_history",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "History output",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "predict_history",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

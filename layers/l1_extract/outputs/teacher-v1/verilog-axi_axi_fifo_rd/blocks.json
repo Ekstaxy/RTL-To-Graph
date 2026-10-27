@@ -1,0 +1,859 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-axi_axi_fifo_rd",
+ "tops": [
+  "axi_fifo_rd"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "axi_fifo_rd": {
+   "source": "teacher",
+   "canonical_instance": "axi_fifo_rd",
+   "file": "data/rtl/verilog-axi/rtl/axi_fifo_rd.v",
+   "lines": [
+    34,
+    411
+   ],
+   "summary": "AXI read-channel FIFO: AR channel passes through (FIFO_DELAY=0), while R-channel beats are packed into a pointer-based circular memory FIFO and output through a registered read stage.",
+   "blocks": [
+    {
+     "name": "R FIFO memory",
+     "kind": "BUFFER",
+     "description": "Circular buffer with full/empty from extended write/read pointers.",
+     "anchors": [
+      {
+       "id": "E49",
+       "name": "mem",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 94.6,
+       "struct_score": 86.4,
+       "trace": "data_backward",
+       "why": "FIFO memory holding packed R beats: data, last, id, resp.",
+       "lines": [
+        124,
+        341,
+        378
+       ]
+      },
+      {
+       "id": "E43",
+       "name": "wr_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "critical",
+       "score": 79.6,
+       "struct_score": 39.1,
+       "trace": "control_backward",
+       "why": "FIFO write pointer advanced on each accepted master R beat.",
+       "lines": [
+        118,
+        331,
+        337
+       ]
+      },
+      {
+       "id": "E46",
+       "name": "rd_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "critical",
+       "score": 80.2,
+       "struct_score": 41.2,
+       "trace": "control_backward",
+       "why": "FIFO read pointer advanced when output stage consumes an entry.",
+       "lines": [
+        120,
+        363,
+        372
+       ]
+      },
+      {
+       "id": "E57",
+       "name": "full",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 45.2,
+       "struct_score": 13.2,
+       "trace": "control_backward",
+       "why": "FIFO full flag blocking writes and deasserting m_axi_rready.",
+       "lines": [
+        134,
+        144,
+        328
+       ]
+      },
+      {
+       "id": "E58",
+       "name": "empty",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 45.1,
+       "struct_score": 12.5,
+       "trace": "control_backward",
+       "why": "FIFO empty flag gating reads and invalidating read data.",
+       "lines": [
+        137,
+        359
+       ]
+      },
+      {
+       "id": "E59",
+       "name": "write",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.3,
+       "struct_score": 5.2,
+       "trace": "control_backward",
+       "why": "FIFO memory write enable.",
+       "lines": [
+        140,
+        330,
+        340
+       ]
+      },
+      {
+       "id": "E60",
+       "name": "read",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.5,
+       "struct_score": 5.9,
+       "trace": "control_backward",
+       "why": "FIFO memory read enable loading mem_read_data_reg.",
+       "lines": [
+        141,
+        361,
+        377
+       ]
+      },
+      {
+       "id": "E53",
+       "name": "m_axi_r",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 19.4,
+       "struct_score": 22.0,
+       "trace": "data_backward",
+       "why": "Packed R-channel word written into FIFO memory.",
+       "lines": [
+        128,
+        147,
+        341
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E44",
+       "name": "wr_ptr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E45",
+       "name": "wr_addr_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E47",
+       "name": "rd_ptr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E48",
+       "name": "rd_addr_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Read output stage",
+     "kind": "PIPELINE_STAGE",
+     "description": "Two-register read path presenting FIFO entries to slave R channel.",
+     "anchors": [
+      {
+       "id": "E50",
+       "name": "mem_read_data_reg",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 23.9,
+       "struct_score": 40.3,
+       "trace": "data_backward",
+       "why": "Registered memory read data before output register.",
+       "lines": [
+        125,
+        378,
+        403
+       ]
+      },
+      {
+       "id": "E51",
+       "name": "mem_read_data_valid_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 19.5,
+       "struct_score": 22.2,
+       "trace": "control_backward",
+       "why": "Valid flag for memory read stage data.",
+       "lines": [
+        126,
+        357,
+        395
+       ]
+      },
+      {
+       "id": "E61",
+       "name": "store_output",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 16.5,
+       "struct_score": 10.2,
+       "trace": "control_backward",
+       "why": "Loads output register and permits next FIFO read.",
+       "lines": [
+        142,
+        394,
+        402
+       ]
+      },
+      {
+       "id": "E54",
+       "name": "s_axi_r_reg",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 29.2,
+       "struct_score": 59.6,
+       "trace": "data_backward",
+       "why": "Output register holding packed R word for slave port.",
+       "lines": [
+        130,
+        314,
+        403
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "s_axi_rdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 90.7,
+       "struct_score": 76.5,
+       "trace": "data_backward",
+       "why": "Slave read data unpacked from output register.",
+       "lines": [
+        78,
+        314
+       ]
+      },
+      {
+       "id": "E21",
+       "name": "s_axi_rvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 63.1,
+       "struct_score": 77.5,
+       "trace": "control_backward",
+       "why": "Slave read valid from output register stage.",
+       "lines": [
+        82,
+        312,
+        393
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "s_axi_rready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 53.1,
+       "struct_score": 44.5,
+       "trace": "interface",
+       "why": "Slave read ready allowing output register reload.",
+       "lines": [
+        83,
+        393
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E52",
+       "name": "mem_read_data_valid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E55",
+       "name": "s_axi_rvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E56",
+       "name": "s_axi_rvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E16",
+       "name": "s_axi_rid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "s_axi_rresp",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "s_axi_rlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "s_axi_ruser",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "Master R input",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Accepts master R beats when FIFO has space.",
+     "anchors": [
+      {
+       "id": "E37",
+       "name": "m_axi_rdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 89.7,
+       "struct_score": 73.9,
+       "trace": "interface",
+       "why": "Master read data packed into FIFO entries.",
+       "lines": [
+        102,
+        147
+       ]
+      },
+      {
+       "id": "E41",
+       "name": "m_axi_rvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 57.5,
+       "struct_score": 60.4,
+       "trace": "interface",
+       "why": "Master read valid triggering FIFO write when not full.",
+       "lines": [
+        106,
+        326
+       ]
+      },
+      {
+       "id": "E42",
+       "name": "m_axi_rready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 53.3,
+       "struct_score": 45.3,
+       "trace": "control_backward",
+       "why": "Master read ready, asserted while FIFO not full.",
+       "lines": [
+        107,
+        144
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E36",
+       "name": "m_axi_rid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E38",
+       "name": "m_axi_rresp",
+       "kind": "port_in"
+      },
+      {
+       "id": "E39",
+       "name": "m_axi_rlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E40",
+       "name": "m_axi_ruser",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "AR passthrough",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "AR channel wired directly from slave to master.",
+     "anchors": [
+      {
+       "id": "E4",
+       "name": "s_axi_araddr",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 56.8,
+       "struct_score": 58.0,
+       "trace": "interface",
+       "why": "Read address passed through to master AR channel.",
+       "lines": [
+        65,
+        296
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "s_axi_arvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 29.1,
+       "struct_score": 59.0,
+       "trace": "interface",
+       "why": "Slave AR valid bypassed to m_axi_arvalid.",
+       "lines": [
+        75,
+        306
+       ]
+      },
+      {
+       "id": "E35",
+       "name": "m_axi_arready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 23.8,
+       "struct_score": 39.8,
+       "trace": "interface",
+       "why": "Master AR ready bypassed to s_axi_arready.",
+       "lines": [
+        100,
+        307
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axi_arid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axi_arlen",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_axi_arsize",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "s_axi_arburst",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_axi_arlock",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_axi_arcache",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "s_axi_arprot",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "s_axi_arqos",
+       "kind": "port_in"
+      },
+      {
+       "id": "E12",
+       "name": "s_axi_arregion",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "s_axi_aruser",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "s_axi_arready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "m_axi_arid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E24",
+       "name": "m_axi_araddr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E25",
+       "name": "m_axi_arlen",
+       "kind": "port_out"
+      },
+      {
+       "id": "E26",
+       "name": "m_axi_arsize",
+       "kind": "port_out"
+      },
+      {
+       "id": "E27",
+       "name": "m_axi_arburst",
+       "kind": "port_out"
+      },
+      {
+       "id": "E28",
+       "name": "m_axi_arlock",
+       "kind": "port_out"
+      },
+      {
+       "id": "E29",
+       "name": "m_axi_arcache",
+       "kind": "port_out"
+      },
+      {
+       "id": "E30",
+       "name": "m_axi_arprot",
+       "kind": "port_out"
+      },
+      {
+       "id": "E31",
+       "name": "m_axi_arqos",
+       "kind": "port_out"
+      },
+      {
+       "id": "E32",
+       "name": "m_axi_arregion",
+       "kind": "port_out"
+      },
+      {
+       "id": "E33",
+       "name": "m_axi_aruser",
+       "kind": "port_out"
+      },
+      {
+       "id": "E34",
+       "name": "m_axi_arvalid",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axi_ar",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axi_arid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axi_araddr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axi_arlen",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_axi_arsize",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "s_axi_arburst",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_axi_arlock",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_axi_arcache",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "s_axi_arprot",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "s_axi_arqos",
+       "kind": "port_in"
+      },
+      {
+       "id": "E12",
+       "name": "s_axi_arregion",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "s_axi_aruser",
+       "kind": "port_in"
+      },
+      {
+       "id": "E14",
+       "name": "s_axi_arvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "s_axi_arready",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "s_axi_r",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20",
+      "E21",
+      "E22"
+     ],
+     "members": [
+      {
+       "id": "E16",
+       "name": "s_axi_rid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "s_axi_rdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "s_axi_rresp",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "s_axi_rlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "s_axi_ruser",
+       "kind": "port_out"
+      },
+      {
+       "id": "E21",
+       "name": "s_axi_rvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E22",
+       "name": "s_axi_rready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axi_ar",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E23",
+      "E24",
+      "E25",
+      "E26",
+      "E27",
+      "E28",
+      "E29",
+      "E30",
+      "E31",
+      "E32",
+      "E33",
+      "E34",
+      "E35"
+     ],
+     "members": [
+      {
+       "id": "E23",
+       "name": "m_axi_arid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E24",
+       "name": "m_axi_araddr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E25",
+       "name": "m_axi_arlen",
+       "kind": "port_out"
+      },
+      {
+       "id": "E26",
+       "name": "m_axi_arsize",
+       "kind": "port_out"
+      },
+      {
+       "id": "E27",
+       "name": "m_axi_arburst",
+       "kind": "port_out"
+      },
+      {
+       "id": "E28",
+       "name": "m_axi_arlock",
+       "kind": "port_out"
+      },
+      {
+       "id": "E29",
+       "name": "m_axi_arcache",
+       "kind": "port_out"
+      },
+      {
+       "id": "E30",
+       "name": "m_axi_arprot",
+       "kind": "port_out"
+      },
+      {
+       "id": "E31",
+       "name": "m_axi_arqos",
+       "kind": "port_out"
+      },
+      {
+       "id": "E32",
+       "name": "m_axi_arregion",
+       "kind": "port_out"
+      },
+      {
+       "id": "E33",
+       "name": "m_axi_aruser",
+       "kind": "port_out"
+      },
+      {
+       "id": "E34",
+       "name": "m_axi_arvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E35",
+       "name": "m_axi_arready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axi_r",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E36",
+      "E37",
+      "E38",
+      "E39",
+      "E40",
+      "E41",
+      "E42"
+     ],
+     "members": [
+      {
+       "id": "E36",
+       "name": "m_axi_rid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E37",
+       "name": "m_axi_rdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E38",
+       "name": "m_axi_rresp",
+       "kind": "port_in"
+      },
+      {
+       "id": "E39",
+       "name": "m_axi_rlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E40",
+       "name": "m_axi_ruser",
+       "kind": "port_in"
+      },
+      {
+       "id": "E41",
+       "name": "m_axi_rvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E42",
+       "name": "m_axi_rready",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

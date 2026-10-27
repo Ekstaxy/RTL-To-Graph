@@ -1,0 +1,300 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "S1_traffic_light",
+ "tops": [
+  "verified_traffic_light"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "verified_traffic_light": {
+   "source": "teacher",
+   "canonical_instance": "verified_traffic_light",
+   "file": "experiments/e3_perturb_benchmark/data/traffic_light/S1/verified_traffic_light.v",
+   "lines": [
+    1,
+    64
+   ],
+   "summary": "Traffic light controller: 2-bit state FSM advances when a down-counting timer hits 3; decoded lamps pass through two register stages and their rising edges reload the timer.",
+   "blocks": [
+    {
+     "name": "light_fsm",
+     "kind": "CONTROLLER",
+     "description": "Boot/stop/go/slow state machine advancing on timer hit.",
+     "anchors": [
+      {
+       "id": "E8",
+       "name": "lamp",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.7,
+       "struct_score": 99.1,
+       "trace": "control_backward",
+       "why": "Light state register: boot, stop, go, slow; decoded into lamp outputs.",
+       "lines": [
+        17,
+        34,
+        42
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "hit3",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.7,
+       "struct_score": 19.2,
+       "trace": "control_backward",
+       "why": "Timer equals 3; triggers FSM transition.",
+       "lines": [
+        23,
+        33
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E9",
+       "name": "lamp_nx",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "phase_timer",
+     "kind": "COUNTER_TIMER",
+     "description": "Down counter reloaded on lamp onset or pedestrian cut; exported as clock.",
+     "anchors": [
+      {
+       "id": "E10",
+       "name": "tmr",
+       "role": "COUNTER",
+       "importance": "critical",
+       "score": 94.1,
+       "struct_score": 85.0,
+       "trace": "control_backward",
+       "why": "Down-counting phase timer reloaded per light; value 3 advances FSM.",
+       "lines": [
+        23,
+        57,
+        61
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "fresh_g",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 17.8,
+       "struct_score": 15.5,
+       "trace": "control_backward",
+       "why": "Green onset edge reloading timer with 60 (representative of fresh_y/fresh_r).",
+       "lines": [
+        25,
+        58
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "cut_short",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 19.8,
+       "struct_score": 23.6,
+       "trace": "control_backward",
+       "why": "Request during long green; reloads timer to 10.",
+       "lines": [
+        24,
+        57
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E17",
+       "name": "fresh_y",
+       "kind": "wire"
+      },
+      {
+       "id": "E18",
+       "name": "fresh_r",
+       "kind": "wire"
+      },
+      {
+       "id": "E4",
+       "name": "clock",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "lamp_outputs",
+     "kind": "PIPELINE_STAGE",
+     "description": "Two register stages of decoded lamp state driving red/yellow/green.",
+     "anchors": [
+      {
+       "id": "E13",
+       "name": "hg",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 26.6,
+       "struct_score": 50.2,
+       "trace": "control_backward",
+       "why": "First-stage decoded lamp register (representative of hr/hy/hg) feeding outputs.",
+       "lines": [
+        25,
+        49,
+        50
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "red",
+       "role": "STATUS",
+       "importance": "critical",
+       "score": 85.3,
+       "struct_score": 59.9,
+       "trace": "control_backward",
+       "why": "Red lamp output, delayed decode of STOP state.",
+       "lines": [
+        7,
+        49
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "yellow",
+       "role": "STATUS",
+       "importance": "critical",
+       "score": 85.3,
+       "struct_score": 59.9,
+       "trace": "control_backward",
+       "why": "Yellow lamp output, delayed decode of SLOW state.",
+       "lines": [
+        8,
+        49
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "green",
+       "role": "STATUS",
+       "importance": "critical",
+       "score": 87.2,
+       "struct_score": 66.7,
+       "trace": "control_backward",
+       "why": "Green lamp output, delayed decode of GO; enables pedestrian cut.",
+       "lines": [
+        9,
+        24,
+        49
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E11",
+       "name": "hr",
+       "kind": "reg"
+      },
+      {
+       "id": "E12",
+       "name": "hy",
+       "kind": "reg"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E3",
+     "name": "pass_request",
+     "role": "COMMAND",
+     "importance": "major",
+     "score": 51.0,
+     "struct_score": 36.4,
+     "trace": "interface",
+     "why": "Pedestrian request shortening a long green by reloading timer.",
+     "lines": [
+      5,
+      24
+     ]
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "rst_n",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "clk",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "pedestrian",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "pass_request",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "lamps_display",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E4",
+      "E5",
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "clock",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "red",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "yellow",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "green",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,20 @@
+{
+ "module_summary": "Round-robin arbiter using a one-hot priority pointer and double-width subtract trick; grant locks until accept, then pointer rotates past the winner.",
+ "anchors": [
+  {"id": "E4", "name": "gnt_o", "role": "ARBITRATION", "importance": "critical", "trace": "data_backward", "why": "Registered one-hot grant vector output, copy of gnt_q, held while locked."},
+  {"id": "E7", "name": "prio_q", "role": "ARBITRATION", "importance": "critical", "trace": "control_backward", "why": "One-hot round-robin priority pointer, rotated to follow the last grant on accept."},
+  {"id": "E10", "name": "locked_q", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Two-state lock: freezes grant until accept_i; drives gnt_valid_o and pointer update."},
+  {"id": "E3", "name": "req_i", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Per-requester request vector feeding priority search and lock entry."},
+  {"id": "E5", "name": "accept_i", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Grant acceptance; releases lock, rotates pointer and clears grant."},
+  {"id": "E12", "name": "dbl_gnt", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Double-width masked-subtract priority search result folded into next grant."}
+ ],
+ "groups": [
+  {"name": "Priority search", "kind": "ARBITER", "anchor_ids": ["E12", "E7", "E4", "E3"], "member_ids": ["E11", "E9", "E8"], "description": "Doubled request vector minus priority pointer selects first requester at or after pointer."},
+  {"name": "Grant lock control", "kind": "CONTROLLER", "anchor_ids": ["E10", "E5"], "member_ids": ["E6"], "description": "Lock flag holds grant until accept, then rotates pointer and clears grant."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "request", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E3"]},
+  {"name": "grant", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E4", "E6", "E5"]}
+ ]
+}

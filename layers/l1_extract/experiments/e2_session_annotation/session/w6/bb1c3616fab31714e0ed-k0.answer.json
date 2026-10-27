@@ -1,0 +1,23 @@
+{
+ "module_summary": "Serial-to-parallel converter: a beat counter and shift register collect 8 valid serial bits, then the word is latched to dout_parallel with a dout_valid pulse.",
+ "anchors": [
+  {"id": "E3", "name": "din_serial", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Serial input bit shifted into the shift register.", "lines": [38, 62]},
+  {"id": "E4", "name": "din_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Qualifies each serial bit; enables beat counter and shifting.", "lines": [39, 53, 61]},
+  {"id": "E5", "name": "dout_parallel", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Output register loaded with assembled 8-bit word when counter wraps.", "lines": [40, 75, 77]},
+  {"id": "E6", "name": "dout_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Registered pulse accompanying the new parallel word.", "lines": [41, 70]},
+  {"id": "E7", "name": "beat", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Bit position counter from ctr0; MSB gates shifting.", "lines": [43, 54, 48]},
+  {"id": "E8", "name": "full_k", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Counter wrap; loads dout_parallel and drives dout_valid.", "lines": [44, 76, 70]},
+  {"id": "E9", "name": "acc_bus", "role": "STORAGE", "importance": "major", "trace": "data_backward", "why": "Shift register word accumulating serial bits.", "lines": [45, 63, 77]},
+  {"id": "E10", "name": "low_half", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Gates shift enable to the first eight beats.", "lines": [46, 48, 61]}
+ ],
+ "groups": [
+  {"name": "beat_counter", "kind": "COUNTER_TIMER", "anchor_ids": ["E7", "E8", "E10"], "member_ids": ["I1"], "description": "Counts valid beats and flags a full byte."},
+  {"name": "shift_register", "kind": "SERIALIZER", "anchor_ids": ["E9", "E3"], "member_ids": ["I2"], "description": "Shifts serial bits into an 8-bit word."},
+  {"name": "output_latch", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E5", "E6"], "member_ids": [], "description": "Latches the word and pulses dout_valid on wrap."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "serial_in", "protocol": "SERIAL", "direction": "IN", "member_ids": ["E3", "E4"]},
+  {"name": "parallel_out", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E5", "E6"]}
+ ]
+}

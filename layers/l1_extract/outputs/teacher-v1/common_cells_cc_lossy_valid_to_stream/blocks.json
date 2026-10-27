@@ -1,0 +1,323 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "common_cells_cc_lossy_valid_to_stream",
+ "tops": [
+  "cc_lossy_valid_to_stream"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "cc_lossy_valid_to_stream": {
+   "source": "teacher",
+   "canonical_instance": "cc_lossy_valid_to_stream",
+   "file": "data/rtl/common_cells/src/cc_lossy_valid_to_stream.sv",
+   "lines": [
+    51,
+    133
+   ],
+   "summary": "Converts an always-accepted valid input into a valid/ready stream via a depth-2 FIFO with fall-through that overwrites the newest entry when full and stalled.",
+   "blocks": [
+    {
+     "name": "Lossy FIFO buffer",
+     "kind": "BUFFER",
+     "description": "Depth-2 buffer with overwrite of last element",
+     "anchors": [
+      {
+       "id": "E17",
+       "name": "mem_q",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 97.3,
+       "struct_score": 93.3,
+       "trace": "data_backward",
+       "why": "Two-entry data buffer written at write pointer, overwritten when full",
+       "lines": [
+        76,
+        93,
+        102
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "write_ptr_q",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 57.7,
+       "struct_score": 61.1,
+       "trace": "control_backward",
+       "why": "Write slot pointer, held on overwrite",
+       "lines": [
+        74,
+        93,
+        94
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "read_ptr_q",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 58.5,
+       "struct_score": 64.3,
+       "trace": "control_backward",
+       "why": "Read slot pointer selecting buffered output, advanced on handshake",
+       "lines": [
+        73,
+        102,
+        107
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E16",
+       "name": "mem_d",
+       "kind": "comb"
+      },
+      {
+       "id": "E12",
+       "name": "write_ptr_d",
+       "kind": "comb"
+      },
+      {
+       "id": "E10",
+       "name": "read_ptr_d",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Transaction counter",
+     "kind": "COUNTER_TIMER",
+     "description": "Tracks pending items for valid, fall-through and busy",
+     "anchors": [
+      {
+       "id": "E15",
+       "name": "pending_tx_counter_q",
+       "role": "FIFO_PTR",
+       "importance": "critical",
+       "score": 90.1,
+       "struct_score": 74.9,
+       "trace": "control_backward",
+       "why": "Occupancy count steering fall-through, overwrite, valid and busy",
+       "lines": [
+        75,
+        90,
+        118
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "busy_o",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 51.3,
+       "struct_score": 37.7,
+       "trace": "data_backward",
+       "why": "Indicates pending buffered transactions",
+       "lines": [
+        67,
+        131
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E14",
+       "name": "pending_tx_counter_d",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Input port",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Valid-only input without backpressure",
+     "anchors": [
+      {
+       "id": "E4",
+       "name": "valid_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 97.4,
+       "struct_score": 93.4,
+       "trace": "interface",
+       "why": "Input valid; writes or falls through, no backpressure",
+       "lines": [
+        60,
+        83,
+        104
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "data_i",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 97.3,
+       "struct_score": 93.1,
+       "trace": "interface",
+       "why": "Input data stored or bypassed to output",
+       "lines": [
+        61,
+        93,
+        105
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Output stream",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Valid/ready output stream",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "valid_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 97.4,
+       "struct_score": 93.5,
+       "trace": "control_backward",
+       "why": "Output valid when FIFO non-empty or input valid",
+       "lines": [
+        63,
+        78,
+        106
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "ready_i",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 92.8,
+       "struct_score": 81.9,
+       "trace": "interface",
+       "why": "Downstream ready; pops FIFO and decides overwrite",
+       "lines": [
+        64,
+        86,
+        106
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "data_o",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 98.2,
+       "struct_score": 95.5,
+       "trace": "data_backward",
+       "why": "Output data from buffer or fall-through input",
+       "lines": [
+        65,
+        102,
+        105
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2",
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_ni",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "clr_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "valid_in",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "valid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "data_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "stream_out",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E6",
+      "E7",
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "valid_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "ready_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "data_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E9"
+     ],
+     "members": [
+      {
+       "id": "E9",
+       "name": "busy_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

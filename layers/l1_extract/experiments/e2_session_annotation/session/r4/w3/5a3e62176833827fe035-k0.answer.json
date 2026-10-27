@@ -1,0 +1,46 @@
+{
+ "module_summary": "I2C slave to Wishbone master bridge: an i2c_slave core streams bytes to a 6-state FSM that loads an auto-incrementing address register, coalesces bytes into words, and issues Wishbone reads/writes.",
+ "anchors": [
+  {"id": "E23", "name": "state_reg", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Bridge FSM: idle, address load, read and write Wishbone phases", "lines": [278, 419]},
+  {"id": "E25", "name": "count_reg", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Byte counter indexing address bytes and word byte lanes", "lines": [301, 356, 421]},
+  {"id": "E27", "name": "last_cycle_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Last byte of I2C transaction, ends write sequence", "lines": [405, 424]},
+  {"id": "E18", "name": "busy", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Busy while FSM is not idle", "lines": [258]},
+  {"id": "E28", "name": "addr_reg", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Auto-incrementing byte address loaded from I2C header bytes", "lines": [251, 340, 427]},
+  {"id": "E30", "name": "data_reg", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Word buffer coalescing write bytes or holding read data", "lines": [252, 356, 428]},
+  {"id": "E9", "name": "wb_adr_o", "role": "INTERFACE_ADDR", "importance": "critical", "trace": "data_backward", "why": "Wishbone word address from addr_reg upper bits", "lines": [251]},
+  {"id": "E10", "name": "wb_dat_i", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Wishbone read data captured into data_reg", "lines": [339]},
+  {"id": "E12", "name": "wb_we_o", "role": "COMMAND", "importance": "minor", "trace": "control_backward", "why": "Wishbone write enable set for write cycles", "lines": [253]},
+  {"id": "E13", "name": "wb_sel_o", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Byte selects marking bytes written in coalesced word", "lines": [254]},
+  {"id": "E14", "name": "wb_stb_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Wishbone strobe asserted in read/write wait states", "lines": [255]},
+  {"id": "E17", "name": "wb_cyc_o", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Wishbone cycle line for read/write transfers", "lines": [256]},
+  {"id": "E15", "name": "wb_ack_i", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Wishbone ack completing read/write and advancing address", "lines": [337, 398]},
+  {"id": "E16", "name": "wb_err_i", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Wishbone error treated as cycle completion", "lines": [337, 398]},
+  {"id": "E6", "name": "i2c_sda_i", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "I2C serial data input to slave core", "lines": [49, 476]},
+  {"id": "E3", "name": "i2c_scl_i", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "I2C clock input to slave core", "lines": [46, 473]},
+  {"id": "E7", "name": "i2c_sda_o", "role": "INTERFACE_DATA", "importance": "minor", "trace": "data_backward", "why": "I2C data output driven by slave core", "lines": [477]},
+  {"id": "E46", "name": "data_out", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Received I2C byte stored into address or data registers", "lines": [301, 376, 467]},
+  {"id": "E47", "name": "data_out_valid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "data_backward", "why": "Received byte valid; starts address phase and write bytes", "lines": [283, 468]},
+  {"id": "E49", "name": "data_out_ready_reg", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Ready to accept received bytes in address/write states", "lines": [299, 469]},
+  {"id": "E48", "name": "data_out_last", "role": "CONTROL_FLAG", "importance": "minor", "trace": "data_backward", "why": "Last received byte; ends transaction or triggers write", "lines": [313, 424]},
+  {"id": "E43", "name": "data_in_valid_reg", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Read byte valid to slave core for transmission", "lines": [287, 463]},
+  {"id": "E41", "name": "data_in_reg", "role": "INTERFACE_DATA", "importance": "minor", "trace": "data_backward", "why": "Byte of read word sent to I2C master", "lines": [437, 462]},
+  {"id": "E45", "name": "data_in_ready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "data_backward", "why": "Slave core requests read data; triggers Wishbone read", "lines": [287, 464]},
+  {"id": "E19", "name": "bus_addressed", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "Device addressed flag; exits read state when dropped", "lines": [351, 483]},
+  {"id": "E20", "name": "bus_active", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "I2C bus activity status from slave core", "lines": [484]},
+  {"id": "E22", "name": "device_address", "role": "CONFIG_REG", "importance": "minor", "trace": "interface", "why": "7-bit I2C slave address configuration", "lines": [488]},
+  {"id": "E21", "name": "enable", "role": "CONFIG_REG", "importance": "minor", "trace": "interface", "why": "Enables I2C slave core", "lines": [487]}
+ ],
+ "groups": [
+  {"name": "Bridge controller", "kind": "CONTROLLER", "anchor_ids": ["E23", "E25", "E27", "E18"], "member_ids": ["E24", "E26", "E40"], "description": "FSM sequencing address load, Wishbone reads and coalesced writes"},
+  {"name": "Address and data registers", "kind": "DATAPATH", "anchor_ids": ["E28", "E30"], "member_ids": ["E29", "E31"], "description": "Auto-increment address pointer and word coalescing buffer"},
+  {"name": "Wishbone master", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E9", "E10", "E12", "E13", "E14", "E15", "E16", "E17"], "member_ids": ["E11", "E32", "E33", "E34", "E35", "E36", "E37", "E38", "E39"], "description": "Registered Wishbone master outputs and ack handling"},
+  {"name": "I2C slave core", "kind": "SERIALIZER", "anchor_ids": ["E6", "E3", "E7", "E46", "E47", "E48", "E49", "E41", "E43", "E45", "E19", "E20", "E21", "E22"], "member_ids": ["I1", "E4", "E5", "E8", "E42", "E44", "E50"], "description": "I2C slave shifting bytes to/from byte streams"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "i2c", "protocol": "SERIAL", "direction": "BIDIR", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8"]},
+  {"name": "wishbone_master", "protocol": "MEMORY_BUS", "direction": "OUT", "member_ids": ["E9", "E10", "E11", "E12", "E13", "E14", "E15", "E16", "E17"]},
+  {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E18", "E19", "E20"]},
+  {"name": "configuration", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E21", "E22"]}
+ ]
+}

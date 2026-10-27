@@ -1,0 +1,1573 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "picorv32_spimemio",
+ "tops": [
+  "spimemio"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "spimemio_xfer": {
+   "source": "teacher",
+   "canonical_instance": "spimemio.xfer",
+   "file": "data/rtl/picorv32/picosoc/spimemio.v",
+   "lines": [
+    378,
+    579
+   ],
+   "summary": "SPI flash byte transfer engine: latches a byte command, then shifts obuffer/ibuffer over 1/2/4-bit (optionally DDR) flash IO under bit and dummy-cycle counters, returning tagged read bytes.",
+   "blocks": [
+    {
+     "name": "Request intake",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Accepts byte command and latches mode, tag and read flags.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "din_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 93.9,
+       "struct_score": 84.6,
+       "trace": "interface",
+       "why": "Byte request valid; with din_ready latches transfer parameters and starts shifting.",
+       "lines": [
+        381,
+        441,
+        562
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "din_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 95.7,
+       "struct_score": 89.1,
+       "trace": "control_backward",
+       "why": "Accepts new byte when previous transfer finishes (next_fetch).",
+       "lines": [
+        382,
+        441,
+        562
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "din_data",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 89.6,
+       "struct_score": 73.9,
+       "trace": "interface",
+       "why": "Byte to transmit, loaded into obuffer; dummy cycle count on reads.",
+       "lines": [
+        383,
+        567,
+        568
+       ]
+      },
+      {
+       "id": "E36",
+       "name": "xfer_ddr",
+       "role": "MUX_SELECT",
+       "importance": "major",
+       "score": 59.6,
+       "struct_score": 68.2,
+       "trace": "control_backward",
+       "why": "Latched DDR mode selecting shift case and dout_valid timing.",
+       "lines": [
+        422,
+        464,
+        551
+       ]
+      },
+      {
+       "id": "E35",
+       "name": "xfer_qspi",
+       "role": "MUX_SELECT",
+       "importance": "major",
+       "score": 59.0,
+       "struct_score": 66.0,
+       "trace": "control_backward",
+       "why": "Latched quad mode selecting 4-bit IO shift case; xfer_dspi sibling.",
+       "lines": [
+        421,
+        464,
+        573
+       ]
+      },
+      {
+       "id": "E38",
+       "name": "xfer_rd",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 23.2,
+       "struct_score": 37.5,
+       "trace": "control_backward",
+       "why": "Read flag disabling IO output enables in multi-bit modes.",
+       "lines": [
+        424,
+        479,
+        575
+       ]
+      },
+      {
+       "id": "E39",
+       "name": "xfer_tag",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 18.7,
+       "struct_score": 19.2,
+       "trace": "data_backward",
+       "why": "Holds request tag returned as dout_tag after delay.",
+       "lines": [
+        425,
+        438,
+        570
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E6",
+       "name": "din_tag",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "din_cont",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "din_dspi",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "din_qspi",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "din_ddr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "din_rd",
+       "kind": "port_in"
+      },
+      {
+       "id": "E33",
+       "name": "xfer_cont",
+       "kind": "reg"
+      },
+      {
+       "id": "E34",
+       "name": "xfer_dspi",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Shift datapath",
+     "kind": "SERIALIZER",
+     "description": "Shifts obuffer out and ibuffer in over 1/2/4 IO lines.",
+     "anchors": [
+      {
+       "id": "E29",
+       "name": "obuffer",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 91.8,
+       "struct_score": 79.3,
+       "trace": "data_backward",
+       "why": "Output shift register driving flash IO data bits MSB first.",
+       "lines": [
+        413,
+        467,
+        568
+       ]
+      },
+      {
+       "id": "E30",
+       "name": "ibuffer",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 87.2,
+       "struct_score": 66.6,
+       "trace": "data_backward",
+       "why": "Input shift register collecting flash IO sample bits.",
+       "lines": [
+        414,
+        473,
+        559
+       ]
+      },
+      {
+       "id": "E21",
+       "name": "flash_io0_do",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 57.8,
+       "struct_score": 61.5,
+       "trace": "data_backward",
+       "why": "Flash IO data out bit from obuffer; io1-3 do/oe replicate.",
+       "lines": [
+        403,
+        467
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E41",
+       "name": "next_obuffer",
+       "kind": "comb"
+      },
+      {
+       "id": "E42",
+       "name": "next_ibuffer",
+       "kind": "comb"
+      },
+      {
+       "id": "E17",
+       "name": "flash_io0_oe",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "flash_io1_oe",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "flash_io2_oe",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "flash_io3_oe",
+       "kind": "port_out"
+      },
+      {
+       "id": "E22",
+       "name": "flash_io1_do",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "flash_io2_do",
+       "kind": "port_out"
+      },
+      {
+       "id": "E24",
+       "name": "flash_io3_do",
+       "kind": "port_out"
+      },
+      {
+       "id": "E25",
+       "name": "flash_io0_di",
+       "kind": "port_in"
+      },
+      {
+       "id": "E26",
+       "name": "flash_io1_di",
+       "kind": "port_in"
+      },
+      {
+       "id": "E27",
+       "name": "flash_io2_di",
+       "kind": "port_in"
+      },
+      {
+       "id": "E28",
+       "name": "flash_io3_di",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Transfer sequencing",
+     "kind": "COUNTER_TIMER",
+     "description": "Bit and dummy counters, SPI clock and fetch completion.",
+     "anchors": [
+      {
+       "id": "E31",
+       "name": "count",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 55.6,
+       "struct_score": 53.6,
+       "trace": "control_backward",
+       "why": "Remaining bit counter decremented per shift; zero completes byte.",
+       "lines": [
+        416,
+        556,
+        566
+       ]
+      },
+      {
+       "id": "E32",
+       "name": "dummy_count",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 62.1,
+       "struct_score": 75.0,
+       "trace": "control_backward",
+       "why": "Dummy clock cycle counter that suspends shifting while nonzero.",
+       "lines": [
+        417,
+        463,
+        554
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "flash_clk",
+       "role": "CLOCK_GEN",
+       "importance": "critical",
+       "score": 93.8,
+       "struct_score": 84.4,
+       "trace": "control_backward",
+       "why": "Generated SPI clock toggled while counting; edges select shift vs sample.",
+       "lines": [
+        396,
+        469,
+        557
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "flash_csb",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 53.3,
+       "struct_score": 45.4,
+       "trace": "control_backward",
+       "why": "Flash chip select, asserted low on accepted request.",
+       "lines": [
+        395,
+        539,
+        563
+       ]
+      },
+      {
+       "id": "E45",
+       "name": "next_fetch",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 48.1,
+       "struct_score": 25.0,
+       "trace": "control_backward",
+       "why": "Byte-complete flag gating din_ready and dout_valid.",
+       "lines": [
+        433,
+        441,
+        476
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E43",
+       "name": "next_count",
+       "kind": "comb"
+      },
+      {
+       "id": "E44",
+       "name": "fetch",
+       "kind": "reg"
+      },
+      {
+       "id": "E46",
+       "name": "last_fetch",
+       "kind": "reg"
+      },
+      {
+       "id": "E37",
+       "name": "xfer_ddr_q",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Response output",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Presents received byte and tag with valid pulse.",
+     "anchors": [
+      {
+       "id": "E12",
+       "name": "dout_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 92.1,
+       "struct_score": 79.9,
+       "trace": "control_backward",
+       "why": "Pulse marking received byte ready, DDR-aware timing from fetch.",
+       "lines": [
+        391,
+        443
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "dout_data",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 88.2,
+       "struct_score": 70.2,
+       "trace": "data_backward",
+       "why": "Received byte output driven from ibuffer.",
+       "lines": [
+        392,
+        444
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E14",
+       "name": "dout_tag",
+       "kind": "port_out"
+      },
+      {
+       "id": "E40",
+       "name": "xfer_tag_q",
+       "kind": "reg"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "resetn",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "din",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "din_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "din_ready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "din_data",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "din_tag",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "din_cont",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "din_dspi",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "din_qspi",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "din_ddr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "din_rd",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "dout",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E12",
+      "E13",
+      "E14"
+     ],
+     "members": [
+      {
+       "id": "E12",
+       "name": "dout_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "dout_data",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "dout_tag",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "flash_spi",
+     "protocol": "SERIAL",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E15",
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20",
+      "E21",
+      "E22",
+      "E23",
+      "E24",
+      "E25",
+      "E26",
+      "E27",
+      "E28"
+     ],
+     "members": [
+      {
+       "id": "E15",
+       "name": "flash_csb",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "flash_clk",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "flash_io0_oe",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "flash_io1_oe",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "flash_io2_oe",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "flash_io3_oe",
+       "kind": "port_out"
+      },
+      {
+       "id": "E21",
+       "name": "flash_io0_do",
+       "kind": "port_out"
+      },
+      {
+       "id": "E22",
+       "name": "flash_io1_do",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "flash_io2_do",
+       "kind": "port_out"
+      },
+      {
+       "id": "E24",
+       "name": "flash_io3_do",
+       "kind": "port_out"
+      },
+      {
+       "id": "E25",
+       "name": "flash_io0_di",
+       "kind": "port_in"
+      },
+      {
+       "id": "E26",
+       "name": "flash_io1_di",
+       "kind": "port_in"
+      },
+      {
+       "id": "E27",
+       "name": "flash_io2_di",
+       "kind": "port_in"
+      },
+      {
+       "id": "E28",
+       "name": "flash_io3_di",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  },
+  "spimemio": {
+   "source": "teacher",
+   "canonical_instance": "spimemio",
+   "file": "data/rtl/picorv32/picosoc/spimemio.v",
+   "lines": [
+    20,
+    376
+   ],
+   "summary": "SPI flash memory-mapped read controller: an FSM sequences reset/wakeup, command, address, mode and dummy bytes into a spimemio_xfer engine, assembles tagged read bytes into 32-bit words with sequential prefetch, plus a config register for bit-bang override.",
+   "blocks": [
+    {
+     "name": "Read sequencer FSM",
+     "kind": "CONTROLLER",
+     "description": "Sequences flash wakeup, command, address, mode and data byte fetches",
+     "anchors": [
+      {
+       "id": "E68",
+       "name": "state",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.3,
+       "struct_score": 98.3,
+       "trace": "control_backward",
+       "why": "Sequencer: reset/wakeup, read command, address bytes, mode, then repeated data byte fetches",
+       "lines": [
+        235,
+        310,
+        355
+       ]
+      },
+      {
+       "id": "E41",
+       "name": "jump",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 46.5,
+       "struct_score": 18.2,
+       "trace": "control_backward",
+       "why": "Non-sequential access: aborts transfer, restarts FSM at command or address",
+       "lines": [
+        72,
+        361,
+        366
+       ]
+      },
+      {
+       "id": "E42",
+       "name": "softreset",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 50.0,
+       "struct_score": 32.4,
+       "trace": "control_backward",
+       "why": "Resets FSM when config disabled or config register written",
+       "lines": [
+        100,
+        211
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "xfer_resetn",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.2,
+       "struct_score": 13.2,
+       "trace": "control_backward",
+       "why": "Resets xfer engine between commands and on jump",
+       "lines": [
+        176,
+        247,
+        364
+       ]
+      },
+      {
+       "id": "E39",
+       "name": "rd_wait",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.2,
+       "struct_score": 17.1,
+       "trace": "control_backward",
+       "why": "Prefetched word unclaimed; stalls next data byte fetch in state 12",
+       "lines": [
+        228,
+        233,
+        350
+       ]
+      },
+      {
+       "id": "E40",
+       "name": "rd_inc",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.1,
+       "struct_score": 16.6,
+       "trace": "control_backward",
+       "why": "Selects incrementing rd_addr for sequential reads vs loading addr",
+       "lines": [
+        226,
+        229,
+        362
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Memory bus and word assembly",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Assembles bytes into rdata, tracks prefetched address and ready",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 90.3,
+       "struct_score": 75.6,
+       "trace": "interface",
+       "why": "Memory read request from CPU; starts address phase and clears rd_wait",
+       "lines": [
+        71,
+        232,
+        282
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 90.8,
+       "struct_score": 76.7,
+       "trace": "control_backward",
+       "why": "Read done when requested addr matches prefetched rd_addr and rd_valid",
+       "lines": [
+        71,
+        282
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "addr",
+       "role": "INTERFACE_ADDR",
+       "importance": "critical",
+       "score": 88.7,
+       "struct_score": 71.4,
+       "trace": "interface",
+       "why": "Read address, sent as three address bytes and compared with rd_addr",
+       "lines": [
+        71,
+        285,
+        306
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "rdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 93.8,
+       "struct_score": 84.4,
+       "trace": "data_backward",
+       "why": "32-bit read word assembled from buffer and fourth tagged byte",
+       "lines": [
+        225
+       ]
+      },
+      {
+       "id": "E36",
+       "name": "buffer",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 47.4,
+       "struct_score": 21.8,
+       "trace": "data_backward",
+       "why": "Collects first three read bytes by dout_tag before rdata assembly",
+       "lines": [
+        221,
+        222,
+        225
+       ]
+      },
+      {
+       "id": "E37",
+       "name": "rd_addr",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 49.8,
+       "struct_score": 31.8,
+       "trace": "data_backward",
+       "why": "Address of buffered word; increments by 4 for sequential prefetch",
+       "lines": [
+        71,
+        72,
+        226
+       ]
+      },
+      {
+       "id": "E38",
+       "name": "rd_valid",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 47.1,
+       "struct_score": 20.7,
+       "trace": "control_backward",
+       "why": "rdata holds valid word for rd_addr; gates ready and jump",
+       "lines": [
+        71,
+        227,
+        363
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Xfer engine interface",
+     "kind": "SERIALIZER",
+     "description": "Byte command/response handshake to spimemio_xfer shift engine",
+     "anchors": [
+      {
+       "id": "E25",
+       "name": "din_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 49.7,
+       "struct_score": 31.2,
+       "trace": "control_backward",
+       "why": "Byte command valid to xfer engine, raised in each FSM send state",
+       "lines": [
+        177,
+        237,
+        241
+       ]
+      },
+      {
+       "id": "E26",
+       "name": "din_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 45.3,
+       "struct_score": 13.4,
+       "trace": "forward",
+       "why": "Xfer engine accepted byte; advances FSM state",
+       "lines": [
+        178,
+        240,
+        255
+       ]
+      },
+      {
+       "id": "E27",
+       "name": "din_data",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 50.5,
+       "struct_score": 34.5,
+       "trace": "data_backward",
+       "why": "Byte to send: command opcode, address bytes, mode or dummy count",
+       "lines": [
+        271,
+        285,
+        319
+       ]
+      },
+      {
+       "id": "E28",
+       "name": "din_tag",
+       "role": "INDEX",
+       "importance": "minor",
+       "score": 15.9,
+       "struct_score": 7.6,
+       "trace": "data_backward",
+       "why": "Tag identifying which result byte position a read returns",
+       "lines": [
+        326,
+        335,
+        352
+       ]
+      },
+      {
+       "id": "E29",
+       "name": "din_cont",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.6,
+       "struct_score": 10.4,
+       "trace": "control_backward",
+       "why": "Continue flag to xfer engine to keep chip select active",
+       "lines": [
+        181,
+        216
+       ]
+      },
+      {
+       "id": "E30",
+       "name": "din_qspi",
+       "role": "MUX_SELECT",
+       "importance": "minor",
+       "score": 22.7,
+       "struct_score": 35.4,
+       "trace": "control_backward",
+       "why": "Selects quad-SPI mode for xfer bytes after command",
+       "lines": [
+        183,
+        286
+       ]
+      },
+      {
+       "id": "E31",
+       "name": "din_ddr",
+       "role": "MUX_SELECT",
+       "importance": "minor",
+       "score": 21.6,
+       "struct_score": 30.7,
+       "trace": "control_backward",
+       "why": "Selects DDR/dual mode, decoded into xfer_dspi and xfer_ddr",
+       "lines": [
+        171,
+        172,
+        287
+       ]
+      },
+      {
+       "id": "E32",
+       "name": "din_rd",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.2,
+       "struct_score": 13.2,
+       "trace": "control_backward",
+       "why": "Enables read direction / dummy cycles in xfer engine",
+       "lines": [
+        185,
+        318,
+        372
+       ]
+      },
+      {
+       "id": "E33",
+       "name": "dout_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 50.2,
+       "struct_score": 33.4,
+       "trace": "forward",
+       "why": "Xfer engine returns byte; stores into buffer/rdata, advances FSM",
+       "lines": [
+        221,
+        224,
+        246
+       ]
+      },
+      {
+       "id": "E34",
+       "name": "dout_data",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 20.0,
+       "struct_score": 24.2,
+       "trace": "data_backward",
+       "why": "Returned read byte placed into buffer or rdata",
+       "lines": [
+        221,
+        225
+       ]
+      },
+      {
+       "id": "E35",
+       "name": "dout_tag",
+       "role": "INDEX",
+       "importance": "minor",
+       "score": 16.0,
+       "struct_score": 8.1,
+       "trace": "data_backward",
+       "why": "Returned byte tag selecting buffer slot or final rdata",
+       "lines": [
+        221,
+        224
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "xfer",
+       "module": "spimemio_xfer"
+      }
+     ],
+     "members": [
+      {
+       "id": "E66",
+       "name": "xfer_dspi",
+       "kind": "wire"
+      },
+      {
+       "id": "E67",
+       "name": "xfer_ddr",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Config register",
+     "kind": "REGISTER_BANK",
+     "description": "Software config: mode, dummy cycles, bit-bang pin control",
+     "anchors": [
+      {
+       "id": "E43",
+       "name": "config_en",
+       "role": "CONFIG_REG",
+       "importance": "major",
+       "score": 47.6,
+       "struct_score": 22.6,
+       "trace": "control_backward",
+       "why": "Selects memory-mapped xfer engine vs bit-bang config outputs on flash pins",
+       "lines": [
+        128,
+        158,
+        166
+       ]
+      },
+      {
+       "id": "E44",
+       "name": "config_ddr",
+       "role": "CONFIG_REG",
+       "importance": "minor",
+       "score": 17.8,
+       "struct_score": 15.6,
+       "trace": "control_backward",
+       "why": "DDR mode config: chooses read command and delayed IO outputs",
+       "lines": [
+        122,
+        166,
+        270
+       ]
+      },
+      {
+       "id": "E45",
+       "name": "config_qspi",
+       "role": "CONFIG_REG",
+       "importance": "minor",
+       "score": 16.5,
+       "struct_score": 10.4,
+       "trace": "control_backward",
+       "why": "Quad SPI config: selects command opcode and mode byte path",
+       "lines": [
+        123,
+        270,
+        310
+       ]
+      },
+      {
+       "id": "E46",
+       "name": "config_cont",
+       "role": "CONFIG_REG",
+       "importance": "minor",
+       "score": 16.7,
+       "struct_score": 11.0,
+       "trace": "control_backward",
+       "why": "Continuous read mode: mode byte and jump restart state",
+       "lines": [
+        124,
+        316,
+        365
+       ]
+      },
+      {
+       "id": "E47",
+       "name": "config_dummy",
+       "role": "CONFIG_REG",
+       "importance": "minor",
+       "score": 17.2,
+       "struct_score": 12.8,
+       "trace": "data_backward",
+       "why": "Dummy cycle count sent to xfer engine",
+       "lines": [
+        125,
+        319
+       ]
+      },
+      {
+       "id": "E48",
+       "name": "config_oe",
+       "role": "CONFIG_REG",
+       "importance": "minor",
+       "score": 19.1,
+       "struct_score": 20.7,
+       "trace": "data_backward",
+       "why": "Bit-bang output enables for flash IO when config_en low",
+       "lines": [
+        119,
+        161
+       ]
+      },
+      {
+       "id": "E51",
+       "name": "config_do",
+       "role": "CONFIG_REG",
+       "importance": "minor",
+       "score": 18.9,
+       "struct_score": 20.1,
+       "trace": "data_backward",
+       "why": "Bit-bang data outputs for flash IO when config_en low",
+       "lines": [
+        116,
+        166
+       ]
+      },
+      {
+       "id": "E21",
+       "name": "cfgreg_we",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 53.2,
+       "struct_score": 44.9,
+       "trace": "forward",
+       "why": "Byte write enables for config register fields; triggers softreset",
+       "lines": [
+        100,
+        113,
+        127
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "cfgreg_di",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 40.5,
+       "struct_score": 91.2,
+       "trace": "interface",
+       "why": "Config register write data",
+       "lines": [
+        114,
+        122,
+        128
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "cfgreg_do",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 28.0,
+       "struct_score": 55.0,
+       "trace": "data_backward",
+       "why": "Config readback with live flash pin states",
+       "lines": [
+        86,
+        93,
+        97
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E49",
+       "name": "config_csb",
+       "kind": "reg"
+      },
+      {
+       "id": "E50",
+       "name": "config_clk",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Flash pin mux",
+     "kind": "DATAPATH",
+     "description": "Selects xfer engine or bit-bang config onto flash pins, DDR delay",
+     "anchors": [
+      {
+       "id": "E62",
+       "name": "xfer_io0_90",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 16.3,
+       "struct_score": 9.3,
+       "trace": "data_backward",
+       "why": "Negedge-delayed IO data for DDR output timing",
+       "lines": [
+        152,
+        166
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "flash_io0_do",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 55.0,
+       "struct_score": 51.3,
+       "trace": "data_backward",
+       "why": "Flash IO output data muxed from xfer engine, DDR delay or config",
+       "lines": [
+        166
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "flash_csb",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 30.6,
+       "struct_score": 64.4,
+       "trace": "data_backward",
+       "why": "Flash chip select muxed from xfer engine or config_csb",
+       "lines": [
+        158
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "flash_clk",
+       "role": "CLOCK_GEN",
+       "importance": "minor",
+       "score": 26.7,
+       "struct_score": 50.3,
+       "trace": "data_backward",
+       "why": "Flash serial clock muxed from xfer engine or config_clk",
+       "lines": [
+        159
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E63",
+       "name": "xfer_io1_90",
+       "kind": "reg"
+      },
+      {
+       "id": "E64",
+       "name": "xfer_io2_90",
+       "kind": "reg"
+      },
+      {
+       "id": "E65",
+       "name": "xfer_io3_90",
+       "kind": "reg"
+      },
+      {
+       "id": "E14",
+       "name": "flash_io1_do",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "flash_io2_do",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "flash_io3_do",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "flash_io0_oe",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "flash_io1_oe",
+       "kind": "port_out"
+      },
+      {
+       "id": "E11",
+       "name": "flash_io2_oe",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "flash_io3_oe",
+       "kind": "port_out"
+      },
+      {
+       "id": "E52",
+       "name": "xfer_csb",
+       "kind": "wire"
+      },
+      {
+       "id": "E53",
+       "name": "xfer_clk",
+       "kind": "wire"
+      },
+      {
+       "id": "E54",
+       "name": "xfer_io0_oe",
+       "kind": "wire"
+      },
+      {
+       "id": "E55",
+       "name": "xfer_io1_oe",
+       "kind": "wire"
+      },
+      {
+       "id": "E56",
+       "name": "xfer_io2_oe",
+       "kind": "wire"
+      },
+      {
+       "id": "E57",
+       "name": "xfer_io3_oe",
+       "kind": "wire"
+      },
+      {
+       "id": "E58",
+       "name": "xfer_io0_do",
+       "kind": "wire"
+      },
+      {
+       "id": "E59",
+       "name": "xfer_io1_do",
+       "kind": "wire"
+      },
+      {
+       "id": "E60",
+       "name": "xfer_io2_do",
+       "kind": "wire"
+      },
+      {
+       "id": "E61",
+       "name": "xfer_io3_do",
+       "kind": "wire"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "resetn",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "mem_read",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "ready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "addr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "rdata",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "flash_spi",
+     "protocol": "SERIAL",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20"
+     ],
+     "members": [
+      {
+       "id": "E7",
+       "name": "flash_csb",
+       "kind": "port_out"
+      },
+      {
+       "id": "E8",
+       "name": "flash_clk",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "flash_io0_oe",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "flash_io1_oe",
+       "kind": "port_out"
+      },
+      {
+       "id": "E11",
+       "name": "flash_io2_oe",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "flash_io3_oe",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "flash_io0_do",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "flash_io1_do",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "flash_io2_do",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "flash_io3_do",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "flash_io0_di",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "flash_io1_di",
+       "kind": "port_in"
+      },
+      {
+       "id": "E19",
+       "name": "flash_io2_di",
+       "kind": "port_in"
+      },
+      {
+       "id": "E20",
+       "name": "flash_io3_di",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "cfgreg",
+     "protocol": "SIMPLE",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E21",
+      "E22",
+      "E23"
+     ],
+     "members": [
+      {
+       "id": "E21",
+       "name": "cfgreg_we",
+       "kind": "port_in"
+      },
+      {
+       "id": "E22",
+       "name": "cfgreg_di",
+       "kind": "port_in"
+      },
+      {
+       "id": "E23",
+       "name": "cfgreg_do",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,333 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "common_cells_cc_shift_register",
+ "tops": [
+  "cc_shift_register"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "cc_shift_register_gated": {
+   "source": "teacher",
+   "canonical_instance": "cc_shift_register.i_shift_register_gated",
+   "file": "data/rtl/common_cells/src/cc_shift_register_gated.sv",
+   "lines": [
+    15,
+    66
+   ],
+   "summary": "Valid-gated delay line: Depth stages of valid and data registers shift together, each data stage loading only when its incoming valid is set to allow clock gating.",
+   "blocks": [
+    {
+     "name": "delay_line",
+     "kind": "PIPELINE_STAGE",
+     "description": "Depth-stage valid/data shift register with valid-gated data loads",
+     "anchors": [
+      {
+       "id": "E11",
+       "name": "gen_shift_register.data_q",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 90.5,
+       "struct_score": 76.0,
+       "trace": "data_backward",
+       "why": "Data shift-register stages, each loaded only when its valid_d is high",
+       "lines": [
+        39,
+        57,
+        62
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "gen_shift_register.valid_q",
+       "role": "PIPELINE_REG",
+       "importance": "critical",
+       "score": 82.1,
+       "struct_score": 48.1,
+       "trace": "control_backward",
+       "why": "Valid flag shift chain accompanying data through each stage",
+       "lines": [
+        38,
+        53,
+        61
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "gen_shift_register.valid_d",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 22.0,
+       "struct_score": 32.6,
+       "trace": "control_backward",
+       "why": "Per-stage load enable gating data_q update for clock gating",
+       "lines": [
+        45,
+        48,
+        57
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E10",
+       "name": "gen_shift_register.data_d",
+       "kind": "wire"
+      },
+      {
+       "id": "E3",
+       "name": "clr_i",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E4",
+     "name": "valid_i",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 95.4,
+     "struct_score": 88.5,
+     "trace": "interface",
+     "why": "Input valid shifted into first stage, gating data capture",
+     "lines": [
+      23,
+      45
+     ]
+    },
+    {
+     "id": "E5",
+     "name": "data_i",
+     "role": "INTERFACE_DATA",
+     "importance": "critical",
+     "score": 91.8,
+     "struct_score": 79.3,
+     "trace": "interface",
+     "why": "Input payload entering the first data stage",
+     "lines": [
+      24,
+      46
+     ]
+    },
+    {
+     "id": "E6",
+     "name": "valid_o",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 96.0,
+     "struct_score": 89.9,
+     "trace": "interface",
+     "why": "Delayed valid from last stage of valid_q",
+     "lines": [
+      25,
+      61
+     ]
+    },
+    {
+     "id": "E7",
+     "name": "data_o",
+     "role": "INTERFACE_DATA",
+     "importance": "critical",
+     "score": 93.2,
+     "struct_score": 82.8,
+     "trace": "interface",
+     "why": "Delayed data from last stage of data_q",
+     "lines": [
+      26,
+      62
+     ]
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2",
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_ni",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "clr_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "in_stream",
+     "protocol": "STREAM",
+     "direction": "IN",
+     "member_ids": [
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "valid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "data_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "out_stream",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "valid_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "data_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "cc_shift_register": {
+   "source": "teacher",
+   "canonical_instance": "cc_shift_register",
+   "file": "data/rtl/common_cells/src/cc_shift_register.sv",
+   "lines": [
+    16,
+    41
+   ],
+   "summary": "Fixed-depth delay line wrapping cc_shift_register_gated with valid tied high, so data shifts through Depth register stages every cycle.",
+   "blocks": [
+    {
+     "name": "delay_line",
+     "kind": "BUFFER",
+     "description": "Child gated shift register with valid forced high, delaying d_i by Depth cycles.",
+     "anchors": [
+      {
+       "id": "E4",
+       "name": "d_i",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 96.0,
+       "struct_score": 89.8,
+       "trace": "interface",
+       "why": "Input data entering the first shift-register stage every cycle.",
+       "lines": [
+        23,
+        35
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "d_o",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 96.4,
+       "struct_score": 90.8,
+       "trace": "data_backward",
+       "why": "Delayed output taken from the last stage of the child shift register.",
+       "lines": [
+        24,
+        37
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "i_shift_register_gated",
+       "module": "cc_shift_register_gated"
+      }
+     ],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2",
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_ni",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "clr_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "data_in",
+     "protocol": "STREAM",
+     "direction": "IN",
+     "member_ids": [
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "d_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "data_out",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "d_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

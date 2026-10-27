@@ -1,0 +1,37 @@
+{
+ "module_summary": "Blocking direct-mapped cache controller: a 5-state FSM latches the CPU request, probes a child tag/data bank for hit, and on miss or write issues a memory req/ack transaction that refills or updates the bank.",
+ "anchors": [
+  {"id": "E17", "name": "mode", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Controller state: wait, peek (tag check), push (write), pull (refill), done.", "lines": [78, 112, 116]},
+  {"id": "E3", "name": "cpu_req_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "CPU request valid; starts the FSM and loads the request latches.", "lines": [54, 114, 129]},
+  {"id": "E4", "name": "cpu_req_ready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "Request ready, asserted only in the wait state.", "lines": [55, 147]},
+  {"id": "E8", "name": "cpu_resp_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Response valid pulse decoded from the done state.", "lines": [59, 149]},
+  {"id": "E9", "name": "cpu_rdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Response data, driven by the out_r result register.", "lines": [60, 150]},
+  {"id": "E18", "name": "lat_a", "role": "HOLDING_REG", "importance": "critical", "trace": "data_backward", "why": "Latched request address; supplies bank slot/tag and the memory address.", "lines": [100, 130, 154]},
+  {"id": "E21", "name": "lat_w", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Latched write flag; steers peek to push (write) path versus read path.", "lines": [116, 132, 143]},
+  {"id": "E22", "name": "found", "role": "CONTROL_FLAG", "importance": "major", "trace": "data_backward", "why": "Cache hit from child bank; selects done vs refill and gates write update.", "lines": [95, 116, 143]},
+  {"id": "E29", "name": "refill_ok", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Refill strobe: writes memory data into bank line and result register.", "lines": [94, 102, 141]},
+  {"id": "E30", "name": "write_ok", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Write-hit strobe: pokes write data into the bank line.", "lines": [95, 103, 139]},
+  {"id": "E11", "name": "mem_req", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Memory request asserted in push or pull states.", "lines": [62, 152]},
+  {"id": "E15", "name": "mem_ack", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Memory acknowledge; ends push/pull and qualifies refill/write strobes.", "lines": [66, 94, 118]},
+  {"id": "E16", "name": "mem_rdata", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Memory read data used to refill the bank and the result register.", "lines": [67, 104, 142]},
+  {"id": "E19", "name": "lat_d", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Latched write data; feeds bank poke, result register and mem_wdata.", "lines": [105, 131, 155]},
+  {"id": "E23", "name": "bank_q", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Bank read data captured into the result register on read hit.", "lines": [84, 107, 144]},
+  {"id": "E24", "name": "is_wait", "role": "DECODE", "importance": "minor", "trace": "control_backward", "why": "Wait-state decode gating request accept, ready and stall.", "lines": [88, 113, 147]},
+  {"id": "E5", "name": "cpu_we", "role": "COMMAND", "importance": "minor", "trace": "interface", "why": "Read/write command input latched into lat_w.", "lines": [56, 132]},
+  {"id": "E6", "name": "cpu_addr", "role": "INTERFACE_ADDR", "importance": "minor", "trace": "interface", "why": "Request address latched into lat_a.", "lines": [57, 130]},
+  {"id": "E10", "name": "stall_o", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Busy indication while FSM is outside wait/done.", "lines": [61, 148]}
+ ],
+ "groups": [
+  {"name": "cache_fsm", "kind": "CONTROLLER", "anchor_ids": ["E17", "E24", "E10"], "member_ids": ["E25", "E26", "E27", "E28"], "description": "Mode register with one-hot style decodes sequencing lookup, write-through and refill."},
+  {"name": "request_latch", "kind": "REGISTER_BANK", "anchor_ids": ["E18", "E21", "E19"], "member_ids": [], "description": "Holds address, write flag and write data for the whole transaction."},
+  {"name": "line_bank", "kind": "MEMORY", "anchor_ids": ["E22", "E29", "E30", "E23"], "member_ids": ["I1"], "description": "cc_bank child: tag compare gives hit, refill and poke strobes update lines."},
+  {"name": "cpu_side", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E3", "E4", "E8", "E9", "E5", "E6"], "member_ids": ["E20", "E7"], "description": "CPU request/response handshake; out_r result register drives read data."},
+  {"name": "mem_side", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E11", "E15", "E16"], "member_ids": ["E12", "E13", "E14"], "description": "Memory req/ack bus for write-through and line refill."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "cpu_req", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7"]},
+  {"name": "cpu_resp", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E8", "E9", "E10"]},
+  {"name": "mem_bus", "protocol": "REQ_ACK", "direction": "OUT", "member_ids": ["E11", "E12", "E13", "E14", "E15", "E16"]}
+ ]
+}

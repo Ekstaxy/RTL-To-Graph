@@ -1,0 +1,30 @@
+{
+  "module_summary": "Dual-clock asynchronous FIFO: binary write/read pointers address a dual_port_RAM child, Gray-coded pointers cross domains via two-flop synchronizers to derive full and empty.",
+  "anchors": [
+    {"id": "E5", "name": "winc", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Write request; when not full advances write pointer and enables RAM write."},
+    {"id": "E7", "name": "wdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Write data passed directly to the dual_port_RAM write port."},
+    {"id": "E8", "name": "wfull", "role": "CONTROL_FLAG", "importance": "critical", "trace": "control_backward", "why": "Full flag from Gray pointer compare; blocks write pointer increment and RAM write."},
+    {"id": "E6", "name": "rinc", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Read request; when not empty advances read pointer and enables RAM read."},
+    {"id": "E10", "name": "rdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Read data output from the dual_port_RAM child."},
+    {"id": "E9", "name": "rempty", "role": "CONTROL_FLAG", "importance": "critical", "trace": "control_backward", "why": "Empty flag from Gray pointer compare; blocks read pointer increment and RAM read."},
+    {"id": "E11", "name": "waddr_bin", "role": "FIFO_PTR", "importance": "critical", "trace": "control_backward", "why": "Binary write pointer in wclk domain; low bits address RAM writes."},
+    {"id": "E12", "name": "raddr_bin", "role": "FIFO_PTR", "importance": "critical", "trace": "control_backward", "why": "Binary read pointer in rclk domain; low bits address RAM reads."},
+    {"id": "E15", "name": "wptr", "role": "FIFO_PTR", "importance": "major", "trace": "data_backward", "why": "Registered Gray-coded write pointer sent across to the read domain."},
+    {"id": "E16", "name": "rptr", "role": "FIFO_PTR", "importance": "major", "trace": "data_backward", "why": "Registered Gray-coded read pointer sent across to the write domain."},
+    {"id": "E18", "name": "wptr_syn", "role": "FIFO_PTR", "importance": "major", "trace": "data_backward", "why": "Write pointer after two-flop rclk synchronizer, compared for empty."},
+    {"id": "E20", "name": "rptr_syn", "role": "FIFO_PTR", "importance": "major", "trace": "data_backward", "why": "Read pointer after two-flop wclk synchronizer, compared for full."},
+    {"id": "E21", "name": "wen", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "RAM write enable: winc gated by not full."},
+    {"id": "E22", "name": "ren", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "RAM read enable: rinc gated by not empty."}
+  ],
+  "groups": [
+    {"name": "write_controller", "kind": "CONTROLLER", "anchor_ids": ["E5", "E7", "E8", "E11", "E15", "E21"], "member_ids": ["E13", "E24", "E23"], "description": "wclk-domain write pointer, Gray conversion, full detection and RAM write enable."},
+    {"name": "read_controller", "kind": "CONTROLLER", "anchor_ids": ["E6", "E9", "E12", "E16", "E22", "E10"], "member_ids": ["E14", "E25"], "description": "rclk-domain read pointer, Gray conversion, empty detection and RAM read enable."},
+    {"name": "pointer_synchronizers", "kind": "OTHER", "anchor_ids": ["E18", "E20"], "member_ids": ["E17", "E19"], "description": "Two-flop synchronizers moving Gray pointers across clock domains."},
+    {"name": "fifo_storage", "kind": "MEMORY", "anchor_ids": [], "member_ids": ["I1"], "description": "dual_port_RAM child storing FIFO entries, written on wclk and read on rclk."}
+  ],
+  "interfaces": [
+    {"name": "clocks_resets", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2", "E3", "E4"]},
+    {"name": "write_port", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E5", "E7", "E8"]},
+    {"name": "read_port", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E6", "E10", "E9"]}
+  ]
+}

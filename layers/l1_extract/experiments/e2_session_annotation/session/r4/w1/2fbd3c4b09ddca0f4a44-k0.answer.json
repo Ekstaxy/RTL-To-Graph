@@ -1,0 +1,24 @@
+{
+ "module_summary": "Two-entry isochronous clock-crossing FIFO: source domain writes a 2-slot memory with a wrapping write pointer, destination domain reads via read pointer; pointer XOR gives full/empty.",
+ "anchors": [
+  {"id": "E3", "name": "src_valid_i", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Source valid; with ready pushes data and advances write pointer.", "lines": [52, 82, 87]},
+  {"id": "E4", "name": "src_ready_o", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Source ready, low when pointers indicate FIFO full.", "lines": [54, 93]},
+  {"id": "E5", "name": "src_data_i", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Source payload written into mem slot selected by write pointer.", "lines": [56, 90]},
+  {"id": "E8", "name": "dst_valid_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Destination valid when pointers differ (FIFO not empty).", "lines": [62, 95]},
+  {"id": "E9", "name": "dst_ready_i", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Destination ready; with valid advances read pointer.", "lines": [64, 84]},
+  {"id": "E10", "name": "dst_data_o", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Output data read from mem slot at read pointer.", "lines": [66, 96]},
+  {"id": "E14", "name": "gen_isochronous_spill_register.mem_q", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "Two-entry data storage written in source domain.", "lines": [86, 87, 96]},
+  {"id": "E12", "name": "gen_isochronous_spill_register.wr_pointer_q", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "Source-domain write pointer with extra wrap bit.", "lines": [80, 82, 90]},
+  {"id": "E11", "name": "gen_isochronous_spill_register.rd_pointer_q", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "Destination-domain read pointer with extra wrap bit.", "lines": [80, 84, 96]}
+ ],
+ "groups": [
+  {"name": "Two-entry buffer", "kind": "BUFFER", "anchor_ids": ["E14"], "member_ids": ["E13"], "description": "Two data slots written at wr_pointer, read at rd_pointer."},
+  {"name": "Pointer control", "kind": "CONTROLLER", "anchor_ids": ["E12", "E11", "E4", "E8"], "member_ids": [], "description": "Write/read pointers in two domains; XOR derives full and empty."}
+ ],
+ "interfaces": [
+  {"name": "src_clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "dst_clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E6", "E7"]},
+  {"name": "src_stream", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5"]},
+  {"name": "dst_stream", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E8", "E9", "E10"]}
+ ]
+}

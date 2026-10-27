@@ -1,0 +1,37 @@
+{
+  "module_summary": "AXI-stream tap: a 4-state FSM copies observed tap beats into a skid-buffered output, and on output backpressure truncates the frame with a tlast beat marked bad in tuser.",
+  "anchors": [
+    {"id": "E32", "name": "state_reg", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "IDLE/TRANSFER/TRUNCATE/WAIT controller selecting copy, truncate or drop.", "lines": [112, 135, 216]},
+    {"id": "E3", "name": "tap_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Observed stream data copied to output when output ready.", "lines": [66, 140, 163]},
+    {"id": "E5", "name": "tap_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Tapped valid; with tap ready marks a transferred beat.", "lines": [68, 131, 137]},
+    {"id": "E6", "name": "tap_axis_tready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Tapped ready observed to detect beat transfers.", "lines": [69, 131, 137]},
+    {"id": "E11", "name": "m_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Output copy data from m_axis_tdata_reg.", "lines": [78, 253]},
+    {"id": "E13", "name": "m_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Output valid from m_axis_tvalid_reg.", "lines": [80, 255]},
+    {"id": "E14", "name": "m_axis_tready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Output ready steering output/temp register transfers.", "lines": [81, 262, 275]},
+    {"id": "E26", "name": "m_axis_tready_int_reg", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "Internal ready of output skid stage; failure mid-frame triggers truncation.", "lines": [99, 162, 294]},
+    {"id": "E44", "name": "temp_m_axis_tdata_reg", "role": "STORAGE", "importance": "major", "trace": "data_backward", "why": "Skid temp register holding a beat while output stalled.", "lines": [240, 306, 315]},
+    {"id": "E7", "name": "tap_axis_tlast", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Tapped end-of-frame ending TRANSFER/WAIT and tracking frame state.", "lines": [70, 132, 170]},
+    {"id": "E15", "name": "m_axis_tlast", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Output end-of-frame, forced on truncation beat.", "lines": [82, 256]},
+    {"id": "E18", "name": "m_axis_tuser", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Output user sideband carrying bad-frame marker on truncation.", "lines": [85, 259]},
+    {"id": "E34", "name": "frame_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "In-frame flag deciding WAIT versus IDLE after truncation.", "lines": [114, 121, 217]},
+    {"id": "E46", "name": "temp_m_axis_tvalid_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Temp register occupied flag affecting internal ready.", "lines": [242, 262, 286]},
+    {"id": "E52", "name": "store_axis_int_to_output", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Loads output registers directly from internal datapath.", "lines": [249, 278, 298]},
+    {"id": "E53", "name": "store_axis_int_to_temp", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Loads temp registers when output stalled.", "lines": [250, 282, 314]},
+    {"id": "E54", "name": "store_axis_temp_to_output", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Moves temp registers into output registers.", "lines": [251, 288, 305]},
+    {"id": "E23", "name": "m_axis_tdata_int", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "FSM-selected beat data: tapped data or zero truncation beat.", "lines": [96, 140, 299]},
+    {"id": "E19", "name": "store_last_word", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Captures sideband of beat where truncation begins.", "lines": [89, 176, 219]},
+    {"id": "E22", "name": "last_word_user_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Held tuser of truncated beat, merged with bad-frame value.", "lines": [93, 191, 222]},
+    {"id": "E10", "name": "tap_axis_tuser", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Tapped user sideband passed or captured on truncation.", "lines": [73, 146, 222]}
+  ],
+  "groups": [
+    {"name": "Tap controller", "kind": "CONTROLLER", "anchor_ids": ["E32", "E34", "E19", "E22", "E23"], "member_ids": ["E33", "E35", "E20", "E21", "E24", "E25", "E27", "E28", "E29", "E30"], "description": "FSM forwarding tapped beats, truncating and waiting for frame end."},
+    {"name": "Tap input", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E3", "E5", "E6", "E7", "E10"], "member_ids": ["E4", "E8", "E9"], "description": "Passive monitor of the tapped stream handshake."},
+    {"name": "Output skid buffer", "kind": "BUFFER", "anchor_ids": ["E26", "E44", "E46", "E52", "E53", "E54"], "member_ids": ["E31", "E36", "E37", "E38", "E39", "E40", "E41", "E42", "E43", "E45", "E47", "E48", "E49", "E50", "E51"], "description": "Output and temp registers forming a registered skid buffer."},
+    {"name": "Output AXI-stream", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E11", "E13", "E14", "E15", "E18"], "member_ids": ["E12", "E16", "E17"], "description": "Registered output stream ports."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "tap_axis", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10"]},
+    {"name": "m_axis", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E11", "E12", "E13", "E14", "E15", "E16", "E17", "E18"]}
+  ]
+}

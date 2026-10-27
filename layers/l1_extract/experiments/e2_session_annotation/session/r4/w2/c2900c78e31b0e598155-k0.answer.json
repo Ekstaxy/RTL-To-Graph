@@ -1,0 +1,53 @@
+{
+ "module_summary": "Write-only AXI4 slave to Wishbone master bridge: skid-buffered AW/W channels unwind bursts into pipelined Wishbone writes, with ack counters and BID/error FIFOs generating B responses.",
+ "anchors": [
+  {"id": "E3", "name": "S_AXI_AWVALID", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "AXI write-address valid feeding the address skid buffer", "lines": [54, 163]},
+  {"id": "E6", "name": "S_AXI_AWADDR", "role": "INTERFACE_ADDR", "importance": "minor", "trace": "interface", "why": "AXI burst start address captured through awskid", "lines": [57, 164]},
+  {"id": "E14", "name": "S_AXI_WVALID", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "AXI write-data valid feeding the write skid buffer", "lines": [67, 180]},
+  {"id": "E16", "name": "S_AXI_WDATA", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "AXI write data payload forwarded to o_wb_data", "lines": [69, 181]},
+  {"id": "E19", "name": "S_AXI_BVALID", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Write response valid when both BID and error FIFOs are non-empty", "lines": [514, 331]},
+  {"id": "E20", "name": "S_AXI_BREADY", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Response ready; pops BID/err FIFOs and decrements fill counters", "lines": [75, 331]},
+  {"id": "E21", "name": "S_AXI_BID", "role": "INTERFACE_ADDR", "importance": "minor", "trace": "data_backward", "why": "Response ID read out of bid_fifo", "lines": [76, 502]},
+  {"id": "E22", "name": "S_AXI_BRESP", "role": "INTERFACE_DATA", "importance": "minor", "trace": "data_backward", "why": "Response code; bit 1 from err_fifo marks slave error", "lines": [511, 515]},
+  {"id": "E23", "name": "o_wb_cyc", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Wishbone cycle line, raised on burst accept, dropped after last ack or error", "lines": [272, 277]},
+  {"id": "E24", "name": "o_wb_stb", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Wishbone strobe issuing one write per accepted W beat", "lines": [273, 276]},
+  {"id": "E25", "name": "o_wb_addr", "role": "INTERFACE_ADDR", "importance": "critical", "trace": "data_backward", "why": "Wishbone word address taken from burst address register axi_waddr", "lines": [283]},
+  {"id": "E26", "name": "o_wb_data", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Wishbone write data registered from skid_wdata, optionally byte-swapped", "lines": [307, 296]},
+  {"id": "E27", "name": "o_wb_sel", "role": "INTERFACE_DATA", "importance": "minor", "trace": "data_backward", "why": "Wishbone byte selects registered from write strobes", "lines": [308, 298]},
+  {"id": "E28", "name": "i_wb_stall", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Wishbone stall backpressure gating strobe, data and burst acceptance", "lines": [190, 275]},
+  {"id": "E29", "name": "i_wb_ack", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Wishbone ack decrementing outstanding acks and ack length tracking", "lines": [277, 345]},
+  {"id": "E30", "name": "i_wb_err", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Wishbone error response forcing err_state and aborting the cycle", "lines": [266, 474]},
+  {"id": "E33", "name": "accept_write_burst", "role": "ENABLE", "importance": "critical", "trace": "control_backward", "why": "Accepts new AW burst: loads burst registers, starts cycle, pushes ack FIFO", "lines": [190, 213, 231]},
+  {"id": "E41", "name": "skid_wready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Ready to write skid buffer; advances address and beat counting", "lines": [203, 239]},
+  {"id": "E44", "name": "skid_awready", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Idle flag: low while a burst is being unwound, gates W acceptance", "lines": [212, 214]},
+  {"id": "E46", "name": "wlen", "role": "COUNTER", "importance": "minor", "trace": "control_backward", "why": "Remaining beats counter of active burst", "lines": [238, 243]},
+  {"id": "E47", "name": "axi_wid", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "ID of active burst, compared to block ID changes and pushed to bid_fifo", "lines": [233, 193]},
+  {"id": "E48", "name": "axi_waddr", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Current burst address, loaded on accept and advanced by axi_addr each beat", "lines": [234, 241, 283]},
+  {"id": "E52", "name": "acks_expected", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Outstanding Wishbone acks counter, blocks ID switches while nonzero", "lines": [345, 347, 193]},
+  {"id": "E53", "name": "writes_expected", "role": "COUNTER", "importance": "minor", "trace": "control_backward", "why": "Counts completed W bursts awaiting B response", "lines": [332, 333]},
+  {"id": "E54", "name": "last_ack", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Marks final expected ack so o_wb_cyc can drop", "lines": [361, 277]},
+  {"id": "E55", "name": "err_state", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Error recovery mode after bus error, aborts cycles until FIFOs drain", "lines": [474, 475, 266]},
+  {"id": "E56", "name": "read_ack_fifo", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Pops next burst length from wb_ack_fifo when ack tracking needs it", "lines": [410, 403]},
+  {"id": "E58", "name": "acklen", "role": "COUNTER", "importance": "minor", "trace": "control_backward", "why": "Remaining acks in current burst for response generation", "lines": [445, 452]},
+  {"id": "E59", "name": "ack_last", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Last ack of burst flag, triggers ack FIFO read and err_fifo write", "lines": [446, 453]},
+  {"id": "E60", "name": "ack_err", "role": "CONTROL_FLAG", "importance": "minor", "trace": "data_backward", "why": "Accumulated error over a burst, written into err_fifo", "lines": [463, 509]},
+  {"id": "E62", "name": "total_fifo_fill", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "Bursts in flight count; MSB is full flag blocking new bursts", "lines": [376, 377, 385]},
+  {"id": "E70", "name": "err_fifo_write", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Pushes per-burst error status into err_fifo at burst end", "lines": [488, 509]}
+ ],
+ "groups": [
+  {"name": "AXI input skid buffers", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E3", "E6", "E14", "E16", "E41"], "member_ids": ["I1", "I2", "E4", "E15", "E32", "E34", "E35", "E36", "E37", "E38", "E39", "E40", "E42", "E43"], "description": "Skid buffers registering AW and W channels before burst unwinding"},
+  {"name": "Burst controller", "kind": "CONTROLLER", "anchor_ids": ["E33", "E44", "E46", "E47"], "member_ids": ["E45", "E50", "E51"], "description": "Accepts bursts and tracks active burst ID, length and idle state"},
+  {"name": "Burst address generator", "kind": "DATAPATH", "anchor_ids": ["E48"], "member_ids": ["I3", "E49"], "description": "Holds burst address and advances it per beat via axi_addr"},
+  {"name": "Wishbone master", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E23", "E24", "E25", "E26", "E27", "E28", "E29", "E30"], "member_ids": [], "description": "Issues pipelined Wishbone writes from W beats"},
+  {"name": "Ack tracking", "kind": "COUNTER_TIMER", "anchor_ids": ["E52", "E53", "E54", "E56", "E58", "E59", "E62"], "member_ids": ["I4", "E57", "E61", "E63", "E64", "E65", "E66", "E74", "E75"], "description": "Counts outstanding acks and burst lengths via wb_ack_fifo to find burst completion"},
+  {"name": "Error handling", "kind": "CONTROLLER", "anchor_ids": ["E55", "E60", "E70"], "member_ids": ["I6", "E67", "E68", "E69"], "description": "Error recovery state and per-burst error recording into err_fifo"},
+  {"name": "Write response channel", "kind": "BUFFER", "anchor_ids": ["E19", "E20", "E21", "E22"], "member_ids": ["I5", "E71", "E72", "E73"], "description": "BID FIFO and error FIFO producing AXI B responses"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "axi_write_address", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12", "E13"]},
+  {"name": "axi_write_data", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E14", "E15", "E16", "E17", "E18"]},
+  {"name": "axi_write_response", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E19", "E20", "E21", "E22"]},
+  {"name": "wishbone_master", "protocol": "MEMORY_BUS", "direction": "OUT", "member_ids": ["E23", "E24", "E25", "E26", "E27", "E28", "E29", "E30"]}
+ ]
+}

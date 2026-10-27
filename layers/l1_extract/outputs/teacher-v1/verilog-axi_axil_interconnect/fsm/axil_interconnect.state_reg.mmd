@@ -1,0 +1,20 @@
+stateDiagram-v2
+    [*] --> STATE_IDLE
+    ANY_STATE --> STATE_IDLE
+    STATE_IDLE --> STATE_DECODE : grant_valid
+    STATE_IDLE --> STATE_IDLE : !grant_valid
+    STATE_DECODE --> STATE_READ : match && read
+    STATE_DECODE --> STATE_WRITE : match && !read
+    STATE_DECODE --> STATE_WAIT_IDLE : !match && read
+    STATE_DECODE --> STATE_WRITE_DROP : !match && !read
+    STATE_WRITE --> STATE_WRITE_RESP : current_s_axil_wready && current_s_axil_wvalid
+    STATE_WRITE --> STATE_WRITE : !(current_s_axil_wready && current_s_axil_wvalid)
+    STATE_WRITE_RESP --> STATE_WAIT_IDLE : current_m_axil_bready && current_m_axil_bvalid
+    STATE_WRITE_RESP --> STATE_WRITE_RESP : !(current_m_axil_bready && current_m_axil_bvalid)
+    STATE_WRITE_DROP --> STATE_WAIT_IDLE : current_s_axil_wready && current_s_axil_wvalid
+    STATE_WRITE_DROP --> STATE_WRITE_DROP : !(current_s_axil_wready && current_s_axil_wvalid)
+    STATE_READ --> STATE_WAIT_IDLE : current_m_axil_rready && current_m_axil_rvalid
+    STATE_READ --> STATE_READ : !(current_m_axil_rready && current_m_axil_rvalid)
+    STATE_WAIT_IDLE --> STATE_IDLE : (!grant_valid || acknowledge)
+    STATE_WAIT_IDLE --> STATE_WAIT_IDLE : !(!grant_valid || acknowledge)
+    %% output i (moore)

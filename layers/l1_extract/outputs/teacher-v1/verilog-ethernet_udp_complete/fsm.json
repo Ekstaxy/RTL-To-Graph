@@ -1,0 +1,959 @@
+[
+ {
+  "module": "ip_arb_mux",
+  "instance": "udp_complete.ip_arb_mux_inst",
+  "state": "frame_reg",
+  "next": "frame_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "0",
+    "value": "0"
+   },
+   {
+    "name": "1",
+    "value": "1"
+   }
+  ],
+  "reset_state": "0",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "s_ip_payload_axis_tvalid[grant_encoded] && s_ip_payload_axis_tready[grant_encoded] && s_ip_payload_axis_tlast[grant_encoded]"
+   },
+   {
+    "src": "*",
+    "dst": "1",
+    "cond": "!frame_reg && grant_valid && (m_ip_hdr_ready || !m_ip_hdr_valid)"
+   }
+  ],
+  "outputs": [],
+  "warnings": [],
+  "semantic_check": "consistent"
+ },
+ {
+  "module": "eth_arb_mux",
+  "instance": "udp_complete.ip_complete_inst.eth_arb_mux_inst",
+  "state": "frame_reg",
+  "next": "frame_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "0",
+    "value": "0"
+   },
+   {
+    "name": "1",
+    "value": "1"
+   }
+  ],
+  "reset_state": "0",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "s_eth_payload_axis_tvalid[grant_encoded] && s_eth_payload_axis_tready[grant_encoded] && s_eth_payload_axis_tlast[grant_encoded]"
+   },
+   {
+    "src": "*",
+    "dst": "1",
+    "cond": "!frame_reg && grant_valid && (m_eth_hdr_ready || !m_eth_hdr_valid)"
+   }
+  ],
+  "outputs": [],
+  "warnings": [],
+  "semantic_check": "consistent"
+ },
+ {
+  "module": "ip_eth_rx",
+  "instance": "udp_complete.ip_complete_inst.ip_inst.ip_eth_rx_inst",
+  "state": "state_reg",
+  "next": "state_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "STATE_IDLE",
+    "value": "3'b0"
+   },
+   {
+    "name": "STATE_READ_HEADER",
+    "value": "3'b1"
+   },
+   {
+    "name": "STATE_WAIT_LAST",
+    "value": "3'b100"
+   },
+   {
+    "name": "STATE_READ_PAYLOAD",
+    "value": "3'b10"
+   },
+   {
+    "name": "STATE_READ_PAYLOAD_LAST",
+    "value": "3'b11"
+   }
+  ],
+  "reset_state": "STATE_IDLE",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_READ_HEADER",
+    "cond": "s_eth_hdr_ready && s_eth_hdr_valid"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_IDLE",
+    "cond": "!(s_eth_hdr_ready && s_eth_hdr_valid)"
+   },
+   {
+    "src": "STATE_READ_HEADER",
+    "dst": "STATE_READ_HEADER",
+    "cond": "s_eth_payload_axis_tready && s_eth_payload_axis_tvalid"
+   },
+   {
+    "src": "STATE_READ_HEADER",
+    "dst": "STATE_WAIT_LAST",
+    "cond": "s_eth_payload_axis_tready && s_eth_payload_axis_tvalid && hdr_ptr_reg == 6'h13 && (m_ip_version_reg != 4'd4 || m_ip_ihl_reg != 4'd5)"
+   },
+   {
+    "src": "STATE_READ_HEADER",
+    "dst": "STATE_WAIT_LAST",
+    "cond": "s_eth_payload_axis_tready && s_eth_payload_axis_tvalid && hdr_ptr_reg == 6'h13 && !(m_ip_version_reg != 4'd4 || m_ip_ihl_reg != 4'd5) && hdr_sum_next != 16'hffff"
+   },
+   {
+    "src": "STATE_READ_HEADER",
+    "dst": "STATE_READ_PAYLOAD",
+    "cond": "s_eth_payload_axis_tready && s_eth_payload_axis_tvalid && hdr_ptr_reg == 6'h13 && !(m_ip_version_reg != 4'd4 || m_ip_ihl_reg != 4'd5) && !(hdr_sum_next != 16'hffff)"
+   },
+   {
+    "src": "STATE_READ_HEADER",
+    "dst": "STATE_IDLE",
+    "cond": "s_eth_payload_axis_tready && s_eth_payload_axis_tvalid && s_eth_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_READ_HEADER",
+    "dst": "STATE_READ_HEADER",
+    "cond": "!(s_eth_payload_axis_tready && s_eth_payload_axis_tvalid)"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD",
+    "dst": "STATE_IDLE",
+    "cond": "s_eth_payload_axis_tready && s_eth_payload_axis_tvalid && s_eth_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD",
+    "dst": "STATE_READ_PAYLOAD_LAST",
+    "cond": "s_eth_payload_axis_tready && s_eth_payload_axis_tvalid && !s_eth_payload_axis_tlast && word_count_reg == 16'd1"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD",
+    "dst": "STATE_READ_PAYLOAD",
+    "cond": "s_eth_payload_axis_tready && s_eth_payload_axis_tvalid && !s_eth_payload_axis_tlast && !(word_count_reg == 16'd1)"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD",
+    "dst": "STATE_READ_PAYLOAD",
+    "cond": "!(s_eth_payload_axis_tready && s_eth_payload_axis_tvalid)"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD_LAST",
+    "dst": "STATE_IDLE",
+    "cond": "s_eth_payload_axis_tready && s_eth_payload_axis_tvalid && s_eth_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD_LAST",
+    "dst": "STATE_READ_PAYLOAD_LAST",
+    "cond": "s_eth_payload_axis_tready && s_eth_payload_axis_tvalid && !s_eth_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD_LAST",
+    "dst": "STATE_READ_PAYLOAD_LAST",
+    "cond": "!(s_eth_payload_axis_tready && s_eth_payload_axis_tvalid)"
+   },
+   {
+    "src": "STATE_WAIT_LAST",
+    "dst": "STATE_IDLE",
+    "cond": "s_eth_payload_axis_tready && s_eth_payload_axis_tvalid && s_eth_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_WAIT_LAST",
+    "dst": "STATE_WAIT_LAST",
+    "cond": "s_eth_payload_axis_tready && s_eth_payload_axis_tvalid && !s_eth_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_WAIT_LAST",
+    "dst": "STATE_WAIT_LAST",
+    "cond": "!(s_eth_payload_axis_tready && s_eth_payload_axis_tvalid)"
+   }
+  ],
+  "outputs": [],
+  "warnings": [],
+  "semantic_check": "consistent-subset"
+ },
+ {
+  "module": "ip_eth_tx",
+  "instance": "udp_complete.ip_complete_inst.ip_inst.ip_eth_tx_inst",
+  "state": "state_reg",
+  "next": "state_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "STATE_IDLE",
+    "value": "3'b0"
+   },
+   {
+    "name": "STATE_WRITE_HEADER",
+    "value": "3'b1"
+   },
+   {
+    "name": "STATE_WRITE_PAYLOAD",
+    "value": "3'b10"
+   },
+   {
+    "name": "STATE_WRITE_PAYLOAD_LAST",
+    "value": "3'b11"
+   },
+   {
+    "name": "STATE_WAIT_LAST",
+    "value": "3'b100"
+   }
+  ],
+  "reset_state": "STATE_IDLE",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_WRITE_HEADER",
+    "cond": "s_ip_hdr_ready && s_ip_hdr_valid"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_IDLE",
+    "cond": "!(s_ip_hdr_ready && s_ip_hdr_valid)"
+   },
+   {
+    "src": "STATE_WRITE_HEADER",
+    "dst": "STATE_WRITE_HEADER",
+    "cond": "m_eth_payload_axis_tready_int_reg"
+   },
+   {
+    "src": "STATE_WRITE_HEADER",
+    "dst": "STATE_WRITE_PAYLOAD",
+    "cond": "m_eth_payload_axis_tready_int_reg && hdr_ptr_reg == 6'h13"
+   },
+   {
+    "src": "STATE_WRITE_HEADER",
+    "dst": "STATE_WRITE_HEADER",
+    "cond": "!m_eth_payload_axis_tready_int_reg"
+   },
+   {
+    "src": "STATE_WRITE_PAYLOAD",
+    "dst": "STATE_IDLE",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && s_ip_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_WRITE_PAYLOAD",
+    "dst": "STATE_WRITE_PAYLOAD_LAST",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && !s_ip_payload_axis_tlast && word_count_reg == 16'd1"
+   },
+   {
+    "src": "STATE_WRITE_PAYLOAD",
+    "dst": "STATE_WRITE_PAYLOAD",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && !s_ip_payload_axis_tlast && !(word_count_reg == 16'd1)"
+   },
+   {
+    "src": "STATE_WRITE_PAYLOAD",
+    "dst": "STATE_WRITE_PAYLOAD",
+    "cond": "!(s_ip_payload_axis_tready && s_ip_payload_axis_tvalid)"
+   },
+   {
+    "src": "STATE_WRITE_PAYLOAD_LAST",
+    "dst": "STATE_IDLE",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && s_ip_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_WRITE_PAYLOAD_LAST",
+    "dst": "STATE_WRITE_PAYLOAD_LAST",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && !s_ip_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_WRITE_PAYLOAD_LAST",
+    "dst": "STATE_WRITE_PAYLOAD_LAST",
+    "cond": "!(s_ip_payload_axis_tready && s_ip_payload_axis_tvalid)"
+   },
+   {
+    "src": "STATE_WAIT_LAST",
+    "dst": "STATE_IDLE",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && s_ip_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_WAIT_LAST",
+    "dst": "STATE_WAIT_LAST",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && !s_ip_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_WAIT_LAST",
+    "dst": "STATE_WAIT_LAST",
+    "cond": "!(s_ip_payload_axis_tready && s_ip_payload_axis_tvalid)"
+   }
+  ],
+  "outputs": [],
+  "warnings": [],
+  "semantic_check": "consistent-subset"
+ },
+ {
+  "module": "ip",
+  "instance": "udp_complete.ip_complete_inst.ip_inst",
+  "state": "state_reg",
+  "next": "state_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "STATE_IDLE",
+    "value": "2'b0"
+   },
+   {
+    "name": "STATE_ARP_QUERY",
+    "value": "2'b1"
+   },
+   {
+    "name": "STATE_WAIT_PACKET",
+    "value": "2'b10"
+   }
+  ],
+  "reset_state": "STATE_IDLE",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_ARP_QUERY",
+    "cond": "s_ip_hdr_valid"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_IDLE",
+    "cond": "!s_ip_hdr_valid"
+   },
+   {
+    "src": "STATE_ARP_QUERY",
+    "dst": "STATE_WAIT_PACKET",
+    "cond": "arp_response_valid && arp_response_error"
+   },
+   {
+    "src": "STATE_ARP_QUERY",
+    "dst": "STATE_WAIT_PACKET",
+    "cond": "arp_response_valid && !arp_response_error"
+   },
+   {
+    "src": "STATE_ARP_QUERY",
+    "dst": "STATE_ARP_QUERY",
+    "cond": "!arp_response_valid"
+   },
+   {
+    "src": "STATE_WAIT_PACKET",
+    "dst": "STATE_IDLE",
+    "cond": "s_ip_payload_axis_tlast && s_ip_payload_axis_tready && s_ip_payload_axis_tvalid"
+   },
+   {
+    "src": "STATE_WAIT_PACKET",
+    "dst": "STATE_WAIT_PACKET",
+    "cond": "!(s_ip_payload_axis_tlast && s_ip_payload_axis_tready && s_ip_payload_axis_tvalid)"
+   }
+  ],
+  "outputs": [],
+  "warnings": [],
+  "semantic_check": "consistent-subset"
+ },
+ {
+  "module": "arp_eth_rx",
+  "instance": "udp_complete.ip_complete_inst.arp_inst.arp_eth_rx_inst",
+  "state": "read_eth_header_reg",
+  "next": "read_eth_header_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "0",
+    "value": "0"
+   },
+   {
+    "name": "1",
+    "value": "1"
+   }
+  ],
+  "reset_state": "1",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "s_eth_hdr_ready && s_eth_hdr_valid && read_eth_header_reg"
+   },
+   {
+    "src": "*",
+    "dst": "1",
+    "cond": "s_eth_payload_axis_tready && s_eth_payload_axis_tvalid && s_eth_payload_axis_tlast"
+   }
+  ],
+  "outputs": [],
+  "warnings": [],
+  "semantic_check": "consistent"
+ },
+ {
+  "module": "arp_eth_rx",
+  "instance": "udp_complete.ip_complete_inst.arp_inst.arp_eth_rx_inst",
+  "state": "read_arp_header_reg",
+  "next": "read_arp_header_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "1",
+    "value": "1"
+   },
+   {
+    "name": "0",
+    "value": "0"
+   }
+  ],
+  "reset_state": "0",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "1",
+    "cond": "s_eth_hdr_ready && s_eth_hdr_valid && read_eth_header_reg"
+   },
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "s_eth_payload_axis_tready && s_eth_payload_axis_tvalid && read_arp_header_reg && ptr_reg == 27/BYTE_LANES"
+   },
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "s_eth_payload_axis_tready && s_eth_payload_axis_tvalid && s_eth_payload_axis_tlast"
+   }
+  ],
+  "outputs": [],
+  "warnings": [],
+  "semantic_check": "consistent"
+ },
+ {
+  "module": "arp_eth_tx",
+  "instance": "udp_complete.ip_complete_inst.arp_inst.arp_eth_tx_inst",
+  "state": "send_arp_header_reg",
+  "next": "send_arp_header_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "1",
+    "value": "1"
+   },
+   {
+    "name": "0",
+    "value": "0"
+   }
+  ],
+  "reset_state": "0",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "1",
+    "cond": "s_frame_ready && s_frame_valid"
+   },
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "m_eth_payload_axis_tready_int_reg && send_arp_header_reg && ptr_reg == 27/BYTE_LANES"
+   }
+  ],
+  "outputs": [],
+  "warnings": [],
+  "semantic_check": "consistent"
+ },
+ {
+  "module": "arp",
+  "instance": "udp_complete.ip_complete_inst.arp_inst",
+  "state": "arp_request_operation_reg",
+  "next": "arp_request_operation_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "0",
+    "value": "0"
+   },
+   {
+    "name": "1",
+    "value": "1"
+   }
+  ],
+  "reset_state": "0",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "arp_request_operation_reg && cache_query_response_valid && !cache_query_response_error"
+   },
+   {
+    "src": "*",
+    "dst": "0",
+    "cond": "arp_request_operation_reg && arp_request_timer_reg == 0 && !(arp_request_retry_cnt_reg > 0)"
+   },
+   {
+    "src": "*",
+    "dst": "1",
+    "cond": "!arp_request_operation_reg && cache_query_request_valid_reg && cache_query_response_valid && cache_query_response_error"
+   }
+  ],
+  "outputs": [],
+  "warnings": [],
+  "semantic_check": "consistent"
+ },
+ {
+  "module": "udp_ip_rx",
+  "instance": "udp_complete.udp_inst.udp_ip_rx_inst",
+  "state": "state_reg",
+  "next": "state_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "STATE_IDLE",
+    "value": "3'b0"
+   },
+   {
+    "name": "STATE_READ_HEADER",
+    "value": "3'b1"
+   },
+   {
+    "name": "STATE_READ_PAYLOAD",
+    "value": "3'b10"
+   },
+   {
+    "name": "STATE_READ_PAYLOAD_LAST",
+    "value": "3'b11"
+   },
+   {
+    "name": "STATE_WAIT_LAST",
+    "value": "3'b100"
+   }
+  ],
+  "reset_state": null,
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_READ_HEADER",
+    "cond": "s_ip_hdr_ready && s_ip_hdr_valid"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_IDLE",
+    "cond": "!(s_ip_hdr_ready && s_ip_hdr_valid)"
+   },
+   {
+    "src": "STATE_READ_HEADER",
+    "dst": "STATE_READ_HEADER",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid"
+   },
+   {
+    "src": "STATE_READ_HEADER",
+    "dst": "STATE_READ_PAYLOAD",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && hdr_ptr_reg == 3'h7"
+   },
+   {
+    "src": "STATE_READ_HEADER",
+    "dst": "STATE_IDLE",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && s_ip_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_READ_HEADER",
+    "dst": "STATE_READ_HEADER",
+    "cond": "!(s_ip_payload_axis_tready && s_ip_payload_axis_tvalid)"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD",
+    "dst": "STATE_IDLE",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && s_ip_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD",
+    "dst": "STATE_READ_PAYLOAD_LAST",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && !s_ip_payload_axis_tlast && word_count_reg == 16'd1"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD",
+    "dst": "STATE_READ_PAYLOAD",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && !s_ip_payload_axis_tlast && !(word_count_reg == 16'd1)"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD",
+    "dst": "STATE_READ_PAYLOAD",
+    "cond": "!(s_ip_payload_axis_tready && s_ip_payload_axis_tvalid)"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD_LAST",
+    "dst": "STATE_IDLE",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && s_ip_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD_LAST",
+    "dst": "STATE_READ_PAYLOAD_LAST",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && !s_ip_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD_LAST",
+    "dst": "STATE_READ_PAYLOAD_LAST",
+    "cond": "!(s_ip_payload_axis_tready && s_ip_payload_axis_tvalid)"
+   },
+   {
+    "src": "STATE_WAIT_LAST",
+    "dst": "STATE_IDLE",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && s_ip_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_WAIT_LAST",
+    "dst": "STATE_WAIT_LAST",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && !s_ip_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_WAIT_LAST",
+    "dst": "STATE_WAIT_LAST",
+    "cond": "!(s_ip_payload_axis_tready && s_ip_payload_axis_tvalid)"
+   },
+   {
+    "src": "*",
+    "dst": "STATE_IDLE",
+    "cond": "rst"
+   }
+  ],
+  "outputs": [],
+  "warnings": [
+   "semantic_check: mismatch (syntactic 5 states / 7 edges vs executed 1 / 0); semantic transitions attached"
+  ],
+  "semantic_check": "mismatch",
+  "semantic_transitions": [
+   {
+    "src": "0",
+    "dst": "0",
+    "cond": "1"
+   }
+  ]
+ },
+ {
+  "module": "udp_checksum_gen",
+  "instance": "udp_complete.udp_inst.genblk1.udp_checksum_gen_inst",
+  "state": "state_reg",
+  "next": "state_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "STATE_IDLE",
+    "value": "3'b0"
+   },
+   {
+    "name": "STATE_SUM_HEADER_1",
+    "value": "3'b1"
+   },
+   {
+    "name": "STATE_SUM_HEADER_2",
+    "value": "3'b10"
+   },
+   {
+    "name": "STATE_SUM_HEADER_3",
+    "value": "3'b11"
+   },
+   {
+    "name": "STATE_SUM_PAYLOAD",
+    "value": "3'b100"
+   },
+   {
+    "name": "STATE_FINISH_SUM",
+    "value": "3'b101"
+   }
+  ],
+  "reset_state": null,
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_SUM_HEADER_1",
+    "cond": "s_udp_hdr_ready && s_udp_hdr_valid"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_IDLE",
+    "cond": "!(s_udp_hdr_ready && s_udp_hdr_valid)"
+   },
+   {
+    "src": "STATE_SUM_HEADER_1",
+    "dst": "STATE_SUM_HEADER_2",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_SUM_HEADER_2",
+    "dst": "STATE_SUM_HEADER_3",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_SUM_HEADER_3",
+    "dst": "STATE_SUM_PAYLOAD",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_SUM_PAYLOAD",
+    "dst": "STATE_FINISH_SUM",
+    "cond": "s_udp_payload_axis_tready && s_udp_payload_axis_tvalid && s_udp_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_SUM_PAYLOAD",
+    "dst": "STATE_SUM_PAYLOAD",
+    "cond": "s_udp_payload_axis_tready && s_udp_payload_axis_tvalid && !s_udp_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_SUM_PAYLOAD",
+    "dst": "STATE_SUM_PAYLOAD",
+    "cond": "!(s_udp_payload_axis_tready && s_udp_payload_axis_tvalid)"
+   },
+   {
+    "src": "STATE_FINISH_SUM",
+    "dst": "STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "*",
+    "dst": "STATE_IDLE",
+    "cond": "rst"
+   }
+  ],
+  "outputs": [
+   {
+    "signal": "hdr_valid_next",
+    "kind": "moore",
+    "port": false
+   },
+   {
+    "signal": "shift_payload_in",
+    "kind": "moore",
+    "port": false
+   }
+  ],
+  "warnings": [
+   "semantic_check: mismatch (syntactic 6 states / 10 edges vs executed 6 / 6); semantic transitions attached"
+  ],
+  "semantic_check": "mismatch",
+  "semantic_transitions": [
+   {
+    "src": "0",
+    "dst": "0",
+    "cond": "(!s_udp_hdr_valid) || (!s_udp_hdr_ready_reg)"
+   },
+   {
+    "src": "0",
+    "dst": "1",
+    "cond": "s_udp_hdr_ready_reg && s_udp_hdr_valid"
+   },
+   {
+    "src": "1",
+    "dst": "2",
+    "cond": "1"
+   },
+   {
+    "src": "2",
+    "dst": "3",
+    "cond": "1"
+   },
+   {
+    "src": "3",
+    "dst": "4",
+    "cond": "1"
+   },
+   {
+    "src": "4",
+    "dst": "4",
+    "cond": "(!s_udp_payload_axis_tvalid) || (!s_udp_payload_axis_tlast)"
+   },
+   {
+    "src": "4",
+    "dst": "5",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "5",
+    "dst": "0",
+    "cond": "1"
+   }
+  ]
+ },
+ {
+  "module": "udp_ip_tx",
+  "instance": "udp_complete.udp_inst.udp_ip_tx_inst",
+  "state": "state_reg",
+  "next": "state_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "STATE_IDLE",
+    "value": "3'b0"
+   },
+   {
+    "name": "STATE_WRITE_HEADER",
+    "value": "3'b1"
+   },
+   {
+    "name": "STATE_WRITE_PAYLOAD",
+    "value": "3'b10"
+   },
+   {
+    "name": "STATE_WRITE_PAYLOAD_LAST",
+    "value": "3'b11"
+   },
+   {
+    "name": "STATE_WAIT_LAST",
+    "value": "3'b100"
+   }
+  ],
+  "reset_state": null,
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_WRITE_HEADER",
+    "cond": "s_udp_hdr_ready && s_udp_hdr_valid"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_IDLE",
+    "cond": "!(s_udp_hdr_ready && s_udp_hdr_valid)"
+   },
+   {
+    "src": "STATE_WRITE_HEADER",
+    "dst": "STATE_WRITE_HEADER",
+    "cond": "m_ip_payload_axis_tready_int_reg"
+   },
+   {
+    "src": "STATE_WRITE_HEADER",
+    "dst": "STATE_WRITE_PAYLOAD",
+    "cond": "m_ip_payload_axis_tready_int_reg && hdr_ptr_reg == 3'h7"
+   },
+   {
+    "src": "STATE_WRITE_HEADER",
+    "dst": "STATE_WRITE_HEADER",
+    "cond": "!m_ip_payload_axis_tready_int_reg"
+   },
+   {
+    "src": "STATE_WRITE_PAYLOAD",
+    "dst": "STATE_IDLE",
+    "cond": "s_udp_payload_axis_tready && s_udp_payload_axis_tvalid && s_udp_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_WRITE_PAYLOAD",
+    "dst": "STATE_WRITE_PAYLOAD_LAST",
+    "cond": "s_udp_payload_axis_tready && s_udp_payload_axis_tvalid && !s_udp_payload_axis_tlast && word_count_reg == 16'd1"
+   },
+   {
+    "src": "STATE_WRITE_PAYLOAD",
+    "dst": "STATE_WRITE_PAYLOAD",
+    "cond": "s_udp_payload_axis_tready && s_udp_payload_axis_tvalid && !s_udp_payload_axis_tlast && !(word_count_reg == 16'd1)"
+   },
+   {
+    "src": "STATE_WRITE_PAYLOAD",
+    "dst": "STATE_WRITE_PAYLOAD",
+    "cond": "!(s_udp_payload_axis_tready && s_udp_payload_axis_tvalid)"
+   },
+   {
+    "src": "STATE_WRITE_PAYLOAD_LAST",
+    "dst": "STATE_IDLE",
+    "cond": "s_udp_payload_axis_tready && s_udp_payload_axis_tvalid && s_udp_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_WRITE_PAYLOAD_LAST",
+    "dst": "STATE_WRITE_PAYLOAD_LAST",
+    "cond": "s_udp_payload_axis_tready && s_udp_payload_axis_tvalid && !s_udp_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_WRITE_PAYLOAD_LAST",
+    "dst": "STATE_WRITE_PAYLOAD_LAST",
+    "cond": "!(s_udp_payload_axis_tready && s_udp_payload_axis_tvalid)"
+   },
+   {
+    "src": "STATE_WAIT_LAST",
+    "dst": "STATE_IDLE",
+    "cond": "s_udp_payload_axis_tvalid && s_udp_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_WAIT_LAST",
+    "dst": "STATE_WAIT_LAST",
+    "cond": "s_udp_payload_axis_tvalid && !s_udp_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_WAIT_LAST",
+    "dst": "STATE_WAIT_LAST",
+    "cond": "!s_udp_payload_axis_tvalid"
+   },
+   {
+    "src": "*",
+    "dst": "STATE_IDLE",
+    "cond": "rst"
+   }
+  ],
+  "outputs": [],
+  "warnings": [
+   "semantic_check: mismatch (syntactic 5 states / 7 edges vs executed 3 / 3); semantic transitions attached"
+  ],
+  "semantic_check": "mismatch",
+  "semantic_transitions": [
+   {
+    "src": "0",
+    "dst": "0",
+    "cond": "(!m_udp_hdr_valid_reg) || (!s_udp_hdr_ready_reg)"
+   },
+   {
+    "src": "0",
+    "dst": "1",
+    "cond": "s_udp_hdr_ready_reg && m_udp_hdr_valid_reg"
+   },
+   {
+    "src": "1",
+    "dst": "1",
+    "cond": "(!m_ip_payload_axis_tready_int_reg) || (s_udp_hdr_ready_reg && !s_udp_payload_axis_tready_reg && m_udp_hdr_valid_reg)"
+   },
+   {
+    "src": "1",
+    "dst": "2",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "2",
+    "dst": "2",
+    "cond": "(!s_udp_payload_axis_tready_reg) || (!m_ip_payload_axis_tready_int_reg && !s_udp_hdr_ready_reg && !m_udp_hdr_valid_reg)"
+   },
+   {
+    "src": "2",
+    "dst": "0",
+    "cond": "<datapath condition>"
+   }
+  ]
+ }
+]

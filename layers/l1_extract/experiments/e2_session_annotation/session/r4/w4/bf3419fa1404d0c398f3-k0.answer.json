@@ -1,0 +1,49 @@
+{
+ "module_summary": "Complete IPv4 stack: an eth_type classifier with per-frame select registers routes incoming Ethernet frames to IP or ARP modules, whose outputs are merged by an arbitrated Ethernet mux; IP resolves MACs via ARP request/response.",
+ "anchors": [
+  {"id": "E3", "name": "s_eth_hdr_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Incoming Ethernet header valid, steered to IP or ARP by eth_type.", "lines": [47, 229, 238]},
+  {"id": "E4", "name": "s_eth_hdr_ready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "Header ready muxed from IP/ARP ready by eth_type select.", "lines": [48, 247]},
+  {"id": "E8", "name": "s_eth_payload_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Incoming Ethernet payload broadcast to IP and ARP receivers.", "lines": [52, 233, 242]},
+  {"id": "E9", "name": "s_eth_payload_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Incoming payload valid; gated by select registers to IP or ARP.", "lines": [53, 214, 234]},
+  {"id": "E10", "name": "s_eth_payload_axis_tready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "Payload ready muxed by select registers; drops unknown frames.", "lines": [54, 251]},
+  {"id": "E11", "name": "s_eth_payload_axis_tlast", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "End of frame; re-arms the classifier select registers.", "lines": [55, 216]},
+  {"id": "E13", "name": "m_eth_hdr_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Outgoing Ethernet header valid from arbitrated IP/ARP mux.", "lines": [61, 287]},
+  {"id": "E18", "name": "m_eth_payload_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Outgoing Ethernet payload from arbitrated mux.", "lines": [66, 292]},
+  {"id": "E20", "name": "m_eth_payload_axis_tready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Downstream ready for outgoing Ethernet payload.", "lines": [68, 295]},
+  {"id": "E23", "name": "s_ip_hdr_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Outgoing IP packet header valid into IP transmit path.", "lines": [75, 356]},
+  {"id": "E32", "name": "s_ip_payload_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "IP payload to be framed and transmitted.", "lines": [84, 365]},
+  {"id": "E31", "name": "s_ip_dest_ip", "role": "INTERFACE_ADDR", "importance": "major", "trace": "interface", "why": "Destination IP address resolved through ARP before transmit.", "lines": [83, 364]},
+  {"id": "E37", "name": "m_ip_hdr_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Received IP header valid from IP RX parser.", "lines": [93, 332]},
+  {"id": "E55", "name": "m_ip_payload_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Received IP payload from IP RX parser.", "lines": [111, 350]},
+  {"id": "E123", "name": "s_select_ip_reg", "role": "MUX_SELECT", "importance": "major", "trace": "control_backward", "why": "Per-frame latch routing payload valid/ready to IP module.", "lines": [217, 234, 251]},
+  {"id": "E124", "name": "s_select_arp_reg", "role": "MUX_SELECT", "importance": "major", "trace": "control_backward", "why": "Per-frame latch routing payload valid/ready to ARP module.", "lines": [218, 243, 252]},
+  {"id": "E125", "name": "s_select_none_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Per-frame latch that drops non-IP/ARP payload by forcing ready.", "lines": [219, 253]},
+  {"id": "E120", "name": "s_select_ip", "role": "DECODE", "importance": "minor", "trace": "data_backward", "why": "eth_type 0x0800 decode selecting IP header path.", "lines": [200, 229, 247]},
+  {"id": "E121", "name": "s_select_arp", "role": "DECODE", "importance": "minor", "trace": "data_backward", "why": "eth_type 0x0806 decode selecting ARP header path.", "lines": [201, 238, 248]},
+  {"id": "E73", "name": "arp_request_valid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "forward", "why": "IP module request to ARP for MAC lookup of next hop.", "lines": [145, 371, 427]},
+  {"id": "E76", "name": "arp_response_valid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "forward", "why": "ARP response valid carrying resolved MAC back to IP.", "lines": [148, 374, 430]},
+  {"id": "E79", "name": "arp_response_mac", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Resolved MAC from ARP cache used as destination MAC.", "lines": [151, 377, 433]},
+  {"id": "E75", "name": "arp_request_ip", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "IP address being looked up in ARP cache.", "lines": [147, 373, 429]},
+  {"id": "E90", "name": "ip_tx_eth_hdr_valid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "forward", "why": "IP module transmit header valid into output arbiter.", "lines": [164, 273, 321]},
+  {"id": "E110", "name": "arp_tx_eth_hdr_valid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "forward", "why": "ARP module transmit header valid into output arbiter.", "lines": [186, 273, 416]},
+  {"id": "E72", "name": "clear_arp_cache", "role": "COMMAND", "importance": "minor", "trace": "interface", "why": "Command to flush the ARP cache.", "lines": [136, 439]},
+  {"id": "E69", "name": "local_ip", "role": "CONFIG_REG", "importance": "minor", "trace": "interface", "why": "Local IP configuration for IP and ARP modules.", "lines": [133, 389, 436]},
+  {"id": "E67", "name": "tx_error_arp_failed", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "Reports packet dropped because ARP resolution failed.", "lines": [127, 386]}
+ ],
+ "groups": [
+  {"name": "eth_type_classifier", "kind": "DECODER", "anchor_ids": ["E123", "E124", "E125", "E120", "E121", "E4", "E10"], "member_ids": ["E122", "E80", "E86", "E100", "E106"], "description": "Decodes eth_type and latches per-frame select to route frames to IP or ARP."},
+  {"name": "ip_module", "kind": "DATAPATH", "anchor_ids": ["E23", "E32", "E31", "E37", "E55", "E90", "E67"], "member_ids": ["I2", "E81", "E87", "E91", "E92", "E95", "E96"], "description": "IPv4 RX parsing and TX framing with ARP-based MAC resolution."},
+  {"name": "arp_module", "kind": "MEMORY", "anchor_ids": ["E73", "E76", "E79", "E75", "E110", "E72", "E69"], "member_ids": ["I3", "E74", "E77", "E78", "E101", "E107", "E111", "E115", "E116"], "description": "ARP cache, lookup controller and ARP request/reply generator."},
+  {"name": "output_arbiter", "kind": "ARBITER", "anchor_ids": ["E13", "E18", "E20"], "member_ids": ["I1", "E14", "E19", "E21"], "description": "Arbitrates IP and ARP transmit frames onto single Ethernet output."},
+  {"name": "eth_input", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E3", "E8", "E9", "E11"], "member_ids": ["E5", "E6", "E7", "E12"], "description": "Incoming Ethernet frame header and payload interface."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "s_eth", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12"]},
+  {"name": "m_eth", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E13", "E14", "E15", "E16", "E17", "E18", "E19", "E20", "E21", "E22"]},
+  {"name": "s_ip", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E23", "E24", "E25", "E26", "E27", "E28", "E29", "E30", "E31", "E32", "E33", "E34", "E35", "E36"]},
+  {"name": "m_ip", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E37", "E38", "E39", "E40", "E41", "E42", "E43", "E44", "E45", "E46", "E47", "E48", "E49", "E50", "E51", "E52", "E53", "E54", "E55", "E56", "E57", "E58", "E59"]},
+  {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E60", "E61", "E62", "E63", "E64", "E65", "E66", "E67"]},
+  {"name": "config", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E68", "E69", "E70", "E71", "E72"]}
+ ]
+}

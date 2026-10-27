@@ -1,0 +1,663 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-i2c_axis_fifo",
+ "tops": [
+  "axis_fifo"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "axis_fifo": {
+   "source": "teacher",
+   "canonical_instance": "axis_fifo",
+   "file": "data/rtl/verilog-i2c/rtl/axis_fifo.v",
+   "lines": [
+    32,
+    290
+   ],
+   "summary": "AXI-Stream FIFO: packs sideband fields into a word written to a memory via MSB-wrapped pointers, read through a skid output pipeline; optional frame-mode drop logic.",
+   "blocks": [
+    {
+     "name": "Write side",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Packs AXIS input fields, writes mem at write pointer when ready and valid.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "s_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 88.1,
+       "struct_score": 70.0,
+       "trace": "interface",
+       "why": "Input stream data packed into FIFO word.",
+       "lines": [
+        84,
+        181
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 92.4,
+       "struct_score": 80.8,
+       "trace": "interface",
+       "why": "Input valid; with tready triggers memory write.",
+       "lines": [
+        86,
+        210
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 94.2,
+       "struct_score": 85.5,
+       "trace": "control_backward",
+       "why": "Input ready derived from full (or frame-mode flags).",
+       "lines": [
+        87,
+        178,
+        210
+       ]
+      },
+      {
+       "id": "E30",
+       "name": "s_axis",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 18.4,
+       "struct_score": 17.9,
+       "trace": "data_backward",
+       "why": "Packed input word {user,last,data} written to mem.",
+       "lines": [
+        160,
+        181,
+        214
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "wr_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 62.2,
+       "struct_score": 75.2,
+       "trace": "control_backward",
+       "why": "Committed write pointer; addresses mem writes, compared for full/empty.",
+       "lines": [
+        152,
+        214,
+        215
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_tlast",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 32.4,
+       "struct_score": 70.7,
+       "trace": "interface",
+       "why": "Frame end marker packed into word; ends frames in frame mode.",
+       "lines": [
+        88,
+        183,
+        220
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "s_axis_tuser",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 30.8,
+       "struct_score": 65.4,
+       "trace": "interface",
+       "why": "User sideband packed into word; bad-frame marker.",
+       "lines": [
+        91,
+        186,
+        231
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E4",
+       "name": "s_axis_tkeep",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_axis_tid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_axis_tdest",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "FIFO memory",
+     "kind": "MEMORY",
+     "description": "Packed word storage array.",
+     "anchors": [
+      {
+       "id": "E27",
+       "name": "mem",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 95.1,
+       "struct_score": 87.6,
+       "trace": "data_backward",
+       "why": "FIFO memory of packed AXIS words, written at wr_ptr, read at rd_ptr.",
+       "lines": [
+        156,
+        214,
+        276
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Full/empty logic",
+     "kind": "CONTROLLER",
+     "description": "Pointer comparisons giving full and empty flags and status.",
+     "anchors": [
+      {
+       "id": "E33",
+       "name": "full",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 46.6,
+       "struct_score": 18.9,
+       "trace": "control_backward",
+       "why": "Pointer-compare full flag deasserting s_axis_tready.",
+       "lines": [
+        166,
+        178,
+        201
+       ]
+      },
+      {
+       "id": "E35",
+       "name": "empty",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 46.3,
+       "struct_score": 17.5,
+       "trace": "control_backward",
+       "why": "Pointer-equal empty flag gating reads and rd_ptr increment.",
+       "lines": [
+        169,
+        202,
+        277
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E22",
+       "name": "status_full",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "status_empty",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "Output pipeline",
+     "kind": "PIPELINE_STAGE",
+     "description": "Reads mem at read pointer into bubble-collapsing output stages.",
+     "anchors": [
+      {
+       "id": "E26",
+       "name": "rd_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 59.2,
+       "struct_score": 66.7,
+       "trace": "control_backward",
+       "why": "Read pointer addressing mem, incremented when not empty.",
+       "lines": [
+        154,
+        276,
+        280
+       ]
+      },
+      {
+       "id": "E31",
+       "name": "m_axis_pipe_reg",
+       "role": "PIPELINE_REG",
+       "importance": "major",
+       "score": 65.8,
+       "struct_score": 84.4,
+       "trace": "data_backward",
+       "why": "Output pipeline stages carrying words from mem to m_axis.",
+       "lines": [
+        162,
+        268,
+        276
+       ]
+      },
+      {
+       "id": "E32",
+       "name": "m_axis_tvalid_pipe_reg",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 21.1,
+       "struct_score": 28.8,
+       "trace": "control_backward",
+       "why": "Per-stage valid bits of output pipeline, bubble collapse.",
+       "lines": [
+        163,
+        267,
+        279
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "m_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 89.2,
+       "struct_score": 72.7,
+       "trace": "data_backward",
+       "why": "Output data from last output pipeline stage.",
+       "lines": [
+        96,
+        191
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "m_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 88.9,
+       "struct_score": 71.9,
+       "trace": "control_backward",
+       "why": "Output valid from last valid pipeline bit.",
+       "lines": [
+        98,
+        189
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "m_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 83.9,
+       "struct_score": 54.7,
+       "trace": "interface",
+       "why": "Output ready advances the output pipeline and memory read.",
+       "lines": [
+        99,
+        259,
+        273
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E12",
+       "name": "m_axis_tkeep",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "m_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "m_axis_tid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "m_axis_tdest",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "m_axis_tuser",
+       "kind": "port_out"
+      },
+      {
+       "id": "E28",
+       "name": "mem_read_data_reg",
+       "kind": "wire"
+      },
+      {
+       "id": "E29",
+       "name": "mem_read_data_valid_reg",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Frame drop control",
+     "kind": "CONTROLLER",
+     "description": "Frame-mode speculative pointer, drop and frame status pulses.",
+     "anchors": [
+      {
+       "id": "E25",
+       "name": "wr_ptr_cur_reg",
+       "role": "FIFO_PTR",
+       "importance": "minor",
+       "score": 33.1,
+       "struct_score": 72.5,
+       "trace": "control_backward",
+       "why": "Frame-mode speculative write pointer (FRAME_FIFO disabled).",
+       "lines": [
+        153,
+        227,
+        228
+       ]
+      },
+      {
+       "id": "E34",
+       "name": "full_cur",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 21.3,
+       "struct_score": 29.6,
+       "trace": "control_backward",
+       "why": "Frame-mode full check against speculative pointer.",
+       "lines": [
+        167,
+        216
+       ]
+      },
+      {
+       "id": "E36",
+       "name": "full_wr",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 21.3,
+       "struct_score": 29.6,
+       "trace": "control_backward",
+       "why": "Frame larger than FIFO overflow condition.",
+       "lines": [
+        171,
+        216
+       ]
+      },
+      {
+       "id": "E37",
+       "name": "drop_frame_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 23.4,
+       "struct_score": 38.2,
+       "trace": "control_backward",
+       "why": "Dropping current frame flag in frame mode.",
+       "lines": [
+        173,
+        216,
+        219
+       ]
+      },
+      {
+       "id": "E38",
+       "name": "overflow_reg",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 16.6,
+       "struct_score": 10.4,
+       "trace": "control_backward",
+       "why": "Pulse on dropped frame, drives status_overflow.",
+       "lines": [
+        174,
+        198,
+        224
+       ]
+      },
+      {
+       "id": "E39",
+       "name": "bad_frame_reg",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 16.7,
+       "struct_score": 10.9,
+       "trace": "control_backward",
+       "why": "Pulse on bad frame discarded, drives status_bad_frame.",
+       "lines": [
+        175,
+        199,
+        234
+       ]
+      },
+      {
+       "id": "E40",
+       "name": "good_frame_reg",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 16.7,
+       "struct_score": 10.9,
+       "trace": "control_backward",
+       "why": "Pulse on good frame committed, drives status_good_frame.",
+       "lines": [
+        176,
+        200,
+        238
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E19",
+       "name": "status_overflow",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "status_bad_frame",
+       "kind": "port_out"
+      },
+      {
+       "id": "E21",
+       "name": "status_good_frame",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axis",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axis_tdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_tkeep",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_tvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_tready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_axis_tid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_axis_tdest",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "s_axis_tuser",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axis",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "m_axis_tdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "m_axis_tkeep",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "m_axis_tvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "m_axis_tready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "m_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "m_axis_tid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "m_axis_tdest",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "m_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E19",
+      "E20",
+      "E21",
+      "E22",
+      "E23"
+     ],
+     "members": [
+      {
+       "id": "E19",
+       "name": "status_overflow",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "status_bad_frame",
+       "kind": "port_out"
+      },
+      {
+       "id": "E21",
+       "name": "status_good_frame",
+       "kind": "port_out"
+      },
+      {
+       "id": "E22",
+       "name": "status_full",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "status_empty",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

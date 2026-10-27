@@ -1,0 +1,459 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "wb2axip_wbp2classic",
+ "tops": [
+  "wbp2classic"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "wbp2classic": {
+   "source": "teacher",
+   "canonical_instance": "wbp2classic",
+   "file": "data/rtl/wb2axip/rtl/wbp2classic.v",
+   "lines": [
+    36,
+    201
+   ],
+   "summary": "Wishbone pipelined-to-classic bridge: passes request signals combinationally downstream, uses a returned flag to drop strobe and stall, and registers ack, error and read data back upstream.",
+   "blocks": [
+    {
+     "name": "Response tracking",
+     "kind": "CONTROLLER",
+     "description": "returned flag drives stall and strobe drop; registered ack/err upstream.",
+     "anchors": [
+      {
+       "id": "E24",
+       "name": "returned",
+       "role": "CONTROL_FLAG",
+       "importance": "critical",
+       "score": 79.6,
+       "struct_score": 38.8,
+       "trace": "control_backward",
+       "why": "Set on downstream ack/err; gates o_mstb and drives o_sstall.",
+       "lines": [
+        70,
+        77,
+        106
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "o_sstall",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 59.0,
+       "struct_score": 65.8,
+       "trace": "control_backward",
+       "why": "Upstream stall, asserted until downstream response returned.",
+       "lines": [
+        50,
+        106
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "o_sack",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 90.3,
+       "struct_score": 75.4,
+       "trace": "control_backward",
+       "why": "Registered upstream ack from i_mack within cycle.",
+       "lines": [
+        50,
+        119
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "o_serr",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 23.9,
+       "struct_score": 40.2,
+       "trace": "control_backward",
+       "why": "Registered upstream bus error from i_merr.",
+       "lines": [
+        52,
+        120
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Request forwarding",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Combinational pass-through of pipelined request onto classic bus.",
+     "anchors": [
+      {
+       "id": "E14",
+       "name": "o_mstb",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 92.8,
+       "struct_score": 81.7,
+       "trace": "control_backward",
+       "why": "Downstream classic strobe, i_sstb masked by returned.",
+       "lines": [
+        55,
+        77
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "o_mcyc",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 63.9,
+       "struct_score": 79.5,
+       "trace": "interface",
+       "why": "Downstream cycle, copy of i_scyc.",
+       "lines": [
+        55,
+        76
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "o_maddr",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 60.2,
+       "struct_score": 70.2,
+       "trace": "data_backward",
+       "why": "Downstream address forwarded from i_saddr.",
+       "lines": [
+        56,
+        79
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "o_mdata",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 67.2,
+       "struct_score": 87.9,
+       "trace": "data_backward",
+       "why": "Downstream write data forwarded from i_sdata.",
+       "lines": [
+        57,
+        80
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "o_mwe",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 23.2,
+       "struct_score": 37.3,
+       "trace": "data_backward",
+       "why": "Downstream write enable forwarded from i_swe.",
+       "lines": [
+        55,
+        78
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "o_mcti",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 21.9,
+       "struct_score": 32.2,
+       "trace": "none",
+       "why": "Constant classic cycle type indicator.",
+       "lines": [
+        63,
+        84
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E18",
+       "name": "o_msel",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "o_mbte",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "Read data return",
+     "kind": "DATAPATH",
+     "description": "Captures downstream read data on ack or error.",
+     "anchors": [
+      {
+       "id": "E11",
+       "name": "o_sdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 97.1,
+       "struct_score": 92.8,
+       "trace": "data_backward",
+       "why": "Upstream read data captured from i_mdata on ack/err.",
+       "lines": [
+        51,
+        128
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "i_mdata",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 66.6,
+       "struct_score": 86.3,
+       "trace": "interface",
+       "why": "Downstream read data latched into o_sdata.",
+       "lines": [
+        60,
+        128
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E3",
+     "name": "i_scyc",
+     "role": "HANDSHAKE_VALID",
+     "importance": "major",
+     "score": 66.5,
+     "struct_score": 86.0,
+     "trace": "interface",
+     "why": "Upstream bus cycle, forwarded to o_mcyc and qualifies ack/err.",
+     "lines": [
+      46,
+      76,
+      119
+     ]
+    },
+    {
+     "id": "E4",
+     "name": "i_sstb",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 91.6,
+     "struct_score": 78.7,
+     "trace": "interface",
+     "why": "Upstream pipelined strobe forwarded as o_mstb, clears returned.",
+     "lines": [
+      46,
+      77,
+      97
+     ]
+    },
+    {
+     "id": "E19",
+     "name": "i_mack",
+     "role": "HANDSHAKE_READY",
+     "importance": "critical",
+     "score": 88.0,
+     "struct_score": 69.7,
+     "trace": "interface",
+     "why": "Downstream ack; sets returned, produces o_sack and captures data.",
+     "lines": [
+      59,
+      99,
+      119
+     ]
+    },
+    {
+     "id": "E21",
+     "name": "i_merr",
+     "role": "STATUS",
+     "importance": "minor",
+     "score": 22.5,
+     "struct_score": 34.4,
+     "trace": "interface",
+     "why": "Downstream error; sets returned and o_serr.",
+     "lines": [
+      61,
+      99,
+      120
+     ]
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "i_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "i_reset",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "wb_pipelined_slave",
+     "protocol": "MEMORY_BUS",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "i_scyc",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "i_sstb",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "i_swe",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "i_saddr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "i_sdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "i_ssel",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "o_sstall",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "o_sack",
+       "kind": "port_out"
+      },
+      {
+       "id": "E11",
+       "name": "o_sdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "o_serr",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "wb_classic_master",
+     "protocol": "MEMORY_BUS",
+     "direction": "OUT",
+     "member_ids": [
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20",
+      "E21",
+      "E22",
+      "E23"
+     ],
+     "members": [
+      {
+       "id": "E13",
+       "name": "o_mcyc",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "o_mstb",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "o_mwe",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "o_maddr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "o_mdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "o_msel",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "i_mack",
+       "kind": "port_in"
+      },
+      {
+       "id": "E20",
+       "name": "i_mdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E21",
+       "name": "i_merr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E22",
+       "name": "o_mcti",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "o_mbte",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

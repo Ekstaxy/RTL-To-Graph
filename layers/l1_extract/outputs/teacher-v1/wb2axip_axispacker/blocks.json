@@ -1,0 +1,856 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "wb2axip_axispacker",
+ "tops": [
+  "axispacker"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "skidbuffer": {
+   "source": "teacher",
+   "canonical_instance": "axispacker.slave_skd",
+   "file": "data/rtl/wb2axip/rtl/skidbuffer.v",
+   "lines": [
+    81,
+    501
+   ],
+   "summary": "Valid/ready skid buffer: a one-entry side register captures input data when the downstream stalls, while a registered output stage muxes skid or input data, giving full-throughput registered handshakes.",
+   "blocks": [
+    {
+     "name": "Skid register",
+     "kind": "BUFFER",
+     "description": "One-entry overflow buffer and its occupancy flag driving o_ready.",
+     "anchors": [
+      {
+       "id": "E10",
+       "name": "LOGIC.r_valid",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 58.1,
+       "struct_score": 62.8,
+       "trace": "control_backward",
+       "why": "Skid-occupied flag; set on downstream stall, drives o_ready and output mux.",
+       "lines": [
+        139,
+        160,
+        212
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "LOGIC.r_data",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 70.0,
+       "struct_score": 94.9,
+       "trace": "data_backward",
+       "why": "One-entry skid storage holding data accepted during a stall.",
+       "lines": [
+        153,
+        213
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "o_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 95.3,
+       "struct_score": 88.1,
+       "trace": "control_backward",
+       "why": "Upstream ready, low whenever skid register holds data.",
+       "lines": [
+        152,
+        160
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E9",
+       "name": "w_data",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Output register",
+     "kind": "PIPELINE_STAGE",
+     "description": "Registered valid and data selecting skid or input payload.",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "o_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 98.7,
+       "struct_score": 96.7,
+       "trace": "control_backward",
+       "why": "Downstream valid driven from registered ro_valid.",
+       "lines": [
+        137,
+        200
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "o_data",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 99.4,
+       "struct_score": 98.5,
+       "trace": "data_backward",
+       "why": "Registered output payload chosen from skid or input data.",
+       "lines": [
+        213,
+        215
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "LOGIC.REG_OUTPUT.ro_valid",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 28.0,
+       "struct_score": 55.1,
+       "trace": "control_backward",
+       "why": "Registered output valid flop behind o_valid.",
+       "lines": [
+        198,
+        200
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Input port",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Upstream valid/data and downstream ready controlling transfers.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "i_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 96.9,
+       "struct_score": 92.2,
+       "trace": "interface",
+       "why": "Upstream valid; loads skid register or output register.",
+       "lines": [
+        137,
+        198
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "i_data",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 98.0,
+       "struct_score": 94.8,
+       "trace": "interface",
+       "why": "Incoming payload captured into skid or output register.",
+       "lines": [
+        153,
+        215
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "i_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 94.2,
+       "struct_score": 85.5,
+       "trace": "interface",
+       "why": "Downstream ready; stall triggers skid capture, ready drains it.",
+       "lines": [
+        137,
+        140,
+        197
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "i_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "i_reset",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "slave_in",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "i_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "o_ready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "i_data",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "master_out",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E6",
+      "E7",
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "o_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "i_ready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "o_data",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "axispacker": {
+   "source": "teacher",
+   "canonical_instance": "axispacker",
+   "file": "data/rtl/wb2axip/rtl/axispacker.v",
+   "lines": [
+    44,
+    860
+   ],
+   "summary": "AXI-stream byte packer: input skid buffer, a combinational stage compacting null (TKEEP=0) bytes plus byte count, a second skid buffer, then a partial-word accumulator merging beats into full output words.",
+   "blocks": [
+    {
+     "name": "Input skid buffer",
+     "kind": "BUFFER",
+     "description": "Registers incoming AXI-stream beats with full-throughput backpressure.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "S_AXIS_TVALID",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 86.9,
+       "struct_score": 65.7,
+       "trace": "interface",
+       "why": "Input stream valid into the slave skid buffer.",
+       "lines": [
+        140
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "S_AXIS_TREADY",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 26.8,
+       "struct_score": 50.9,
+       "trace": "interface",
+       "why": "Input stream ready from the slave skid buffer.",
+       "lines": [
+        140
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "S_AXIS_TDATA",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 91.4,
+       "struct_score": 78.4,
+       "trace": "interface",
+       "why": "Input stream payload bytes to be compacted.",
+       "lines": [
+        141
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "S_AXIS_TSTRB",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 29.2,
+       "struct_score": 59.4,
+       "trace": "interface",
+       "why": "Input byte strobes carried alongside data through packing.",
+       "lines": [
+        141
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "S_AXIS_TKEEP",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 29.2,
+       "struct_score": 59.4,
+       "trace": "interface",
+       "why": "Input byte keep flags marking which bytes are retained.",
+       "lines": [
+        142
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "S_AXIS_TLAST",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 26.1,
+       "struct_score": 48.0,
+       "trace": "interface",
+       "why": "Input packet end marker.",
+       "lines": [
+        142
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "slave_skd",
+       "module": "skidbuffer"
+      }
+     ],
+     "members": [
+      {
+       "id": "E15",
+       "name": "pre_tvalid",
+       "kind": "wire"
+      },
+      {
+       "id": "E16",
+       "name": "pre_tready",
+       "kind": "wire"
+      },
+      {
+       "id": "E17",
+       "name": "pre_tdata",
+       "kind": "wire"
+      },
+      {
+       "id": "E18",
+       "name": "pre_tstrb",
+       "kind": "wire"
+      },
+      {
+       "id": "E19",
+       "name": "pre_tkeep",
+       "kind": "wire"
+      },
+      {
+       "id": "E20",
+       "name": "pre_tlast",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Beat packing stage",
+     "kind": "PIPELINE_STAGE",
+     "description": "Compacts kept bytes to the low end and counts them, registered via beat skid buffer.",
+     "anchors": [
+      {
+       "id": "E21",
+       "name": "pck_tdata",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 48.1,
+       "struct_score": 24.7,
+       "trace": "data_backward",
+       "why": "Beat with null bytes squeezed out by pack function, fed to beat skid buffer.",
+       "lines": [
+        160,
+        190
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "pck_count",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 16.3,
+       "struct_score": 9.5,
+       "trace": "data_backward",
+       "why": "Popcount of TKEEP giving valid byte count of the packed beat.",
+       "lines": [
+        165,
+        190
+       ]
+      },
+      {
+       "id": "E31",
+       "name": "skd_count",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 23.2,
+       "struct_score": 37.6,
+       "trace": "data_backward",
+       "why": "Registered byte count of current beat; drives fill arithmetic and readiness.",
+       "lines": [
+        258,
+        274,
+        365
+       ]
+      },
+      {
+       "id": "E27",
+       "name": "skd_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 29.1,
+       "struct_score": 59.1,
+       "trace": "control_backward",
+       "why": "Valid of packed beat from beat skid buffer; gates axis_ready and next_valid.",
+       "lines": [
+        192,
+        261
+       ]
+      },
+      {
+       "id": "E28",
+       "name": "skd_data",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 21.0,
+       "struct_score": 28.3,
+       "trace": "data_backward",
+       "why": "Registered packed beat data shifted into w_packed_data.",
+       "lines": [
+        193,
+        345
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I2",
+       "instance": "beat_skd",
+       "module": "skidbuffer"
+      }
+     ],
+     "members": [
+      {
+       "id": "E22",
+       "name": "pck_tstrb",
+       "kind": "comb"
+      },
+      {
+       "id": "E23",
+       "name": "pck_tkeep",
+       "kind": "comb"
+      },
+      {
+       "id": "E24",
+       "name": "pck_tlast",
+       "kind": "comb"
+      },
+      {
+       "id": "E29",
+       "name": "skd_strb",
+       "kind": "wire"
+      },
+      {
+       "id": "E30",
+       "name": "skd_keep",
+       "kind": "wire"
+      },
+      {
+       "id": "E32",
+       "name": "skd_last",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Word packing accumulator",
+     "kind": "DATAPATH",
+     "description": "Accumulates packed beats into full words, tracking fill level and pending last.",
+     "anchors": [
+      {
+       "id": "E26",
+       "name": "axis_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 51.6,
+       "struct_score": 38.9,
+       "trace": "control_backward",
+       "why": "Accept of packed beat; drops when accumulator full or ending while output stalled.",
+       "lines": [
+        192,
+        257,
+        260
+       ]
+      },
+      {
+       "id": "E33",
+       "name": "mid_fill",
+       "role": "FIFO_PTR",
+       "importance": "critical",
+       "score": 88.4,
+       "struct_score": 70.6,
+       "trace": "control_backward",
+       "why": "Byte occupancy of partial-word buffer; sets shift amount and when a word is complete.",
+       "lines": [
+        270,
+        274,
+        345
+       ]
+      },
+      {
+       "id": "E34",
+       "name": "mid_data",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 92.1,
+       "struct_score": 80.1,
+       "trace": "data_backward",
+       "why": "Partial-word accumulator holding leftover bytes between output words.",
+       "lines": [
+        307,
+        318,
+        344
+       ]
+      },
+      {
+       "id": "E37",
+       "name": "mid_last",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 56.4,
+       "struct_score": 56.6,
+       "trace": "control_backward",
+       "why": "Pending final word flag; forces flush of mid_data with TLAST.",
+       "lines": [
+        279,
+        288,
+        410
+       ]
+      },
+      {
+       "id": "E38",
+       "name": "w_packed_data",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 51.8,
+       "struct_score": 40.0,
+       "trace": "data_backward",
+       "why": "Double-width merge of mid_data with skd_data shifted by mid_fill bytes.",
+       "lines": [
+        318,
+        344,
+        417
+       ]
+      },
+      {
+       "id": "E41",
+       "name": "next_valid",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 23.6,
+       "struct_score": 38.9,
+       "trace": "control_backward",
+       "why": "Full word or final flush available; loads M_AXIS_TVALID and decrements fill.",
+       "lines": [
+        365,
+        392
+       ]
+      },
+      {
+       "id": "E42",
+       "name": "next_last",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 19.2,
+       "struct_score": 21.2,
+       "trace": "control_backward",
+       "why": "Next output word ends the packet; feeds M_AXIS_TLAST and mid_last.",
+       "lines": [
+        377,
+        420
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E35",
+       "name": "mid_strb",
+       "kind": "reg"
+      },
+      {
+       "id": "E36",
+       "name": "mid_keep",
+       "kind": "reg"
+      },
+      {
+       "id": "E39",
+       "name": "w_packed_strb",
+       "kind": "comb"
+      },
+      {
+       "id": "E40",
+       "name": "w_packed_keep",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Output register",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Registered AXI-stream master outputs loaded when output free.",
+     "anchors": [
+      {
+       "id": "E9",
+       "name": "M_AXIS_TVALID",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 99.0,
+       "struct_score": 97.5,
+       "trace": "control_backward",
+       "why": "Registered output valid loaded from next_valid when output is free.",
+       "lines": [
+        391,
+        392
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "M_AXIS_TREADY",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 64.9,
+       "struct_score": 82.2,
+       "trace": "interface",
+       "why": "Output backpressure; stalls packing, mid_fill and output registers.",
+       "lines": [
+        259,
+        391
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "M_AXIS_TDATA",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 96.7,
+       "struct_score": 91.7,
+       "trace": "data_backward",
+       "why": "Packed output word from mid_data or low half of w_packed_data.",
+       "lines": [
+        412,
+        417
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "M_AXIS_TSTRB",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 37.0,
+       "struct_score": 82.3,
+       "trace": "data_backward",
+       "why": "Packed output byte strobes.",
+       "lines": [
+        413,
+        418
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "M_AXIS_TKEEP",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 37.0,
+       "struct_score": 82.3,
+       "trace": "data_backward",
+       "why": "Packed output byte keep flags.",
+       "lines": [
+        414,
+        419
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "M_AXIS_TLAST",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 61.8,
+       "struct_score": 74.1,
+       "trace": "data_backward",
+       "why": "Output packet end, from mid_last flush or next_last.",
+       "lines": [
+        415,
+        420
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "S_AXI_ACLK",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "S_AXI_ARESETN",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axis",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "S_AXIS_TVALID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "S_AXIS_TREADY",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "S_AXIS_TDATA",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "S_AXIS_TSTRB",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "S_AXIS_TKEEP",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "S_AXIS_TLAST",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axis",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E9",
+      "E10",
+      "E11",
+      "E12",
+      "E13",
+      "E14"
+     ],
+     "members": [
+      {
+       "id": "E9",
+       "name": "M_AXIS_TVALID",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "M_AXIS_TREADY",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "M_AXIS_TDATA",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "M_AXIS_TSTRB",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "M_AXIS_TKEEP",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "M_AXIS_TLAST",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,33 @@
+{
+ "module_summary": "PCPI coprocessor for RISC-V DIV/DIVU/REM/REMU: decodes the instruction, then runs a 32-iteration restoring shift-subtract divider on sign-corrected operands with sign fix-up on completion.",
+ "anchors": [
+  {"id": "E3", "name": "pcpi_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Coprocessor request valid gating instruction decode", "lines": [2423, 2444]},
+  {"id": "E4", "name": "pcpi_insn", "role": "COMMAND", "importance": "critical", "trace": "interface", "why": "Instruction word decoded into div/divu/rem/remu", "lines": [2424, 2444, 2445]},
+  {"id": "E5", "name": "pcpi_rs1", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Dividend operand loaded, sign-corrected, into dividend register", "lines": [2425, 2474]},
+  {"id": "E6", "name": "pcpi_rs2", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Divisor operand loaded, sign-corrected and shifted, into divisor", "lines": [2426, 2475]},
+  {"id": "E8", "name": "pcpi_rd", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Result: signed quotient or remainder written back", "lines": [2428, 2493, 2495]},
+  {"id": "E10", "name": "pcpi_ready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "One-cycle completion pulse when division finishes", "lines": [2430, 2482]},
+  {"id": "E7", "name": "pcpi_wr", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Register writeback enable asserted with result", "lines": [2427, 2483]},
+  {"id": "E9", "name": "pcpi_wait", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Tells core a div/rem instruction is being processed", "lines": [2429, 2453, 2436]},
+  {"id": "E11", "name": "instr_div", "role": "DECODE", "importance": "major", "trace": "control_backward", "why": "Decoded op flag selecting signed handling and quotient output", "lines": [2432, 2446, 2492]},
+  {"id": "E17", "name": "start", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Rising edge of wait; loads operands and starts iteration", "lines": [2436, 2472]},
+  {"id": "E22", "name": "running", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Two-state busy controller for the iterative divider", "lines": [2461, 2473, 2480]},
+  {"id": "E21", "name": "quotient_msk", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "One-hot bit position shifting right; zero ends iteration", "lines": [2460, 2480, 2506]},
+  {"id": "E18", "name": "dividend", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Partial remainder, reduced by divisor each step", "lines": [2457, 2498, 2499]},
+  {"id": "E19", "name": "divisor", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Shifted divisor compared and subtracted each iteration", "lines": [2458, 2498, 2502]},
+  {"id": "E20", "name": "quotient", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Quotient accumulated by OR-ing mask bits", "lines": [2459, 2500, 2493]},
+  {"id": "E23", "name": "outsign", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Result sign latched at start, negates output", "lines": [2462, 2476, 2493]},
+  {"id": "E16", "name": "pcpi_wait_q", "role": "HOLDING_REG", "importance": "minor", "trace": "control_backward", "why": "Delayed wait used for start edge detection", "lines": [2435, 2436, 2454]}
+ ],
+ "groups": [
+  {"name": "Instruction decoder", "kind": "DECODER", "anchor_ids": ["E11", "E4", "E9", "E16", "E17"], "member_ids": ["E12", "E13", "E14", "E15"], "description": "Decodes DIV/REM variants and generates wait and start"},
+  {"name": "Divider control", "kind": "CONTROLLER", "anchor_ids": ["E22", "E21", "E10", "E7"], "member_ids": [], "description": "Busy state and iteration mask sequencing completion"},
+  {"name": "Divider datapath", "kind": "DATAPATH", "anchor_ids": ["E18", "E19", "E20", "E23", "E8"], "member_ids": [], "description": "Shift-subtract datapath and sign-corrected result"},
+  {"name": "PCPI request", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E3", "E5", "E6"], "member_ids": [], "description": "Request valid and source operands from core"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "pcpi_request", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6"]},
+  {"name": "pcpi_response", "protocol": "OTHER", "direction": "OUT", "member_ids": ["E7", "E8", "E9", "E10"]}
+ ]
+}

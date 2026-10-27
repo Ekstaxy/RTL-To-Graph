@@ -1,0 +1,26 @@
+{
+ "module_summary": "Source side of a 4-phase CDC handshake: an FSM samples valid data into glitch-free registers, raises async request, and waits for the synchronized ack to assert then deassert.",
+ "anchors": [
+  {"id": "E15", "name": "state_q", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Handshake FSM: IDLE, wait ack assert, wait ack deassert", "lines": [130, 169, 196]},
+  {"id": "E12", "name": "data_src_q", "role": "HOLDING_REG", "importance": "critical", "trace": "data_backward", "why": "Data latched on accept, held stable across the async transfer", "lines": [125, 200, 204]},
+  {"id": "E10", "name": "req_src_q", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Registered glitch-free request driving async_req_o", "lines": [123, 199, 203]},
+  {"id": "E13", "name": "ack_synced", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "data_backward", "why": "Synchronized async ack steering FSM transitions and ready", "lines": [127, 145, 180]},
+  {"id": "E4", "name": "valid_i", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Source valid; starts transfer and samples data in IDLE", "lines": [115, 172]},
+  {"id": "E5", "name": "ready_o", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Source ready decoded from FSM state and ack", "lines": [116, 153, 156]},
+  {"id": "E3", "name": "data_i", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Payload sampled into data register on valid", "lines": [114, 173]},
+  {"id": "E6", "name": "async_req_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "data_backward", "why": "Asynchronous request to destination domain", "lines": [117, 203]},
+  {"id": "E8", "name": "async_data_o", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Asynchronous data bus to destination domain", "lines": [119, 204]},
+  {"id": "E7", "name": "async_ack_i", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Asynchronous ack input fed to synchronizer", "lines": [118, 144]}
+ ],
+ "groups": [
+  {"name": "Handshake FSM", "kind": "CONTROLLER", "anchor_ids": ["E15", "E5", "E10"], "member_ids": ["E14", "E9"], "description": "Sequences 4-phase req/ack and local ready"},
+  {"name": "Data register", "kind": "DATAPATH", "anchor_ids": ["E12", "E3", "E8"], "member_ids": ["E11"], "description": "Holds payload stable on async data output"},
+  {"name": "Ack synchronizer", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E13", "E7"], "member_ids": [], "description": "Multi-stage synchronizer bringing ack into source clock"},
+  {"name": "Async request", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E6", "E4"], "member_ids": [], "description": "Local valid converted to async request"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "src_stream", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5"]},
+  {"name": "async_link", "protocol": "REQ_ACK", "direction": "OUT", "member_ids": ["E6", "E7", "E8"]}
+ ]
+}

@@ -1,0 +1,24 @@
+{
+ "module_summary": "Small synchronous FIFO: a 4-entry register array with read/write pointers and an occupancy counter deriving valid (not empty) and accept (not full).",
+ "anchors": [
+  {"id": "E9", "name": "ram_q", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "4-entry data array written at wr_ptr_q on push, read at rd_ptr_q.", "lines": [456, 483, 507]},
+  {"id": "E11", "name": "wr_ptr_q", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "Write pointer addressing ram_q; increments on accepted push.", "lines": [483, 484]},
+  {"id": "E10", "name": "rd_ptr_q", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "Read pointer selecting data_out_o; increments on valid pop.", "lines": [489, 507]},
+  {"id": "E12", "name": "count_q", "role": "FIFO_PTR", "importance": "critical", "trace": "control_backward", "why": "Occupancy count; drives valid_o (non-empty) and accept_o (non-full).", "lines": [493, 496, 503]},
+  {"id": "E4", "name": "push_i", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Push request; with accept_o writes data and advances write pointer.", "lines": [481, 492]},
+  {"id": "E7", "name": "accept_o", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Not-full indication accepting pushes.", "lines": [481, 504]},
+  {"id": "E8", "name": "valid_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Not-empty indication; output data valid.", "lines": [488, 503]},
+  {"id": "E5", "name": "pop_i", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Pop request from consumer; advances read pointer.", "lines": [488, 489]},
+  {"id": "E3", "name": "data_in_i", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Write data stored into ram_q on push.", "lines": [438, 483]},
+  {"id": "E6", "name": "data_out_o", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Head-of-FIFO data read from ram_q at rd_ptr_q.", "lines": [443, 507]}
+ ],
+ "groups": [
+  {"name": "fifo_storage", "kind": "BUFFER", "anchor_ids": ["E9", "E3", "E6"], "member_ids": [], "description": "Register array holding queued entries."},
+  {"name": "fifo_control", "kind": "CONTROLLER", "anchor_ids": ["E11", "E10", "E12", "E4", "E7", "E8", "E5"], "member_ids": [], "description": "Pointers and occupancy counter producing full/empty handshakes."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "push_port", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E7"]},
+  {"name": "pop_port", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E6", "E8", "E5"]}
+ ]
+}

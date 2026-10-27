@@ -1,0 +1,42 @@
+{
+ "module_summary": "GMII/MII Ethernet receive to AXI-Stream: a 5-byte delay line strips preamble/FCS while a 3-state FSM emits payload, and an LFSR CRC-32 checks FCS to flag bad frames.",
+ "anchors": [
+  {"id": "E17", "name": "state_reg", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "IDLE/PAYLOAD/WAIT_LAST controller: detects SFD, emits payload, handles errors.", "lines": [101, 189, 248]},
+  {"id": "E3", "name": "gmii_rxd", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "GMII receive byte (or MII nibble) entering the delay line.", "lines": [275, 301, 306]},
+  {"id": "E4", "name": "gmii_rx_dv", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Receive data valid; frames packets and ends payload when low.", "lines": [213, 268, 312]},
+  {"id": "E6", "name": "m_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Output payload byte from delayed receive data.", "lines": [143]},
+  {"id": "E7", "name": "m_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "data_backward", "why": "Output valid during PAYLOAD state.", "lines": [144]},
+  {"id": "E8", "name": "m_axis_tlast", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "End-of-frame marker on dv drop or error.", "lines": [145]},
+  {"id": "E9", "name": "m_axis_tuser", "role": "INTERFACE_DATA", "importance": "minor", "trace": "data_backward", "why": "Frame error flag (optionally with PTP timestamp) on last beat.", "lines": [146]},
+  {"id": "E11", "name": "clk_enable", "role": "ENABLE", "importance": "major", "trace": "interface", "why": "Clock enable gating FSM advance and delay-line shifting.", "lines": [182, 263]},
+  {"id": "E12", "name": "mii_select", "role": "COMMAND", "importance": "major", "trace": "interface", "why": "Selects MII nibble mode versus GMII byte mode.", "lines": [185, 264]},
+  {"id": "E13", "name": "cfg_rx_enable", "role": "ENABLE", "importance": "minor", "trace": "interface", "why": "Receive enable required to start a frame on SFD.", "lines": [194]},
+  {"id": "E21", "name": "mii_odd", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "MII nibble phase; holds FSM and shifts delay line on odd cycles.", "lines": [185, 265, 277]},
+  {"id": "E22", "name": "in_frame", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Tracks frame presence for SFD-based start-of-packet detection.", "lines": [267, 270, 299]},
+  {"id": "E27", "name": "gmii_rxd_d4", "role": "STORAGE", "importance": "major", "trace": "data_backward", "why": "Tail of 5-stage receive data delay line feeding output and CRC.", "lines": [162, 204, 310]},
+  {"id": "E32", "name": "gmii_rx_dv_d4", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Delayed data valid used for SFD detection and error handling.", "lines": [194, 207]},
+  {"id": "E37", "name": "gmii_rx_er_d4", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Delayed receive error aborting payload into WAIT_LAST.", "lines": [194, 207]},
+  {"id": "E53", "name": "crc_state", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Running CRC-32 state, reset in IDLE and updated per payload byte.", "lines": [163, 327, 329]},
+  {"id": "E54", "name": "crc_next", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "LFSR next CRC compared with received FCS bytes.", "lines": [165, 220, 329]},
+  {"id": "E20", "name": "update_crc", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Advances CRC state during payload.", "lines": [202, 328]},
+  {"id": "E14", "name": "start_packet", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "Start-of-packet pulse after SFD detection.", "lines": [148]},
+  {"id": "E15", "name": "error_bad_frame", "role": "STATUS", "importance": "major", "trace": "data_backward", "why": "Bad frame indication from rx_er or FCS mismatch.", "lines": [149]},
+  {"id": "E16", "name": "error_bad_fcs", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "FCS mismatch indication.", "lines": [150]},
+  {"id": "E52", "name": "ptp_ts_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Captures PTP timestamp at packet start for tuser (parameter-gated).", "lines": [146, 259]}
+ ],
+ "groups": [
+  {"name": "Receive FSM", "kind": "CONTROLLER", "anchor_ids": ["E17", "E13"], "member_ids": ["E18"], "description": "Detects SFD, streams payload, checks FCS at end, waits after errors."},
+  {"name": "Receive delay line", "kind": "BUFFER", "anchor_ids": ["E27", "E32", "E37", "E21", "E22", "E11", "E12"], "member_ids": ["E23", "E24", "E25", "E26", "E28", "E29", "E30", "E31", "E33", "E34", "E35", "E36"], "description": "Five-stage data/dv/er shift registers, MII nibble assembly, frame tracking."},
+  {"name": "CRC checker", "kind": "DATAPATH", "anchor_ids": ["E53", "E54", "E20"], "member_ids": ["I1", "E19"], "description": "LFSR CRC-32 over payload compared with trailing FCS bytes."},
+  {"name": "AXIS output", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E6", "E7", "E8", "E9", "E52"], "member_ids": ["E38", "E39", "E40", "E41", "E42", "E43", "E44", "E45"], "description": "Registered AXI-Stream output beats with last and error user bit."},
+  {"name": "Status outputs", "kind": "OTHER", "anchor_ids": ["E14", "E15", "E16"], "member_ids": ["E46", "E47", "E48", "E49", "E50", "E51"], "description": "Registered start-of-packet and bad frame/FCS pulses."}
+ ],
+ "interfaces": [
+  {"name": "clock/reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "GMII input", "protocol": "STREAM", "direction": "IN", "member_ids": ["E3", "E4", "E5"]},
+  {"name": "AXI-Stream output", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E6", "E7", "E8", "E9"]},
+  {"name": "PTP timestamp", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E10"]},
+  {"name": "control/config", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E11", "E12", "E13"]},
+  {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E14", "E15", "E16"]}
+ ]
+}

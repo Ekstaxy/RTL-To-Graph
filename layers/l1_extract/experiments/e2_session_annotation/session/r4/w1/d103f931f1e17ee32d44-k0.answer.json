@@ -1,0 +1,47 @@
+{
+  "module_summary": "AXI4 to AXI-lite write adapter: a 4-state FSM accepts AXI write bursts, tracks address/beat count, splits or merges data width, issues one AXI-lite write per beat and returns one merged response.",
+  "anchors": [
+    {"id": "E33", "name": "state_reg", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "IDLE/DATA/DATA_2/RESP controller sequencing address accept, data transfer and response collection", "lines": [149, 226, 521]},
+    {"id": "E11", "name": "s_axi_awvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Slave write-address valid; starts a new burst in IDLE", "lines": [68, 232]},
+    {"id": "E12", "name": "s_axi_awready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Slave write-address ready from s_axi_awready_reg, asserted in IDLE", "lines": [69, 177, 232]},
+    {"id": "E16", "name": "s_axi_wvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Slave write-data valid; accepted beats advance burst and address", "lines": [73, 252]},
+    {"id": "E17", "name": "s_axi_wready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Slave write-data ready from s_axi_wready_reg, gated by master wvalid", "lines": [74, 178, 252]},
+    {"id": "E13", "name": "s_axi_wdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "AXI write data beats copied, replicated or packed into AXI-lite write data", "lines": [70, 253, 452]},
+    {"id": "E4", "name": "s_axi_awaddr", "role": "INTERFACE_ADDR", "importance": "minor", "trace": "interface", "why": "Burst start address loaded into addr_reg and master awaddr", "lines": [61, 235, 236]},
+    {"id": "E20", "name": "s_axi_bvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Slave write-response valid raised when burst finishes in RESP", "lines": [77, 181, 260]},
+    {"id": "E19", "name": "s_axi_bresp", "role": "INTERFACE_DATA", "importance": "minor", "trace": "data_backward", "why": "Merged response: first or any error AXI-lite bresp of the burst", "lines": [76, 180]},
+    {"id": "E22", "name": "m_axil_awaddr", "role": "INTERFACE_ADDR", "importance": "critical", "trace": "data_backward", "why": "AXI-lite write address per single transfer, from awaddr or addr_reg", "lines": [83, 183, 229]},
+    {"id": "E24", "name": "m_axil_awvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "AXI-lite address valid issued for each transfer, cleared on awready", "lines": [85, 188, 229]},
+    {"id": "E26", "name": "m_axil_wdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "AXI-lite write data, shifted/replicated/merged from slave write data", "lines": [87, 189]},
+    {"id": "E28", "name": "m_axil_wvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "AXI-lite write-data valid, gates slave wready", "lines": [89, 191, 242]},
+    {"id": "E31", "name": "m_axil_bvalid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "AXI-lite response valid; completes a transfer in RESP", "lines": [92, 270]},
+    {"id": "E32", "name": "m_axil_bready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "AXI-lite response ready, asserted when slave response channel free", "lines": [93, 192, 270]},
+    {"id": "E37", "name": "addr_reg", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Current burst address, incremented per beat; feeds next awaddr and lane shifts", "lines": [152, 258, 279]},
+    {"id": "E43", "name": "burst_reg", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Remaining beat count loaded from awlen, decremented per accepted beat", "lines": [155, 256, 257]},
+    {"id": "E49", "name": "burst_active_reg", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Burst still active; decides RESP returns to DATA or finishes to IDLE", "lines": [158, 277]},
+    {"id": "E39", "name": "data_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Wide data held while splitting or merging across segments", "lines": [153, 472]},
+    {"id": "E41", "name": "strb_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Write strobes held alongside data_reg for split/merge", "lines": [154, 473]},
+    {"id": "E35", "name": "id_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Latched AXI write ID returned on bid", "lines": [151, 272]},
+    {"id": "E45", "name": "burst_size_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Latched awsize controlling address increment per beat", "lines": [156, 258]},
+    {"id": "E47", "name": "master_burst_size_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Output transfer size used for address stepping and merge boundary", "lines": [157, 370, 459]},
+    {"id": "E51", "name": "convert_burst_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Selects merge path STATE_DATA_2 vs narrow pass-through after response", "lines": [159, 400]},
+    {"id": "E53", "name": "first_transfer_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Marks first transfer so its bresp is captured", "lines": [160, 274]},
+    {"id": "E55", "name": "last_segment_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Last narrow segment of a split beat; chooses DATA vs DATA_2", "lines": [161, 496, 499]}
+  ],
+  "groups": [
+    {"name": "Write FSM", "kind": "CONTROLLER", "anchor_ids": ["E33", "E49", "E51", "E53", "E55"], "member_ids": ["E34", "E50", "E52", "E54", "E56"], "description": "Sequences address accept, data beats, per-transfer response and burst completion"},
+    {"name": "Burst tracking", "kind": "COUNTER_TIMER", "anchor_ids": ["E43", "E37", "E45", "E47", "E35"], "member_ids": ["E44", "E38", "E46", "E48", "E36"], "description": "Beat counter and address/size/ID holding registers for the active burst"},
+    {"name": "Width conversion datapath", "kind": "DATAPATH", "anchor_ids": ["E39", "E41", "E26"], "member_ids": ["E40", "E42", "E73", "E74", "E75", "E76", "E27"], "description": "Splits, replicates or merges slave data and strobes into AXI-lite write data"},
+    {"name": "AXI slave write port", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E11", "E12", "E16", "E17", "E13", "E4", "E20", "E19"], "member_ids": ["E57", "E59", "E61", "E63", "E65", "E3", "E5", "E6", "E14", "E18", "E21"], "description": "AXI4 AW/W/B channels with registered ready and response outputs"},
+    {"name": "AXI-lite master write port", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E22", "E24", "E28", "E31", "E32"], "member_ids": ["E67", "E69", "E71", "E77", "E79", "E23", "E25", "E29", "E30"], "description": "Registered AXI-lite AW/W outputs and B response handshake"}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "s_axi_aw", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12"]},
+    {"name": "s_axi_w", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E13", "E14", "E15", "E16", "E17"]},
+    {"name": "s_axi_b", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E18", "E19", "E20", "E21"]},
+    {"name": "m_axil_aw", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E22", "E23", "E24", "E25"]},
+    {"name": "m_axil_w", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E26", "E27", "E28", "E29"]},
+    {"name": "m_axil_b", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E30", "E31", "E32"]}
+  ]
+}

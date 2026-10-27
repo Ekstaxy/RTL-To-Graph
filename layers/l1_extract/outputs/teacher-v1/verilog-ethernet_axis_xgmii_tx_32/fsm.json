@@ -1,0 +1,166 @@
+[
+ {
+  "module": "axis_xgmii_tx_32",
+  "instance": "axis_xgmii_tx_32",
+  "state": "state_reg",
+  "next": "state_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "STATE_IDLE",
+    "value": "4'b0"
+   },
+   {
+    "name": "STATE_PREAMBLE",
+    "value": "4'b1"
+   },
+   {
+    "name": "STATE_PAYLOAD",
+    "value": "4'b10"
+   },
+   {
+    "name": "STATE_PAD",
+    "value": "4'b11"
+   },
+   {
+    "name": "STATE_FCS_1",
+    "value": "4'b100"
+   },
+   {
+    "name": "STATE_ERR",
+    "value": "4'b111"
+   },
+   {
+    "name": "STATE_FCS_2",
+    "value": "4'b101"
+   },
+   {
+    "name": "STATE_FCS_3",
+    "value": "4'b110"
+   },
+   {
+    "name": "STATE_IFG",
+    "value": "4'b1000"
+   }
+  ],
+  "reset_state": "STATE_IDLE",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_PREAMBLE",
+    "cond": "s_axis_tvalid && cfg_tx_enable"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_IDLE",
+    "cond": "!(s_axis_tvalid && cfg_tx_enable)"
+   },
+   {
+    "src": "STATE_PREAMBLE",
+    "dst": "STATE_PAYLOAD",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_PAYLOAD",
+    "dst": "STATE_PAD",
+    "cond": "(!s_axis_tvalid || s_axis_tlast) && frame_min_count_reg && frame_min_count_reg > CTRL_WIDTH"
+   },
+   {
+    "src": "STATE_PAYLOAD",
+    "dst": "STATE_FCS_1",
+    "cond": "(!s_axis_tvalid || s_axis_tlast) && frame_min_count_reg && !(frame_min_count_reg > CTRL_WIDTH)"
+   },
+   {
+    "src": "STATE_PAYLOAD",
+    "dst": "STATE_FCS_1",
+    "cond": "(!s_axis_tvalid || s_axis_tlast) && !frame_min_count_reg"
+   },
+   {
+    "src": "STATE_PAYLOAD",
+    "dst": "STATE_PAYLOAD",
+    "cond": "!(!s_axis_tvalid || s_axis_tlast)"
+   },
+   {
+    "src": "STATE_PAD",
+    "dst": "STATE_PAD",
+    "cond": "frame_min_count_reg > CTRL_WIDTH"
+   },
+   {
+    "src": "STATE_PAD",
+    "dst": "STATE_FCS_1",
+    "cond": "!(frame_min_count_reg > CTRL_WIDTH)"
+   },
+   {
+    "src": "STATE_FCS_1",
+    "dst": "STATE_ERR",
+    "cond": "frame_error_reg"
+   },
+   {
+    "src": "STATE_FCS_1",
+    "dst": "STATE_FCS_2",
+    "cond": "!frame_error_reg"
+   },
+   {
+    "src": "STATE_FCS_2",
+    "dst": "STATE_FCS_3",
+    "cond": "extra_cycle"
+   },
+   {
+    "src": "STATE_FCS_2",
+    "dst": "STATE_IFG",
+    "cond": "!extra_cycle"
+   },
+   {
+    "src": "STATE_FCS_3",
+    "dst": "STATE_IFG",
+    "cond": "ifg_count_next > 8'd3"
+   },
+   {
+    "src": "STATE_FCS_3",
+    "dst": "STATE_IDLE",
+    "cond": "!(ifg_count_next > 8'd3)"
+   },
+   {
+    "src": "STATE_ERR",
+    "dst": "STATE_IFG",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_IFG",
+    "dst": "STATE_IFG",
+    "cond": "(ifg_count_next > 8'd3 || frame_reg)"
+   },
+   {
+    "src": "STATE_IFG",
+    "dst": "STATE_IDLE",
+    "cond": "!(ifg_count_next > 8'd3 || frame_reg)"
+   }
+  ],
+  "outputs": [
+   {
+    "signal": "reset_crc",
+    "kind": "moore",
+    "port": false
+   },
+   {
+    "signal": "start_packet_next",
+    "kind": "moore",
+    "port": false
+   },
+   {
+    "signal": "update_crc",
+    "kind": "moore",
+    "port": false
+   }
+  ],
+  "warnings": [
+   "semantic_check: unsupported (unsupported: packed select of array)"
+  ],
+  "semantic_check": "unsupported"
+ }
+]

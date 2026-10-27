@@ -1,0 +1,21 @@
+stateDiagram-v2
+    [*] --> STATE_IDLE
+    ANY_STATE --> STATE_IDLE
+    STATE_IDLE --> STATE_START : s_axis_write_desc_ready && s_axis_write_desc_valid
+    STATE_IDLE --> STATE_IDLE : !(s_axis_write_desc_ready && s_axis_write_desc_valid)
+    STATE_START --> STATE_WRITE : !m_axi_awvalid_reg && active_count_av_reg && m_axi_awvalid_next
+    STATE_START --> STATE_START : !m_axi_awvalid_reg && active_count_av_reg && !m_axi_awvalid_next
+    STATE_START --> STATE_START : !(!m_axi_awvalid_reg && active_count_av_reg)
+    STATE_WRITE --> STATE_IDLE : ((s_axis_write_data_tready && shift_axis_tvalid || !input_active_reg && !last_transfer_reg) || !shift_axis_input_tready) && shift_axis_tlast && output_last_cycle_reg
+    STATE_WRITE --> STATE_FINISH_BURST : ((s_axis_write_data_tready && shift_axis_tvalid || !input_active_reg && !last_transfer_reg) || !shift_axis_input_tready) && shift_axis_tlast && !output_last_cycle_reg
+    STATE_WRITE --> STATE_START : ((s_axis_write_data_tready && shift_axis_tvalid || !input_active_reg && !last_transfer_reg) || !shift_axis_input_tready) && !shift_axis_tlast && output_last_cycle_reg && op_word_count_reg > 0
+    STATE_WRITE --> STATE_DROP_DATA : ((s_axis_write_data_tready && shift_axis_tvalid || !input_active_reg && !last_transfer_reg) || !shift_axis_input_tready) && !shift_axis_tlast && output_last_cycle_reg && !(op_word_count_reg > 0)
+    STATE_WRITE --> STATE_WRITE : ((s_axis_write_data_tready && shift_axis_tvalid || !input_active_reg && !last_transfer_reg) || !shift_axis_input_tready) && !shift_axis_tlast && !output_last_cycle_reg
+    STATE_WRITE --> STATE_WRITE : !((s_axis_write_data_tready && shift_axis_tvalid || !input_active_reg && !last_transfer_reg) || !shift_axis_input_tready)
+    STATE_FINISH_BURST --> STATE_IDLE : m_axi_wready_int && output_last_cycle_reg
+    STATE_FINISH_BURST --> STATE_FINISH_BURST : m_axi_wready_int && !output_last_cycle_reg
+    STATE_FINISH_BURST --> STATE_FINISH_BURST : !m_axi_wready_int
+    STATE_DROP_DATA --> STATE_IDLE : shift_axis_tvalid && shift_axis_tlast
+    STATE_DROP_DATA --> STATE_DROP_DATA : shift_axis_tvalid && !shift_axis_tlast
+    STATE_DROP_DATA --> STATE_DROP_DATA : !shift_axis_tvalid
+    %% output flush_save (moore)

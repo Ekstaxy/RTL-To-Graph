@@ -1,0 +1,52 @@
+{
+  "module_summary": "XGMII-to-AXI-Stream 64-bit receiver: lane-swap aligner and terminate detector feed a two-stage data pipeline, a 3-state FSM frames packets, and an LFSR CRC checks FCS.",
+  "anchors": [
+    {"id": "E15", "name": "state_reg", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "IDLE/PAYLOAD/LAST receive FSM controlling tvalid, tlast, tkeep and error outputs", "lines": [218, 312]},
+    {"id": "E3", "name": "xgmii_rxd", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "64-bit XGMII receive data input masked and pipelined into payload", "lines": [198, 375]},
+    {"id": "E4", "name": "xgmii_rxc", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "XGMII control lane flags used for start/terminate detection and framing errors", "lines": [198, 362]},
+    {"id": "E5", "name": "m_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "AXI-Stream output payload driven from tdata register", "lines": [167]},
+    {"id": "E7", "name": "m_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "AXI-Stream valid asserted during PAYLOAD and LAST states", "lines": [169]},
+    {"id": "E8", "name": "m_axis_tlast", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Marks final beat of a packet on terminate or framing error", "lines": [170]},
+    {"id": "E6", "name": "m_axis_tkeep", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Byte-enable output computed from terminate lane position", "lines": [168]},
+    {"id": "E9", "name": "m_axis_tuser", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "Bad-frame flag bit plus optional PTP timestamp", "lines": [171]},
+    {"id": "E18", "name": "lanes_swapped", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Set when start appears in lane 4; selects swapped 32-bit lane alignment of data", "lines": [340, 384]},
+    {"id": "E19", "name": "swap_rxd", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Holds upper 32 bits of previous word for lane-swapped realignment", "lines": [324, 341]},
+    {"id": "E29", "name": "xgmii_rxd_d0", "role": "PIPELINE_REG", "importance": "major", "trace": "data_backward", "why": "First aligned data stage feeding CRC LFSR and second stage", "lines": [341, 357, 187]},
+    {"id": "E30", "name": "xgmii_rxd_d1", "role": "PIPELINE_REG", "importance": "minor", "trace": "data_backward", "why": "Second data stage driving AXI tdata next value", "lines": [422, 208]},
+    {"id": "E26", "name": "term_present_reg", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Terminate character detected; ends packet in PAYLOAD state", "lines": [251, 351]},
+    {"id": "E24", "name": "term_lane_reg", "role": "INDEX", "importance": "major", "trace": "control_backward", "why": "Lane of terminate character; sets tkeep and which CRC check applies", "lines": [253, 255, 366]},
+    {"id": "E25", "name": "term_lane_d0_reg", "role": "INDEX", "importance": "minor", "trace": "data_backward", "why": "Delayed terminate lane used in LAST state tkeep and CRC check", "lines": [280, 411]},
+    {"id": "E27", "name": "framing_error_reg", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Control characters inside payload; forces tlast, error and FSM return to IDLE", "lines": [244, 362]},
+    {"id": "E28", "name": "framing_error_d0_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "data_backward", "why": "Delayed framing error also aborting the packet", "lines": [244, 412]},
+    {"id": "E33", "name": "xgmii_start_d0", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Start character detected; captures timestamp and start_packet", "lines": [378, 404]},
+    {"id": "E34", "name": "xgmii_start_d1", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Delayed start condition that moves FSM from IDLE to PAYLOAD", "lines": [223, 423]},
+    {"id": "E32", "name": "xgmii_start_swap", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Start found in lane 4; triggers swapped timestamp capture", "lines": [386, 394]},
+    {"id": "E53", "name": "crc_state", "role": "STORAGE", "importance": "major", "trace": "data_backward", "why": "Running Ethernet CRC32 state, reset by reset_crc, updated from LFSR", "lines": [414, 417, 188]},
+    {"id": "E17", "name": "reset_crc", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "FSM-driven reinitialisation of CRC state between packets", "lines": [221, 414]},
+    {"id": "E55", "name": "crc_valid", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Per-lane FCS match results compared against residues; decide bad_fcs", "lines": [155, 258]},
+    {"id": "E56", "name": "crc_valid_save", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Registered CRC matches used for LAST-state FCS check", "lines": [420, 287]},
+    {"id": "E11", "name": "cfg_rx_enable", "role": "CONFIG_REG", "importance": "major", "trace": "interface", "why": "Configuration enable gating packet start acceptance", "lines": [223, 297]},
+    {"id": "E13", "name": "error_bad_frame", "role": "STATUS", "importance": "major", "trace": "interface", "why": "Status pulse for framing or FCS errors", "lines": [174]},
+    {"id": "E14", "name": "error_bad_fcs", "role": "STATUS", "importance": "major", "trace": "interface", "why": "Status pulse for CRC/FCS mismatch", "lines": [175]},
+    {"id": "E12", "name": "start_packet", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "Start-of-packet indication with lane position", "lines": [173]},
+    {"id": "E50", "name": "ptp_ts_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Timestamp captured at packet start, placed into tuser", "lines": [397, 407, 241]},
+    {"id": "E58", "name": "ts_inc_reg", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Per-cycle timestamp increment used to adjust swapped-start timestamp", "lines": [426, 397]},
+    {"id": "E10", "name": "ptp_ts", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "PTP time input sampled at start of frame", "lines": [407, 425]}
+  ],
+  "groups": [
+    {"name": "Receive FSM", "kind": "CONTROLLER", "anchor_ids": ["E15", "E34", "E11", "E17"], "member_ids": ["E16"], "description": "Three-state controller framing packets onto AXI stream and resetting CRC"},
+    {"name": "Lane alignment and pipeline", "kind": "DATAPATH", "anchor_ids": ["E3", "E4", "E18", "E19", "E29", "E30", "E33", "E32"], "member_ids": ["E20", "E21", "E22", "E23", "E31"], "description": "Masks control bytes, swaps lanes for lane-4 starts, delays data two stages"},
+    {"name": "Terminate and framing detect", "kind": "DECODER", "anchor_ids": ["E26", "E24", "E25", "E27", "E28"], "member_ids": [], "description": "Finds terminate lane and control-character framing errors"},
+    {"name": "CRC checker", "kind": "DATAPATH", "anchor_ids": ["E53", "E55", "E56"], "member_ids": ["I1", "E54"], "description": "LFSR CRC32 over aligned data with per-lane residue comparison"},
+    {"name": "AXI stream output", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E5", "E6", "E7", "E8", "E9"], "member_ids": ["E35", "E36", "E37", "E38", "E39", "E40", "E41", "E42", "E43", "E44"], "description": "Registered AXI-Stream output beat with keep, last and user"},
+    {"name": "Status and PTP", "kind": "OTHER", "anchor_ids": ["E13", "E14", "E12", "E50", "E58", "E10"], "member_ids": ["E45", "E46", "E47", "E48", "E49", "E51", "E52", "E57"], "description": "Error/start status pulses and start-of-frame timestamp capture"}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "xgmii_rx", "protocol": "STREAM", "direction": "IN", "member_ids": ["E3", "E4"]},
+    {"name": "m_axis", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E5", "E6", "E7", "E8", "E9"]},
+    {"name": "ptp", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E10"]},
+    {"name": "config", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E11"]},
+    {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E12", "E13", "E14"]}
+  ]
+}

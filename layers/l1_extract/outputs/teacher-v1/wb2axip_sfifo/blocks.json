@@ -1,0 +1,369 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "wb2axip_sfifo",
+ "tops": [
+  "sfifo"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "sfifo": {
+   "source": "teacher",
+   "canonical_instance": "sfifo",
+   "file": "data/rtl/wb2axip/rtl/sfifo.v",
+   "lines": [
+    26,
+    483
+   ],
+   "summary": "Synchronous FIFO built on a circular memory array with write/read address pointers, an occupancy counter deriving full, and a registered empty flag.",
+   "blocks": [
+    {
+     "name": "fifo_memory",
+     "kind": "MEMORY",
+     "description": "Circular data array holding queued words.",
+     "anchors": [
+      {
+       "id": "E12",
+       "name": "mem",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 97.9,
+       "struct_score": 94.7,
+       "trace": "data_backward",
+       "why": "FIFO memory array written at wr_addr, read asynchronously at rd_addr.",
+       "lines": [
+        69,
+        128,
+        182
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "write_side",
+     "kind": "CONTROLLER",
+     "description": "Qualifies write requests and advances the write pointer into mem.",
+     "anchors": [
+      {
+       "id": "E15",
+       "name": "w_wr",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 51.7,
+       "struct_score": 39.3,
+       "trace": "control_backward",
+       "why": "Qualified write enable: advances wr_addr, writes mem, updates fill.",
+       "lines": [
+        72,
+        120,
+        127
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "wr_addr",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 59.6,
+       "struct_score": 68.2,
+       "trace": "control_backward",
+       "why": "Write pointer, increments on accepted write, addresses mem.",
+       "lines": [
+        70,
+        121,
+        128
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E3",
+       "name": "i_wr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "i_data",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "read_side",
+     "kind": "CONTROLLER",
+     "description": "Qualifies read requests and advances the read pointer driving o_data.",
+     "anchors": [
+      {
+       "id": "E16",
+       "name": "w_rd",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 50.1,
+       "struct_score": 32.8,
+       "trace": "control_backward",
+       "why": "Qualified read enable: advances rd_addr, updates fill and empty.",
+       "lines": [
+        73,
+        145
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "rd_addr",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 59.2,
+       "struct_score": 66.6,
+       "trace": "control_backward",
+       "why": "Read pointer, increments on accepted read, addresses mem.",
+       "lines": [
+        70,
+        146,
+        182
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E7",
+       "name": "i_rd",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "o_data",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "occupancy_flags",
+     "kind": "COUNTER_TIMER",
+     "description": "Fill counter and derived full/empty flags.",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "o_fill",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 71.0,
+       "struct_score": 97.5,
+       "trace": "control_backward",
+       "why": "Occupancy count, +1 on write, -1 on read; MSB gives full.",
+       "lines": [
+        43,
+        90,
+        91
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "o_full",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 56.7,
+       "struct_score": 57.8,
+       "trace": "control_backward",
+       "why": "Full indication from fill MSB; blocks writes.",
+       "lines": [
+        42,
+        111
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "o_empty",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 56.0,
+       "struct_score": 55.0,
+       "trace": "control_backward",
+       "why": "Empty indication from r_empty; blocks reads.",
+       "lines": [
+        48,
+        161
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "r_empty",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 27.1,
+       "struct_score": 51.7,
+       "trace": "control_backward",
+       "why": "Registered empty flag updated from fill on read/write.",
+       "lines": [
+        67,
+        156,
+        161
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E11",
+       "name": "r_full",
+       "kind": "wire"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E3",
+     "name": "i_wr",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 95.7,
+     "struct_score": 89.0,
+     "trace": "interface",
+     "why": "Write request; qualified by not-full to push i_data.",
+     "lines": [
+      40,
+      72
+     ]
+    },
+    {
+     "id": "E4",
+     "name": "i_data",
+     "role": "INTERFACE_DATA",
+     "importance": "critical",
+     "score": 93.1,
+     "struct_score": 82.7,
+     "trace": "interface",
+     "why": "Write data payload stored into mem.",
+     "lines": [
+      41,
+      128
+     ]
+    },
+    {
+     "id": "E7",
+     "name": "i_rd",
+     "role": "HANDSHAKE_READY",
+     "importance": "critical",
+     "score": 92.6,
+     "struct_score": 81.2,
+     "trace": "interface",
+     "why": "Read request from consumer; qualified by not-empty to pop.",
+     "lines": [
+      46,
+      73
+     ]
+    },
+    {
+     "id": "E8",
+     "name": "o_data",
+     "role": "INTERFACE_DATA",
+     "importance": "critical",
+     "score": 95.2,
+     "struct_score": 87.8,
+     "trace": "data_backward",
+     "why": "Read data output taken from mem at rd_addr.",
+     "lines": [
+      47,
+      182
+     ]
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "i_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "i_reset",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "write_port",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "i_wr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "i_data",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "o_full",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "read_port",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E7",
+      "E8",
+      "E9"
+     ],
+     "members": [
+      {
+       "id": "E7",
+       "name": "i_rd",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "o_data",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "o_empty",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "fill_level",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "o_fill",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

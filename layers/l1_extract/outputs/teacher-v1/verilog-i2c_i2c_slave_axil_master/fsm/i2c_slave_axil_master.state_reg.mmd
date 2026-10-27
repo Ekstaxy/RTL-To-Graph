@@ -1,0 +1,23 @@
+stateDiagram-v2
+    [*] --> STATE_IDLE
+    ANY_STATE --> STATE_IDLE
+    STATE_IDLE --> STATE_ADDRESS : data_out_valid
+    STATE_IDLE --> STATE_READ_1 : !data_out_valid && data_in_ready && !data_in_valid_reg
+    STATE_ADDRESS --> STATE_IDLE : data_out_ready_reg && data_out_valid && count_reg == 0 && data_out_last
+    STATE_ADDRESS --> STATE_WRITE_1 : data_out_ready_reg && data_out_valid && count_reg == 0 && !data_out_last
+    STATE_ADDRESS --> STATE_IDLE : data_out_ready_reg && data_out_valid && !(count_reg == 0) && data_out_last
+    STATE_ADDRESS --> STATE_ADDRESS : data_out_ready_reg && data_out_valid && !(count_reg == 0) && !data_out_last
+    STATE_ADDRESS --> STATE_ADDRESS : !(data_out_ready_reg && data_out_valid)
+    STATE_READ_1 --> STATE_READ_2 : m_axil_rready && m_axil_rvalid
+    STATE_READ_1 --> STATE_READ_1 : !(m_axil_rready && m_axil_rvalid)
+    STATE_READ_2 --> STATE_IDLE : (data_out_valid || !bus_addressed)
+    STATE_READ_2 --> STATE_IDLE : !(data_out_valid || !bus_addressed) && data_in_ready && !data_in_valid_reg && count_reg == (STRB_WIDTH*WORD_SIZE/8)-1
+    STATE_READ_2 --> STATE_READ_2 : !(data_out_valid || !bus_addressed) && data_in_ready && !data_in_valid_reg && !(count_reg == (STRB_WIDTH*WORD_SIZE/8)-1)
+    STATE_READ_2 --> STATE_READ_2 : !(data_out_valid || !bus_addressed) && !(data_in_ready && !data_in_valid_reg)
+    STATE_WRITE_1 --> STATE_WRITE_2 : data_out_ready_reg && data_out_valid && (count_reg == (STRB_WIDTH*WORD_SIZE/8)-1 || data_out_last)
+    STATE_WRITE_1 --> STATE_WRITE_1 : data_out_ready_reg && data_out_valid && !(count_reg == (STRB_WIDTH*WORD_SIZE/8)-1 || data_out_last)
+    STATE_WRITE_1 --> STATE_WRITE_1 : !(data_out_ready_reg && data_out_valid)
+    STATE_WRITE_2 --> STATE_IDLE : m_axil_bready && m_axil_bvalid && last_cycle_reg
+    STATE_WRITE_2 --> STATE_WRITE_1 : m_axil_bready && m_axil_bvalid && !last_cycle_reg
+    STATE_WRITE_2 --> STATE_WRITE_2 : !(m_axil_bready && m_axil_bvalid)
+    %% output data_out_ready_next (moore)

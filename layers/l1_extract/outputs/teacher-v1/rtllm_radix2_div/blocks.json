@@ -1,0 +1,441 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "rtllm_radix2_div",
+ "tops": [
+  "radix2_div"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "radix2_div": {
+   "source": "teacher",
+   "canonical_instance": "radix2_div",
+   "file": "data/rtl/RTLLM/Arithmetic/Divider/radix2_div/verified_radix2_div.v",
+   "lines": [
+    2,
+    83
+   ],
+   "summary": "Sequential radix-2 restoring divider: a 16-bit shift register holds remainder/quotient, updated each cycle by a subtract-and-mux step under a bit counter, with valid/ready result handshake and sign correction.",
+   "blocks": [
+    {
+     "name": "Division control",
+     "kind": "CONTROLLER",
+     "description": "Counter and busy flag sequencing eight iterations and result handshake.",
+     "anchors": [
+      {
+       "id": "E23",
+       "name": "cnt",
+       "role": "COUNTER",
+       "importance": "critical",
+       "score": 86.2,
+       "struct_score": 62.9,
+       "trace": "control_backward",
+       "why": "Iteration counter; cnt[3] ends division and raises res_valid.",
+       "lines": [
+        61,
+        69,
+        80
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "start_cnt",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 54.5,
+       "struct_score": 49.6,
+       "trace": "control_backward",
+       "why": "Busy flag set on operation start, gates the iterative SR/cnt updates.",
+       "lines": [
+        50,
+        52,
+        60
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "data_go",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.8,
+       "struct_score": 19.4,
+       "trace": "control_backward",
+       "why": "Handshake completion res_valid & res_ready, clears res_valid.",
+       "lines": [
+        76,
+        77,
+        81
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Shift-subtract datapath",
+     "kind": "DATAPATH",
+     "description": "SR shift register with trial subtraction and restoring mux.",
+     "anchors": [
+      {
+       "id": "E12",
+       "name": "SR",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 95.2,
+       "struct_score": 87.9,
+       "trace": "data_backward",
+       "why": "Shift register holding partial remainder (upper) and quotient (lower) during division.",
+       "lines": [
+        16,
+        57,
+        71
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "NEG_DIVISOR",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 52.2,
+       "struct_score": 41.4,
+       "trace": "data_backward",
+       "why": "Negated divisor held across the division, added to remainder each step.",
+       "lines": [
+        17,
+        35,
+        58
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "mux_result",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 48.5,
+       "struct_score": 26.4,
+       "trace": "data_backward",
+       "why": "Restoring step result: subtraction or unchanged remainder shifted into SR.",
+       "lines": [
+        33,
+        37,
+        71
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "CO",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 19.5,
+       "struct_score": 22.3,
+       "trace": "data_backward",
+       "why": "Carry-out of trial subtraction; selects mux_result and becomes quotient bit.",
+       "lines": [
+        35,
+        37,
+        66
+       ]
+      },
+      {
+       "id": "E21",
+       "name": "sub_result",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 19.7,
+       "struct_score": 23.2,
+       "trace": "data_backward",
+       "why": "Trial subtraction of remainder plus NEG_DIVISOR.",
+       "lines": [
+        32,
+        35,
+        37
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E14",
+       "name": "REMAINER",
+       "kind": "wire"
+      },
+      {
+       "id": "E15",
+       "name": "QUOTIENT",
+       "kind": "wire"
+      },
+      {
+       "id": "E16",
+       "name": "divident_abs",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Sign correction",
+     "kind": "DATAPATH",
+     "description": "Saved operand signs negate remainder and quotient into result.",
+     "anchors": [
+      {
+       "id": "E10",
+       "name": "dividend_save",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 23.1,
+       "struct_score": 36.8,
+       "trace": "data_backward",
+       "why": "Latched dividend, its sign bit drives result sign correction.",
+       "lines": [
+        15,
+        27,
+        54
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "divisor_save",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 22.0,
+       "struct_score": 32.5,
+       "trace": "data_backward",
+       "why": "Latched divisor, its sign bit decides quotient negation.",
+       "lines": [
+        15,
+        28,
+        55
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "remainer",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 20.7,
+       "struct_score": 27.4,
+       "trace": "data_backward",
+       "why": "Sign-corrected remainder forming result upper byte.",
+       "lines": [
+        24,
+        27,
+        29
+       ]
+      },
+      {
+       "id": "E19",
+       "name": "quotient",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 21.2,
+       "struct_score": 29.4,
+       "trace": "data_backward",
+       "why": "Sign-corrected quotient forming result lower byte.",
+       "lines": [
+        24,
+        28,
+        29
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "result",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 96.2,
+       "struct_score": 90.3,
+       "trace": "data_backward",
+       "why": "16-bit output of sign-corrected remainder and quotient.",
+       "lines": [
+        12,
+        29
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Operation handshake",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Valid/ready request and result handshake with operand inputs.",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "opn_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 96.0,
+       "struct_score": 90.0,
+       "trace": "interface",
+       "why": "Operation request; starts division and latches operands when idle.",
+       "lines": [
+        9,
+        50
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "res_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 99.2,
+       "struct_score": 98.0,
+       "trace": "control_backward",
+       "why": "Result valid, set at count end, cleared on data_go acceptance.",
+       "lines": [
+        10,
+        79,
+        81
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "res_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 57.7,
+       "struct_score": 61.3,
+       "trace": "interface",
+       "why": "Downstream accepts result; with res_valid forms data_go clearing valid.",
+       "lines": [
+        11,
+        77
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "dividend",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 64.2,
+       "struct_score": 80.2,
+       "trace": "interface",
+       "why": "Dividend operand input, absolute value loaded into SR.",
+       "lines": [
+        5,
+        26,
+        54
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "divisor",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 64.2,
+       "struct_score": 80.2,
+       "trace": "interface",
+       "why": "Divisor operand input, negated into NEG_DIVISOR.",
+       "lines": [
+        6,
+        55,
+        58
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "sign",
+       "role": "COMMAND",
+       "importance": "major",
+       "score": 54.0,
+       "struct_score": 47.9,
+       "trace": "interface",
+       "why": "Selects signed vs unsigned division; steers abs and result negation.",
+       "lines": [
+        7,
+        26,
+        28
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "operation_request",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E6",
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "opn_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "dividend",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "divisor",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "sign",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "result_response",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E7",
+      "E8",
+      "E9"
+     ],
+     "members": [
+      {
+       "id": "E7",
+       "name": "res_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E8",
+       "name": "res_ready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "result",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

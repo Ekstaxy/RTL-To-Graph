@@ -1,0 +1,39 @@
+{
+ "module_summary": "Half of a CDC clear/reset controller: an initiator FSM steps through isolate/clear phases sent over a 4-phase CDC, while a receiver tracks remote phases; isolate/clear outputs are ORed.",
+ "anchors": [
+  {"id": "E15", "name": "initiator_state_q", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Initiator FSM sequencing ISOLATE, CLEAR, POST_CLEAR phases and driving phase transfer requests.", "lines": [256, 278, 378]},
+  {"id": "E22", "name": "receiver_phase_q", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Receiver phase register captured from remote side; decodes receiver isolate/clear outputs.", "lines": [410, 468, 472]},
+  {"id": "E3", "name": "clear_i", "role": "COMMAND", "importance": "critical", "trace": "forward", "why": "Clear request starting the initiator isolate/clear sequence from IDLE.", "lines": [202, 280]},
+  {"id": "E4", "name": "isolate_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Isolate request to attached CDCs, OR of initiator and receiver isolate.", "lines": [203, 520]},
+  {"id": "E6", "name": "clear_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Clear request to attached CDCs, OR of initiator and receiver clear.", "lines": [205, 519]},
+  {"id": "E5", "name": "isolate_ack_i", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Isolation acknowledge gating initiator ISOLATE exit and receiver phase ack.", "lines": [204, 290, 488]},
+  {"id": "E7", "name": "clear_ack_i", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Clear acknowledge gating initiator CLEAR exit and receiver phase ack.", "lines": [206, 323, 493]},
+  {"id": "E9", "name": "async_req_o", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Async 4-phase request carrying initiator phase to the other domain.", "lines": [209, 400]},
+  {"id": "E8", "name": "async_next_phase_o", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Async phase payload sent to the other domain by the source CDC.", "lines": [208, 402]},
+  {"id": "E10", "name": "async_ack_i", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Async acknowledge from the other domain for initiator phase transfer.", "lines": [210, 401]},
+  {"id": "E11", "name": "async_next_phase_i", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Async phase payload received from the other domain's initiator.", "lines": [211, 438]},
+  {"id": "E12", "name": "async_req_i", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Async request from the other domain into the destination CDC.", "lines": [212, 436]},
+  {"id": "E13", "name": "async_ack_o", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Async acknowledge returned by destination CDC to the other domain.", "lines": [213, 437]},
+  {"id": "E17", "name": "initiator_phase_transition_req", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "FSM-driven valid into source CDC requesting phase transfer.", "lines": [286, 398]},
+  {"id": "E18", "name": "initiator_phase_transition_ack", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "forward", "why": "Source CDC ready advancing initiator FSM after phase delivery.", "lines": [290, 399]},
+  {"id": "E16", "name": "initiator_clear_seq_phase", "role": "INTERFACE_DATA", "importance": "minor", "trace": "control_backward", "why": "Current initiator phase value fed as data into source CDC.", "lines": [287, 397]},
+  {"id": "E28", "name": "receiver_phase_pending_q", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Marks a captured phase awaiting local acknowledge; blocks recapture and enables ack.", "lines": [445, 469, 483]},
+  {"id": "E30", "name": "receiver_phase_done_q", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Prevents recapturing a phase until the CDC request deasserts.", "lines": [446, 470]},
+  {"id": "E31", "name": "receiver_capture_phase", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Enables loading receiver_phase_q from CDC output and sets pending.", "lines": [443, 457, 508]},
+  {"id": "E26", "name": "receiver_phase_ack", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Ready to destination CDC once local isolate/clear acknowledged.", "lines": [435, 462, 488]},
+  {"id": "E25", "name": "receiver_phase_req", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "forward", "why": "Valid from destination CDC signalling a new remote phase.", "lines": [434, 444, 453]}
+ ],
+ "groups": [
+  {"name": "Initiator FSM", "kind": "CONTROLLER", "anchor_ids": ["E15", "E3", "E17", "E18", "E16"], "member_ids": ["E14", "E19", "E20"], "description": "Clear-triggered FSM stepping isolate/clear phases, waiting for local acks and CDC phase delivery."},
+  {"name": "Receiver phase tracker", "kind": "CONTROLLER", "anchor_ids": ["E22", "E28", "E30", "E31", "E26", "E25"], "member_ids": ["E21", "E23", "E24", "E27", "E29", "E32", "E33"], "description": "Captures remote phases, decodes isolate/clear, acknowledges after local isolate/clear acks."},
+  {"name": "Phase CDC link", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E9", "E8", "E10", "E11", "E12", "E13"], "member_ids": ["I1", "I2"], "description": "4-phase CDC source and destination transferring clear-sequence phases between domains."},
+  {"name": "Isolate/clear outputs", "kind": "OTHER", "anchor_ids": ["E4", "E6", "E5", "E7"], "member_ids": ["E19", "E20", "E32", "E33"], "description": "ORs initiator and receiver isolate/clear requests toward attached CDCs; collects acks."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "clear_request", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E3"]},
+  {"name": "isolate_clear_ctrl", "protocol": "REQ_ACK", "direction": "OUT", "member_ids": ["E4", "E5", "E6", "E7"]},
+  {"name": "async_phase_tx", "protocol": "REQ_ACK", "direction": "OUT", "member_ids": ["E8", "E9", "E10"]},
+  {"name": "async_phase_rx", "protocol": "REQ_ACK", "direction": "IN", "member_ids": ["E11", "E12", "E13"]}
+ ]
+}

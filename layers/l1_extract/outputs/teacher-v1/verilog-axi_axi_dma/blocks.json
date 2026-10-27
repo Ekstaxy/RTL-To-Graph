@@ -1,0 +1,4029 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-axi_axi_dma",
+ "tops": [
+  "axi_dma"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "axi_dma_rd": {
+   "source": "teacher",
+   "canonical_instance": "axi_dma.axi_dma_rd_inst",
+   "file": "data/rtl/verilog-axi/rtl/axi_dma_rd.v",
+   "lines": [
+    34,
+    690
+   ],
+   "summary": "AXI read DMA: an address FSM splits descriptors into 4K-safe AXI bursts, a read FSM shifts/aligns returned data and pushes it through a 32-entry output FIFO onto an AXI stream, then reports status.",
+   "blocks": [
+    {
+     "name": "AXI address controller",
+     "kind": "CONTROLLER",
+     "description": "Accepts descriptors and issues 4K-safe AXI read bursts, tracking address and remaining length.",
+     "anchors": [
+      {
+       "id": "E39",
+       "name": "axi_state_reg",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 97.9,
+       "struct_score": 94.8,
+       "trace": "control_backward",
+       "why": "Address FSM: IDLE accepts descriptor, START issues AXI AR bursts until length exhausted.",
+       "lines": [
+        323,
+        553
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "s_axis_read_desc_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 87.0,
+       "struct_score": 65.9,
+       "trace": "interface",
+       "why": "Descriptor valid; with ready it loads address, length, tag into command registers.",
+       "lines": [
+        328
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "s_axis_read_desc_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 87.0,
+       "struct_score": 65.9,
+       "trace": "control_backward",
+       "why": "Descriptor ready, asserted in idle when enabled and no pending command.",
+       "lines": [
+        282,
+        328
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "s_axis_read_desc_addr",
+       "role": "INTERFACE_ADDR",
+       "importance": "minor",
+       "score": 26.3,
+       "struct_score": 48.8,
+       "trace": "interface",
+       "why": "Descriptor start address loaded into addr_reg.",
+       "lines": [
+        330,
+        335
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_read_desc_len",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 29.7,
+       "struct_score": 61.4,
+       "trace": "interface",
+       "why": "Descriptor byte length loaded into op_word_count and cycle counts.",
+       "lines": [
+        341
+       ]
+      },
+      {
+       "id": "E45",
+       "name": "addr_reg",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 46.4,
+       "struct_score": 17.8,
+       "trace": "data_backward",
+       "why": "Current read address, advanced by each burst size; checks 4K boundary.",
+       "lines": [
+        365,
+        393
+       ]
+      },
+      {
+       "id": "E47",
+       "name": "op_word_count_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 50.4,
+       "struct_score": 34.3,
+       "trace": "control_backward",
+       "why": "Remaining bytes of descriptor; decremented per burst, decides more bursts.",
+       "lines": [
+        365,
+        394
+       ]
+      },
+      {
+       "id": "E50",
+       "name": "tr_word_count_next",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 18.4,
+       "struct_score": 17.8,
+       "trace": "data_backward",
+       "why": "Per-burst byte count limited by max burst and 4K boundary; sets arlen.",
+       "lines": [
+        369,
+        387
+       ]
+      },
+      {
+       "id": "E30",
+       "name": "m_axi_arvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 89.8,
+       "struct_score": 74.3,
+       "trace": "control_backward",
+       "why": "AXI read-address valid; START state waits for it low before issuing next burst.",
+       "lines": [
+        296,
+        364
+       ]
+      },
+      {
+       "id": "E31",
+       "name": "m_axi_arready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 19.4,
+       "struct_score": 21.9,
+       "trace": "interface",
+       "why": "AXI address ready clears arvalid.",
+       "lines": [
+        306
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "m_axi_araddr",
+       "role": "INTERFACE_ADDR",
+       "importance": "critical",
+       "score": 79.6,
+       "struct_score": 39.0,
+       "trace": "data_backward",
+       "why": "Burst start address driven from addr_reg.",
+       "lines": [
+        289
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "m_axi_arlen",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 25.1,
+       "struct_score": 44.5,
+       "trace": "data_backward",
+       "why": "Burst length computed from per-burst word count.",
+       "lines": [
+        290
+       ]
+      },
+      {
+       "id": "E38",
+       "name": "enable",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 16.0,
+       "struct_score": 8.2,
+       "trace": "interface",
+       "why": "Enables accepting new descriptors.",
+       "lines": [
+        326
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E40",
+       "name": "axi_state_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E46",
+       "name": "addr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E48",
+       "name": "op_word_count_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E49",
+       "name": "tr_word_count_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E99",
+       "name": "s_axis_read_desc_ready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E100",
+       "name": "s_axis_read_desc_ready_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E107",
+       "name": "m_axi_araddr_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E108",
+       "name": "m_axi_araddr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E109",
+       "name": "m_axi_arlen_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E110",
+       "name": "m_axi_arlen_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E111",
+       "name": "m_axi_arvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E112",
+       "name": "m_axi_arvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E22",
+       "name": "m_axi_arid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E25",
+       "name": "m_axi_arsize",
+       "kind": "port_out"
+      },
+      {
+       "id": "E26",
+       "name": "m_axi_arburst",
+       "kind": "port_out"
+      },
+      {
+       "id": "E27",
+       "name": "m_axi_arlock",
+       "kind": "port_out"
+      },
+      {
+       "id": "E28",
+       "name": "m_axi_arcache",
+       "kind": "port_out"
+      },
+      {
+       "id": "E29",
+       "name": "m_axi_arprot",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "Internal command register",
+     "kind": "BUFFER",
+     "description": "Holds per-descriptor offsets, cycle counts and tag passed from address FSM to read FSM.",
+     "anchors": [
+      {
+       "id": "E69",
+       "name": "axis_cmd_valid_reg",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 48.2,
+       "struct_score": 25.1,
+       "trace": "control_backward",
+       "why": "Internal command valid handing descriptor parameters from address FSM to read FSM.",
+       "lines": [
+        321,
+        475
+       ]
+      },
+      {
+       "id": "E44",
+       "name": "axis_cmd_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 15.2,
+       "struct_score": 5.0,
+       "trace": "control_backward",
+       "why": "Read FSM accepts internal command, clearing axis_cmd_valid.",
+       "lines": [
+        321,
+        476
+       ]
+      },
+      {
+       "id": "E55",
+       "name": "axis_cmd_input_cycle_count_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 17.6,
+       "struct_score": 14.7,
+       "trace": "data_backward",
+       "why": "Command register bank holding cycle counts, offsets, tag for read FSM.",
+       "lines": [
+        462,
+        573
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E51",
+       "name": "axis_cmd_offset_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E52",
+       "name": "axis_cmd_offset_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E53",
+       "name": "axis_cmd_last_cycle_offset_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E54",
+       "name": "axis_cmd_last_cycle_offset_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E56",
+       "name": "axis_cmd_input_cycle_count_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E57",
+       "name": "axis_cmd_output_cycle_count_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E58",
+       "name": "axis_cmd_output_cycle_count_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E59",
+       "name": "axis_cmd_bubble_cycle_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E60",
+       "name": "axis_cmd_bubble_cycle_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E61",
+       "name": "axis_cmd_tag_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E62",
+       "name": "axis_cmd_tag_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E63",
+       "name": "axis_cmd_axis_id_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E64",
+       "name": "axis_cmd_axis_id_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E65",
+       "name": "axis_cmd_axis_dest_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E66",
+       "name": "axis_cmd_axis_dest_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E67",
+       "name": "axis_cmd_axis_user_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E68",
+       "name": "axis_cmd_axis_user_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E70",
+       "name": "axis_cmd_valid_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Read data controller",
+     "kind": "CONTROLLER",
+     "description": "Sequences AXI R beats, counts input/output cycles, generates tlast and descriptor status.",
+     "anchors": [
+      {
+       "id": "E41",
+       "name": "axis_state_reg",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 98.4,
+       "struct_score": 96.0,
+       "trace": "control_backward",
+       "why": "Read-data FSM: IDLE takes internal command, READ moves AXI R beats to stream and status.",
+       "lines": [
+        450,
+        554
+       ]
+      },
+      {
+       "id": "E75",
+       "name": "input_cycle_count_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 50.8,
+       "struct_score": 35.9,
+       "trace": "control_backward",
+       "why": "Counts remaining AXI input beats; ends input_active.",
+       "lines": [
+        491
+       ]
+      },
+      {
+       "id": "E77",
+       "name": "output_cycle_count_reg",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 22.9,
+       "struct_score": 36.2,
+       "trace": "control_backward",
+       "why": "Counts remaining output stream cycles; sets output_last_cycle.",
+       "lines": [
+        506
+       ]
+      },
+      {
+       "id": "E79",
+       "name": "input_active_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.9,
+       "struct_score": 19.9,
+       "trace": "control_backward",
+       "why": "More AXI input beats expected; gates rready and counter updates.",
+       "lines": [
+        483,
+        485
+       ]
+      },
+      {
+       "id": "E81",
+       "name": "output_active_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 15.7,
+       "struct_score": 6.9,
+       "trace": "control_backward",
+       "why": "More output cycles pending; gates output counter decrement.",
+       "lines": [
+        505
+       ]
+      },
+      {
+       "id": "E87",
+       "name": "output_last_cycle_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.4,
+       "struct_score": 13.9,
+       "trace": "control_backward",
+       "why": "Last output cycle: sets tlast, trims tkeep, emits status, returns to idle.",
+       "lines": [
+        518
+       ]
+      },
+      {
+       "id": "E83",
+       "name": "bubble_cycle_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.7,
+       "struct_score": 19.3,
+       "trace": "control_backward",
+       "why": "Unaligned bubble cycle flag; disabled when ENABLE_UNALIGNED=0.",
+       "lines": [
+        489
+       ]
+      },
+      {
+       "id": "E85",
+       "name": "first_cycle_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.7,
+       "struct_score": 19.1,
+       "trace": "control_backward",
+       "why": "First beat of transfer, used for unaligned bubble handling.",
+       "lines": [
+        489
+       ]
+      },
+      {
+       "id": "E36",
+       "name": "m_axi_rvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 32.5,
+       "struct_score": 71.0,
+       "trace": "interface",
+       "why": "AXI read-data valid; with rready advances read counters and output.",
+       "lines": [
+        485
+       ]
+      },
+      {
+       "id": "E37",
+       "name": "m_axi_rready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 60.5,
+       "struct_score": 70.9,
+       "trace": "control_backward",
+       "why": "Read-data ready, gated by output FIFO space and input_active.",
+       "lines": [
+        297,
+        485
+       ]
+      },
+      {
+       "id": "E34",
+       "name": "m_axi_rresp",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 19.8,
+       "struct_score": 23.6,
+       "trace": "interface",
+       "why": "Read response captured on SLVERR/DECERR for status error.",
+       "lines": [
+        444
+       ]
+      },
+      {
+       "id": "E89",
+       "name": "rresp_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 15.2,
+       "struct_score": 4.9,
+       "trace": "data_backward",
+       "why": "Sticky AXI error response accumulated across the transfer.",
+       "lines": [
+        447,
+        591
+       ]
+      },
+      {
+       "id": "E91",
+       "name": "tag_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 16.4,
+       "struct_score": 9.6,
+       "trace": "data_backward",
+       "why": "Descriptor tag held for status output.",
+       "lines": [
+        525
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "m_axis_read_desc_status_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 52.9,
+       "struct_score": 43.9,
+       "trace": "control_backward",
+       "why": "One-cycle status pulse when the last output cycle of a descriptor completes.",
+       "lines": [
+        286
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "m_axis_read_desc_status_error",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 16.7,
+       "struct_score": 11.0,
+       "trace": "data_backward",
+       "why": "Error code derived from accumulated AXI read response.",
+       "lines": [
+        285
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "m_axis_read_desc_status_tag",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 25.1,
+       "struct_score": 44.5,
+       "trace": "data_backward",
+       "why": "Echoes descriptor tag with status.",
+       "lines": [
+        284
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E42",
+       "name": "axis_state_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E76",
+       "name": "input_cycle_count_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E78",
+       "name": "output_cycle_count_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E80",
+       "name": "input_active_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E82",
+       "name": "output_active_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E84",
+       "name": "bubble_cycle_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E86",
+       "name": "first_cycle_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E88",
+       "name": "output_last_cycle_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E90",
+       "name": "rresp_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E92",
+       "name": "tag_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E93",
+       "name": "axis_id_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E94",
+       "name": "axis_id_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E95",
+       "name": "axis_dest_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E96",
+       "name": "axis_dest_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E97",
+       "name": "axis_user_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E98",
+       "name": "axis_user_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E113",
+       "name": "m_axi_rready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E114",
+       "name": "m_axi_rready_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E101",
+       "name": "m_axis_read_desc_status_tag_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E102",
+       "name": "m_axis_read_desc_status_tag_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E103",
+       "name": "m_axis_read_desc_status_error_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E104",
+       "name": "m_axis_read_desc_status_error_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E105",
+       "name": "m_axis_read_desc_status_valid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E106",
+       "name": "m_axis_read_desc_status_valid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E32",
+       "name": "m_axi_rid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E35",
+       "name": "m_axi_rlast",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Read data alignment",
+     "kind": "DATAPATH",
+     "description": "Shifts AXI read data by byte offset and forms internal stream beats with tkeep/tlast.",
+     "anchors": [
+      {
+       "id": "E33",
+       "name": "m_axi_rdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 87.1,
+       "struct_score": 66.2,
+       "trace": "interface",
+       "why": "AXI read data, saved and shifted to form stream data.",
+       "lines": [
+        270,
+        599
+       ]
+      },
+      {
+       "id": "E115",
+       "name": "save_axi_rdata_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 16.9,
+       "struct_score": 12.0,
+       "trace": "data_backward",
+       "why": "Previous AXI read beat saved for cross-beat shifting.",
+       "lines": [
+        268,
+        599
+       ]
+      },
+      {
+       "id": "E43",
+       "name": "transfer_in_save",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 14.6,
+       "struct_score": 2.3,
+       "trace": "control_backward",
+       "why": "Load enable for save_axi_rdata_reg on accepted beat.",
+       "lines": [
+        487,
+        598
+       ]
+      },
+      {
+       "id": "E116",
+       "name": "shift_axi_rdata",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 44.2,
+       "struct_score": 8.9,
+       "trace": "data_backward",
+       "why": "Aligned read data from current and saved beats shifted by offset.",
+       "lines": [
+        270,
+        416
+       ]
+      },
+      {
+       "id": "E71",
+       "name": "offset_reg",
+       "role": "MUX_SELECT",
+       "importance": "minor",
+       "score": 18.4,
+       "struct_score": 18.0,
+       "trace": "control_backward",
+       "why": "Byte offset selecting shift amount for read data alignment.",
+       "lines": [
+        270
+       ]
+      },
+      {
+       "id": "E73",
+       "name": "last_cycle_offset_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 15.2,
+       "struct_score": 4.8,
+       "trace": "data_backward",
+       "why": "Byte count of final cycle used to trim tkeep.",
+       "lines": [
+        520,
+        521
+       ]
+      },
+      {
+       "id": "E119",
+       "name": "m_axis_read_data_tvalid_int",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 19.6,
+       "struct_score": 22.8,
+       "trace": "control_backward",
+       "why": "Internal stream valid; write enable into output FIFO.",
+       "lines": [
+        516,
+        662
+       ]
+      },
+      {
+       "id": "E120",
+       "name": "m_axis_read_data_tready_int",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 15.1,
+       "struct_score": 4.6,
+       "trace": "control_backward",
+       "why": "Internal ready from FIFO not half full; throttles rready.",
+       "lines": [
+        483,
+        647
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E72",
+       "name": "offset_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E74",
+       "name": "last_cycle_offset_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E117",
+       "name": "m_axis_read_data_tdata_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E118",
+       "name": "m_axis_read_data_tkeep_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E121",
+       "name": "m_axis_read_data_tlast_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E122",
+       "name": "m_axis_read_data_tid_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E123",
+       "name": "m_axis_read_data_tdest_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E124",
+       "name": "m_axis_read_data_tuser_int",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Output FIFO",
+     "kind": "BUFFER",
+     "description": "32-entry stream FIFO with output register driving the AXI stream master.",
+     "anchors": [
+      {
+       "id": "E137",
+       "name": "out_fifo_tdata",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 89.3,
+       "struct_score": 73.0,
+       "trace": "data_backward",
+       "why": "32-entry output FIFO data array buffering stream beats.",
+       "lines": [
+        663,
+        673
+       ]
+      },
+      {
+       "id": "E132",
+       "name": "out_fifo_wr_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 56.8,
+       "struct_score": 57.9,
+       "trace": "control_backward",
+       "why": "Output FIFO write pointer, increments on internal valid when not full.",
+       "lines": [
+        663,
+        669
+       ]
+      },
+      {
+       "id": "E133",
+       "name": "out_fifo_rd_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 56.6,
+       "struct_score": 57.1,
+       "trace": "control_backward",
+       "why": "Output FIFO read pointer, increments when output register loads.",
+       "lines": [
+        673,
+        680
+       ]
+      },
+      {
+       "id": "E134",
+       "name": "out_fifo_half_full_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 15.4,
+       "struct_score": 5.6,
+       "trace": "control_backward",
+       "why": "FIFO half-full flag backpressures internal ready.",
+       "lines": [
+        647,
+        660
+       ]
+      },
+      {
+       "id": "E135",
+       "name": "out_fifo_full",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.0,
+       "struct_score": 8.1,
+       "trace": "control_backward",
+       "why": "FIFO full blocks writes.",
+       "lines": [
+        631,
+        662
+       ]
+      },
+      {
+       "id": "E136",
+       "name": "out_fifo_empty",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.1,
+       "struct_score": 8.7,
+       "trace": "control_backward",
+       "why": "FIFO empty blocks output register load.",
+       "lines": [
+        632,
+        672
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "m_axis_read_data_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 85.4,
+       "struct_score": 60.3,
+       "trace": "data_backward",
+       "why": "Output stream data read from output FIFO.",
+       "lines": [
+        649
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "m_axis_read_data_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 80.9,
+       "struct_score": 43.9,
+       "trace": "control_backward",
+       "why": "Output stream valid from FIFO output register.",
+       "lines": [
+        651
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "m_axis_read_data_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 79.4,
+       "struct_score": 38.2,
+       "trace": "interface",
+       "why": "Downstream ready pops output FIFO into output register.",
+       "lines": [
+        658,
+        672
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "m_axis_read_data_tlast",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 20.8,
+       "struct_score": 27.7,
+       "trace": "data_backward",
+       "why": "Marks last beat of descriptor frame.",
+       "lines": [
+        652
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "m_axis_read_data_tkeep",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 23.3,
+       "struct_score": 37.7,
+       "trace": "data_backward",
+       "why": "Byte keep, trimmed on last cycle by last_cycle_offset.",
+       "lines": [
+        650
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E138",
+       "name": "out_fifo_tkeep",
+       "kind": "mem"
+      },
+      {
+       "id": "E139",
+       "name": "out_fifo_tlast",
+       "kind": "mem"
+      },
+      {
+       "id": "E140",
+       "name": "out_fifo_tid",
+       "kind": "mem"
+      },
+      {
+       "id": "E141",
+       "name": "out_fifo_tdest",
+       "kind": "mem"
+      },
+      {
+       "id": "E142",
+       "name": "out_fifo_tuser",
+       "kind": "mem"
+      },
+      {
+       "id": "E125",
+       "name": "m_axis_read_data_tdata_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E126",
+       "name": "m_axis_read_data_tkeep_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E127",
+       "name": "m_axis_read_data_tvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E128",
+       "name": "m_axis_read_data_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E129",
+       "name": "m_axis_read_data_tid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E130",
+       "name": "m_axis_read_data_tdest_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E131",
+       "name": "m_axis_read_data_tuser_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E19",
+       "name": "m_axis_read_data_tid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "m_axis_read_data_tdest",
+       "kind": "port_out"
+      },
+      {
+       "id": "E21",
+       "name": "m_axis_read_data_tuser",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "read_descriptor",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axis_read_desc_addr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_read_desc_len",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_read_desc_tag",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_read_desc_id",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_read_desc_dest",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_axis_read_desc_user",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_axis_read_desc_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "s_axis_read_desc_ready",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "read_descriptor_status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E11",
+      "E12",
+      "E13"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "m_axis_read_desc_status_tag",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "m_axis_read_desc_status_error",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "m_axis_read_desc_status_valid",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "axis_read_data",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20",
+      "E21"
+     ],
+     "members": [
+      {
+       "id": "E14",
+       "name": "m_axis_read_data_tdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "m_axis_read_data_tkeep",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "m_axis_read_data_tvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "m_axis_read_data_tready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "m_axis_read_data_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "m_axis_read_data_tid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "m_axis_read_data_tdest",
+       "kind": "port_out"
+      },
+      {
+       "id": "E21",
+       "name": "m_axis_read_data_tuser",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "axi_read_address",
+     "protocol": "MEMORY_BUS",
+     "direction": "OUT",
+     "member_ids": [
+      "E22",
+      "E23",
+      "E24",
+      "E25",
+      "E26",
+      "E27",
+      "E28",
+      "E29",
+      "E30",
+      "E31"
+     ],
+     "members": [
+      {
+       "id": "E22",
+       "name": "m_axi_arid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "m_axi_araddr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E24",
+       "name": "m_axi_arlen",
+       "kind": "port_out"
+      },
+      {
+       "id": "E25",
+       "name": "m_axi_arsize",
+       "kind": "port_out"
+      },
+      {
+       "id": "E26",
+       "name": "m_axi_arburst",
+       "kind": "port_out"
+      },
+      {
+       "id": "E27",
+       "name": "m_axi_arlock",
+       "kind": "port_out"
+      },
+      {
+       "id": "E28",
+       "name": "m_axi_arcache",
+       "kind": "port_out"
+      },
+      {
+       "id": "E29",
+       "name": "m_axi_arprot",
+       "kind": "port_out"
+      },
+      {
+       "id": "E30",
+       "name": "m_axi_arvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E31",
+       "name": "m_axi_arready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "axi_read_data",
+     "protocol": "MEMORY_BUS",
+     "direction": "IN",
+     "member_ids": [
+      "E32",
+      "E33",
+      "E34",
+      "E35",
+      "E36",
+      "E37"
+     ],
+     "members": [
+      {
+       "id": "E32",
+       "name": "m_axi_rid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E33",
+       "name": "m_axi_rdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E34",
+       "name": "m_axi_rresp",
+       "kind": "port_in"
+      },
+      {
+       "id": "E35",
+       "name": "m_axi_rlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E36",
+       "name": "m_axi_rvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E37",
+       "name": "m_axi_rready",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "config",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E38"
+     ],
+     "members": [
+      {
+       "id": "E38",
+       "name": "enable",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  },
+  "axi_dma_wr": {
+   "source": "teacher",
+   "canonical_instance": "axi_dma.axi_dma_wr_inst",
+   "file": "data/rtl/verilog-axi/rtl/axi_dma_wr.v",
+   "lines": [
+    34,
+    940
+   ],
+   "summary": "AXI-stream to AXI4 write DMA: a 5-state FSM splits descriptors into 4K-safe bursts, aligns stream data, buffers beats in an output FIFO and reports completion via a status FIFO.",
+   "blocks": [
+    {
+     "name": "Write DMA controller",
+     "kind": "CONTROLLER",
+     "description": "FSM sequencing descriptor load, burst issue, data beats, burst finish and drop.",
+     "anchors": [
+      {
+       "id": "E44",
+       "name": "state_reg",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.3,
+       "struct_score": 98.3,
+       "trace": "control_backward",
+       "why": "Main FSM (IDLE/START/WRITE/FINISH_BURST/DROP_DATA) sequencing descriptor, bursts and data.",
+       "lines": [
+        432,
+        788
+       ]
+      },
+      {
+       "id": "E70",
+       "name": "input_active_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 48.1,
+       "struct_score": 24.9,
+       "trace": "control_backward",
+       "why": "Input stream still delivering data for this burst; gates tready and counters.",
+       "lines": [
+        528,
+        545
+       ]
+      },
+      {
+       "id": "E78",
+       "name": "last_transfer_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 47.6,
+       "struct_score": 22.7,
+       "trace": "control_backward",
+       "why": "Current burst is final of descriptor; controls tready and finish path.",
+       "lines": [
+        528,
+        583
+       ]
+      },
+      {
+       "id": "E76",
+       "name": "output_last_cycle_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 46.1,
+       "struct_score": 16.6,
+       "trace": "control_backward",
+       "why": "Last beat of AXI burst; asserts WLAST and state exit.",
+       "lines": [
+        579,
+        646,
+        718
+       ]
+      },
+      {
+       "id": "E72",
+       "name": "first_cycle_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.5,
+       "struct_score": 10.3,
+       "trace": "control_backward",
+       "why": "First cycle of descriptor; adjusts length and AW issue condition.",
+       "lines": [
+        509,
+        540
+       ]
+      },
+      {
+       "id": "E46",
+       "name": "transfer_in_save",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.1,
+       "struct_score": 4.6,
+       "trace": "control_backward",
+       "why": "Load enable for saved stream word used by alignment shifter.",
+       "lines": [
+        532,
+        834
+       ]
+      },
+      {
+       "id": "E47",
+       "name": "flush_save",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.0,
+       "struct_score": 3.9,
+       "trace": "control_backward",
+       "why": "Clears saved partial word and extra-cycle flag in IDLE.",
+       "lines": [
+        435,
+        830
+       ]
+      },
+      {
+       "id": "E48",
+       "name": "status_fifo_we",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.6,
+       "struct_score": 6.7,
+       "trace": "control_backward",
+       "why": "Enqueue enable for status FIFO at burst end.",
+       "lines": [
+        611,
+        841
+       ]
+      },
+      {
+       "id": "E147",
+       "name": "m_axi_wvalid_int",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.2,
+       "struct_score": 4.7,
+       "trace": "control_backward",
+       "why": "FSM beat write enable into output FIFO.",
+       "lines": [
+        557,
+        918
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E45",
+       "name": "state_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E71",
+       "name": "input_active_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E73",
+       "name": "first_cycle_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E74",
+       "name": "input_last_cycle_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E75",
+       "name": "input_last_cycle_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E77",
+       "name": "output_last_cycle_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E79",
+       "name": "last_transfer_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E49",
+       "name": "cycle_size",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Descriptor and burst address generator",
+     "kind": "DATAPATH",
+     "description": "Accepts descriptors, splits into 4K-safe bursts and drives AXI AW channel.",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "s_axis_write_desc_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 79.0,
+       "struct_score": 36.6,
+       "trace": "interface",
+       "why": "Write descriptor valid; accepted in IDLE to start a DMA operation.",
+       "lines": [
+        86,
+        456
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_write_desc_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 79.3,
+       "struct_score": 37.8,
+       "trace": "control_backward",
+       "why": "Descriptor ready, asserted in IDLE when enabled and status slots available.",
+       "lines": [
+        311,
+        456
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "s_axis_write_desc_addr",
+       "role": "INTERFACE_ADDR",
+       "importance": "minor",
+       "score": 26.7,
+       "struct_score": 50.3,
+       "trace": "interface",
+       "why": "Descriptor start address loaded into addr_reg.",
+       "lines": [
+        439,
+        445
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_write_desc_len",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 28.6,
+       "struct_score": 57.2,
+       "trace": "interface",
+       "why": "Descriptor length loaded into op_word_count_reg.",
+       "lines": [
+        443,
+        452
+       ]
+      },
+      {
+       "id": "E42",
+       "name": "enable",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 15.8,
+       "struct_score": 7.4,
+       "trace": "interface",
+       "why": "Global enable gating descriptor acceptance.",
+       "lines": [
+        138,
+        436
+       ]
+      },
+      {
+       "id": "E50",
+       "name": "addr_reg",
+       "role": "INDEX",
+       "importance": "major",
+       "score": 44.7,
+       "struct_score": 10.9,
+       "trace": "data_backward",
+       "why": "Current write address; advanced by burst size after each AW issue.",
+       "lines": [
+        507,
+        512,
+        807
+       ]
+      },
+      {
+       "id": "E52",
+       "name": "op_word_count_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 54.6,
+       "struct_score": 50.0,
+       "trace": "control_backward",
+       "why": "Remaining bytes of descriptor; decides burst size and more bursts.",
+       "lines": [
+        465,
+        513,
+        649
+       ]
+      },
+      {
+       "id": "E55",
+       "name": "tr_word_count_next",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 18.7,
+       "struct_score": 19.3,
+       "trace": "data_backward",
+       "why": "Computed burst byte count limited by max burst and 4K boundary.",
+       "lines": [
+        469,
+        512
+       ]
+      },
+      {
+       "id": "E31",
+       "name": "m_axi_awvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 80.2,
+       "struct_score": 41.4,
+       "trace": "control_backward",
+       "why": "AXI write address valid issued per burst in START state.",
+       "lines": [
+        123,
+        331
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "m_axi_awaddr",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 51.0,
+       "struct_score": 36.6,
+       "trace": "data_backward",
+       "why": "Burst start address loaded from addr_reg.",
+       "lines": [
+        116,
+        324
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "m_axi_awlen",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 24.4,
+       "struct_score": 41.9,
+       "trace": "data_backward",
+       "why": "Burst length from output cycle count.",
+       "lines": [
+        117,
+        325
+       ]
+      },
+      {
+       "id": "E32",
+       "name": "m_axi_awready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 19.4,
+       "struct_score": 22.1,
+       "trace": "interface",
+       "why": "AXI AW ready clearing awvalid.",
+       "lines": [
+        124,
+        380
+       ]
+      },
+      {
+       "id": "E82",
+       "name": "tag_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 16.1,
+       "struct_score": 8.4,
+       "trace": "data_backward",
+       "why": "Descriptor tag held for status FIFO entries.",
+       "lines": [
+        613,
+        824
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E109",
+       "name": "s_axis_write_desc_ready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E110",
+       "name": "s_axis_write_desc_ready_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E51",
+       "name": "addr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E53",
+       "name": "op_word_count_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E54",
+       "name": "tr_word_count_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E83",
+       "name": "tag_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E125",
+       "name": "m_axi_awaddr_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E126",
+       "name": "m_axi_awaddr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E127",
+       "name": "m_axi_awlen_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E128",
+       "name": "m_axi_awlen_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E129",
+       "name": "m_axi_awvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E130",
+       "name": "m_axi_awvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E23",
+       "name": "m_axi_awid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E26",
+       "name": "m_axi_awsize",
+       "kind": "port_out"
+      },
+      {
+       "id": "E27",
+       "name": "m_axi_awburst",
+       "kind": "port_out"
+      },
+      {
+       "id": "E28",
+       "name": "m_axi_awlock",
+       "kind": "port_out"
+      },
+      {
+       "id": "E29",
+       "name": "m_axi_awcache",
+       "kind": "port_out"
+      },
+      {
+       "id": "E30",
+       "name": "m_axi_awprot",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_write_desc_tag",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Beat and length counters",
+     "kind": "COUNTER_TIMER",
+     "description": "Input/output cycle counters and accumulated length per burst.",
+     "anchors": [
+      {
+       "id": "E66",
+       "name": "input_cycle_count_reg",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 22.8,
+       "struct_score": 35.9,
+       "trace": "control_backward",
+       "why": "Remaining input stream cycles in current burst.",
+       "lines": [
+        546,
+        815
+       ]
+      },
+      {
+       "id": "E68",
+       "name": "output_cycle_count_reg",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 21.1,
+       "struct_score": 28.7,
+       "trace": "control_backward",
+       "why": "Remaining AXI beats in current burst; sets output_last_cycle.",
+       "lines": [
+        550,
+        816
+       ]
+      },
+      {
+       "id": "E64",
+       "name": "length_reg",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 22.8,
+       "struct_score": 35.9,
+       "trace": "data_backward",
+       "why": "Accumulated transferred byte length reported in status.",
+       "lines": [
+        541,
+        812
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E67",
+       "name": "input_cycle_count_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E69",
+       "name": "output_cycle_count_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E65",
+       "name": "length_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E62",
+       "name": "last_cycle_offset_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E63",
+       "name": "last_cycle_offset_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Stream alignment shifter",
+     "kind": "DATAPATH",
+     "description": "Combines saved and incoming stream words to realign data to AXI address offset.",
+     "anchors": [
+      {
+       "id": "E15",
+       "name": "s_axis_write_data_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 86.2,
+       "struct_score": 62.9,
+       "trace": "interface",
+       "why": "Input stream payload, shifted for alignment and written to AXI.",
+       "lines": [
+        337,
+        835
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "s_axis_write_data_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 84.7,
+       "struct_score": 57.7,
+       "trace": "interface",
+       "why": "Input stream valid; triggers first AW issue and data beats.",
+       "lines": [
+        339,
+        509
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "s_axis_write_data_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 89.9,
+       "struct_score": 74.5,
+       "trace": "control_backward",
+       "why": "Input stream ready computed by FSM from FIFO space and active flags.",
+       "lines": [
+        321,
+        530
+       ]
+      },
+      {
+       "id": "E138",
+       "name": "shift_axis_tdata",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 16.1,
+       "struct_score": 8.7,
+       "trace": "data_backward",
+       "why": "Aligned stream data combining saved and new words by offset.",
+       "lines": [
+        337,
+        555
+       ]
+      },
+      {
+       "id": "E140",
+       "name": "shift_axis_tvalid",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.3,
+       "struct_score": 17.4,
+       "trace": "control_backward",
+       "why": "Aligned data valid gating FSM beat processing.",
+       "lines": [
+        339,
+        737
+       ]
+      },
+      {
+       "id": "E141",
+       "name": "shift_axis_tlast",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.0,
+       "struct_score": 12.2,
+       "trace": "control_backward",
+       "why": "Aligned end-of-packet; triggers status enqueue and state exit.",
+       "lines": [
+        565,
+        742
+       ]
+      },
+      {
+       "id": "E142",
+       "name": "shift_axis_input_tready",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.8,
+       "struct_score": 19.4,
+       "trace": "control_backward",
+       "why": "Shifter can accept input; gates stream tready.",
+       "lines": [
+        528,
+        735
+       ]
+      },
+      {
+       "id": "E135",
+       "name": "save_axis_tdata_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 16.9,
+       "struct_score": 11.8,
+       "trace": "data_backward",
+       "why": "Saved previous stream word for unaligned shift.",
+       "lines": [
+        343,
+        835
+       ]
+      },
+      {
+       "id": "E143",
+       "name": "shift_axis_extra_cycle_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.5,
+       "struct_score": 14.3,
+       "trace": "control_backward",
+       "why": "Extra output cycle needed to flush saved bytes at frame end.",
+       "lines": [
+        348,
+        838
+       ]
+      },
+      {
+       "id": "E56",
+       "name": "offset_reg",
+       "role": "MUX_SELECT",
+       "importance": "minor",
+       "score": 20.5,
+       "struct_score": 26.5,
+       "trace": "control_backward",
+       "why": "Byte offset selecting shift amount for unaligned data.",
+       "lines": [
+        343,
+        808
+       ]
+      },
+      {
+       "id": "E60",
+       "name": "zero_offset_reg",
+       "role": "MUX_SELECT",
+       "importance": "minor",
+       "score": 19.5,
+       "struct_score": 22.4,
+       "trace": "control_backward",
+       "why": "Selects passthrough vs shifted stream path.",
+       "lines": [
+        335,
+        810
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E136",
+       "name": "save_axis_tkeep_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E137",
+       "name": "save_axis_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E139",
+       "name": "shift_axis_tkeep",
+       "kind": "comb"
+      },
+      {
+       "id": "E133",
+       "name": "s_axis_write_data_tready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E134",
+       "name": "s_axis_write_data_tready_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E57",
+       "name": "offset_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E58",
+       "name": "strb_offset_mask_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E59",
+       "name": "strb_offset_mask_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E61",
+       "name": "zero_offset_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E16",
+       "name": "s_axis_write_data_tkeep",
+       "kind": "port_in"
+      },
+      {
+       "id": "E19",
+       "name": "s_axis_write_data_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E20",
+       "name": "s_axis_write_data_tid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E21",
+       "name": "s_axis_write_data_tdest",
+       "kind": "port_in"
+      },
+      {
+       "id": "E22",
+       "name": "s_axis_write_data_tuser",
+       "kind": "port_in"
+      },
+      {
+       "id": "E84",
+       "name": "axis_id_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E85",
+       "name": "axis_id_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E86",
+       "name": "axis_dest_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E87",
+       "name": "axis_dest_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E88",
+       "name": "axis_user_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E89",
+       "name": "axis_user_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Output write data FIFO",
+     "kind": "BUFFER",
+     "description": "32-entry FIFO buffering W beats with half-full backpressure to FSM.",
+     "anchors": [
+      {
+       "id": "E158",
+       "name": "out_fifo_wdata",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 61.0,
+       "struct_score": 72.2,
+       "trace": "data_backward",
+       "why": "Output write-data FIFO decoupling FSM beats from AXI W channel.",
+       "lines": [
+        919,
+        926
+       ]
+      },
+      {
+       "id": "E153",
+       "name": "out_fifo_wr_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "minor",
+       "score": 25.0,
+       "struct_score": 44.3,
+       "trace": "control_backward",
+       "why": "Output FIFO write pointer, increments on m_axi_wvalid_int.",
+       "lines": [
+        896,
+        922
+       ]
+      },
+      {
+       "id": "E154",
+       "name": "out_fifo_rd_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "minor",
+       "score": 24.5,
+       "struct_score": 42.4,
+       "trace": "control_backward",
+       "why": "Output FIFO read pointer, increments when W beat loaded.",
+       "lines": [
+        897,
+        930
+       ]
+      },
+      {
+       "id": "E155",
+       "name": "out_fifo_half_full_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 15.5,
+       "struct_score": 6.0,
+       "trace": "control_backward",
+       "why": "Output FIFO half-full; deasserts internal write ready.",
+       "lines": [
+        906,
+        916
+       ]
+      },
+      {
+       "id": "E148",
+       "name": "m_axi_wready_int",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 16.8,
+       "struct_score": 11.5,
+       "trace": "control_backward",
+       "why": "Internal ready from output FIFO back-pressuring FSM data beats.",
+       "lines": [
+        515,
+        906
+       ]
+      },
+      {
+       "id": "E33",
+       "name": "m_axi_wdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 84.7,
+       "struct_score": 57.5,
+       "trace": "data_backward",
+       "why": "AXI write data driven from output FIFO register.",
+       "lines": [
+        125,
+        908
+       ]
+      },
+      {
+       "id": "E36",
+       "name": "m_axi_wvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 52.2,
+       "struct_score": 41.4,
+       "trace": "control_backward",
+       "why": "AXI write data valid from output FIFO read side.",
+       "lines": [
+        128,
+        910
+       ]
+      },
+      {
+       "id": "E37",
+       "name": "m_axi_wready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 21.2,
+       "struct_score": 29.3,
+       "trace": "interface",
+       "why": "AXI W ready; pops output FIFO into W registers.",
+       "lines": [
+        914,
+        925
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E159",
+       "name": "out_fifo_wstrb",
+       "kind": "mem"
+      },
+      {
+       "id": "E160",
+       "name": "out_fifo_wlast",
+       "kind": "mem"
+      },
+      {
+       "id": "E156",
+       "name": "out_fifo_full",
+       "kind": "wire"
+      },
+      {
+       "id": "E157",
+       "name": "out_fifo_empty",
+       "kind": "wire"
+      },
+      {
+       "id": "E149",
+       "name": "m_axi_wdata_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E150",
+       "name": "m_axi_wstrb_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E151",
+       "name": "m_axi_wlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E152",
+       "name": "m_axi_wvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E144",
+       "name": "m_axi_wdata_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E145",
+       "name": "m_axi_wstrb_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E146",
+       "name": "m_axi_wlast_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E34",
+       "name": "m_axi_wstrb",
+       "kind": "port_out"
+      },
+      {
+       "id": "E35",
+       "name": "m_axi_wlast",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "Completion status FIFO",
+     "kind": "BUFFER",
+     "description": "Queues per-burst status, pops on B responses and emits descriptor status with errors.",
+     "anchors": [
+      {
+       "id": "E93",
+       "name": "status_fifo_len",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 59.8,
+       "struct_score": 69.0,
+       "trace": "data_backward",
+       "why": "Status FIFO memory of per-burst length (with tag/id/dest/user/last arrays).",
+       "lines": [
+        759,
+        842
+       ]
+      },
+      {
+       "id": "E90",
+       "name": "status_fifo_wr_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 55.7,
+       "struct_score": 54.1,
+       "trace": "control_backward",
+       "why": "Status FIFO write pointer, advanced when burst status enqueued.",
+       "lines": [
+        755,
+        848
+       ]
+      },
+      {
+       "id": "E91",
+       "name": "status_fifo_rd_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "minor",
+       "score": 24.7,
+       "struct_score": 43.1,
+       "trace": "control_backward",
+       "why": "Status FIFO read pointer, advanced on each B response.",
+       "lines": [
+        755,
+        850
+       ]
+      },
+      {
+       "id": "E40",
+       "name": "m_axi_bvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 85.1,
+       "struct_score": 59.1,
+       "trace": "interface",
+       "why": "AXI write response valid; pops status FIFO and reports completion.",
+       "lines": [
+        426,
+        757
+       ]
+      },
+      {
+       "id": "E41",
+       "name": "m_axi_bready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 29.2,
+       "struct_score": 59.4,
+       "trace": "control_backward",
+       "why": "B ready asserted while status FIFO has pending entries.",
+       "lines": [
+        332,
+        757
+       ]
+      },
+      {
+       "id": "E80",
+       "name": "bresp_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 15.0,
+       "struct_score": 4.1,
+       "trace": "data_backward",
+       "why": "Sticky AXI error response mapped to status error code.",
+       "lines": [
+        429,
+        822
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "m_axis_write_desc_status_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 52.2,
+       "struct_score": 41.4,
+       "trace": "data_backward",
+       "why": "Descriptor completion status valid, from last flag of status FIFO entry.",
+       "lines": [
+        98,
+        319
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "m_axis_write_desc_status_error",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 16.5,
+       "struct_score": 10.0,
+       "trace": "data_backward",
+       "why": "DMA error code from AXI SLVERR/DECERR responses.",
+       "lines": [
+        97,
+        318
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "m_axis_write_desc_status_len",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 27.1,
+       "struct_score": 51.9,
+       "trace": "data_backward",
+       "why": "Reported transferred length from status FIFO.",
+       "lines": [
+        92,
+        313
+       ]
+      },
+      {
+       "id": "E105",
+       "name": "active_count_reg",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 18.3,
+       "struct_score": 17.4,
+       "trace": "control_backward",
+       "why": "Outstanding burst count limiting in-flight writes to status FIFO depth.",
+       "lines": [
+        853,
+        856
+       ]
+      },
+      {
+       "id": "E106",
+       "name": "active_count_av_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.4,
+       "struct_score": 13.8,
+       "trace": "control_backward",
+       "why": "Outstanding slot available; gates descriptor ready and AW issue.",
+       "lines": [
+        436,
+        506
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E94",
+       "name": "status_fifo_tag",
+       "kind": "mem"
+      },
+      {
+       "id": "E95",
+       "name": "status_fifo_id",
+       "kind": "mem"
+      },
+      {
+       "id": "E96",
+       "name": "status_fifo_dest",
+       "kind": "mem"
+      },
+      {
+       "id": "E97",
+       "name": "status_fifo_user",
+       "kind": "mem"
+      },
+      {
+       "id": "E98",
+       "name": "status_fifo_last",
+       "kind": "mem"
+      },
+      {
+       "id": "E99",
+       "name": "status_fifo_wr_len",
+       "kind": "comb"
+      },
+      {
+       "id": "E100",
+       "name": "status_fifo_wr_tag",
+       "kind": "comb"
+      },
+      {
+       "id": "E101",
+       "name": "status_fifo_wr_id",
+       "kind": "comb"
+      },
+      {
+       "id": "E102",
+       "name": "status_fifo_wr_dest",
+       "kind": "comb"
+      },
+      {
+       "id": "E103",
+       "name": "status_fifo_wr_user",
+       "kind": "comb"
+      },
+      {
+       "id": "E104",
+       "name": "status_fifo_wr_last",
+       "kind": "comb"
+      },
+      {
+       "id": "E92",
+       "name": "status_fifo_rd_ptr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E81",
+       "name": "bresp_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E107",
+       "name": "inc_active",
+       "kind": "comb"
+      },
+      {
+       "id": "E108",
+       "name": "dec_active",
+       "kind": "comb"
+      },
+      {
+       "id": "E111",
+       "name": "m_axis_write_desc_status_len_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E112",
+       "name": "m_axis_write_desc_status_len_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E113",
+       "name": "m_axis_write_desc_status_tag_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E114",
+       "name": "m_axis_write_desc_status_tag_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E115",
+       "name": "m_axis_write_desc_status_id_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E116",
+       "name": "m_axis_write_desc_status_id_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E117",
+       "name": "m_axis_write_desc_status_dest_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E118",
+       "name": "m_axis_write_desc_status_dest_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E119",
+       "name": "m_axis_write_desc_status_user_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E120",
+       "name": "m_axis_write_desc_status_user_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E121",
+       "name": "m_axis_write_desc_status_error_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E122",
+       "name": "m_axis_write_desc_status_error_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E123",
+       "name": "m_axis_write_desc_status_valid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E124",
+       "name": "m_axis_write_desc_status_valid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E131",
+       "name": "m_axi_bready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E132",
+       "name": "m_axi_bready_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E39",
+       "name": "m_axi_bresp",
+       "kind": "port_in"
+      },
+      {
+       "id": "E38",
+       "name": "m_axi_bid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "m_axis_write_desc_status_tag",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "m_axis_write_desc_status_id",
+       "kind": "port_out"
+      },
+      {
+       "id": "E11",
+       "name": "m_axis_write_desc_status_dest",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "m_axis_write_desc_status_user",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "write_descriptor",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axis_write_desc_addr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_write_desc_len",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_write_desc_tag",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_write_desc_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_write_desc_ready",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "write_desc_status",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12",
+      "E13",
+      "E14"
+     ],
+     "members": [
+      {
+       "id": "E8",
+       "name": "m_axis_write_desc_status_len",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "m_axis_write_desc_status_tag",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "m_axis_write_desc_status_id",
+       "kind": "port_out"
+      },
+      {
+       "id": "E11",
+       "name": "m_axis_write_desc_status_dest",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "m_axis_write_desc_status_user",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "m_axis_write_desc_status_error",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "m_axis_write_desc_status_valid",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "s_axis_write_data",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E15",
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20",
+      "E21",
+      "E22"
+     ],
+     "members": [
+      {
+       "id": "E15",
+       "name": "s_axis_write_data_tdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E16",
+       "name": "s_axis_write_data_tkeep",
+       "kind": "port_in"
+      },
+      {
+       "id": "E17",
+       "name": "s_axis_write_data_tvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "s_axis_write_data_tready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "s_axis_write_data_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E20",
+       "name": "s_axis_write_data_tid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E21",
+       "name": "s_axis_write_data_tdest",
+       "kind": "port_in"
+      },
+      {
+       "id": "E22",
+       "name": "s_axis_write_data_tuser",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axi_aw",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E23",
+      "E24",
+      "E25",
+      "E26",
+      "E27",
+      "E28",
+      "E29",
+      "E30",
+      "E31",
+      "E32"
+     ],
+     "members": [
+      {
+       "id": "E23",
+       "name": "m_axi_awid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E24",
+       "name": "m_axi_awaddr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E25",
+       "name": "m_axi_awlen",
+       "kind": "port_out"
+      },
+      {
+       "id": "E26",
+       "name": "m_axi_awsize",
+       "kind": "port_out"
+      },
+      {
+       "id": "E27",
+       "name": "m_axi_awburst",
+       "kind": "port_out"
+      },
+      {
+       "id": "E28",
+       "name": "m_axi_awlock",
+       "kind": "port_out"
+      },
+      {
+       "id": "E29",
+       "name": "m_axi_awcache",
+       "kind": "port_out"
+      },
+      {
+       "id": "E30",
+       "name": "m_axi_awprot",
+       "kind": "port_out"
+      },
+      {
+       "id": "E31",
+       "name": "m_axi_awvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E32",
+       "name": "m_axi_awready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axi_w",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E33",
+      "E34",
+      "E35",
+      "E36",
+      "E37"
+     ],
+     "members": [
+      {
+       "id": "E33",
+       "name": "m_axi_wdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E34",
+       "name": "m_axi_wstrb",
+       "kind": "port_out"
+      },
+      {
+       "id": "E35",
+       "name": "m_axi_wlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E36",
+       "name": "m_axi_wvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E37",
+       "name": "m_axi_wready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axi_b",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E38",
+      "E39",
+      "E40",
+      "E41"
+     ],
+     "members": [
+      {
+       "id": "E38",
+       "name": "m_axi_bid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E39",
+       "name": "m_axi_bresp",
+       "kind": "port_in"
+      },
+      {
+       "id": "E40",
+       "name": "m_axi_bvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E41",
+       "name": "m_axi_bready",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "config",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E42",
+      "E43"
+     ],
+     "members": [
+      {
+       "id": "E42",
+       "name": "enable",
+       "kind": "port_in"
+      },
+      {
+       "id": "E43",
+       "name": "abort",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  },
+  "axi_dma": {
+   "source": "teacher",
+   "canonical_instance": "axi_dma",
+   "file": "data/rtl/verilog-axi/rtl/axi_dma.v",
+   "lines": [
+    34,
+    359
+   ],
+   "summary": "AXI4 DMA top: a structural wrapper pairing an independent read DMA (AXI memory to AXI stream) and write DMA (AXI stream to AXI memory), each driven by descriptor inputs and reporting status.",
+   "blocks": [
+    {
+     "name": "Read DMA engine",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "axi_dma_rd child: descriptors to AXI read bursts, returned data to AXI stream.",
+     "anchors": [
+      {
+       "id": "E9",
+       "name": "s_axis_read_desc_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 83.0,
+       "struct_score": 51.5,
+       "trace": "interface",
+       "why": "Read descriptor submit into read DMA child.",
+       "lines": [
+        224
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "s_axis_read_desc_addr",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 53.2,
+       "struct_score": 44.8,
+       "trace": "interface",
+       "why": "Source memory address of read descriptor.",
+       "lines": [
+        218
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "m_axis_read_data_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 89.0,
+       "struct_score": 72.2,
+       "trace": "interface",
+       "why": "AXI stream output of data read from memory.",
+       "lines": [
+        237
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "m_axis_read_data_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 56.4,
+       "struct_score": 56.6,
+       "trace": "interface",
+       "why": "Read data stream valid from read DMA.",
+       "lines": [
+        239
+       ]
+      },
+      {
+       "id": "E62",
+       "name": "m_axi_araddr",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 54.5,
+       "struct_score": 49.5,
+       "trace": "interface",
+       "why": "AXI master read burst address from read DMA.",
+       "lines": [
+        250
+       ]
+      },
+      {
+       "id": "E72",
+       "name": "m_axi_rdata",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 59.8,
+       "struct_score": 68.8,
+       "trace": "interface",
+       "why": "AXI master read data returned to read DMA.",
+       "lines": [
+        260
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "m_axis_read_desc_status_valid",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 17.0,
+       "struct_score": 12.1,
+       "trace": "interface",
+       "why": "Read descriptor completion status pulse.",
+       "lines": [
+        232
+       ]
+      },
+      {
+       "id": "E69",
+       "name": "m_axi_arvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 28.4,
+       "struct_score": 56.6,
+       "trace": "interface",
+       "why": "AXI read address valid from read DMA.",
+       "lines": [
+        257
+       ]
+      },
+      {
+       "id": "E77",
+       "name": "read_enable",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 17.2,
+       "struct_score": 12.9,
+       "trace": "interface",
+       "why": "Enables read DMA descriptor processing.",
+       "lines": [
+        269
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "axi_dma_rd_inst",
+       "module": "axi_dma_rd"
+      }
+     ],
+     "members": []
+    },
+    {
+     "name": "Write DMA engine",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "axi_dma_wr child: AXI stream data written to memory as AXI write bursts.",
+     "anchors": [
+      {
+       "id": "E25",
+       "name": "s_axis_write_desc_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 83.0,
+       "struct_score": 51.5,
+       "trace": "interface",
+       "why": "Write descriptor submit into write DMA child.",
+       "lines": [
+        303
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "s_axis_write_desc_addr",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 53.2,
+       "struct_score": 44.8,
+       "trace": "interface",
+       "why": "Destination memory address of write descriptor.",
+       "lines": [
+        300
+       ]
+      },
+      {
+       "id": "E34",
+       "name": "s_axis_write_data_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 87.8,
+       "struct_score": 68.8,
+       "trace": "interface",
+       "why": "AXI stream input data written to memory.",
+       "lines": [
+        320
+       ]
+      },
+      {
+       "id": "E43",
+       "name": "m_axi_awaddr",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 54.5,
+       "struct_score": 49.5,
+       "trace": "interface",
+       "why": "AXI master write burst address from write DMA.",
+       "lines": [
+        333
+       ]
+      },
+      {
+       "id": "E52",
+       "name": "m_axi_wdata",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 61.0,
+       "struct_score": 72.2,
+       "trace": "interface",
+       "why": "AXI master write data from write DMA.",
+       "lines": [
+        342
+       ]
+      },
+      {
+       "id": "E33",
+       "name": "m_axis_write_desc_status_valid",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 17.0,
+       "struct_score": 12.1,
+       "trace": "interface",
+       "why": "Write descriptor completion status pulse.",
+       "lines": [
+        315
+       ]
+      },
+      {
+       "id": "E36",
+       "name": "s_axis_write_data_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 27.0,
+       "struct_score": 51.5,
+       "trace": "interface",
+       "why": "Write data stream valid into write DMA.",
+       "lines": [
+        322
+       ]
+      },
+      {
+       "id": "E50",
+       "name": "m_axi_awvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 28.4,
+       "struct_score": 56.6,
+       "trace": "interface",
+       "why": "AXI write address valid from write DMA.",
+       "lines": [
+        340
+       ]
+      },
+      {
+       "id": "E78",
+       "name": "write_enable",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 17.2,
+       "struct_score": 12.9,
+       "trace": "interface",
+       "why": "Enables write DMA descriptor processing.",
+       "lines": [
+        355
+       ]
+      },
+      {
+       "id": "E79",
+       "name": "write_abort",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 17.2,
+       "struct_score": 12.9,
+       "trace": "interface",
+       "why": "Aborts the current write DMA transfer.",
+       "lines": [
+        356
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I2",
+       "instance": "axi_dma_wr_inst",
+       "module": "axi_dma_wr"
+      }
+     ],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "read_descriptor",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axis_read_desc_addr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_read_desc_len",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_read_desc_tag",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_read_desc_id",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_read_desc_dest",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_axis_read_desc_user",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_axis_read_desc_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "s_axis_read_desc_ready",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "read_descriptor_status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E11",
+      "E12",
+      "E13"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "m_axis_read_desc_status_tag",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "m_axis_read_desc_status_error",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "m_axis_read_desc_status_valid",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "m_axis_read_data",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20",
+      "E21"
+     ],
+     "members": [
+      {
+       "id": "E14",
+       "name": "m_axis_read_data_tdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "m_axis_read_data_tkeep",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "m_axis_read_data_tvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "m_axis_read_data_tready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "m_axis_read_data_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "m_axis_read_data_tid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "m_axis_read_data_tdest",
+       "kind": "port_out"
+      },
+      {
+       "id": "E21",
+       "name": "m_axis_read_data_tuser",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "write_descriptor",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E22",
+      "E23",
+      "E24",
+      "E25",
+      "E26"
+     ],
+     "members": [
+      {
+       "id": "E22",
+       "name": "s_axis_write_desc_addr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E23",
+       "name": "s_axis_write_desc_len",
+       "kind": "port_in"
+      },
+      {
+       "id": "E24",
+       "name": "s_axis_write_desc_tag",
+       "kind": "port_in"
+      },
+      {
+       "id": "E25",
+       "name": "s_axis_write_desc_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E26",
+       "name": "s_axis_write_desc_ready",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "write_descriptor_status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E27",
+      "E28",
+      "E29",
+      "E30",
+      "E31",
+      "E32",
+      "E33"
+     ],
+     "members": [
+      {
+       "id": "E27",
+       "name": "m_axis_write_desc_status_len",
+       "kind": "port_out"
+      },
+      {
+       "id": "E28",
+       "name": "m_axis_write_desc_status_tag",
+       "kind": "port_out"
+      },
+      {
+       "id": "E29",
+       "name": "m_axis_write_desc_status_id",
+       "kind": "port_out"
+      },
+      {
+       "id": "E30",
+       "name": "m_axis_write_desc_status_dest",
+       "kind": "port_out"
+      },
+      {
+       "id": "E31",
+       "name": "m_axis_write_desc_status_user",
+       "kind": "port_out"
+      },
+      {
+       "id": "E32",
+       "name": "m_axis_write_desc_status_error",
+       "kind": "port_out"
+      },
+      {
+       "id": "E33",
+       "name": "m_axis_write_desc_status_valid",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "s_axis_write_data",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E34",
+      "E35",
+      "E36",
+      "E37",
+      "E38",
+      "E39",
+      "E40",
+      "E41"
+     ],
+     "members": [
+      {
+       "id": "E34",
+       "name": "s_axis_write_data_tdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E35",
+       "name": "s_axis_write_data_tkeep",
+       "kind": "port_in"
+      },
+      {
+       "id": "E36",
+       "name": "s_axis_write_data_tvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E37",
+       "name": "s_axis_write_data_tready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E38",
+       "name": "s_axis_write_data_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E39",
+       "name": "s_axis_write_data_tid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E40",
+       "name": "s_axis_write_data_tdest",
+       "kind": "port_in"
+      },
+      {
+       "id": "E41",
+       "name": "s_axis_write_data_tuser",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axi_write",
+     "protocol": "MEMORY_BUS",
+     "direction": "OUT",
+     "member_ids": [
+      "E42",
+      "E43",
+      "E44",
+      "E45",
+      "E46",
+      "E47",
+      "E48",
+      "E49",
+      "E50",
+      "E51",
+      "E52",
+      "E53",
+      "E54",
+      "E55",
+      "E56",
+      "E57",
+      "E58",
+      "E59",
+      "E60"
+     ],
+     "members": [
+      {
+       "id": "E42",
+       "name": "m_axi_awid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E43",
+       "name": "m_axi_awaddr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E44",
+       "name": "m_axi_awlen",
+       "kind": "port_out"
+      },
+      {
+       "id": "E45",
+       "name": "m_axi_awsize",
+       "kind": "port_out"
+      },
+      {
+       "id": "E46",
+       "name": "m_axi_awburst",
+       "kind": "port_out"
+      },
+      {
+       "id": "E47",
+       "name": "m_axi_awlock",
+       "kind": "port_out"
+      },
+      {
+       "id": "E48",
+       "name": "m_axi_awcache",
+       "kind": "port_out"
+      },
+      {
+       "id": "E49",
+       "name": "m_axi_awprot",
+       "kind": "port_out"
+      },
+      {
+       "id": "E50",
+       "name": "m_axi_awvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E51",
+       "name": "m_axi_awready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E52",
+       "name": "m_axi_wdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E53",
+       "name": "m_axi_wstrb",
+       "kind": "port_out"
+      },
+      {
+       "id": "E54",
+       "name": "m_axi_wlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E55",
+       "name": "m_axi_wvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E56",
+       "name": "m_axi_wready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E57",
+       "name": "m_axi_bid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E58",
+       "name": "m_axi_bresp",
+       "kind": "port_in"
+      },
+      {
+       "id": "E59",
+       "name": "m_axi_bvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E60",
+       "name": "m_axi_bready",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "m_axi_read",
+     "protocol": "MEMORY_BUS",
+     "direction": "IN",
+     "member_ids": [
+      "E61",
+      "E62",
+      "E63",
+      "E64",
+      "E65",
+      "E66",
+      "E67",
+      "E68",
+      "E69",
+      "E70",
+      "E71",
+      "E72",
+      "E73",
+      "E74",
+      "E75",
+      "E76"
+     ],
+     "members": [
+      {
+       "id": "E61",
+       "name": "m_axi_arid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E62",
+       "name": "m_axi_araddr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E63",
+       "name": "m_axi_arlen",
+       "kind": "port_out"
+      },
+      {
+       "id": "E64",
+       "name": "m_axi_arsize",
+       "kind": "port_out"
+      },
+      {
+       "id": "E65",
+       "name": "m_axi_arburst",
+       "kind": "port_out"
+      },
+      {
+       "id": "E66",
+       "name": "m_axi_arlock",
+       "kind": "port_out"
+      },
+      {
+       "id": "E67",
+       "name": "m_axi_arcache",
+       "kind": "port_out"
+      },
+      {
+       "id": "E68",
+       "name": "m_axi_arprot",
+       "kind": "port_out"
+      },
+      {
+       "id": "E69",
+       "name": "m_axi_arvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E70",
+       "name": "m_axi_arready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E71",
+       "name": "m_axi_rid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E72",
+       "name": "m_axi_rdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E73",
+       "name": "m_axi_rresp",
+       "kind": "port_in"
+      },
+      {
+       "id": "E74",
+       "name": "m_axi_rlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E75",
+       "name": "m_axi_rvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E76",
+       "name": "m_axi_rready",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "config",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E77",
+      "E78",
+      "E79"
+     ],
+     "members": [
+      {
+       "id": "E77",
+       "name": "read_enable",
+       "kind": "port_in"
+      },
+      {
+       "id": "E78",
+       "name": "write_enable",
+       "kind": "port_in"
+      },
+      {
+       "id": "E79",
+       "name": "write_abort",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

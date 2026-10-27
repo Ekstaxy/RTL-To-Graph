@@ -1,0 +1,50 @@
+{
+ "module_summary": "AXI-Lite 1-to-NS splitter for single-cycle slaves: decodes the address into one-hot per-slave valids, pipelines the selected slave's response/read data by index, and queues responses in B and R FIFOs with outstanding counters for backpressure.",
+ "anchors": [
+  {"id": "E3", "name": "S_AXI_AWVALID", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Write address valid into the AW skid buffer.", "lines": [209]},
+  {"id": "E16", "name": "S_AXI_ARVALID", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Read address valid; launches one-hot slave read and read count.", "lines": [357, 405]},
+  {"id": "E47", "name": "m_axi_awvalid", "role": "DECODE", "importance": "critical", "trace": "control_backward", "why": "One-hot slave write select decoded from skid-buffered address.", "lines": [223, 240]},
+  {"id": "E58", "name": "m_axi_arvalid", "role": "DECODE", "importance": "critical", "trace": "control_backward", "why": "One-hot slave read select decoded from read address.", "lines": [359, 370]},
+  {"id": "E8", "name": "S_AXI_WREADY", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "Write data ready, set after AW accepted until WVALID arrives.", "lines": [231, 254]},
+  {"id": "E12", "name": "S_AXI_BVALID", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Write response valid when B FIFO not empty.", "lines": [302, 330]},
+  {"id": "E20", "name": "S_AXI_RVALID", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Read response valid when R FIFO not empty.", "lines": [429, 453]},
+  {"id": "E9", "name": "S_AXI_WDATA", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Write data broadcast directly to all slaves.", "lines": [243]},
+  {"id": "E18", "name": "S_AXI_RDATA", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Read data returned from the R FIFO.", "lines": [430]},
+  {"id": "E29", "name": "M_AXI_RDATA", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Concatenated slave read data, indexed by last_read_index.", "lines": [384]},
+  {"id": "E54", "name": "read_rdata", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Selected slave read word registered before R FIFO.", "lines": [384, 427]},
+  {"id": "E52", "name": "last_read_index", "role": "INDEX", "importance": "major", "trace": "control_backward", "why": "Delayed slave index selecting read data and read response.", "lines": [381, 384, 392]},
+  {"id": "E45", "name": "write_count", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Outstanding write count; drives bfull backpressure.", "lines": [281, 285, 286]},
+  {"id": "E61", "name": "read_count", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Outstanding read count; drives read_full backpressure.", "lines": [407, 408, 411]},
+  {"id": "E37", "name": "bfull", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Write path full; blocks AW skid buffer acceptance.", "lines": [246, 286]},
+  {"id": "E60", "name": "read_full", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Read path full; deasserts ARREADY.", "lines": [408, 423]},
+  {"id": "E17", "name": "S_AXI_ARREADY", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Read address ready while outstanding reads not full.", "lines": [423]},
+  {"id": "E4", "name": "S_AXI_AWREADY", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Write address ready from AW skid buffer.", "lines": [210]},
+  {"id": "E31", "name": "awskid_valid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "data_backward", "why": "Buffered AW valid that triggers slave select and count update.", "lines": [220, 234, 278]},
+  {"id": "E34", "name": "write_awskidready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Accept from AW skid when W done and not full.", "lines": [212, 246]},
+  {"id": "E39", "name": "awskid_addr", "role": "INDEX", "importance": "minor", "trace": "data_backward", "why": "Buffered slave index used for one-hot decode.", "lines": [223, 237]},
+  {"id": "E41", "name": "write_bindex", "role": "INDEX", "importance": "minor", "trace": "control_backward", "why": "Slave index selecting the write response.", "lines": [257, 265]},
+  {"id": "E51", "name": "read_index", "role": "INDEX", "importance": "minor", "trace": "data_backward", "why": "Registered read slave index from ARADDR.", "lines": [367, 381]},
+  {"id": "E46", "name": "write_resp", "role": "PIPELINE_REG", "importance": "minor", "trace": "data_backward", "why": "Selected slave write response written into B FIFO.", "lines": [265, 300]},
+  {"id": "E53", "name": "read_resp", "role": "PIPELINE_REG", "importance": "minor", "trace": "data_backward", "why": "Selected slave read response written into R FIFO.", "lines": [392, 427]},
+  {"id": "E36", "name": "write_response", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Delayed write-done pulse pushing response into B FIFO.", "lines": [254, 300]},
+  {"id": "E57", "name": "read_result", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Delayed read pulse pushing data into R FIFO.", "lines": [378, 427]},
+  {"id": "E43", "name": "m_axi_awprot", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Latched write protection bits to slaves.", "lines": [236, 241]}
+ ],
+ "groups": [
+  {"name": "write_address_decode", "kind": "DECODER", "anchor_ids": ["E3", "E4", "E31", "E34", "E39", "E47", "E8", "E43"], "member_ids": ["I1", "E42", "E38", "E40", "E22", "E23"], "description": "AW skid buffer and one-hot slave write select with WREADY handshake."},
+  {"name": "write_response_path", "kind": "BUFFER", "anchor_ids": ["E12", "E45", "E37", "E41", "E46", "E36"], "member_ids": ["I2", "E35", "E32", "E33", "E44", "E11"], "description": "Response selection pipeline, B FIFO and outstanding write counter."},
+  {"name": "read_address_decode", "kind": "DECODER", "anchor_ids": ["E16", "E17", "E58", "E51"], "member_ids": ["E59", "E55", "E27", "E28"], "description": "One-hot slave read select from read address."},
+  {"name": "read_data_path", "kind": "BUFFER", "anchor_ids": ["E20", "E18", "E29", "E54", "E52", "E53", "E57", "E61", "E60"], "member_ids": ["I3", "E56", "E48", "E49", "E50", "E19"], "description": "Indexed read data mux, R FIFO and outstanding read counter."},
+  {"name": "write_data_broadcast", "kind": "DATAPATH", "anchor_ids": ["E9"], "member_ids": ["E10", "E24", "E25", "E7"], "description": "Write data and strobes passed directly to all slaves."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "s_axi_aw", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6"]},
+  {"name": "s_axi_w", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E7", "E8", "E9", "E10"]},
+  {"name": "s_axi_b", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E11", "E12", "E13"]},
+  {"name": "s_axi_ar", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E14", "E15", "E16", "E17"]},
+  {"name": "s_axi_r", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E18", "E19", "E20", "E21"]},
+  {"name": "m_axi_write", "protocol": "OTHER", "direction": "OUT", "member_ids": ["E22", "E23", "E24", "E25", "E26"]},
+  {"name": "m_axi_read", "protocol": "OTHER", "direction": "IN", "member_ids": ["E27", "E28", "E29", "E30"]}
+ ]
+}

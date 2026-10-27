@@ -1,0 +1,1207 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "serv_serv_decode",
+ "tops": [
+  "serv_decode"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "serv_decode": {
+   "source": "teacher",
+   "canonical_instance": "serv_decode",
+   "file": "data/rtl/serv/rtl/serv_decode.v",
+   "lines": [
+    8,
+    367
+   ],
+   "summary": "SERV instruction decoder: latches opcode/funct3/selected instruction bits on bus ack, then combinationally decodes them into control flags for state, ALU, memory, CSR, bufreg and immediate units.",
+   "blocks": [
+    {
+     "name": "Instruction field registers",
+     "kind": "REGISTER_BANK",
+     "description": "Latch opcode, funct3 and selected bits when instruction arrives.",
+     "anchors": [
+      {
+       "id": "E48",
+       "name": "opcode",
+       "role": "HOLDING_REG",
+       "importance": "critical",
+       "score": 81.3,
+       "struct_score": 45.4,
+       "trace": "data_backward",
+       "why": "Latched 5-bit opcode held during execution; source of nearly all decode flags.",
+       "lines": [
+        71,
+        88,
+        247
+       ]
+      },
+      {
+       "id": "E49",
+       "name": "funct3",
+       "role": "HOLDING_REG",
+       "importance": "critical",
+       "score": 79.0,
+       "struct_score": 36.5,
+       "trace": "data_backward",
+       "why": "Latched funct3 field steering ALU, memory, CSR and branch decodes.",
+       "lines": [
+        72,
+        133,
+        244
+       ]
+      },
+      {
+       "id": "E50",
+       "name": "op20",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 17.9,
+       "struct_score": 15.8,
+       "trace": "data_backward",
+       "why": "Representative latched instruction bit (op20/21/22/26) for CSR and system decode.",
+       "lines": [
+        73,
+        141,
+        248
+       ]
+      },
+      {
+       "id": "E55",
+       "name": "imm30",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 15.8,
+       "struct_score": 7.5,
+       "trace": "data_backward",
+       "why": "Latched bit 30 selecting sub and signed shift.",
+       "lines": [
+        79,
+        165,
+        245
+       ]
+      },
+      {
+       "id": "E2",
+       "name": "i_wb_rdt",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 94.7,
+       "struct_score": 86.6,
+       "trace": "interface",
+       "why": "Instruction word from bus; fields latched into decode registers.",
+       "lines": [
+        14,
+        244,
+        247
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "i_wb_en",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 48.7,
+       "struct_score": 27.2,
+       "trace": "forward",
+       "why": "Load enable latching instruction fields when fetch completes.",
+       "lines": [
+        15,
+        243
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E51",
+       "name": "op21",
+       "kind": "reg"
+      },
+      {
+       "id": "E52",
+       "name": "op22",
+       "kind": "reg"
+      },
+      {
+       "id": "E53",
+       "name": "op26",
+       "kind": "reg"
+      },
+      {
+       "id": "E54",
+       "name": "imm25",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "State/control decode",
+     "kind": "DECODER",
+     "description": "Instruction class flags for state machine and PC control.",
+     "anchors": [
+      {
+       "id": "E12",
+       "name": "o_two_stage_op",
+       "role": "DECODE",
+       "importance": "major",
+       "score": 49.3,
+       "struct_score": 29.6,
+       "trace": "control_backward",
+       "why": "Flags two-stage instructions (mem, shift, branch, slt) to the state unit.",
+       "lines": [
+        25,
+        261
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "o_branch_op",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 21.1,
+       "struct_score": 28.7,
+       "trace": "control_backward",
+       "why": "Branch/jump instruction flag to state unit.",
+       "lines": [
+        22,
+        264
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "o_shift_op",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 21.3,
+       "struct_score": 29.6,
+       "trace": "control_backward",
+       "why": "Shift instruction flag to state and bufreg.",
+       "lines": [
+        23,
+        265
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "o_rd_op",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 21.1,
+       "struct_score": 28.7,
+       "trace": "control_backward",
+       "why": "Instruction writes rd.",
+       "lines": [
+        24,
+        266
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "o_dbus_en",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 21.1,
+       "struct_score": 28.7,
+       "trace": "control_backward",
+       "why": "Load/store instruction: enable data bus access.",
+       "lines": [
+        26,
+        259
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "o_ctrl_jal_or_jalr",
+       "role": "DECODE",
+       "importance": "major",
+       "score": 49.1,
+       "struct_score": 28.7,
+       "trace": "control_backward",
+       "why": "Jump decode steering PC control unit.",
+       "lines": [
+        37,
+        273
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "o_ctrl_mret",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 21.2,
+       "struct_score": 29.3,
+       "trace": "control_backward",
+       "why": "mret decode to control/CSR.",
+       "lines": [
+        40,
+        276
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "o_e_op",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 21.2,
+       "struct_score": 29.3,
+       "trace": "control_backward",
+       "why": "ecall/ebreak exception instruction decode.",
+       "lines": [
+        20,
+        262
+       ]
+      },
+      {
+       "id": "E56",
+       "name": "co_mdu_op",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 18.3,
+       "struct_score": 17.5,
+       "trace": "control_backward",
+       "why": "MDU instruction decode, disabled by MDU parameter by default.",
+       "lines": [
+        81,
+        86,
+        92
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E57",
+       "name": "co_two_stage_op",
+       "kind": "wire"
+      },
+      {
+       "id": "E58",
+       "name": "co_shift_op",
+       "kind": "wire"
+      },
+      {
+       "id": "E59",
+       "name": "co_branch_op",
+       "kind": "wire"
+      },
+      {
+       "id": "E60",
+       "name": "co_dbus_en",
+       "kind": "wire"
+      },
+      {
+       "id": "E61",
+       "name": "co_mtval_pc",
+       "kind": "wire"
+      },
+      {
+       "id": "E73",
+       "name": "co_rd_op",
+       "kind": "wire"
+      },
+      {
+       "id": "E71",
+       "name": "co_ctrl_jal_or_jalr",
+       "kind": "wire"
+      },
+      {
+       "id": "E78",
+       "name": "co_ctrl_mret",
+       "kind": "wire"
+      },
+      {
+       "id": "E79",
+       "name": "co_e_op",
+       "kind": "wire"
+      },
+      {
+       "id": "E77",
+       "name": "co_ebreak",
+       "kind": "wire"
+      },
+      {
+       "id": "E69",
+       "name": "co_cond_branch",
+       "kind": "wire"
+      },
+      {
+       "id": "E70",
+       "name": "co_ctrl_utype",
+       "kind": "wire"
+      },
+      {
+       "id": "E72",
+       "name": "co_ctrl_pc_rel",
+       "kind": "wire"
+      },
+      {
+       "id": "E74",
+       "name": "co_sh_right",
+       "kind": "wire"
+      },
+      {
+       "id": "E75",
+       "name": "co_bne_or_bge",
+       "kind": "wire"
+      },
+      {
+       "id": "E4",
+       "name": "o_sh_right",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "o_bne_or_bge",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "o_cond_branch",
+       "kind": "port_out"
+      },
+      {
+       "id": "E8",
+       "name": "o_ebreak",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "o_mdu_op",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "o_ext_funct3",
+       "kind": "port_out"
+      },
+      {
+       "id": "E21",
+       "name": "o_ctrl_utype",
+       "kind": "port_out"
+      },
+      {
+       "id": "E22",
+       "name": "o_ctrl_pc_rel",
+       "kind": "port_out"
+      },
+      {
+       "id": "E41",
+       "name": "o_mtval_pc",
+       "kind": "port_out"
+      },
+      {
+       "id": "E65",
+       "name": "co_ext_funct3",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "ALU/memory decode",
+     "kind": "DECODER",
+     "description": "ALU operation and memory access decodes from funct3/opcode.",
+     "anchors": [
+      {
+       "id": "E28",
+       "name": "o_alu_rd_sel",
+       "role": "DECODE",
+       "importance": "major",
+       "score": 50.6,
+       "struct_score": 35.0,
+       "trace": "control_backward",
+       "why": "One-hot ALU result select (add, slt, bool) from funct3.",
+       "lines": [
+        46,
+        281
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "o_alu_sub",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 21.2,
+       "struct_score": 29.3,
+       "trace": "control_backward",
+       "why": "ALU subtract for sub, branches, slt.",
+       "lines": [
+        42,
+        277
+       ]
+      },
+      {
+       "id": "E32",
+       "name": "o_mem_cmd",
+       "role": "DECODE",
+       "importance": "major",
+       "score": 49.1,
+       "struct_score": 28.7,
+       "trace": "control_backward",
+       "why": "Memory command: store vs load.",
+       "lines": [
+        51,
+        285
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E81",
+       "name": "co_alu_sub",
+       "kind": "wire"
+      },
+      {
+       "id": "E92",
+       "name": "co_alu_cmp_eq",
+       "kind": "wire"
+      },
+      {
+       "id": "E93",
+       "name": "co_alu_cmp_sig",
+       "kind": "wire"
+      },
+      {
+       "id": "E97",
+       "name": "co_alu_bool_op",
+       "kind": "wire"
+      },
+      {
+       "id": "E100",
+       "name": "co_alu_rd_sel",
+       "kind": "wire"
+      },
+      {
+       "id": "E94",
+       "name": "co_mem_cmd",
+       "kind": "wire"
+      },
+      {
+       "id": "E95",
+       "name": "co_mem_signed",
+       "kind": "wire"
+      },
+      {
+       "id": "E96",
+       "name": "co_mem_half",
+       "kind": "wire"
+      },
+      {
+       "id": "E62",
+       "name": "co_mem_word",
+       "kind": "wire"
+      },
+      {
+       "id": "E25",
+       "name": "o_alu_bool_op",
+       "kind": "port_out"
+      },
+      {
+       "id": "E26",
+       "name": "o_alu_cmp_eq",
+       "kind": "port_out"
+      },
+      {
+       "id": "E27",
+       "name": "o_alu_cmp_sig",
+       "kind": "port_out"
+      },
+      {
+       "id": "E29",
+       "name": "o_mem_signed",
+       "kind": "port_out"
+      },
+      {
+       "id": "E30",
+       "name": "o_mem_word",
+       "kind": "port_out"
+      },
+      {
+       "id": "E31",
+       "name": "o_mem_half",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "CSR decode",
+     "kind": "DECODER",
+     "description": "CSR address, enables and operation select.",
+     "anchors": [
+      {
+       "id": "E76",
+       "name": "csr_op",
+       "role": "DECODE",
+       "importance": "major",
+       "score": 46.3,
+       "struct_score": 17.5,
+       "trace": "control_backward",
+       "why": "CSR access instruction decode feeding all CSR enables.",
+       "lines": [
+        137,
+        194,
+        195
+       ]
+      },
+      {
+       "id": "E82",
+       "name": "csr_valid",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 15.9,
+       "struct_score": 7.6,
+       "trace": "control_backward",
+       "why": "Distinguishes RF-stored CSRs from serv_csr-held ones.",
+       "lines": [
+        190,
+        194
+       ]
+      },
+      {
+       "id": "E33",
+       "name": "o_csr_en",
+       "role": "DECODE",
+       "importance": "major",
+       "score": 49.5,
+       "struct_score": 30.4,
+       "trace": "control_backward",
+       "why": "Enables access to RF-stored CSRs.",
+       "lines": [
+        53,
+        286
+       ]
+      },
+      {
+       "id": "E38",
+       "name": "o_csr_source",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 21.9,
+       "struct_score": 32.3,
+       "trace": "control_backward",
+       "why": "CSR write/set/clear operation select from funct3.",
+       "lines": [
+        58,
+        291
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E83",
+       "name": "co_rd_csr_en",
+       "kind": "wire"
+      },
+      {
+       "id": "E84",
+       "name": "co_csr_en",
+       "kind": "wire"
+      },
+      {
+       "id": "E85",
+       "name": "co_csr_mstatus_en",
+       "kind": "wire"
+      },
+      {
+       "id": "E86",
+       "name": "co_csr_mie_en",
+       "kind": "wire"
+      },
+      {
+       "id": "E87",
+       "name": "co_csr_mcause_en",
+       "kind": "wire"
+      },
+      {
+       "id": "E88",
+       "name": "co_csr_source",
+       "kind": "wire"
+      },
+      {
+       "id": "E89",
+       "name": "co_csr_d_sel",
+       "kind": "wire"
+      },
+      {
+       "id": "E90",
+       "name": "co_csr_imm_en",
+       "kind": "wire"
+      },
+      {
+       "id": "E91",
+       "name": "co_csr_addr",
+       "kind": "wire"
+      },
+      {
+       "id": "E34",
+       "name": "o_csr_addr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E35",
+       "name": "o_csr_mstatus_en",
+       "kind": "port_out"
+      },
+      {
+       "id": "E36",
+       "name": "o_csr_mie_en",
+       "kind": "port_out"
+      },
+      {
+       "id": "E37",
+       "name": "o_csr_mcause_en",
+       "kind": "port_out"
+      },
+      {
+       "id": "E39",
+       "name": "o_csr_d_sel",
+       "kind": "port_out"
+      },
+      {
+       "id": "E40",
+       "name": "o_csr_imm_en",
+       "kind": "port_out"
+      },
+      {
+       "id": "E46",
+       "name": "o_rd_csr_en",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "Operand/immediate decode",
+     "kind": "DECODER",
+     "description": "Immediate format, bufreg and operand/writeback source decodes.",
+     "anchors": [
+      {
+       "id": "E43",
+       "name": "o_immdec_en",
+       "role": "DECODE",
+       "importance": "major",
+       "score": 51.4,
+       "struct_score": 38.0,
+       "trace": "control_backward",
+       "why": "Per-field immediate decoder enables by instruction format.",
+       "lines": [
+        64,
+        295
+       ]
+      },
+      {
+       "id": "E42",
+       "name": "o_immdec_ctrl",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 23.1,
+       "struct_score": 37.1,
+       "trace": "control_backward",
+       "why": "Immediate format control bits for immediate decoder.",
+       "lines": [
+        63,
+        294
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "o_bufreg_rs1_en",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 21.1,
+       "struct_score": 28.7,
+       "trace": "control_backward",
+       "why": "Bufreg adds rs1 (jalr, mem, shift).",
+       "lines": [
+        32,
+        269
+       ]
+      },
+      {
+       "id": "E44",
+       "name": "o_op_b_source",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 21.1,
+       "struct_score": 28.7,
+       "trace": "control_backward",
+       "why": "Operand B source: rs2 vs immediate.",
+       "lines": [
+        65,
+        296
+       ]
+      },
+      {
+       "id": "E47",
+       "name": "o_rd_alu_en",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 21.2,
+       "struct_score": 29.3,
+       "trace": "control_backward",
+       "why": "Selects ALU result for rd writeback.",
+       "lines": [
+        69,
+        298
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E98",
+       "name": "co_immdec_ctrl",
+       "kind": "wire"
+      },
+      {
+       "id": "E99",
+       "name": "co_immdec_en",
+       "kind": "wire"
+      },
+      {
+       "id": "E66",
+       "name": "co_bufreg_rs1_en",
+       "kind": "wire"
+      },
+      {
+       "id": "E67",
+       "name": "co_bufreg_imm_en",
+       "kind": "wire"
+      },
+      {
+       "id": "E68",
+       "name": "co_bufreg_clr_lsb",
+       "kind": "wire"
+      },
+      {
+       "id": "E80",
+       "name": "co_bufreg_sh_signed",
+       "kind": "wire"
+      },
+      {
+       "id": "E101",
+       "name": "co_op_b_source",
+       "kind": "wire"
+      },
+      {
+       "id": "E63",
+       "name": "co_rd_alu_en",
+       "kind": "wire"
+      },
+      {
+       "id": "E64",
+       "name": "co_rd_mem_en",
+       "kind": "wire"
+      },
+      {
+       "id": "E17",
+       "name": "o_bufreg_imm_en",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "o_bufreg_clr_lsb",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "o_bufreg_sh_signed",
+       "kind": "port_out"
+      },
+      {
+       "id": "E45",
+       "name": "o_rd_mem_en",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "instruction input",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E2",
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E2",
+       "name": "i_wb_rdt",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "i_wb_en",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "to state",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12",
+      "E13"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "o_sh_right",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "o_bne_or_bge",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "o_cond_branch",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "o_e_op",
+       "kind": "port_out"
+      },
+      {
+       "id": "E8",
+       "name": "o_ebreak",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "o_branch_op",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "o_shift_op",
+       "kind": "port_out"
+      },
+      {
+       "id": "E11",
+       "name": "o_rd_op",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "o_two_stage_op",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "o_dbus_en",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "to mdu/extension",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E14",
+      "E15"
+     ],
+     "members": [
+      {
+       "id": "E14",
+       "name": "o_mdu_op",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "o_ext_funct3",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "to bufreg",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E16",
+      "E17",
+      "E18",
+      "E19"
+     ],
+     "members": [
+      {
+       "id": "E16",
+       "name": "o_bufreg_rs1_en",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "o_bufreg_imm_en",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "o_bufreg_clr_lsb",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "o_bufreg_sh_signed",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "to ctrl",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E20",
+      "E21",
+      "E22",
+      "E23"
+     ],
+     "members": [
+      {
+       "id": "E20",
+       "name": "o_ctrl_jal_or_jalr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E21",
+       "name": "o_ctrl_utype",
+       "kind": "port_out"
+      },
+      {
+       "id": "E22",
+       "name": "o_ctrl_pc_rel",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "o_ctrl_mret",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "to alu",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E24",
+      "E25",
+      "E26",
+      "E27",
+      "E28"
+     ],
+     "members": [
+      {
+       "id": "E24",
+       "name": "o_alu_sub",
+       "kind": "port_out"
+      },
+      {
+       "id": "E25",
+       "name": "o_alu_bool_op",
+       "kind": "port_out"
+      },
+      {
+       "id": "E26",
+       "name": "o_alu_cmp_eq",
+       "kind": "port_out"
+      },
+      {
+       "id": "E27",
+       "name": "o_alu_cmp_sig",
+       "kind": "port_out"
+      },
+      {
+       "id": "E28",
+       "name": "o_alu_rd_sel",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "to mem if",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E29",
+      "E30",
+      "E31",
+      "E32"
+     ],
+     "members": [
+      {
+       "id": "E29",
+       "name": "o_mem_signed",
+       "kind": "port_out"
+      },
+      {
+       "id": "E30",
+       "name": "o_mem_word",
+       "kind": "port_out"
+      },
+      {
+       "id": "E31",
+       "name": "o_mem_half",
+       "kind": "port_out"
+      },
+      {
+       "id": "E32",
+       "name": "o_mem_cmd",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "to csr",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E33",
+      "E34",
+      "E35",
+      "E36",
+      "E37",
+      "E38",
+      "E39",
+      "E40",
+      "E41"
+     ],
+     "members": [
+      {
+       "id": "E33",
+       "name": "o_csr_en",
+       "kind": "port_out"
+      },
+      {
+       "id": "E34",
+       "name": "o_csr_addr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E35",
+       "name": "o_csr_mstatus_en",
+       "kind": "port_out"
+      },
+      {
+       "id": "E36",
+       "name": "o_csr_mie_en",
+       "kind": "port_out"
+      },
+      {
+       "id": "E37",
+       "name": "o_csr_mcause_en",
+       "kind": "port_out"
+      },
+      {
+       "id": "E38",
+       "name": "o_csr_source",
+       "kind": "port_out"
+      },
+      {
+       "id": "E39",
+       "name": "o_csr_d_sel",
+       "kind": "port_out"
+      },
+      {
+       "id": "E40",
+       "name": "o_csr_imm_en",
+       "kind": "port_out"
+      },
+      {
+       "id": "E41",
+       "name": "o_mtval_pc",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "to top",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E42",
+      "E43",
+      "E44"
+     ],
+     "members": [
+      {
+       "id": "E42",
+       "name": "o_immdec_ctrl",
+       "kind": "port_out"
+      },
+      {
+       "id": "E43",
+       "name": "o_immdec_en",
+       "kind": "port_out"
+      },
+      {
+       "id": "E44",
+       "name": "o_op_b_source",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "to rf if",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E45",
+      "E46",
+      "E47"
+     ],
+     "members": [
+      {
+       "id": "E45",
+       "name": "o_rd_mem_en",
+       "kind": "port_out"
+      },
+      {
+       "id": "E46",
+       "name": "o_rd_csr_en",
+       "kind": "port_out"
+      },
+      {
+       "id": "E47",
+       "name": "o_rd_alu_en",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,24 @@
+{
+  "module_summary": "8-to-16 bit width converter: a toggling phase bit stores the first valid byte, then concatenates it with the second byte into a registered 16-bit word with valid pulse.",
+  "anchors": [
+    {"id": "E9", "name": "phz", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Two-state phase toggled per valid byte: capture high byte or emit word.", "lines": [15, 20, 32]},
+    {"id": "E10", "name": "hi_q", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Holds first (high) byte until second byte arrives.", "lines": [16, 24, 42]},
+    {"id": "E3", "name": "valid_in", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Input byte valid; toggles phase and qualifies capture/emit.", "lines": [5, 20, 32]},
+    {"id": "E4", "name": "data_in", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "8-bit input stream, captured as high byte or used as low byte.", "lines": [6, 24, 42]},
+    {"id": "E5", "name": "valid_out", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Registered one-cycle pulse when a 16-bit word is assembled.", "lines": [8, 33]},
+    {"id": "E6", "name": "data_out", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Registered 16-bit output word updated on second byte.", "lines": [9, 51]},
+    {"id": "E8", "name": "hit", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Second-byte valid: loads data_out and asserts valid_out.", "lines": [20, 33, 51]},
+    {"id": "E7", "name": "arm_n", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Active-low first-byte capture enable for high-byte register.", "lines": [21, 41]},
+    {"id": "E12", "name": "pk", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Packed word: held high byte concatenated with current byte.", "lines": [24, 51]}
+  ],
+  "groups": [
+    {"name": "phase_control", "kind": "CONTROLLER", "anchor_ids": ["E9", "E8", "E7"], "member_ids": [], "description": "Phase toggle deciding capture versus emit."},
+    {"name": "pack_datapath", "kind": "SERIALIZER", "anchor_ids": ["E10", "E12", "E6", "E5"], "member_ids": ["E11"], "description": "High-byte holding register and concatenation into registered 16-bit output."},
+    {"name": "byte_input", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E3", "E4"], "member_ids": [], "description": "Valid-qualified 8-bit input stream."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "byte_in", "protocol": "STREAM", "direction": "IN", "member_ids": ["E3", "E4"]},
+    {"name": "word_out", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E5", "E6"]}
+  ]
+}

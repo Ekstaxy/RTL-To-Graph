@@ -1,0 +1,217 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "rtllm_synchronizer",
+ "tops": [
+  "verified_synchronizer"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "verified_synchronizer": {
+   "source": "teacher",
+   "canonical_instance": "verified_synchronizer",
+   "file": "data/rtl/RTLLM/Miscellaneous/Others/synchronizer/verified_synchronizer.v",
+   "lines": [
+    1,
+    44
+   ],
+   "summary": "MUX-based clock-domain-crossing synchronizer: data and enable are registered in clk_a, the enable passes a two-flop synchronizer in clk_b, and the synchronized enable selects data_reg into dataout.",
+   "blocks": [
+    {
+     "name": "Source domain capture",
+     "kind": "PIPELINE_STAGE",
+     "description": "clk_a registers capturing data and enable",
+     "anchors": [
+      {
+       "id": "E8",
+       "name": "data_reg",
+       "role": "HOLDING_REG",
+       "importance": "critical",
+       "score": 81.7,
+       "struct_score": 46.9,
+       "trace": "data_backward",
+       "why": "clk_a-domain register holding data_in, sampled across domain into dataout",
+       "lines": [
+        16,
+        41
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "en_data_reg",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 50.1,
+       "struct_score": 32.8,
+       "trace": "control_backward",
+       "why": "clk_a-domain registered data_en fed into the clk_b synchronizer",
+       "lines": [
+        22,
+        30
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "data_in",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 66.5,
+       "struct_score": 86.0,
+       "trace": "interface",
+       "why": "Source-domain data input captured into data_reg",
+       "lines": [
+        16
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "data_en",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 67.4,
+       "struct_score": 88.4,
+       "trace": "interface",
+       "why": "Source-domain data-valid enable to be synchronized",
+       "lines": [
+        22
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Enable synchronizer",
+     "kind": "PIPELINE_STAGE",
+     "description": "Two-flop clk_b synchronizer for the data enable",
+     "anchors": [
+      {
+       "id": "E10",
+       "name": "en_clap_one",
+       "role": "PIPELINE_REG",
+       "importance": "major",
+       "score": 52.5,
+       "struct_score": 42.3,
+       "trace": "data_backward",
+       "why": "First clk_b synchronizer flop for the enable",
+       "lines": [
+        30,
+        35
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "en_clap_two",
+       "role": "MUX_SELECT",
+       "importance": "critical",
+       "score": 84.5,
+       "struct_score": 56.9,
+       "trace": "control_backward",
+       "why": "Synchronized enable selecting data_reg versus held dataout",
+       "lines": [
+        35,
+        41
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Output mux register",
+     "kind": "DATAPATH",
+     "description": "clk_b output register loading data_reg on synchronized enable",
+     "anchors": [
+      {
+       "id": "E7",
+       "name": "dataout",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 98.0,
+       "struct_score": 95.0,
+       "trace": "data_backward",
+       "why": "clk_b-domain output updated from data_reg when enable synchronized",
+       "lines": [
+        41
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clocks_resets",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2",
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_a",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "clk_b",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "arstn",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "brstn",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "data_input",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E5",
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "data_in",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "data_en",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "data_output",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E7",
+       "name": "dataout",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

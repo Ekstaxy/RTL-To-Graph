@@ -1,0 +1,96 @@
+[
+ {
+  "module": "axis_xgmii_rx_32",
+  "instance": "axis_xgmii_rx_32",
+  "state": "state_reg",
+  "next": "state_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "STATE_IDLE",
+    "value": "2'b0"
+   },
+   {
+    "name": "STATE_PREAMBLE",
+    "value": "2'b1"
+   },
+   {
+    "name": "STATE_PAYLOAD",
+    "value": "2'b10"
+   },
+   {
+    "name": "STATE_LAST",
+    "value": "2'b11"
+   }
+  ],
+  "reset_state": "STATE_IDLE",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_IDLE",
+    "cond": "xgmii_start_d2 && cfg_rx_enable && framing_error_reg"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_PREAMBLE",
+    "cond": "xgmii_start_d2 && cfg_rx_enable && !framing_error_reg"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_IDLE",
+    "cond": "!(xgmii_start_d2 && cfg_rx_enable)"
+   },
+   {
+    "src": "STATE_PREAMBLE",
+    "dst": "STATE_PAYLOAD",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_PAYLOAD",
+    "dst": "STATE_IDLE",
+    "cond": "framing_error_reg"
+   },
+   {
+    "src": "STATE_PAYLOAD",
+    "dst": "STATE_IDLE",
+    "cond": "!framing_error_reg && term_present_reg && term_lane_reg == 0"
+   },
+   {
+    "src": "STATE_PAYLOAD",
+    "dst": "STATE_LAST",
+    "cond": "!framing_error_reg && term_present_reg && !(term_lane_reg == 0)"
+   },
+   {
+    "src": "STATE_PAYLOAD",
+    "dst": "STATE_PAYLOAD",
+    "cond": "!framing_error_reg && !term_present_reg"
+   },
+   {
+    "src": "STATE_LAST",
+    "dst": "STATE_IDLE",
+    "cond": "1"
+   }
+  ],
+  "outputs": [
+   {
+    "signal": "last_cycle",
+    "kind": "moore",
+    "port": false
+   },
+   {
+    "signal": "start_packet_next",
+    "kind": "moore",
+    "port": false
+   }
+  ],
+  "warnings": [
+   "semantic_check: unsupported (unsupported: packed select of array)"
+  ],
+  "semantic_check": "unsupported"
+ }
+]

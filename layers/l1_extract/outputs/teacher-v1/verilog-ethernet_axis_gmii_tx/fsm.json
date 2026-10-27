@@ -1,0 +1,127 @@
+[
+ {
+  "module": "axis_gmii_tx",
+  "instance": "axis_gmii_tx",
+  "state": "state_reg",
+  "next": "state_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "STATE_IDLE",
+    "value": "3'b0"
+   },
+   {
+    "name": "STATE_PREAMBLE",
+    "value": "3'b1"
+   },
+   {
+    "name": "STATE_PAYLOAD",
+    "value": "3'b10"
+   },
+   {
+    "name": "STATE_LAST",
+    "value": "3'b11"
+   },
+   {
+    "name": "STATE_PAD",
+    "value": "3'b100"
+   },
+   {
+    "name": "STATE_FCS",
+    "value": "3'b101"
+   },
+   {
+    "name": "STATE_IFG",
+    "value": "3'b110"
+   }
+  ],
+  "reset_state": "STATE_IDLE",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_PREAMBLE",
+    "cond": "clk_enable && !(mii_select && mii_odd_reg) && s_axis_tvalid && cfg_tx_enable"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_IDLE",
+    "cond": "clk_enable && !(mii_select && mii_odd_reg) && !(s_axis_tvalid && cfg_tx_enable)"
+   },
+   {
+    "src": "STATE_PREAMBLE",
+    "dst": "STATE_PREAMBLE",
+    "cond": "clk_enable && !(mii_select && mii_odd_reg) && frame_ptr_reg == 6"
+   },
+   {
+    "src": "STATE_PREAMBLE",
+    "dst": "STATE_PAYLOAD",
+    "cond": "clk_enable && !(mii_select && mii_odd_reg) && !(frame_ptr_reg == 6) && frame_ptr_reg == 7"
+   },
+   {
+    "src": "STATE_PREAMBLE",
+    "dst": "STATE_PREAMBLE",
+    "cond": "clk_enable && !(mii_select && mii_odd_reg) && !(frame_ptr_reg == 6) && !(frame_ptr_reg == 7)"
+   },
+   {
+    "src": "STATE_PAYLOAD",
+    "dst": "STATE_LAST",
+    "cond": "clk_enable && !(mii_select && mii_odd_reg) && (!s_axis_tvalid || s_axis_tlast)"
+   },
+   {
+    "src": "STATE_PAYLOAD",
+    "dst": "STATE_PAYLOAD",
+    "cond": "clk_enable && !(mii_select && mii_odd_reg) && !(!s_axis_tvalid || s_axis_tlast)"
+   },
+   {
+    "src": "STATE_LAST",
+    "dst": "STATE_PAD",
+    "cond": "clk_enable && !(mii_select && mii_odd_reg) && frame_min_count_reg"
+   },
+   {
+    "src": "STATE_LAST",
+    "dst": "STATE_FCS",
+    "cond": "clk_enable && !(mii_select && mii_odd_reg) && !frame_min_count_reg"
+   },
+   {
+    "src": "STATE_PAD",
+    "dst": "STATE_PAD",
+    "cond": "clk_enable && !(mii_select && mii_odd_reg) && frame_min_count_reg"
+   },
+   {
+    "src": "STATE_PAD",
+    "dst": "STATE_FCS",
+    "cond": "clk_enable && !(mii_select && mii_odd_reg) && !frame_min_count_reg"
+   },
+   {
+    "src": "STATE_FCS",
+    "dst": "STATE_FCS",
+    "cond": "clk_enable && !(mii_select && mii_odd_reg) && frame_ptr_reg < 3"
+   },
+   {
+    "src": "STATE_FCS",
+    "dst": "STATE_IFG",
+    "cond": "clk_enable && !(mii_select && mii_odd_reg) && !(frame_ptr_reg < 3)"
+   },
+   {
+    "src": "STATE_IFG",
+    "dst": "STATE_IFG",
+    "cond": "clk_enable && !(mii_select && mii_odd_reg) && (frame_ptr_reg < cfg_ifg-1 || frame_reg)"
+   },
+   {
+    "src": "STATE_IFG",
+    "dst": "STATE_IDLE",
+    "cond": "clk_enable && !(mii_select && mii_odd_reg) && !(frame_ptr_reg < cfg_ifg-1 || frame_reg)"
+   }
+  ],
+  "outputs": [],
+  "warnings": [
+   "semantic_check: unsupported (unsupported: packed select of array)"
+  ],
+  "semantic_check": "unsupported"
+ }
+]

@@ -1,0 +1,141 @@
+{
+  "module_summary": "Round-robin arbiter selecting one of N requesters with rotating priority token, maintaining grant and busy state registers.",
+  "anchors": [
+    {
+      "id": "E8",
+      "name": "token_r",
+      "role": "ARBITRATION",
+      "importance": "critical",
+      "trace": "control_backward",
+      "why": "Round-robin priority token pointer; rotates after each grant to ensure fairness",
+      "lines": [35, 73, 74, 75]
+    },
+    {
+      "id": "E9",
+      "name": "sel_r",
+      "role": "ARBITRATION",
+      "importance": "critical",
+      "trace": "data_backward",
+      "why": "Grant selection register holding one-hot encoded grant; driven by rr_pick arbitration",
+      "lines": [36, 64, 66, 77]
+    },
+    {
+      "id": "E10",
+      "name": "busy_r",
+      "role": "CONTROL_FLAG",
+      "importance": "critical",
+      "trace": "control_backward",
+      "why": "Busy flag tracking active grant; cleared by accept, set by any request while idle",
+      "lines": [37, 52, 54, 55, 56]
+    },
+    {
+      "id": "E3",
+      "name": "req_i",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Request input vector from N requesters; drives rr_pick and any_ask logic",
+      "lines": [29, 42, 47]
+    },
+    {
+      "id": "E5",
+      "name": "accept_i",
+      "role": "HANDSHAKE_READY",
+      "importance": "critical",
+      "trace": "forward",
+      "why": "Accept/ready handshake signal; triggers busy release and token rotation",
+      "lines": [31, 48, 55]
+    },
+    {
+      "id": "E7",
+      "name": "cand",
+      "role": "ARBITRATION",
+      "importance": "major",
+      "trace": "data_backward",
+      "why": "Candidate grant from rr_pick child instance; selected based on round-robin priority",
+      "lines": [34, 44, 66]
+    },
+    {
+      "id": "E11",
+      "name": "any_ask",
+      "role": "CONTROL_FLAG",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Request pending flag (OR of all requests); gates busy_r activation from idle",
+      "lines": [38, 47, 54]
+    },
+    {
+      "id": "E12",
+      "name": "release_now",
+      "role": "CONTROL_FLAG",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Release condition (busy AND accept); triggers token rotation and sel_r clear",
+      "lines": [39, 48, 63, 73]
+    }
+  ],
+  "groups": [
+    {
+      "name": "Arbitration_State",
+      "kind": "ARBITER",
+      "anchor_ids": ["E8", "E9", "E10"],
+      "member_ids": [],
+      "description": "Token, selection, and busy state registers managing round-robin grant arbitration"
+    },
+    {
+      "name": "Request_Interface",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E3"],
+      "member_ids": [],
+      "description": "Request input vector from N clients"
+    },
+    {
+      "name": "Handshake_Control",
+      "kind": "CONTROLLER",
+      "anchor_ids": ["E5"],
+      "member_ids": [],
+      "description": "Accept/ready handshake controlling grant and token state updates"
+    },
+    {
+      "name": "Priority_Selection",
+      "kind": "ARBITER",
+      "anchor_ids": ["E7"],
+      "member_ids": ["I1"],
+      "description": "Round-robin candidate selection from rr_pick child; steers sel_r update"
+    },
+    {
+      "name": "Arbitration_Control",
+      "kind": "CONTROLLER",
+      "anchor_ids": ["E11", "E12"],
+      "member_ids": [],
+      "description": "Request pending and release condition flags driving state transitions"
+    },
+    {
+      "name": "Output_Interface",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": [],
+      "member_ids": ["E4", "E6"],
+      "description": "Grant and valid output ports driven by sel_r and busy_r"
+    }
+  ],
+  "interfaces": [
+    {
+      "name": "Clock_Reset",
+      "protocol": "CLOCK_RESET",
+      "direction": "IN",
+      "member_ids": ["E1", "E2"]
+    },
+    {
+      "name": "Request_Input",
+      "protocol": "SIMPLE",
+      "direction": "IN",
+      "member_ids": ["E3"]
+    },
+    {
+      "name": "Grant_Handshake",
+      "protocol": "VALID_READY",
+      "direction": "OUT",
+      "member_ids": ["E4", "E6", "E5"]
+    }
+  ]
+}

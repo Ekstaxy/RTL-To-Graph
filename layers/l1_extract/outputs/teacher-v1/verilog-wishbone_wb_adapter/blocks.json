@@ -1,0 +1,771 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-wishbone_wb_adapter",
+ "tops": [
+  "wb_adapter"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "priority_encoder": {
+   "source": "heuristic",
+   "canonical_instance": "wb_adapter.cycle_encoder_inst",
+   "file": "data/rtl/verilog-wishbone/rtl/priority_encoder.v",
+   "lines": [
+    32,
+    88
+   ],
+   "summary": "priority_encoder (heuristic)",
+   "blocks": [
+    {
+     "name": "storage",
+     "kind": "BUFFER",
+     "description": "storage",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "stage_valid",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 67.0,
+       "struct_score": 87.3,
+       "trace": "data_backward",
+       "why": "memory array",
+       "lines": []
+      },
+      {
+       "id": "E7",
+       "name": "stage_enc",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 67.3,
+       "struct_score": 88.0,
+       "trace": "data_backward",
+       "why": "memory array",
+       "lines": []
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E2",
+     "name": "output_valid",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 96.6,
+     "struct_score": 91.5,
+     "trace": "interface",
+     "why": "valid port",
+     "lines": []
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "input",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E1"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "input_unencoded",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "output",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E2",
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E2",
+       "name": "output_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E3",
+       "name": "output_encoded",
+       "kind": "port_out"
+      },
+      {
+       "id": "E4",
+       "name": "output_unencoded",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "wb_adapter": {
+   "source": "teacher",
+   "canonical_instance": "wb_adapter",
+   "file": "data/rtl/verilog-wishbone/rtl/wb_adapter.v",
+   "lines": [
+    32,
+    361
+   ],
+   "summary": "Wishbone width adapter: registers master requests to the slave and slave responses back; for wider masters an FSM with priority encoder splits transfers into multiple slave cycles.",
+   "blocks": [
+    {
+     "name": "Master-to-slave request register",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Registers master address, data, select, we, stb, cyc onto slave port",
+     "anchors": [
+      {
+       "id": "E8",
+       "name": "wbm_stb_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 93.0,
+       "struct_score": 82.3,
+       "trace": "interface",
+       "why": "Master strobe launching a registered slave access",
+       "lines": [
+        52,
+        198,
+        320
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "wbm_cyc_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 65.0,
+       "struct_score": 82.3,
+       "trace": "interface",
+       "why": "Master bus cycle indication forwarded to slave cyc",
+       "lines": [
+        56,
+        321
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "wbm_adr_i",
+       "role": "INTERFACE_ADDR",
+       "importance": "critical",
+       "score": 89.4,
+       "struct_score": 73.1,
+       "trace": "interface",
+       "why": "Master address, aligned and registered onto slave address",
+       "lines": [
+        47,
+        207,
+        316
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "wbm_dat_i",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 90.5,
+       "struct_score": 76.1,
+       "trace": "interface",
+       "why": "Master write data, word-selected and registered toward slave",
+       "lines": [
+        48,
+        210,
+        317
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "wbm_we_i",
+       "role": "COMMAND",
+       "importance": "major",
+       "score": 46.5,
+       "struct_score": 18.5,
+       "trace": "interface",
+       "why": "Read/write command forwarded as slave write enable",
+       "lines": [
+        50,
+        318
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "wbm_sel_i",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 30.7,
+       "struct_score": 64.8,
+       "trace": "interface",
+       "why": "Byte select lanes, also decoded to choose slave cycles",
+       "lines": [
+        51,
+        161,
+        319
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "wbs_adr_o",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 58.6,
+       "struct_score": 64.4,
+       "trace": "data_backward",
+       "why": "Registered slave address output",
+       "lines": [
+        61,
+        139
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "wbs_dat_o",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 35.6,
+       "struct_score": 78.7,
+       "trace": "data_backward",
+       "why": "Registered slave write data output",
+       "lines": [
+        63,
+        140
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "wbs_stb_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 59.2,
+       "struct_score": 66.8,
+       "trace": "control_backward",
+       "why": "Registered slave strobe, cleared on slave response",
+       "lines": [
+        66,
+        143
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "wbs_cyc_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 59.2,
+       "struct_score": 66.8,
+       "trace": "control_backward",
+       "why": "Registered slave cycle signal",
+       "lines": [
+        70,
+        144
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E41",
+       "name": "wbs_adr_o_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E42",
+       "name": "wbs_adr_o_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E43",
+       "name": "wbs_dat_o_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E44",
+       "name": "wbs_dat_o_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E45",
+       "name": "wbs_we_o_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E46",
+       "name": "wbs_we_o_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E47",
+       "name": "wbs_sel_o_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E48",
+       "name": "wbs_sel_o_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E49",
+       "name": "wbs_stb_o_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E50",
+       "name": "wbs_stb_o_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E51",
+       "name": "wbs_cyc_o_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E52",
+       "name": "wbs_cyc_o_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E16",
+       "name": "wbs_we_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "wbs_sel_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "Slave-to-master response register",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Captures slave ack/err/rty and read data back to master",
+     "anchors": [
+      {
+       "id": "E9",
+       "name": "wbm_ack_o",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 92.9,
+       "struct_score": 82.1,
+       "trace": "control_backward",
+       "why": "Registered acknowledge to master from slave ack",
+       "lines": [
+        53,
+        135
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "wbm_dat_o",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 63.6,
+       "struct_score": 78.7,
+       "trace": "data_backward",
+       "why": "Registered read data returned to master",
+       "lines": [
+        49,
+        134
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "wbm_err_o",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 26.5,
+       "struct_score": 49.6,
+       "trace": "control_backward",
+       "why": "Registered error response to master",
+       "lines": [
+        54,
+        136
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "wbm_rty_o",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 26.5,
+       "struct_score": 49.6,
+       "trace": "control_backward",
+       "why": "Registered retry response to master",
+       "lines": [
+        55,
+        137
+       ]
+      },
+      {
+       "id": "E19",
+       "name": "wbs_ack_i",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 62.0,
+       "struct_score": 74.7,
+       "trace": "interface",
+       "why": "Slave acknowledge ending the cycle and passed back to master",
+       "lines": [
+        67,
+        302,
+        305
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "wbs_dat_i",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 34.5,
+       "struct_score": 76.1,
+       "trace": "interface",
+       "why": "Slave read data captured into master read data register",
+       "lines": [
+        62,
+        304
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "wbs_err_i",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 34.0,
+       "struct_score": 74.7,
+       "trace": "interface",
+       "why": "Slave error terminating cycle, forwarded to master",
+       "lines": [
+        68,
+        302,
+        306
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E33",
+       "name": "wbm_dat_o_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E34",
+       "name": "wbm_dat_o_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E35",
+       "name": "wbm_ack_o_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E36",
+       "name": "wbm_ack_o_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E37",
+       "name": "wbm_err_o_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E38",
+       "name": "wbm_err_o_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E39",
+       "name": "wbm_rty_o_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E40",
+       "name": "wbm_rty_o_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E21",
+       "name": "wbs_rty_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Width-split controller",
+     "kind": "CONTROLLER",
+     "description": "FSM and priority encoder sequencing sub-word cycles when master is wider",
+     "anchors": [
+      {
+       "id": "E23",
+       "name": "state_reg",
+       "role": "FSM_STATE",
+       "importance": "minor",
+       "score": 43.6,
+       "struct_score": 98.9,
+       "trace": "control_backward",
+       "why": "IDLE/WAIT_ACK/PAUSE FSM for multi-cycle splitting; disabled at equal widths",
+       "lines": [
+        112,
+        188,
+        339
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "cycle_mask_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 19.8,
+       "struct_score": 23.7,
+       "trace": "control_backward",
+       "why": "Masks already-issued sub-words for priority encoder in split mode",
+       "lines": [
+        114,
+        151,
+        341
+       ]
+      },
+      {
+       "id": "E31",
+       "name": "current_cycle_reg",
+       "role": "INDEX",
+       "importance": "minor",
+       "score": 18.0,
+       "struct_score": 16.4,
+       "trace": "control_backward",
+       "why": "Sub-word index placing slave read data into master word",
+       "lines": [
+        120,
+        234,
+        351
+       ]
+      },
+      {
+       "id": "E30",
+       "name": "cycle_sel_valid",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 20.3,
+       "struct_score": 25.5,
+       "trace": "control_backward",
+       "why": "Encoder valid: another sub-word cycle remains",
+       "lines": [
+        118,
+        202,
+        242
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "cycle_encoder_inst",
+       "module": "priority_encoder"
+      }
+     ],
+     "members": [
+      {
+       "id": "E24",
+       "name": "state_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E26",
+       "name": "cycle_mask_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E27",
+       "name": "cycle_sel_raw",
+       "kind": "comb"
+      },
+      {
+       "id": "E28",
+       "name": "cycle_sel",
+       "kind": "wire"
+      },
+      {
+       "id": "E29",
+       "name": "cycle_sel_enc",
+       "kind": "wire"
+      },
+      {
+       "id": "E32",
+       "name": "current_cycle_next",
+       "kind": "comb"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "wishbone_master_port",
+     "protocol": "REQ_ACK",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "wbm_adr_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "wbm_dat_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "wbm_dat_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "wbm_we_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "wbm_sel_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "wbm_stb_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "wbm_ack_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "wbm_err_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E11",
+       "name": "wbm_rty_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "wbm_cyc_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "wishbone_slave_port",
+     "protocol": "REQ_ACK",
+     "direction": "OUT",
+     "member_ids": [
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20",
+      "E21",
+      "E22"
+     ],
+     "members": [
+      {
+       "id": "E13",
+       "name": "wbs_adr_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "wbs_dat_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "wbs_dat_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "wbs_we_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "wbs_sel_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "wbs_stb_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "wbs_ack_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E20",
+       "name": "wbs_err_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E21",
+       "name": "wbs_rty_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E22",
+       "name": "wbs_cyc_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

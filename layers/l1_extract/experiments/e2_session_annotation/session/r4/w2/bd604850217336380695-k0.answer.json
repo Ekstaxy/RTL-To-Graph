@@ -1,0 +1,26 @@
+{
+ "module_summary": "Synchronous FIFO wrapper that adds a registered threshold interrupt, predicting next fill level from accepted writes/reads and comparing it to i_threshold.",
+ "anchors": [
+  {"id": "E3", "name": "i_wr", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Write request into the FIFO; accepted when not full.", "lines": [53, 66, 72]},
+  {"id": "E4", "name": "i_data", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Write data stored in the child FIFO.", "lines": [54, 72]},
+  {"id": "E7", "name": "i_rd", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Read request popping the FIFO; accepted when not empty.", "lines": [59, 67, 72]},
+  {"id": "E8", "name": "o_data", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Read data from the child FIFO.", "lines": [60, 73]},
+  {"id": "E6", "name": "o_fill", "role": "FIFO_PTR", "importance": "major", "trace": "data_backward", "why": "FIFO occupancy count used to compute the threshold interrupt.", "lines": [56, 81, 83]},
+  {"id": "E5", "name": "o_full", "role": "STATUS", "importance": "major", "trace": "data_backward", "why": "FIFO full flag; blocks w_wr.", "lines": [55, 66]},
+  {"id": "E9", "name": "o_empty", "role": "STATUS", "importance": "major", "trace": "data_backward", "why": "FIFO empty flag; blocks w_rd.", "lines": [61, 67]},
+  {"id": "E11", "name": "o_int", "role": "STATUS", "importance": "critical", "trace": "control_backward", "why": "Registered interrupt asserted when next fill level reaches i_threshold.", "lines": [64, 81, 83]},
+  {"id": "E10", "name": "i_threshold", "role": "CONFIG_REG", "importance": "major", "trace": "interface", "why": "Fill threshold compared against predicted fill to raise o_int.", "lines": [63, 82, 83]},
+  {"id": "E12", "name": "w_wr", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Accepted write, adjusting predicted fill in interrupt logic.", "lines": [66, 80]},
+  {"id": "E13", "name": "w_rd", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Accepted read, adjusting predicted fill in interrupt logic.", "lines": [67, 80]}
+ ],
+ "groups": [
+  {"name": "fifo_core", "kind": "BUFFER", "anchor_ids": ["E3", "E4", "E7", "E8", "E6", "E5", "E9"], "member_ids": ["I1"], "description": "Child synchronous FIFO with memory, pointers and fill counter."},
+  {"name": "threshold_irq", "kind": "COUNTER_TIMER", "anchor_ids": ["E11", "E10", "E12", "E13"], "member_ids": [], "description": "Compares predicted next fill level with threshold to register interrupt."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "write_port", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6"]},
+  {"name": "read_port", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E7", "E8", "E9"]},
+  {"name": "threshold", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E10", "E11"]}
+ ]
+}

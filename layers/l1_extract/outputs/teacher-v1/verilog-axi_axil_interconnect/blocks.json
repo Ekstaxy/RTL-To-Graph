@@ -1,0 +1,1508 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-axi_axil_interconnect",
+ "tops": [
+  "axil_interconnect"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "priority_encoder": {
+   "source": "heuristic",
+   "canonical_instance": "axil_interconnect.arb_inst.priority_encoder_inst",
+   "file": "data/rtl/verilog-axi/rtl/priority_encoder.v",
+   "lines": [
+    34,
+    90
+   ],
+   "summary": "priority_encoder (heuristic)",
+   "blocks": [
+    {
+     "name": "storage",
+     "kind": "BUFFER",
+     "description": "storage",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "stage_valid",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 69.8,
+       "struct_score": 94.5,
+       "trace": "data_backward",
+       "why": "memory array",
+       "lines": []
+      },
+      {
+       "id": "E7",
+       "name": "stage_enc",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 70.3,
+       "struct_score": 95.7,
+       "trace": "data_backward",
+       "why": "memory array",
+       "lines": []
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E1",
+     "name": "input_unencoded",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 39.9,
+     "struct_score": 89.7,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    },
+    {
+     "id": "E2",
+     "name": "output_valid",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 96.6,
+     "struct_score": 91.5,
+     "trace": "interface",
+     "why": "valid port",
+     "lines": []
+    },
+    {
+     "id": "E4",
+     "name": "output_unencoded",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 41.6,
+     "struct_score": 93.8,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "input",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E1"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "input_unencoded",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "output",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E2",
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E2",
+       "name": "output_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E3",
+       "name": "output_encoded",
+       "kind": "port_out"
+      },
+      {
+       "id": "E4",
+       "name": "output_unencoded",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "arbiter": {
+   "source": "teacher",
+   "canonical_instance": "axil_interconnect.arb_inst",
+   "file": "data/rtl/verilog-axi/rtl/arbiter.v",
+   "lines": [
+    34,
+    157
+   ],
+   "summary": "Parameterized arbiter: two priority encoders (plain and round-robin-masked) pick a requester, registered into one-hot grant, encoded index and valid, with optional blocking hold.",
+   "blocks": [
+    {
+     "name": "Grant controller",
+     "kind": "ARBITER",
+     "description": "Next-grant logic and grant registers selecting one requester per cycle.",
+     "anchors": [
+      {
+       "id": "E8",
+       "name": "grant_reg",
+       "role": "ARBITRATION",
+       "importance": "critical",
+       "score": 96.9,
+       "struct_score": 92.3,
+       "trace": "control_backward",
+       "why": "Registered one-hot grant vector chosen from priority-encoded requests; drives grant port.",
+       "lines": [
+        58,
+        63,
+        150
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "grant_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 97.7,
+       "struct_score": 94.3,
+       "trace": "control_backward",
+       "why": "Grant valid output from grant_valid_reg; used for blocking hold check.",
+       "lines": [
+        54,
+        62,
+        109
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "grant_encoded",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 57.8,
+       "struct_score": 61.7,
+       "trace": "interface",
+       "why": "Binary index of the granted port, from grant_encoded_reg.",
+       "lines": [
+        55,
+        64
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "request_valid",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 50.3,
+       "struct_score": 33.7,
+       "trace": "control_backward",
+       "why": "Any-request flag from priority encoder; enables issuing a new grant.",
+       "lines": [
+        66,
+        76,
+        114
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "request_index",
+       "role": "INDEX",
+       "importance": "minor",
+       "score": 17.4,
+       "struct_score": 13.7,
+       "trace": "data_backward",
+       "why": "Encoded index of highest-priority request, loaded into grant_encoded_next.",
+       "lines": [
+        67,
+        77,
+        128
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E9",
+       "name": "grant_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E10",
+       "name": "grant_valid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E11",
+       "name": "grant_valid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E12",
+       "name": "grant_encoded_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E13",
+       "name": "grant_encoded_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E5",
+       "name": "grant",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "request_mask",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Priority encoders",
+     "kind": "DECODER",
+     "description": "Plain and round-robin-masked priority encoders over requests.",
+     "anchors": [
+      {
+       "id": "E19",
+       "name": "masked_request_valid",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 22.3,
+       "struct_score": 33.7,
+       "trace": "control_backward",
+       "why": "Masked-request present flag choosing masked grant in round-robin mode.",
+       "lines": [
+        83,
+        93,
+        116
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "mask_reg",
+       "role": "ARBITRATION",
+       "importance": "minor",
+       "score": 38.9,
+       "struct_score": 87.1,
+       "trace": "control_backward",
+       "why": "Round-robin priority mask applied to requests; inactive with default ARB_TYPE_ROUND_ROBIN=0.",
+       "lines": [
+        81,
+        92,
+        153
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "priority_encoder_inst",
+       "module": "priority_encoder"
+      },
+      {
+       "id": "I2",
+       "instance": "priority_encoder_masked",
+       "module": "priority_encoder"
+      }
+     ],
+     "members": [
+      {
+       "id": "E18",
+       "name": "mask_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E20",
+       "name": "masked_request_index",
+       "kind": "wire"
+      },
+      {
+       "id": "E21",
+       "name": "masked_request_mask",
+       "kind": "wire"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E3",
+     "name": "request",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 98.1,
+     "struct_score": 95.3,
+     "trace": "interface",
+     "why": "Per-port request vector fed to both priority encoders.",
+     "lines": [
+      50,
+      75,
+      92
+     ]
+    },
+    {
+     "id": "E4",
+     "name": "acknowledge",
+     "role": "HANDSHAKE_READY",
+     "importance": "major",
+     "score": 67.1,
+     "struct_score": 87.6,
+     "trace": "interface",
+     "why": "Per-port acknowledge releasing a held grant in blocking-ack mode.",
+     "lines": [
+      51,
+      109
+     ]
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "request_ack",
+     "protocol": "REQ_ACK",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "request",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "acknowledge",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "grant_out",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E5",
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "grant",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "grant_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "grant_encoded",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "axil_interconnect": {
+   "source": "teacher",
+   "canonical_instance": "axil_interconnect",
+   "file": "data/rtl/verilog-axi/rtl/axil_interconnect.v",
+   "lines": [
+    34,
+    562
+   ],
+   "summary": "Shared-bus AXI-Lite crossbar: a round-robin arbiter grants one slave-port read or write, an FSM decodes the address to a master port and store-and-forwards address, data and response through holding registers.",
+   "blocks": [
+    {
+     "name": "transaction_fsm",
+     "kind": "CONTROLLER",
+     "description": "Sequences address capture, decode, data forwarding and response return per granted transaction.",
+     "anchors": [
+      {
+       "id": "E41",
+       "name": "state_reg",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.3,
+       "struct_score": 98.2,
+       "trace": "control_backward",
+       "why": "Transaction FSM: idle, decode, write, write response, write drop, read, wait idle.",
+       "lines": [
+        222,
+        381,
+        538
+       ]
+      },
+      {
+       "id": "E43",
+       "name": "match",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 44.7,
+       "struct_score": 10.9,
+       "trace": "control_backward",
+       "why": "Address decode hit flag; chooses forward to master versus decode-error response.",
+       "lines": [
+        224,
+        414,
+        419
+       ]
+      },
+      {
+       "id": "E122",
+       "name": "read",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 45.0,
+       "struct_score": 12.2,
+       "trace": "control_backward",
+       "why": "Granted request is read vs write; steers address capture and FSM branch.",
+       "lines": [
+        318,
+        389,
+        420
+       ]
+      },
+      {
+       "id": "E48",
+       "name": "axil_addr_valid_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.3,
+       "struct_score": 9.3,
+       "trace": "control_backward",
+       "why": "Pending address flag; issues master awvalid/arvalid once per transaction.",
+       "lines": [
+        228,
+        448,
+        495
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E42",
+       "name": "state_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E49",
+       "name": "axil_addr_valid_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "request_arbiter",
+     "kind": "ARBITER",
+     "description": "Round-robin arbiter choosing one slave read or write request at a time.",
+     "anchors": [
+      {
+       "id": "E119",
+       "name": "grant",
+       "role": "ARBITRATION",
+       "importance": "critical",
+       "score": 74.8,
+       "struct_score": 19.4,
+       "trace": "control_backward",
+       "why": "One-hot grant from round-robin arbiter over slave read/write requests; qualifies acknowledge.",
+       "lines": [
+        314,
+        333,
+        351
+       ]
+      },
+      {
+       "id": "E120",
+       "name": "grant_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 47.0,
+       "struct_score": 20.3,
+       "trace": "control_backward",
+       "why": "Arbiter grant valid; starts transaction from idle and ends wait-idle.",
+       "lines": [
+        315,
+        385,
+        513
+       ]
+      },
+      {
+       "id": "E117",
+       "name": "request",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 19.1,
+       "struct_score": 20.9,
+       "trace": "data_backward",
+       "why": "Arbiter request vector built from slave awvalid/arvalid.",
+       "lines": [
+        312,
+        331,
+        343
+       ]
+      },
+      {
+       "id": "E118",
+       "name": "acknowledge",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 17.7,
+       "struct_score": 14.9,
+       "trace": "control_backward",
+       "why": "Releases arbiter grant on completed slave response handshake.",
+       "lines": [
+        313,
+        351,
+        513
+       ]
+      },
+      {
+       "id": "E121",
+       "name": "grant_encoded",
+       "role": "ARBITRATION",
+       "importance": "minor",
+       "score": 19.1,
+       "struct_score": 20.8,
+       "trace": "control_backward",
+       "why": "Encoded grant index; LSB gives read, upper bits give s_select.",
+       "lines": [
+        316,
+        318,
+        319
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "arb_inst",
+       "module": "arbiter"
+      }
+     ],
+     "members": []
+    },
+    {
+     "name": "slave_mux",
+     "kind": "DATAPATH",
+     "description": "Selects the granted slave port signals via s_select.",
+     "anchors": [
+      {
+       "id": "E78",
+       "name": "s_select",
+       "role": "MUX_SELECT",
+       "importance": "major",
+       "score": 61.9,
+       "struct_score": 74.4,
+       "trace": "control_backward",
+       "why": "Granted slave port index from grant_encoded; muxes current_s_axil_* and slave handshakes.",
+       "lines": [
+        268,
+        270,
+        319
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E79",
+       "name": "current_s_axil_awaddr",
+       "kind": "wire"
+      },
+      {
+       "id": "E80",
+       "name": "current_s_axil_awprot",
+       "kind": "wire"
+      },
+      {
+       "id": "E81",
+       "name": "current_s_axil_awvalid",
+       "kind": "wire"
+      },
+      {
+       "id": "E82",
+       "name": "current_s_axil_awready",
+       "kind": "wire"
+      },
+      {
+       "id": "E83",
+       "name": "current_s_axil_wdata",
+       "kind": "wire"
+      },
+      {
+       "id": "E84",
+       "name": "current_s_axil_wstrb",
+       "kind": "wire"
+      },
+      {
+       "id": "E85",
+       "name": "current_s_axil_wvalid",
+       "kind": "wire"
+      },
+      {
+       "id": "E86",
+       "name": "current_s_axil_wready",
+       "kind": "wire"
+      },
+      {
+       "id": "E87",
+       "name": "current_s_axil_bresp",
+       "kind": "wire"
+      },
+      {
+       "id": "E88",
+       "name": "current_s_axil_bvalid",
+       "kind": "wire"
+      },
+      {
+       "id": "E89",
+       "name": "current_s_axil_bready",
+       "kind": "wire"
+      },
+      {
+       "id": "E90",
+       "name": "current_s_axil_araddr",
+       "kind": "wire"
+      },
+      {
+       "id": "E91",
+       "name": "current_s_axil_arprot",
+       "kind": "wire"
+      },
+      {
+       "id": "E92",
+       "name": "current_s_axil_arvalid",
+       "kind": "wire"
+      },
+      {
+       "id": "E93",
+       "name": "current_s_axil_arready",
+       "kind": "wire"
+      },
+      {
+       "id": "E94",
+       "name": "current_s_axil_rdata",
+       "kind": "wire"
+      },
+      {
+       "id": "E95",
+       "name": "current_s_axil_rresp",
+       "kind": "wire"
+      },
+      {
+       "id": "E96",
+       "name": "current_s_axil_rvalid",
+       "kind": "wire"
+      },
+      {
+       "id": "E97",
+       "name": "current_s_axil_rready",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "master_decode_mux",
+     "kind": "DECODER",
+     "description": "Address-region decode picks master port; m_select_reg muxes master signals.",
+     "anchors": [
+      {
+       "id": "E44",
+       "name": "m_select_reg",
+       "role": "MUX_SELECT",
+       "importance": "critical",
+       "score": 93.0,
+       "struct_score": 82.2,
+       "trace": "control_backward",
+       "why": "Decoded master port index; selects current_m_axil_* signals and which master handshake asserts.",
+       "lines": [
+        226,
+        291,
+        553
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E45",
+       "name": "m_select_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E98",
+       "name": "current_m_axil_awaddr",
+       "kind": "wire"
+      },
+      {
+       "id": "E99",
+       "name": "current_m_axil_awprot",
+       "kind": "wire"
+      },
+      {
+       "id": "E100",
+       "name": "current_m_axil_awvalid",
+       "kind": "wire"
+      },
+      {
+       "id": "E101",
+       "name": "current_m_axil_awready",
+       "kind": "wire"
+      },
+      {
+       "id": "E102",
+       "name": "current_m_axil_wdata",
+       "kind": "wire"
+      },
+      {
+       "id": "E103",
+       "name": "current_m_axil_wstrb",
+       "kind": "wire"
+      },
+      {
+       "id": "E104",
+       "name": "current_m_axil_wvalid",
+       "kind": "wire"
+      },
+      {
+       "id": "E105",
+       "name": "current_m_axil_wready",
+       "kind": "wire"
+      },
+      {
+       "id": "E106",
+       "name": "current_m_axil_bresp",
+       "kind": "wire"
+      },
+      {
+       "id": "E107",
+       "name": "current_m_axil_bvalid",
+       "kind": "wire"
+      },
+      {
+       "id": "E108",
+       "name": "current_m_axil_bready",
+       "kind": "wire"
+      },
+      {
+       "id": "E109",
+       "name": "current_m_axil_araddr",
+       "kind": "wire"
+      },
+      {
+       "id": "E110",
+       "name": "current_m_axil_arprot",
+       "kind": "wire"
+      },
+      {
+       "id": "E111",
+       "name": "current_m_axil_arvalid",
+       "kind": "wire"
+      },
+      {
+       "id": "E112",
+       "name": "current_m_axil_arready",
+       "kind": "wire"
+      },
+      {
+       "id": "E113",
+       "name": "current_m_axil_rdata",
+       "kind": "wire"
+      },
+      {
+       "id": "E114",
+       "name": "current_m_axil_rresp",
+       "kind": "wire"
+      },
+      {
+       "id": "E115",
+       "name": "current_m_axil_rvalid",
+       "kind": "wire"
+      },
+      {
+       "id": "E116",
+       "name": "current_m_axil_rready",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "holding_registers",
+     "kind": "DATAPATH",
+     "description": "Store-and-forward address, data, strobe, prot and response registers.",
+     "anchors": [
+      {
+       "id": "E46",
+       "name": "axil_addr_reg",
+       "role": "HOLDING_REG",
+       "importance": "critical",
+       "score": 76.9,
+       "struct_score": 27.9,
+       "trace": "data_backward",
+       "why": "Latched transaction address, decoded against master regions and broadcast to master awaddr/araddr.",
+       "lines": [
+        227,
+        255,
+        412
+       ]
+      },
+      {
+       "id": "E52",
+       "name": "axil_data_reg",
+       "role": "HOLDING_REG",
+       "importance": "critical",
+       "score": 76.9,
+       "struct_score": 28.0,
+       "trace": "data_backward",
+       "why": "Store-and-forward data register: write data to masters, read data back to slaves.",
+       "lines": [
+        230,
+        251,
+        258
+       ]
+      },
+      {
+       "id": "E56",
+       "name": "axil_resp_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 16.9,
+       "struct_score": 11.6,
+       "trace": "data_backward",
+       "why": "Held bresp/rresp from master or decode error, broadcast to slave response ports.",
+       "lines": [
+        232,
+        248,
+        252
+       ]
+      },
+      {
+       "id": "E50",
+       "name": "axil_prot_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 17.3,
+       "struct_score": 13.3,
+       "trace": "data_backward",
+       "why": "Latched protection bits; checked for secure masters and forwarded to masters.",
+       "lines": [
+        229,
+        256,
+        412
+       ]
+      },
+      {
+       "id": "E54",
+       "name": "axil_wstrb_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 16.4,
+       "struct_score": 9.8,
+       "trace": "data_backward",
+       "why": "Latched write strobes forwarded to master wstrb.",
+       "lines": [
+        231,
+        259
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E47",
+       "name": "axil_addr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E53",
+       "name": "axil_data_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E57",
+       "name": "axil_resp_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E51",
+       "name": "axil_prot_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E55",
+       "name": "axil_wstrb_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "handshake_registers",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Registered per-port valid/ready signals for slave and master AXI-Lite channels.",
+     "anchors": [
+      {
+       "id": "E5",
+       "name": "s_axil_awvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 57.9,
+       "struct_score": 61.9,
+       "trace": "interface",
+       "why": "Slave write-address valids form even arbiter request bits.",
+       "lines": [
+        74,
+        343
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "s_axil_arvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 57.9,
+       "struct_score": 61.9,
+       "trace": "interface",
+       "why": "Slave read-address valids form odd arbiter request bits.",
+       "lines": [
+        85,
+        344
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "m_axil_awvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 33.0,
+       "struct_score": 72.1,
+       "trace": "interface",
+       "why": "Master write-address valid driven from registered handshake.",
+       "lines": [
+        97,
+        257
+       ]
+      },
+      {
+       "id": "E35",
+       "name": "m_axil_arvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 33.0,
+       "struct_score": 72.1,
+       "trace": "interface",
+       "why": "Master read-address valid driven from registered handshake.",
+       "lines": [
+        108,
+        264
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "s_axil_bvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 35.4,
+       "struct_score": 78.3,
+       "trace": "interface",
+       "why": "Slave write response valid; with bready acknowledges arbiter.",
+       "lines": [
+        81,
+        249,
+        351
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "s_axil_rvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 35.4,
+       "struct_score": 78.3,
+       "trace": "interface",
+       "why": "Slave read data valid; with rready acknowledges arbiter.",
+       "lines": [
+        89,
+        253,
+        352
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E58",
+       "name": "s_axil_awready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E59",
+       "name": "s_axil_awready_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E60",
+       "name": "s_axil_wready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E61",
+       "name": "s_axil_wready_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E62",
+       "name": "s_axil_bvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E63",
+       "name": "s_axil_bvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E64",
+       "name": "s_axil_arready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E65",
+       "name": "s_axil_arready_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E66",
+       "name": "s_axil_rvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E67",
+       "name": "s_axil_rvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E68",
+       "name": "m_axil_awvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E69",
+       "name": "m_axil_awvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E70",
+       "name": "m_axil_wvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E71",
+       "name": "m_axil_wvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E72",
+       "name": "m_axil_bready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E73",
+       "name": "m_axil_bready_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E74",
+       "name": "m_axil_arvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E75",
+       "name": "m_axil_arvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E76",
+       "name": "m_axil_rready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E77",
+       "name": "m_axil_rready_next",
+       "kind": "comb"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axil_aw",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axil_awaddr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axil_awprot",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axil_awvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_axil_awready",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "s_axil_w",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E7",
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E7",
+       "name": "s_axil_wdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_axil_wstrb",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_axil_wvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "s_axil_wready",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "s_axil_b",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E11",
+      "E12",
+      "E13"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "s_axil_bresp",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "s_axil_bvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "s_axil_bready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axil_ar",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E14",
+      "E15",
+      "E16",
+      "E17"
+     ],
+     "members": [
+      {
+       "id": "E14",
+       "name": "s_axil_araddr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "s_axil_arprot",
+       "kind": "port_in"
+      },
+      {
+       "id": "E16",
+       "name": "s_axil_arvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E17",
+       "name": "s_axil_arready",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "s_axil_r",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E18",
+      "E19",
+      "E20",
+      "E21"
+     ],
+     "members": [
+      {
+       "id": "E18",
+       "name": "s_axil_rdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "s_axil_rresp",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "s_axil_rvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E21",
+       "name": "s_axil_rready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axil_aw",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E22",
+      "E23",
+      "E24",
+      "E25"
+     ],
+     "members": [
+      {
+       "id": "E22",
+       "name": "m_axil_awaddr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "m_axil_awprot",
+       "kind": "port_out"
+      },
+      {
+       "id": "E24",
+       "name": "m_axil_awvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E25",
+       "name": "m_axil_awready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axil_w",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E26",
+      "E27",
+      "E28",
+      "E29"
+     ],
+     "members": [
+      {
+       "id": "E26",
+       "name": "m_axil_wdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E27",
+       "name": "m_axil_wstrb",
+       "kind": "port_out"
+      },
+      {
+       "id": "E28",
+       "name": "m_axil_wvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E29",
+       "name": "m_axil_wready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axil_b",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E30",
+      "E31",
+      "E32"
+     ],
+     "members": [
+      {
+       "id": "E30",
+       "name": "m_axil_bresp",
+       "kind": "port_in"
+      },
+      {
+       "id": "E31",
+       "name": "m_axil_bvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E32",
+       "name": "m_axil_bready",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "m_axil_ar",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E33",
+      "E34",
+      "E35",
+      "E36"
+     ],
+     "members": [
+      {
+       "id": "E33",
+       "name": "m_axil_araddr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E34",
+       "name": "m_axil_arprot",
+       "kind": "port_out"
+      },
+      {
+       "id": "E35",
+       "name": "m_axil_arvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E36",
+       "name": "m_axil_arready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axil_r",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E37",
+      "E38",
+      "E39",
+      "E40"
+     ],
+     "members": [
+      {
+       "id": "E37",
+       "name": "m_axil_rdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E38",
+       "name": "m_axil_rresp",
+       "kind": "port_in"
+      },
+      {
+       "id": "E39",
+       "name": "m_axil_rvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E40",
+       "name": "m_axil_rready",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,234 @@
+{
+  "module_summary": "Cache controller with 5-state FSM, associative lookup, and hit/miss responses.",
+  "anchors": [
+    {
+      "id": "E18",
+      "name": "cur",
+      "role": "FSM_STATE",
+      "importance": "critical",
+      "trace": "control_backward",
+      "why": "FSM state register; transitions HOME/PROBE/PUSH/PULL/ACK through cache operations.",
+      "lines": [32, 56, 63]
+    },
+    {
+      "id": "E19",
+      "name": "keys",
+      "role": "STORAGE",
+      "importance": "critical",
+      "trace": "data_backward",
+      "why": "Cache tag storage; indexed by sel to check tag match.",
+      "lines": [33, 42, 93]
+    },
+    {
+      "id": "E20",
+      "name": "words",
+      "role": "STORAGE",
+      "importance": "critical",
+      "trace": "data_backward",
+      "why": "Cache data storage; indexed by sel to return hit data.",
+      "lines": [34, 43, 95]
+    },
+    {
+      "id": "E21",
+      "name": "vld",
+      "role": "CONTROL_FLAG",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Cache line valid bits; per-line flags gating hit detection.",
+      "lines": [35, 44, 97]
+    },
+    {
+      "id": "E22",
+      "name": "lat_w",
+      "role": "HOLDING_REG",
+      "importance": "major",
+      "trace": "data_backward",
+      "why": "Latches write command; steers to PUSH vs READ path.",
+      "lines": [36, 66, 103]
+    },
+    {
+      "id": "E23",
+      "name": "lat_d",
+      "role": "HOLDING_REG",
+      "importance": "major",
+      "trace": "data_backward",
+      "why": "Latches write data; used for cache update on PUSH.",
+      "lines": [37, 65, 106]
+    },
+    {
+      "id": "E24",
+      "name": "lat_a",
+      "role": "HOLDING_REG",
+      "importance": "major",
+      "trace": "data_backward",
+      "why": "Latches request address; decoded to sel and key.",
+      "lines": [38, 64, 107]
+    },
+    {
+      "id": "E3",
+      "name": "cpu_req_valid",
+      "role": "HANDSHAKE_VALID",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "CPU request valid; gates state machine from HOME.",
+      "lines": [8, 62, 105]
+    },
+    {
+      "id": "E4",
+      "name": "cpu_req_ready",
+      "role": "HANDSHAKE_READY",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "CPU request ready; asserted only in HOME state.",
+      "lines": [9, 46, 101]
+    },
+    {
+      "id": "E8",
+      "name": "cpu_resp_valid",
+      "role": "HANDSHAKE_VALID",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "CPU response valid; asserted in ACK state.",
+      "lines": [13, 47, 102]
+    },
+    {
+      "id": "E9",
+      "name": "cpu_rdata",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "CPU response data; driven by output buffer.",
+      "lines": [14, 31, 100]
+    },
+    {
+      "id": "E17",
+      "name": "obuf",
+      "role": "HOLDING_REG",
+      "importance": "critical",
+      "trace": "data_backward",
+      "why": "Output buffer; holds hit data or filled data for response.",
+      "lines": [31, 85, 98]
+    },
+    {
+      "id": "E25",
+      "name": "sel",
+      "role": "INDEX",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Cache line selector; derived from lat_a for tag/data lookups.",
+      "lines": [40, 84, 86]
+    },
+    {
+      "id": "E26",
+      "name": "key",
+      "role": "INDEX",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Tag from address; compared to k_rd for match detection.",
+      "lines": [41, 88, 93]
+    },
+    {
+      "id": "E29",
+      "name": "match",
+      "role": "CONTROL_FLAG",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Tag match signal; gates HIT path when valid and tags match.",
+      "lines": [44, 70, 88]
+    },
+    {
+      "id": "E35",
+      "name": "fill_go",
+      "role": "CONTROL_FLAG",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Fill completion enable; fills cache line on memory ack in PULL.",
+      "lines": [51, 83, 97]
+    },
+    {
+      "id": "E36",
+      "name": "wr_go",
+      "role": "CONTROL_FLAG",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Write completion enable; updates cache on match in PUSH.",
+      "lines": [52, 86, 106]
+    }
+  ],
+  "groups": [
+    {
+      "name": "FSM Controller",
+      "kind": "CONTROLLER",
+      "anchor_ids": ["E18"],
+      "member_ids": [],
+      "description": "5-state FSM managing cache lookup and fill operations."
+    },
+    {
+      "name": "Cache Storage",
+      "kind": "MEMORY",
+      "anchor_ids": ["E19", "E20", "E21"],
+      "member_ids": [],
+      "description": "Tag array, data array, and valid bits for cache lines."
+    },
+    {
+      "name": "Address Latching and Decoding",
+      "kind": "DATAPATH",
+      "anchor_ids": ["E23", "E24", "E22", "E25", "E26"],
+      "member_ids": [],
+      "description": "Request latches and address decoding to index and tag."
+    },
+    {
+      "name": "Lookup Logic",
+      "kind": "CONTROLLER",
+      "anchor_ids": ["E29", "E35", "E36"],
+      "member_ids": [],
+      "description": "Hit detection and state-dependent gating signals."
+    },
+    {
+      "name": "Output Path",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E17", "E9"],
+      "member_ids": [],
+      "description": "Output buffer and response data."
+    },
+    {
+      "name": "CPU Interface",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E3", "E4", "E8"],
+      "member_ids": [],
+      "description": "CPU request/response handshake."
+    }
+  ],
+  "interfaces": [
+    {
+      "name": "cpu_request",
+      "protocol": "VALID_READY",
+      "direction": "IN",
+      "member_ids": ["E3", "E4", "E6", "E7", "E10"]
+    },
+    {
+      "name": "cpu_response",
+      "protocol": "VALID_READY",
+      "direction": "OUT",
+      "member_ids": ["E8", "E9"]
+    },
+    {
+      "name": "memory_request",
+      "protocol": "VALID_READY",
+      "direction": "OUT",
+      "member_ids": ["E11", "E12", "E13", "E14"]
+    },
+    {
+      "name": "memory_response",
+      "protocol": "VALID_READY",
+      "direction": "IN",
+      "member_ids": ["E15", "E16"]
+    },
+    {
+      "name": "status",
+      "protocol": "SIMPLE",
+      "direction": "OUT",
+      "member_ids": ["E10"]
+    }
+  ]
+}

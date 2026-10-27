@@ -1,0 +1,25 @@
+stateDiagram-v2
+    [*] --> STATE_IDLE
+    ANY_STATE --> STATE_ADDRESS : start_bit
+    ANY_STATE --> STATE_IDLE : !start_bit && stop_bit
+    STATE_IDLE --> STATE_IDLE : !start_bit && !stop_bit
+    STATE_ADDRESS --> STATE_ADDRESS : !start_bit && !stop_bit && scl_posedge && bit_count_reg > 0
+    STATE_ADDRESS --> STATE_ACK : !start_bit && !stop_bit && scl_posedge && !(bit_count_reg > 0) && shift_reg[6∶0] == DEV_ADDR
+    STATE_ADDRESS --> STATE_IDLE : !start_bit && !stop_bit && scl_posedge && !(bit_count_reg > 0) && !(shift_reg[6∶0] == DEV_ADDR)
+    STATE_ADDRESS --> STATE_ADDRESS : !start_bit && !stop_bit && !scl_posedge
+    STATE_ACK --> STATE_READ_1 : !start_bit && !stop_bit && scl_negedge && mode_read_reg
+    STATE_ACK --> STATE_WRITE_1 : !start_bit && !stop_bit && scl_negedge && !mode_read_reg
+    STATE_ACK --> STATE_ACK : !start_bit && !stop_bit && !scl_negedge
+    STATE_WRITE_1 --> STATE_WRITE_2 : !start_bit && !stop_bit && scl_negedge
+    STATE_WRITE_1 --> STATE_WRITE_1 : !start_bit && !stop_bit && !scl_negedge
+    STATE_WRITE_2 --> STATE_WRITE_2 : !start_bit && !stop_bit && scl_posedge && bit_count_reg > 0
+    STATE_WRITE_2 --> STATE_ACK : !start_bit && !stop_bit && scl_posedge && !(bit_count_reg > 0)
+    STATE_WRITE_2 --> STATE_WRITE_2 : !start_bit && !stop_bit && !scl_posedge
+    STATE_READ_1 --> STATE_READ_1 : !start_bit && !stop_bit && scl_negedge && bit_count_reg > 0
+    STATE_READ_1 --> STATE_READ_2 : !start_bit && !stop_bit && scl_negedge && !(bit_count_reg > 0)
+    STATE_READ_1 --> STATE_READ_1 : !start_bit && !stop_bit && !scl_negedge
+    STATE_READ_2 --> STATE_READ_3 : !start_bit && !stop_bit && scl_negedge
+    STATE_READ_2 --> STATE_READ_2 : !start_bit && !stop_bit && !scl_negedge
+    STATE_READ_3 --> STATE_IDLE : !start_bit && !stop_bit && scl_posedge && sda_i_reg
+    STATE_READ_3 --> STATE_READ_1 : !start_bit && !stop_bit && scl_posedge && !sda_i_reg
+    STATE_READ_3 --> STATE_READ_3 : !start_bit && !stop_bit && !scl_posedge

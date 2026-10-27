@@ -1,0 +1,2363 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "picorv32_wb",
+ "tops": [
+  "picorv32_wb"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "picorv32": {
+   "source": "teacher",
+   "canonical_instance": "picorv32_wb.picorv32_core",
+   "file": "data/rtl/picorv32/picorv32.v",
+   "lines": [
+    62,
+    2167
+   ],
+   "summary": "PicoRV32 multi-cycle RISC-V core: a cpu_state FSM sequences fetch, register read, execute, shift and load/store through a single memory interface FSM, with a predecoder, 32-entry register file, operand registers and ALU, plus optional PCPI, IRQ and trace.",
+   "blocks": [
+    {
+     "name": "Core control FSM",
+     "kind": "CONTROLLER",
+     "description": "cpu_state FSM sequencing fetch, operand read, execute, shift and memory phases.",
+     "anchors": [
+      {
+       "id": "E187",
+       "name": "cpu_state",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.7,
+       "struct_score": 99.4,
+       "trace": "control_backward",
+       "why": "Main core FSM: trap, fetch, ld_rs1, ld_rs2, exec, shift, stmem, ldmem.",
+       "lines": [
+        1181,
+        1483,
+        1486
+       ]
+      },
+      {
+       "id": "E142",
+       "name": "decoder_trigger",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 50.4,
+       "struct_score": 34.2,
+       "trace": "control_backward",
+       "why": "Pulse when fetched instruction ready; triggers decode and launch.",
+       "lines": [
+        658,
+        1037,
+        1446
+       ]
+      },
+      {
+       "id": "E144",
+       "name": "decoder_pseudo_trigger",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 20.4,
+       "struct_score": 25.9,
+       "trace": "control_backward",
+       "why": "Re-trigger decode without new fetch, suppressing instr refresh.",
+       "lines": [
+        660,
+        1037,
+        1875
+       ]
+      },
+      {
+       "id": "E179",
+       "name": "launch_next_insn",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 15.4,
+       "struct_score": 5.7,
+       "trace": "control_backward",
+       "why": "Fetch state with decoded instruction ready and no IRQ pending.",
+       "lines": [
+        768,
+        1400,
+        1416
+       ]
+      },
+      {
+       "id": "E195",
+       "name": "latched_branch",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 20.1,
+       "struct_score": 24.7,
+       "trace": "control_backward",
+       "why": "Branch taken flag selecting next_pc target and link write.",
+       "lines": [
+        1204,
+        1213,
+        1316
+       ]
+      },
+      {
+       "id": "E193",
+       "name": "latched_store",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 19.9,
+       "struct_score": 24.1,
+       "trace": "control_backward",
+       "why": "Pending register write-back flag.",
+       "lines": [
+        1202,
+        1320,
+        1479
+       ]
+      },
+      {
+       "id": "E211",
+       "name": "alu_wait",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.2,
+       "struct_score": 13.2,
+       "trace": "control_backward",
+       "why": "Stall for two-cycle ALU/compare results.",
+       "lines": [
+        1223,
+        1645
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "trap",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 48.5,
+       "struct_score": 26.6,
+       "trace": "control_backward",
+       "why": "Trap output halting the core on illegal instruction or misalignment.",
+       "lines": [
+        91,
+        566,
+        1488
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E143",
+       "name": "decoder_trigger_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E145",
+       "name": "decoder_pseudo_trigger_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E194",
+       "name": "latched_stalu",
+       "kind": "reg"
+      },
+      {
+       "id": "E196",
+       "name": "latched_compr",
+       "kind": "reg"
+      },
+      {
+       "id": "E197",
+       "name": "latched_trace",
+       "kind": "reg"
+      },
+      {
+       "id": "E212",
+       "name": "alu_wait_2",
+       "kind": "reg"
+      },
+      {
+       "id": "E178",
+       "name": "dbg_next",
+       "kind": "reg"
+      },
+      {
+       "id": "E202",
+       "name": "current_pc",
+       "kind": "reg"
+      },
+      {
+       "id": "E206",
+       "name": "do_waitirq",
+       "kind": "reg"
+      },
+      {
+       "id": "E203",
+       "name": "pcpi_timeout_counter",
+       "kind": "reg"
+      },
+      {
+       "id": "E204",
+       "name": "pcpi_timeout",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Memory interface",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Memory FSM issuing fetch/load/store requests, aligning data, latching instructions.",
+     "anchors": [
+      {
+       "id": "E65",
+       "name": "mem_state",
+       "role": "FSM_STATE",
+       "importance": "major",
+       "score": 69.3,
+       "struct_score": 93.2,
+       "trace": "control_backward",
+       "why": "Memory interface FSM sequencing request, wait and completion.",
+       "lines": [
+        351,
+        581,
+        587
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "mem_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 92.9,
+       "struct_score": 82.0,
+       "trace": "interface",
+       "why": "Memory request valid, set by memory FSM for fetch/load/store.",
+       "lines": [
+        93,
+        373,
+        590
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "mem_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 77.1,
+       "struct_score": 29.1,
+       "trace": "interface",
+       "why": "Memory ready completing a transfer (mem_xfer).",
+       "lines": [
+        95,
+        373,
+        569
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "mem_addr",
+       "role": "INTERFACE_ADDR",
+       "importance": "critical",
+       "score": 86.8,
+       "struct_score": 65.3,
+       "trace": "interface",
+       "why": "Memory address from next PC or reg_op1 via look-ahead address.",
+       "lines": [
+        97,
+        575
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "mem_wdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 90.4,
+       "struct_score": 75.8,
+       "trace": "interface",
+       "why": "Store data from reg_op2, byte/half replicated.",
+       "lines": [
+        98,
+        579
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "mem_rdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 88.2,
+       "struct_score": 70.2,
+       "trace": "interface",
+       "why": "Instruction or load data read from memory.",
+       "lines": [
+        100,
+        407,
+        432
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "mem_wstrb",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 22.9,
+       "struct_score": 36.1,
+       "trace": "control_backward",
+       "why": "Byte write strobes from word size and address alignment.",
+       "lines": [
+        99,
+        576
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "mem_instr",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 17.6,
+       "struct_score": 14.7,
+       "trace": "control_backward",
+       "why": "Marks memory request as instruction fetch.",
+       "lines": [
+        94,
+        585
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "mem_la_read",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 34.0,
+       "struct_score": 74.9,
+       "trace": "interface",
+       "why": "Look-ahead read request one cycle before mem_valid.",
+       "lines": [
+        103,
+        380,
+        574
+       ]
+      },
+      {
+       "id": "E70",
+       "name": "mem_do_rinst",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 50.9,
+       "struct_score": 36.1,
+       "trace": "control_backward",
+       "why": "Instruction fetch request flag to memory FSM; triggers decode on done.",
+       "lines": [
+        356,
+        373,
+        1446
+       ]
+      },
+      {
+       "id": "E69",
+       "name": "mem_do_prefetch",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 19.6,
+       "struct_score": 22.9,
+       "trace": "control_backward",
+       "why": "Prefetch next instruction request to memory FSM.",
+       "lines": [
+        355,
+        375,
+        382
+       ]
+      },
+      {
+       "id": "E71",
+       "name": "mem_do_rdata",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.1,
+       "struct_score": 16.7,
+       "trace": "control_backward",
+       "why": "Load data request flag to memory FSM.",
+       "lines": [
+        357,
+        375,
+        376
+       ]
+      },
+      {
+       "id": "E72",
+       "name": "mem_do_wdata",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.5,
+       "struct_score": 14.3,
+       "trace": "control_backward",
+       "why": "Store data request flag driving mem_la_write.",
+       "lines": [
+        358,
+        379
+       ]
+      },
+      {
+       "id": "E86",
+       "name": "mem_done",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 22.9,
+       "struct_score": 36.3,
+       "trace": "control_backward",
+       "why": "Memory operation complete pulse advancing core FSM and decoder.",
+       "lines": [
+        376,
+        866,
+        1446
+       ]
+      },
+      {
+       "id": "E66",
+       "name": "mem_wordsize",
+       "role": "MUX_SELECT",
+       "importance": "minor",
+       "score": 19.1,
+       "struct_score": 20.7,
+       "trace": "control_backward",
+       "why": "Selects word/half/byte for wdata, wstrb and rdata alignment.",
+       "lines": [
+        352,
+        403,
+        1861
+       ]
+      },
+      {
+       "id": "E68",
+       "name": "mem_rdata_q",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 30.7,
+       "struct_score": 64.7,
+       "trace": "data_backward",
+       "why": "Latched fetched instruction feeding second-stage decode.",
+       "lines": [
+        354,
+        432,
+        1047
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E73",
+       "name": "mem_xfer",
+       "kind": "wire"
+      },
+      {
+       "id": "E74",
+       "name": "mem_la_secondword",
+       "kind": "reg"
+      },
+      {
+       "id": "E75",
+       "name": "mem_la_firstword_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E76",
+       "name": "last_mem_valid",
+       "kind": "reg"
+      },
+      {
+       "id": "E77",
+       "name": "mem_la_firstword",
+       "kind": "wire"
+      },
+      {
+       "id": "E78",
+       "name": "mem_la_firstword_xfer",
+       "kind": "wire"
+      },
+      {
+       "id": "E79",
+       "name": "prefetched_high_word",
+       "kind": "reg"
+      },
+      {
+       "id": "E80",
+       "name": "clear_prefetched_high_word",
+       "kind": "comb"
+      },
+      {
+       "id": "E81",
+       "name": "mem_16bit_buffer",
+       "kind": "reg"
+      },
+      {
+       "id": "E82",
+       "name": "mem_rdata_latched_noshuffle",
+       "kind": "wire"
+      },
+      {
+       "id": "E83",
+       "name": "mem_rdata_latched",
+       "kind": "wire"
+      },
+      {
+       "id": "E84",
+       "name": "mem_la_use_prefetched_high_word",
+       "kind": "wire"
+      },
+      {
+       "id": "E85",
+       "name": "mem_busy",
+       "kind": "wire"
+      },
+      {
+       "id": "E67",
+       "name": "mem_rdata_word",
+       "kind": "comb"
+      },
+      {
+       "id": "E12",
+       "name": "mem_la_write",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "mem_la_addr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "mem_la_wdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "mem_la_wstrb",
+       "kind": "port_out"
+      },
+      {
+       "id": "E190",
+       "name": "set_mem_do_rinst",
+       "kind": "reg"
+      },
+      {
+       "id": "E191",
+       "name": "set_mem_do_rdata",
+       "kind": "reg"
+      },
+      {
+       "id": "E192",
+       "name": "set_mem_do_wdata",
+       "kind": "reg"
+      },
+      {
+       "id": "E219",
+       "name": "clear_prefetched_high_word_q",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Instruction decoder",
+     "kind": "DECODER",
+     "description": "Two-stage predecode of fetched word into opcode-class and instruction flags.",
+     "anchors": [
+      {
+       "id": "E148",
+       "name": "is_lb_lh_lw_lbu_lhu",
+       "role": "DECODE",
+       "importance": "major",
+       "score": 47.3,
+       "struct_score": 21.5,
+       "trace": "control_backward",
+       "why": "Representative predecoded opcode class (loads) steering decode and FSM.",
+       "lines": [
+        665,
+        875,
+        1696
+       ]
+      },
+      {
+       "id": "E89",
+       "name": "instr_jal",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 17.5,
+       "struct_score": 14.2,
+       "trace": "control_backward",
+       "why": "Representative per-instruction decode flag.",
+       "lines": [
+        646,
+        869
+       ]
+      },
+      {
+       "id": "E136",
+       "name": "instr_trap",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 19.1,
+       "struct_score": 20.8,
+       "trace": "control_backward",
+       "why": "Illegal/unsupported instruction decode, routes to PCPI or trap.",
+       "lines": [
+        653,
+        679,
+        1585
+       ]
+      },
+      {
+       "id": "E138",
+       "name": "decoded_rs1",
+       "role": "INDEX",
+       "importance": "major",
+       "score": 43.7,
+       "struct_score": 7.1,
+       "trace": "data_backward",
+       "why": "Decoded rs1 index reading register file.",
+       "lines": [
+        655,
+        883,
+        1352
+       ]
+      },
+      {
+       "id": "E139",
+       "name": "decoded_rs2",
+       "role": "INDEX",
+       "importance": "minor",
+       "score": 16.2,
+       "struct_score": 8.8,
+       "trace": "data_backward",
+       "why": "Decoded rs2 index for second register operand.",
+       "lines": [
+        656,
+        884
+       ]
+      },
+      {
+       "id": "E137",
+       "name": "decoded_rd",
+       "role": "INDEX",
+       "importance": "minor",
+       "score": 15.2,
+       "struct_score": 4.9,
+       "trace": "data_backward",
+       "why": "Decoded destination register index.",
+       "lines": [
+        655,
+        882
+       ]
+      },
+      {
+       "id": "E140",
+       "name": "decoded_imm",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 20.4,
+       "struct_score": 25.8,
+       "trace": "data_backward",
+       "why": "Decoded immediate for ALU operands, branches and addresses.",
+       "lines": [
+        657,
+        1124,
+        1806
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E36",
+       "name": "next_insn_opcode",
+       "kind": "reg"
+      },
+      {
+       "id": "E87",
+       "name": "instr_lui",
+       "kind": "reg"
+      },
+      {
+       "id": "E88",
+       "name": "instr_auipc",
+       "kind": "reg"
+      },
+      {
+       "id": "E90",
+       "name": "instr_jalr",
+       "kind": "reg"
+      },
+      {
+       "id": "E91",
+       "name": "instr_beq",
+       "kind": "reg"
+      },
+      {
+       "id": "E92",
+       "name": "instr_bne",
+       "kind": "reg"
+      },
+      {
+       "id": "E93",
+       "name": "instr_blt",
+       "kind": "reg"
+      },
+      {
+       "id": "E94",
+       "name": "instr_bge",
+       "kind": "reg"
+      },
+      {
+       "id": "E95",
+       "name": "instr_bltu",
+       "kind": "reg"
+      },
+      {
+       "id": "E96",
+       "name": "instr_bgeu",
+       "kind": "reg"
+      },
+      {
+       "id": "E97",
+       "name": "instr_lb",
+       "kind": "reg"
+      },
+      {
+       "id": "E98",
+       "name": "instr_lh",
+       "kind": "reg"
+      },
+      {
+       "id": "E99",
+       "name": "instr_lw",
+       "kind": "reg"
+      },
+      {
+       "id": "E100",
+       "name": "instr_lbu",
+       "kind": "reg"
+      },
+      {
+       "id": "E101",
+       "name": "instr_lhu",
+       "kind": "reg"
+      },
+      {
+       "id": "E102",
+       "name": "instr_sb",
+       "kind": "reg"
+      },
+      {
+       "id": "E103",
+       "name": "instr_sh",
+       "kind": "reg"
+      },
+      {
+       "id": "E104",
+       "name": "instr_sw",
+       "kind": "reg"
+      },
+      {
+       "id": "E105",
+       "name": "instr_addi",
+       "kind": "reg"
+      },
+      {
+       "id": "E106",
+       "name": "instr_slti",
+       "kind": "reg"
+      },
+      {
+       "id": "E107",
+       "name": "instr_sltiu",
+       "kind": "reg"
+      },
+      {
+       "id": "E108",
+       "name": "instr_xori",
+       "kind": "reg"
+      },
+      {
+       "id": "E109",
+       "name": "instr_ori",
+       "kind": "reg"
+      },
+      {
+       "id": "E110",
+       "name": "instr_andi",
+       "kind": "reg"
+      },
+      {
+       "id": "E111",
+       "name": "instr_slli",
+       "kind": "reg"
+      },
+      {
+       "id": "E112",
+       "name": "instr_srli",
+       "kind": "reg"
+      },
+      {
+       "id": "E113",
+       "name": "instr_srai",
+       "kind": "reg"
+      },
+      {
+       "id": "E114",
+       "name": "instr_add",
+       "kind": "reg"
+      },
+      {
+       "id": "E115",
+       "name": "instr_sub",
+       "kind": "reg"
+      },
+      {
+       "id": "E116",
+       "name": "instr_sll",
+       "kind": "reg"
+      },
+      {
+       "id": "E117",
+       "name": "instr_slt",
+       "kind": "reg"
+      },
+      {
+       "id": "E118",
+       "name": "instr_sltu",
+       "kind": "reg"
+      },
+      {
+       "id": "E119",
+       "name": "instr_xor",
+       "kind": "reg"
+      },
+      {
+       "id": "E120",
+       "name": "instr_srl",
+       "kind": "reg"
+      },
+      {
+       "id": "E121",
+       "name": "instr_sra",
+       "kind": "reg"
+      },
+      {
+       "id": "E122",
+       "name": "instr_or",
+       "kind": "reg"
+      },
+      {
+       "id": "E123",
+       "name": "instr_and",
+       "kind": "reg"
+      },
+      {
+       "id": "E124",
+       "name": "instr_rdcycle",
+       "kind": "reg"
+      },
+      {
+       "id": "E125",
+       "name": "instr_rdcycleh",
+       "kind": "reg"
+      },
+      {
+       "id": "E126",
+       "name": "instr_rdinstr",
+       "kind": "reg"
+      },
+      {
+       "id": "E127",
+       "name": "instr_rdinstrh",
+       "kind": "reg"
+      },
+      {
+       "id": "E128",
+       "name": "instr_ecall_ebreak",
+       "kind": "reg"
+      },
+      {
+       "id": "E129",
+       "name": "instr_fence",
+       "kind": "reg"
+      },
+      {
+       "id": "E130",
+       "name": "instr_getq",
+       "kind": "reg"
+      },
+      {
+       "id": "E131",
+       "name": "instr_setq",
+       "kind": "reg"
+      },
+      {
+       "id": "E132",
+       "name": "instr_retirq",
+       "kind": "reg"
+      },
+      {
+       "id": "E133",
+       "name": "instr_maskirq",
+       "kind": "reg"
+      },
+      {
+       "id": "E134",
+       "name": "instr_waitirq",
+       "kind": "reg"
+      },
+      {
+       "id": "E135",
+       "name": "instr_timer",
+       "kind": "reg"
+      },
+      {
+       "id": "E141",
+       "name": "decoded_imm_j",
+       "kind": "reg"
+      },
+      {
+       "id": "E146",
+       "name": "compressed_instr",
+       "kind": "reg"
+      },
+      {
+       "id": "E147",
+       "name": "is_lui_auipc_jal",
+       "kind": "reg"
+      },
+      {
+       "id": "E149",
+       "name": "is_slli_srli_srai",
+       "kind": "reg"
+      },
+      {
+       "id": "E150",
+       "name": "is_jalr_addi_slti_sltiu_xori_ori_andi",
+       "kind": "reg"
+      },
+      {
+       "id": "E151",
+       "name": "is_sb_sh_sw",
+       "kind": "reg"
+      },
+      {
+       "id": "E152",
+       "name": "is_sll_srl_sra",
+       "kind": "reg"
+      },
+      {
+       "id": "E153",
+       "name": "is_lui_auipc_jal_jalr_addi_add_sub",
+       "kind": "reg"
+      },
+      {
+       "id": "E154",
+       "name": "is_slti_blt_slt",
+       "kind": "reg"
+      },
+      {
+       "id": "E155",
+       "name": "is_sltiu_bltu_sltu",
+       "kind": "reg"
+      },
+      {
+       "id": "E156",
+       "name": "is_beq_bne_blt_bge_bltu_bgeu",
+       "kind": "reg"
+      },
+      {
+       "id": "E157",
+       "name": "is_lbu_lhu_lw",
+       "kind": "reg"
+      },
+      {
+       "id": "E158",
+       "name": "is_alu_reg_imm",
+       "kind": "reg"
+      },
+      {
+       "id": "E159",
+       "name": "is_alu_reg_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E160",
+       "name": "is_compare",
+       "kind": "reg"
+      },
+      {
+       "id": "E161",
+       "name": "is_rdcycle_rdcycleh_rdinstr_rdinstrh",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Register file",
+     "kind": "REGISTER_BANK",
+     "description": "32x32 register file with write-back mux and read ports.",
+     "anchors": [
+      {
+       "id": "E52",
+       "name": "cpuregs",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 88.7,
+       "struct_score": 71.5,
+       "trace": "data_backward",
+       "why": "Register file written at latched_rd, read via decoded rs1/rs2.",
+       "lines": [
+        203,
+        1344,
+        1352
+       ]
+      },
+      {
+       "id": "E201",
+       "name": "latched_rd",
+       "role": "INDEX",
+       "importance": "minor",
+       "score": 15.3,
+       "struct_score": 5.4,
+       "trace": "data_backward",
+       "why": "Destination index used for register file write-back.",
+       "lines": [
+        1210,
+        1338,
+        1344
+       ]
+      },
+      {
+       "id": "E220",
+       "name": "cpuregs_write",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 14.4,
+       "struct_score": 1.5,
+       "trace": "control_backward",
+       "why": "Register file write enable in fetch state.",
+       "lines": [
+        1303,
+        1318,
+        1338
+       ]
+      },
+      {
+       "id": "E221",
+       "name": "cpuregs_wrdata",
+       "role": "MUX_SELECT",
+       "importance": "minor",
+       "score": 19.2,
+       "struct_score": 21.2,
+       "trace": "data_backward",
+       "why": "Write-back mux: link PC, ALU/reg_out result, IRQ values.",
+       "lines": [
+        1304,
+        1317,
+        1321
+       ]
+      },
+      {
+       "id": "E222",
+       "name": "cpuregs_rs1",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 18.0,
+       "struct_score": 16.3,
+       "trace": "data_backward",
+       "why": "Register file read port 1 value loaded into reg_op1.",
+       "lines": [
+        1305,
+        1352,
+        1361
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E223",
+       "name": "cpuregs_rs2",
+       "kind": "comb"
+      },
+      {
+       "id": "E224",
+       "name": "decoded_rs",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Execute datapath",
+     "kind": "DATAPATH",
+     "description": "Operand registers, ALU, shifter and result/PC registers.",
+     "anchors": [
+      {
+       "id": "E32",
+       "name": "reg_op1",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 53.4,
+       "struct_score": 45.8,
+       "trace": "data_backward",
+       "why": "ALU operand 1 / load-store address register.",
+       "lines": [
+        176,
+        382,
+        1231
+       ]
+      },
+      {
+       "id": "E33",
+       "name": "reg_op2",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 52.5,
+       "struct_score": 42.5,
+       "trace": "data_backward",
+       "why": "ALU operand 2 / store data register.",
+       "lines": [
+        176,
+        405,
+        1231
+       ]
+      },
+      {
+       "id": "E207",
+       "name": "alu_out",
+       "role": "DATAPATH_MAJOR",
+       "importance": "critical",
+       "score": 72.3,
+       "struct_score": 9.2,
+       "trace": "data_backward",
+       "why": "ALU result mux: add/sub, compare, logic and shift results.",
+       "lines": [
+        1221,
+        1271,
+        1275
+       ]
+      },
+      {
+       "id": "E209",
+       "name": "alu_out_0",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 15.0,
+       "struct_score": 4.3,
+       "trace": "data_backward",
+       "why": "Compare/branch condition result from eq/lt comparators.",
+       "lines": [
+        1222,
+        1254,
+        1273
+       ]
+      },
+      {
+       "id": "E213",
+       "name": "alu_add_sub",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 15.4,
+       "struct_score": 5.8,
+       "trace": "data_backward",
+       "why": "Adder/subtractor of reg_op1 and reg_op2.",
+       "lines": [
+        1225,
+        1240,
+        1271
+       ]
+      },
+      {
+       "id": "E34",
+       "name": "reg_out",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 52.8,
+       "struct_score": 43.5,
+       "trace": "data_backward",
+       "why": "Result register for loads, shifts, counters; write-back and branch target.",
+       "lines": [
+        176,
+        1213,
+        1321
+       ]
+      },
+      {
+       "id": "E35",
+       "name": "reg_sh",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 20.6,
+       "struct_score": 26.8,
+       "trace": "control_backward",
+       "why": "Remaining shift amount counter in shift state.",
+       "lines": [
+        177,
+        1709,
+        1761
+       ]
+      },
+      {
+       "id": "E30",
+       "name": "reg_pc",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 45.5,
+       "struct_score": 14.2,
+       "trace": "data_backward",
+       "why": "Program counter of current instruction; used for AUIPC/JAL link.",
+       "lines": [
+        176,
+        1526,
+        1642
+       ]
+      },
+      {
+       "id": "E31",
+       "name": "reg_next_pc",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 19.3,
+       "struct_score": 21.5,
+       "trace": "data_backward",
+       "why": "Next sequential PC feeding next_pc fetch address.",
+       "lines": [
+        176,
+        1213,
+        1495
+       ]
+      },
+      {
+       "id": "E46",
+       "name": "next_pc",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 17.4,
+       "struct_score": 13.7,
+       "trace": "data_backward",
+       "why": "Fetch PC: branch target from reg_out or reg_next_pc.",
+       "lines": [
+        194,
+        382,
+        1213
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E208",
+       "name": "alu_out_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E210",
+       "name": "alu_out_0_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E214",
+       "name": "alu_shl",
+       "kind": "comb"
+      },
+      {
+       "id": "E215",
+       "name": "alu_shr",
+       "kind": "comb"
+      },
+      {
+       "id": "E216",
+       "name": "alu_eq",
+       "kind": "comb"
+      },
+      {
+       "id": "E217",
+       "name": "alu_ltu",
+       "kind": "comb"
+      },
+      {
+       "id": "E218",
+       "name": "alu_lts",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Counters, IRQ, PCPI and trace",
+     "kind": "OTHER",
+     "description": "Optional cycle/instr counters, interrupt logic, co-processor and trace outputs.",
+     "anchors": [
+      {
+       "id": "E28",
+       "name": "count_cycle",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 21.0,
+       "struct_score": 28.5,
+       "trace": "none",
+       "why": "64-bit cycle counter read by RDCYCLE.",
+       "lines": [
+        175,
+        1433,
+        1630
+       ]
+      },
+      {
+       "id": "E29",
+       "name": "count_instr",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 22.4,
+       "struct_score": 34.3,
+       "trace": "none",
+       "why": "64-bit retired instruction counter read by RDINSTR.",
+       "lines": [
+        175,
+        1564,
+        1634
+       ]
+      },
+      {
+       "id": "E188",
+       "name": "irq_state",
+       "role": "FSM_STATE",
+       "importance": "minor",
+       "score": 39.1,
+       "struct_score": 87.5,
+       "trace": "control_backward",
+       "why": "IRQ entry sequencing state (IRQ disabled by parameter).",
+       "lines": [
+        1182,
+        1324,
+        1506
+       ]
+      },
+      {
+       "id": "E48",
+       "name": "irq_active",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.6,
+       "struct_score": 18.8,
+       "trace": "control_backward",
+       "why": "Interrupt handler active flag (IRQ disabled).",
+       "lines": [
+        197,
+        1471,
+        1508
+       ]
+      },
+      {
+       "id": "E49",
+       "name": "irq_mask",
+       "role": "CONFIG_REG",
+       "importance": "minor",
+       "score": 21.4,
+       "struct_score": 30.2,
+       "trace": "control_backward",
+       "why": "Software-set IRQ mask register (IRQ disabled).",
+       "lines": [
+        198,
+        1473,
+        1512
+       ]
+      },
+      {
+       "id": "E50",
+       "name": "irq_pending",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 17.3,
+       "struct_score": 13.5,
+       "trace": "control_backward",
+       "why": "Pending interrupt bits (IRQ disabled).",
+       "lines": [
+        199,
+        1440,
+        1512
+       ]
+      },
+      {
+       "id": "E51",
+       "name": "timer",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 23.5,
+       "struct_score": 38.6,
+       "trace": "none",
+       "why": "IRQ timer countdown (IRQ disabled).",
+       "lines": [
+        200,
+        1442,
+        1443
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "pcpi_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 32.9,
+       "struct_score": 71.9,
+       "trace": "interface",
+       "why": "Co-processor request valid (PCPI disabled by parameter).",
+       "lines": [
+        110,
+        1424,
+        1469
+       ]
+      },
+      {
+       "id": "E64",
+       "name": "pcpi_int_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 15.5,
+       "struct_score": 6.0,
+       "trace": "control_backward",
+       "why": "Merged co-processor ready from external PCPI, MUL, DIV.",
+       "lines": [
+        270,
+        329,
+        1598
+       ]
+      },
+      {
+       "id": "E26",
+       "name": "trace_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 27.4,
+       "struct_score": 52.9,
+       "trace": "interface",
+       "why": "Trace output valid (trace disabled by parameter).",
+       "lines": [
+        158,
+        1519
+       ]
+      },
+      {
+       "id": "E27",
+       "name": "trace_data",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 33.6,
+       "struct_score": 73.9,
+       "trace": "interface",
+       "why": "Trace payload: branch targets, addresses, results.",
+       "lines": [
+        159,
+        1521,
+        1523
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E47",
+       "name": "irq_delay",
+       "kind": "reg"
+      },
+      {
+       "id": "E205",
+       "name": "next_irq_pending",
+       "kind": "reg"
+      },
+      {
+       "id": "E25",
+       "name": "eoi",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "pcpi_insn",
+       "kind": "port_out"
+      },
+      {
+       "id": "E53",
+       "name": "pcpi_mul_wr",
+       "kind": "wire"
+      },
+      {
+       "id": "E54",
+       "name": "pcpi_mul_rd",
+       "kind": "wire"
+      },
+      {
+       "id": "E55",
+       "name": "pcpi_mul_wait",
+       "kind": "wire"
+      },
+      {
+       "id": "E56",
+       "name": "pcpi_mul_ready",
+       "kind": "wire"
+      },
+      {
+       "id": "E57",
+       "name": "pcpi_div_wr",
+       "kind": "wire"
+      },
+      {
+       "id": "E58",
+       "name": "pcpi_div_rd",
+       "kind": "wire"
+      },
+      {
+       "id": "E59",
+       "name": "pcpi_div_wait",
+       "kind": "wire"
+      },
+      {
+       "id": "E60",
+       "name": "pcpi_div_ready",
+       "kind": "wire"
+      },
+      {
+       "id": "E61",
+       "name": "pcpi_int_wr",
+       "kind": "comb"
+      },
+      {
+       "id": "E62",
+       "name": "pcpi_int_rd",
+       "kind": "comb"
+      },
+      {
+       "id": "E63",
+       "name": "pcpi_int_wait",
+       "kind": "comb"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "resetn",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "trap",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "memory",
+     "protocol": "MEMORY_BUS",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "mem_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "mem_instr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "mem_ready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "mem_addr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E8",
+       "name": "mem_wdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "mem_wstrb",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "mem_rdata",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "memory_lookahead",
+     "protocol": "MEMORY_BUS",
+     "direction": "OUT",
+     "member_ids": [
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "mem_la_read",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "mem_la_write",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "mem_la_addr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "mem_la_wdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "mem_la_wstrb",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "pcpi",
+     "protocol": "REQ_ACK",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20",
+      "E21",
+      "E22",
+      "E23"
+     ],
+     "members": [
+      {
+       "id": "E16",
+       "name": "pcpi_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "pcpi_insn",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "pcpi_rs1",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "pcpi_rs2",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "pcpi_wr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E21",
+       "name": "pcpi_rd",
+       "kind": "port_in"
+      },
+      {
+       "id": "E22",
+       "name": "pcpi_wait",
+       "kind": "port_in"
+      },
+      {
+       "id": "E23",
+       "name": "pcpi_ready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "irq",
+     "protocol": "SIMPLE",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E24",
+      "E25"
+     ],
+     "members": [
+      {
+       "id": "E24",
+       "name": "irq",
+       "kind": "port_in"
+      },
+      {
+       "id": "E25",
+       "name": "eoi",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "trace",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E26",
+      "E27"
+     ],
+     "members": [
+      {
+       "id": "E26",
+       "name": "trace_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E27",
+       "name": "trace_data",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "picorv32_wb": {
+   "source": "teacher",
+   "canonical_instance": "picorv32_wb",
+   "file": "data/rtl/picorv32/picorv32.v",
+   "lines": [
+    2815,
+    3049
+   ],
+   "summary": "PicoRV32 RISC-V core wrapped with a Wishbone master: a 3-state FSM latches the core's native memory request onto Wishbone signals, waits for ack, and returns read data with a one-cycle mem_ready.",
+   "blocks": [
+    {
+     "name": "PicoRV32 core",
+     "kind": "OTHER",
+     "description": "Multi-cycle RISC-V core issuing native valid/ready memory requests.",
+     "anchors": [
+      {
+       "id": "E1",
+       "name": "trap",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 47.7,
+       "struct_score": 23.1,
+       "trace": "interface",
+       "why": "Core trap status output.",
+       "lines": [
+        2842,
+        2941
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "mem_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 55.8,
+       "struct_score": 54.2,
+       "trace": "data_backward",
+       "why": "Core memory request starting a Wishbone cycle in IDLE.",
+       "lines": [
+        2899,
+        2943,
+        3010
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "mem_instr",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 19.7,
+       "struct_score": 23.1,
+       "trace": "interface",
+       "why": "Indicates current core memory access is instruction fetch.",
+       "lines": [
+        2897,
+        2947
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "picorv32_core",
+       "module": "picorv32"
+      }
+     ],
+     "members": [
+      {
+       "id": "E26",
+       "name": "mem_addr",
+       "kind": "wire"
+      },
+      {
+       "id": "E27",
+       "name": "mem_wdata",
+       "kind": "wire"
+      },
+      {
+       "id": "E31",
+       "name": "clk",
+       "kind": "wire"
+      },
+      {
+       "id": "E32",
+       "name": "resetn",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Wishbone bridge FSM",
+     "kind": "CONTROLLER",
+     "description": "Converts core request into one Wishbone cycle and returns ready/rdata.",
+     "anchors": [
+      {
+       "id": "E33",
+       "name": "state",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.5,
+       "struct_score": 98.8,
+       "trace": "control_backward",
+       "why": "IDLE/WBSTART/WBEND bridge FSM sequencing Wishbone cycles.",
+       "lines": [
+        2993,
+        3008,
+        3018
+       ]
+      },
+      {
+       "id": "E29",
+       "name": "mem_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 48.3,
+       "struct_score": 25.8,
+       "trace": "control_backward",
+       "why": "One-cycle completion pulse back to the core.",
+       "lines": [
+        2903,
+        2948,
+        3030
+       ]
+      },
+      {
+       "id": "E30",
+       "name": "mem_rdata",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 50.7,
+       "struct_score": 35.3,
+       "trace": "data_backward",
+       "why": "Holds Wishbone read data returned to the core.",
+       "lines": [
+        2904,
+        2949,
+        3029
+       ]
+      },
+      {
+       "id": "E34",
+       "name": "we",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 18.5,
+       "struct_score": 18.3,
+       "trace": "control_backward",
+       "why": "Write decode from OR of mem_wstrb bits.",
+       "lines": [
+        2995,
+        2996,
+        3013
+       ]
+      },
+      {
+       "id": "E28",
+       "name": "mem_wstrb",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 18.9,
+       "struct_score": 19.7,
+       "trace": "data_backward",
+       "why": "Core byte write strobes, drive we and wbm_sel_o.",
+       "lines": [
+        2902,
+        2996,
+        3014
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Wishbone master port",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Registered Wishbone address, data, select, strobe and cycle outputs.",
+     "anchors": [
+      {
+       "id": "E4",
+       "name": "wbm_adr_o",
+       "role": "INTERFACE_ADDR",
+       "importance": "critical",
+       "score": 92.0,
+       "struct_score": 79.7,
+       "trace": "data_backward",
+       "why": "Wishbone address latched from core mem_addr.",
+       "lines": [
+        2848,
+        3011
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "wbm_dat_o",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 68.2,
+       "struct_score": 90.4,
+       "trace": "data_backward",
+       "why": "Wishbone write data latched from core mem_wdata.",
+       "lines": [
+        2849,
+        3012
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "wbm_dat_i",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 65.2,
+       "struct_score": 82.8,
+       "trace": "interface",
+       "why": "Wishbone read data captured into mem_rdata on ack.",
+       "lines": [
+        2850,
+        3029
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "wbm_we_o",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 54.1,
+       "struct_score": 48.2,
+       "trace": "control_backward",
+       "why": "Wishbone write enable from any nonzero strobe.",
+       "lines": [
+        2851,
+        3013
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "wbm_sel_o",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 27.5,
+       "struct_score": 53.3,
+       "trace": "data_backward",
+       "why": "Wishbone byte selects latched from mem_wstrb.",
+       "lines": [
+        2852,
+        3014
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "wbm_stb_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 65.3,
+       "struct_score": 83.1,
+       "trace": "control_backward",
+       "why": "Wishbone strobe asserted with cyc during WBSTART.",
+       "lines": [
+        2853,
+        3016,
+        3034
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "wbm_ack_i",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 88.8,
+       "struct_score": 71.7,
+       "trace": "interface",
+       "why": "Wishbone ack ends cycle, captures read data and moves FSM.",
+       "lines": [
+        2854,
+        3028
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "wbm_cyc_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 93.3,
+       "struct_score": 83.1,
+       "trace": "control_backward",
+       "why": "Wishbone cycle asserted on core request until ack.",
+       "lines": [
+        2855,
+        3017,
+        3035
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Coprocessor, IRQ and trace",
+     "kind": "OTHER",
+     "description": "Optional core side interfaces passed through to ports.",
+     "anchors": [
+      {
+       "id": "E12",
+       "name": "pcpi_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 33.7,
+       "struct_score": 74.0,
+       "trace": "interface",
+       "why": "Coprocessor request valid; PCPI disabled by default.",
+       "lines": [
+        2858,
+        2951
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "irq",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 27.2,
+       "struct_score": 52.3,
+       "trace": "interface",
+       "why": "Interrupt request inputs; IRQ disabled by default.",
+       "lines": [
+        2868,
+        2960
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "trace_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 33.7,
+       "struct_score": 74.0,
+       "trace": "interface",
+       "why": "Trace output valid; trace disabled by default.",
+       "lines": [
+        2894,
+        2985
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E13",
+       "name": "pcpi_insn",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "pcpi_rs1",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "pcpi_rs2",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "pcpi_wr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E17",
+       "name": "pcpi_rd",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "pcpi_wait",
+       "kind": "port_in"
+      },
+      {
+       "id": "E19",
+       "name": "pcpi_ready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E21",
+       "name": "eoi",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "trace_data",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E2",
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E2",
+       "name": "wb_rst_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "wb_clk_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "wishbone_master",
+     "protocol": "MEMORY_BUS",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "wbm_adr_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "wbm_dat_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "wbm_dat_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "wbm_we_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E8",
+       "name": "wbm_sel_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "wbm_stb_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "wbm_ack_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "wbm_cyc_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "pcpi",
+     "protocol": "REQ_ACK",
+     "direction": "OUT",
+     "member_ids": [
+      "E12",
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18",
+      "E19"
+     ],
+     "members": [
+      {
+       "id": "E12",
+       "name": "pcpi_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "pcpi_insn",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "pcpi_rs1",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "pcpi_rs2",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "pcpi_wr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E17",
+       "name": "pcpi_rd",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "pcpi_wait",
+       "kind": "port_in"
+      },
+      {
+       "id": "E19",
+       "name": "pcpi_ready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "irq",
+     "protocol": "SIMPLE",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E20",
+      "E21"
+     ],
+     "members": [
+      {
+       "id": "E20",
+       "name": "irq",
+       "kind": "port_in"
+      },
+      {
+       "id": "E21",
+       "name": "eoi",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "trace",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E22",
+      "E23"
+     ],
+     "members": [
+      {
+       "id": "E22",
+       "name": "trace_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "trace_data",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E1",
+      "E24"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "trap",
+       "kind": "port_out"
+      },
+      {
+       "id": "E24",
+       "name": "mem_instr",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

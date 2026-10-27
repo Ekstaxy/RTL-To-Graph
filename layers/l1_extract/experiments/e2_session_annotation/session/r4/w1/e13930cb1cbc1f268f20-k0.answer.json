@@ -1,0 +1,36 @@
+{
+ "module_summary": "Wishbone clock-domain-crossing bridge: master-side registers capture a request, 3-flop synchronizers pass stb/cyc and done handshakes between domains, slave-side registers replay it and return the response.",
+ "anchors": [
+  {"id": "E30", "name": "wbm_stb_i_reg", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Captured master strobe; marks pending request, synchronized into slave domain.", "lines": [130, 148, 220]},
+  {"id": "E34", "name": "wbm_cyc_i_reg", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Captured master cycle; holds request while slave side completes.", "lines": [130, 152, 216]},
+  {"id": "E25", "name": "wbm_adr_i_reg", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Holds request address across the clock-domain crossing.", "lines": [143, 188]},
+  {"id": "E26", "name": "wbm_dat_i_reg", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Holds master write data until slave-side cycle starts.", "lines": [144, 190]},
+  {"id": "E28", "name": "wbm_we_i_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Holds master write-enable command for slave replay.", "lines": [146, 191]},
+  {"id": "E29", "name": "wbm_sel_i_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Holds master byte-select for slave replay.", "lines": [147, 192]},
+  {"id": "E27", "name": "wbm_dat_o_reg", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Master-side read data latched from slave-domain response.", "lines": [134, 104]},
+  {"id": "E31", "name": "wbm_ack_o_reg", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "Master-side ack, set when done edge arrives from slave domain.", "lines": [135, 105]},
+  {"id": "E37", "name": "wbm_done_sync3", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Done synchronizer chain into master domain; edge detect completes master cycle.", "lines": [132, 159]},
+  {"id": "E54", "name": "wbs_done_reg", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Slave-side completion flag sent back to master domain.", "lines": [185, 157]},
+  {"id": "E53", "name": "wbs_stb_o_sync3", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Stb synchronizer chain into slave domain; rising edge starts slave cycle.", "lines": [186, 222]},
+  {"id": "E50", "name": "wbs_cyc_o_sync3", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Cyc synchronizer chain; falling edge clears slave-side registers.", "lines": [199, 218]},
+  {"id": "E43", "name": "wbs_stb_o_reg", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Slave-side strobe register replaying master request.", "lines": [193, 113]},
+  {"id": "E47", "name": "wbs_cyc_o_reg", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Slave-side cycle register driving wbs_cyc_o.", "lines": [197, 114]},
+  {"id": "E38", "name": "wbs_adr_o_reg", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Slave-side address register loaded from master capture.", "lines": [188, 109]},
+  {"id": "E40", "name": "wbs_dat_o_reg", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Slave-side write data register driving wbs_dat_o.", "lines": [190, 110]},
+  {"id": "E39", "name": "wbs_dat_i_reg", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Captures slave read data at end of cycle for master return.", "lines": [179, 134]},
+  {"id": "E44", "name": "wbs_ack_i_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Latched slave ack status carried to master domain.", "lines": [180, 135]},
+  {"id": "E21", "name": "wbs_ack_i", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Slave acknowledge ends slave cycle and latches response.", "lines": [177, 180]},
+  {"id": "E8", "name": "wbm_stb_i", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Master strobe request captured in idle state.", "lines": [148]}
+ ],
+ "groups": [
+  {"name": "Master-side capture", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E8", "E30", "E34", "E25", "E26", "E28", "E29", "E27", "E31"], "member_ids": ["E32", "E33", "E3", "E4", "E6", "E7", "E12", "E5", "E9", "E10", "E11"], "description": "Latches master request, holds it, returns slave response and ack/err/rty."},
+  {"name": "CDC synchronizers", "kind": "OTHER", "anchor_ids": ["E37", "E53", "E50", "E54"], "member_ids": ["E35", "E36", "E48", "E49", "E51", "E52"], "description": "3-flop synchronizers for stb/cyc to slave and done back to master."},
+  {"name": "Slave-side replay", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E43", "E47", "E38", "E40", "E39", "E44", "E21"], "member_ids": ["E41", "E42", "E45", "E46", "E15", "E16", "E17", "E18", "E19", "E20", "E22", "E23", "E24"], "description": "Replays captured request on slave bus, captures slave response."}
+ ],
+ "interfaces": [
+  {"name": "master_clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "slave_clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E13", "E14"]},
+  {"name": "wb_master_port", "protocol": "MEMORY_BUS", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12"]},
+  {"name": "wb_slave_port", "protocol": "MEMORY_BUS", "direction": "OUT", "member_ids": ["E15", "E16", "E17", "E18", "E19", "E20", "E21", "E22", "E23", "E24"]}
+ ]
+}

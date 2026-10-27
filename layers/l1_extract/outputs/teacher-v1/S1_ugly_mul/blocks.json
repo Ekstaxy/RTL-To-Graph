@@ -1,0 +1,336 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "S1_ugly_mul",
+ "tops": [
+  "ugly_mul"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "ugly_mul": {
+   "source": "teacher",
+   "canonical_instance": "ugly_mul",
+   "file": "experiments/e3_perturb_benchmark/data/ugly_mul/S1/ugly_mul.v",
+   "lines": [
+    1,
+    64
+   ],
+   "summary": "Sequential 16x16 shift-and-add multiplier: one-hot 3-state FSM loads operands, accumulates masked shifted multiplicand for 16 cycles, then pulses done.",
+   "blocks": [
+    {
+     "name": "mul_controller",
+     "kind": "CONTROLLER",
+     "description": "One-hot idle/iterate/finish FSM producing load, busy and done.",
+     "anchors": [
+      {
+       "id": "E10",
+       "name": "st",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.6,
+       "struct_score": 99.1,
+       "trace": "control_backward",
+       "why": "One-hot state register: idle, iterate, finish; gates load, accumulate and busy.",
+       "lines": [
+        15,
+        40,
+        54
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "load",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 22.1,
+       "struct_score": 32.9,
+       "trace": "control_backward",
+       "why": "Operand load enable: idle and start clears sum and counter.",
+       "lines": [
+        25,
+        49
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "last",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 19.1,
+       "struct_score": 20.8,
+       "trace": "control_backward",
+       "why": "Counter equals 16; triggers transition to finish.",
+       "lines": [
+        24,
+        32
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "d",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 95.3,
+       "struct_score": 88.2,
+       "trace": "control_backward",
+       "why": "Registered one-cycle done pulse from finish state, accompanying product.",
+       "lines": [
+        18,
+        44
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "bz",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 51.0,
+       "struct_score": 36.5,
+       "trace": "control_backward",
+       "why": "Busy level while FSM iterates.",
+       "lines": [
+        8,
+        63
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E11",
+       "name": "st_nx",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "shift_add_datapath",
+     "kind": "DATAPATH",
+     "description": "Shifted multiplicand, shifting multiplier and accumulating adder.",
+     "anchors": [
+      {
+       "id": "E8",
+       "name": "sum",
+       "role": "DATAPATH_MAJOR",
+       "importance": "critical",
+       "score": 86.8,
+       "struct_score": 65.3,
+       "trace": "data_backward",
+       "why": "Product accumulator adding partial product each iteration; drives p.",
+       "lines": [
+        13,
+        55,
+        62
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "mcand",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 56.7,
+       "struct_score": 57.6,
+       "trace": "data_backward",
+       "why": "Multiplicand operand latched from a, shifted left each iteration.",
+       "lines": [
+        50,
+        56
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "mplier",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 54.9,
+       "struct_score": 51.0,
+       "trace": "data_backward",
+       "why": "Multiplier operand latched from b, shifted right; LSB gates partial product.",
+       "lines": [
+        23,
+        51,
+        57
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "part",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 24.6,
+       "struct_score": 42.6,
+       "trace": "data_backward",
+       "why": "Partial product: multiplicand masked by multiplier LSB.",
+       "lines": [
+        23,
+        55
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E7",
+       "name": "p",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "iteration_counter",
+     "kind": "COUNTER_TIMER",
+     "description": "Five-bit cycle counter bounding 16 iterations.",
+     "anchors": [
+      {
+       "id": "E9",
+       "name": "ctr",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 57.7,
+       "struct_score": 61.2,
+       "trace": "control_backward",
+       "why": "Iteration counter; reaching 16 ends iterate state.",
+       "lines": [
+        24,
+        53,
+        58
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "operand_input",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Start command with two 16-bit operands.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "s",
+       "role": "COMMAND",
+       "importance": "critical",
+       "score": 81.2,
+       "struct_score": 44.9,
+       "trace": "interface",
+       "why": "Start command; in idle loads operands and enters iterate.",
+       "lines": [
+        4,
+        25,
+        30
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "a",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 94.4,
+       "struct_score": 85.9,
+       "trace": "interface",
+       "why": "Multiplicand operand input.",
+       "lines": [
+        5,
+        50
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "b",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 94.4,
+       "struct_score": 85.9,
+       "trace": "interface",
+       "why": "Multiplier operand input.",
+       "lines": [
+        6,
+        51
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "c",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rn",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "operands",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "a",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "b",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "result",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E7",
+      "E14",
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E7",
+       "name": "p",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "d",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "bz",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

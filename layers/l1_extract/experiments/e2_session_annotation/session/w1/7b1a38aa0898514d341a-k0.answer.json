@@ -1,0 +1,43 @@
+{
+ "module_summary": "Direct-mapped write-through cache: a 5-state FSM latches CPU requests, checks tag/valid arrays, refills misses and writes through via a req/ack memory port.",
+ "anchors": [
+  {"id":"E17","name":"state_q","role":"FSM_STATE","importance":"critical","trace":"control_backward","why":"IDLE/LOOKUP/WRITE_MEM/REFILL/RESPOND controller driving handshakes, memory requests, array updates."},
+  {"id":"E20","name":"data_array","role":"STORAGE","importance":"critical","trace":"data_backward","why":"Cached data lines, filled on refill and updated on write hits."},
+  {"id":"E19","name":"tag_array","role":"STORAGE","importance":"critical","trace":"data_backward","why":"Per-line tags written on refill and compared for hit detection."},
+  {"id":"E21","name":"valid_bits","role":"STORAGE","importance":"major","trace":"control_backward","why":"Per-line valid bits set on refill, qualify hit."},
+  {"id":"E27","name":"hit","role":"CONTROL_FLAG","importance":"critical","trace":"control_backward","why":"Tag match with valid; selects RESPOND vs REFILL and gates write-hit updates."},
+  {"id":"E22","name":"addr_q","role":"PIPELINE_REG","importance":"major","trace":"data_backward","why":"Latched request address providing index/tag and the memory address."},
+  {"id":"E23","name":"wdata_q","role":"PIPELINE_REG","importance":"major","trace":"data_backward","why":"Latched write data sent to memory and written into data_array on hit."},
+  {"id":"E24","name":"we_q","role":"CONTROL_FLAG","importance":"major","trace":"control_backward","why":"Latched write flag steering FSM to WRITE_MEM write-through path."},
+  {"id":"E25","name":"index","role":"INTERFACE_ADDR","importance":"minor","trace":"data_backward","why":"Line index from addr_q addressing tag, data and valid arrays."},
+  {"id":"E26","name":"tag","role":"DATAPATH_MAJOR","importance":"minor","trace":"data_backward","why":"Address tag field compared against tag_array and stored on refill."},
+  {"id":"E28","name":"rdata_q","role":"DATAPATH_MAJOR","importance":"major","trace":"data_backward","why":"Response data register muxed from hit data, refill data or write data."},
+  {"id":"E3","name":"cpu_req_valid","role":"HANDSHAKE_VALID","importance":"critical","trace":"interface","why":"CPU request valid; starts lookup and latches request fields."},
+  {"id":"E4","name":"cpu_req_ready","role":"HANDSHAKE_READY","importance":"critical","trace":"interface","why":"Ready when FSM idle."},
+  {"id":"E5","name":"cpu_we","role":"CONTROL_FLAG","importance":"major","trace":"interface","why":"Request write/read type latched into we_q."},
+  {"id":"E6","name":"cpu_addr","role":"INTERFACE_ADDR","importance":"critical","trace":"interface","why":"CPU request address latched into addr_q."},
+  {"id":"E7","name":"cpu_wdata","role":"INTERFACE_DATA","importance":"major","trace":"interface","why":"CPU write data latched into wdata_q."},
+  {"id":"E8","name":"cpu_resp_valid","role":"HANDSHAKE_VALID","importance":"critical","trace":"interface","why":"Response valid pulse in RESPOND state."},
+  {"id":"E9","name":"cpu_rdata","role":"INTERFACE_DATA","importance":"critical","trace":"interface","why":"Read response data from rdata_q."},
+  {"id":"E10","name":"stall_o","role":"CONTROL_FLAG","importance":"minor","trace":"control_backward","why":"Stall indication while lookup or memory access in progress."},
+  {"id":"E11","name":"mem_req","role":"HANDSHAKE_VALID","importance":"critical","trace":"interface","why":"Memory request during REFILL or WRITE_MEM."},
+  {"id":"E15","name":"mem_ack","role":"HANDSHAKE_READY","importance":"critical","trace":"interface","why":"Memory acknowledge completing refill/write and advancing FSM."},
+  {"id":"E12","name":"mem_we","role":"CONTROL_FLAG","importance":"major","trace":"interface","why":"Memory write strobe for write-through accesses."},
+  {"id":"E13","name":"mem_addr","role":"INTERFACE_ADDR","importance":"critical","trace":"interface","why":"Memory address from latched addr_q."},
+  {"id":"E14","name":"mem_wdata","role":"INTERFACE_DATA","importance":"major","trace":"interface","why":"Write-through data from wdata_q."},
+  {"id":"E16","name":"mem_rdata","role":"INTERFACE_DATA","importance":"critical","trace":"interface","why":"Refill data written to data_array and rdata_q."}
+ ],
+ "groups": [
+  {"name":"cache_fsm","kind":"CONTROLLER","anchor_ids":["E17","E10"],"member_ids":["E18"],"description":"Sequences lookup, write-through, refill and response; generates handshakes."},
+  {"name":"cache_arrays","kind":"MEMORY","anchor_ids":["E20","E19","E21"],"member_ids":[],"description":"Tag, data and valid storage for 16 direct-mapped lines."},
+  {"name":"hit_logic","kind":"DECODER","anchor_ids":["E27","E25","E26"],"member_ids":[],"description":"Splits address into index/tag and compares against stored tag and valid."},
+  {"name":"request_latch","kind":"PIPELINE_STAGE","anchor_ids":["E22","E23","E24"],"member_ids":[],"description":"Holds accepted CPU request address, data and write flag."},
+  {"name":"response_path","kind":"DATAPATH","anchor_ids":["E28"],"member_ids":[],"description":"Selects and registers read data returned to CPU."}
+ ],
+ "interfaces": [
+  {"name":"clk_rst","protocol":"CLOCK_RESET","direction":"IN","member_ids":["E1","E2"]},
+  {"name":"cpu_req","protocol":"VALID_READY","direction":"IN","member_ids":["E3","E4","E5","E6","E7"]},
+  {"name":"cpu_resp","protocol":"VALID_READY","direction":"OUT","member_ids":["E8","E9","E10"]},
+  {"name":"mem_port","protocol":"REQ_ACK","direction":"BIDIR","member_ids":["E11","E12","E13","E14","E15","E16"]}
+ ]
+}

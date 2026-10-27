@@ -1,0 +1,52 @@
+{
+ "module_summary": "Wishbone NM-by-NS crossbar: per-master skid buffer and address decoder form requests, a fixed-priority arbiter grants slave channels, index LUTs route requests and returns, and pending counters hold grants.",
+ "anchors": [
+  {"id": "E4", "name": "i_mstb", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Per-master Wishbone strobe entering the request skid buffers", "lines": [267]},
+  {"id": "E6", "name": "i_maddr", "role": "INTERFACE_ADDR", "importance": "major", "trace": "interface", "why": "Master addresses buffered then decoded into slave requests", "lines": [268]},
+  {"id": "E7", "name": "i_mdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Master write data routed to the granted slave port", "lines": [269]},
+  {"id": "E9", "name": "o_mstall", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Per-master stall from skid buffer ready", "lines": [276]},
+  {"id": "E46", "name": "dcd_stb", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "Decoder output valid qualifying each master's request vector", "lines": [295, 301]},
+  {"id": "E23", "name": "request", "role": "DECODE", "importance": "major", "trace": "control_backward", "why": "Per-master one-hot decoded slave request (plus no-slave bit) feeding arbitration", "lines": [301, 340]},
+  {"id": "E36", "name": "m_stb", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "Decoded master strobe gated by pending-full; counts pending transactions", "lines": [304, 1039]},
+  {"id": "E24", "name": "requested", "role": "ARBITRATION", "importance": "minor", "trace": "control_backward", "why": "Priority mask: slave already requested by a lower-numbered master", "lines": [335, 343]},
+  {"id": "E59", "name": "ARBITRATE_REQUESTS[*].stay_on_channel", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Holds current grant while requests or pending transactions remain", "lines": [480, 514]},
+  {"id": "E60", "name": "ARBITRATE_REQUESTS[*].requested_channel_is_available", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Requested slave free and unclaimed by higher priority, enabling new grant", "lines": [491, 516]},
+  {"id": "E25", "name": "grant", "role": "ARBITRATION", "importance": "critical", "trace": "control_backward", "why": "Per-master grant vector over slave channels from registered r_grant", "lines": [528, 341]},
+  {"id": "E26", "name": "mgrant", "role": "ARBITRATION", "importance": "major", "trace": "control_backward", "why": "Master N holds some channel; gates acks, errors and return data", "lines": [527, 482]},
+  {"id": "E55", "name": "SLAVE_GRANT[*].drop_sgrant", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Releases a slave grant when owning master drops cycle or moves on", "lines": [361, 383]},
+  {"id": "E27", "name": "sgrant", "role": "ARBITRATION", "importance": "critical", "trace": "control_backward", "why": "Per-slave busy grant; gates slave cyc/stb and new grants", "lines": [387, 750]},
+  {"id": "E64", "name": "ARBITRATE_REQUESTS[*].MINDEX_MULTIPLE_SLAVES.r_regrant", "role": "ARBITRATION", "importance": "minor", "trace": "control_backward", "why": "Candidate slave channels for master regrant computing next mindex", "lines": [561, 586]},
+  {"id": "E33", "name": "mindex", "role": "MUX_SELECT", "importance": "major", "trace": "control_backward", "why": "Slave index granted to each master; selects return data, ack, stall", "lines": [625, 990]},
+  {"id": "E34", "name": "sindex", "role": "MUX_SELECT", "importance": "major", "trace": "control_backward", "why": "Master index owning each slave; selects forwarded address, data, strobe", "lines": [694, 852]},
+  {"id": "E42", "name": "s_stall", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Slave stall while strobing; holds slave outputs and master stall", "lines": [410, 850]},
+  {"id": "E13", "name": "o_scyc", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Per-slave bus cycle from r_scyc while granted master holds cyc", "lines": [776]},
+  {"id": "E14", "name": "o_sstb", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Per-slave strobe from r_sstb carrying routed requests", "lines": [777]},
+  {"id": "E16", "name": "o_saddr", "role": "INTERFACE_ADDR", "importance": "major", "trace": "interface", "why": "Registered slave address selected from master via sindex", "lines": [861]},
+  {"id": "E17", "name": "o_sdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Registered slave write data routed from owning master", "lines": [862]},
+  {"id": "E21", "name": "i_sdata", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Slave read data returned to the granted master", "lines": [409]},
+  {"id": "E44", "name": "s_ack", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Slave ack qualified by cyc, routed to master via mindex", "lines": [411, 985]},
+  {"id": "E45", "name": "s_err", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Slave bus error; aborts slave cycle and returns master error", "lines": [412, 769]},
+  {"id": "E11", "name": "o_mdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Per-master read data muxed from slave data by mindex", "lines": [990]},
+  {"id": "E10", "name": "o_mack", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Per-master acknowledge routed from granted slave", "lines": [1014]},
+  {"id": "E12", "name": "o_merr", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "Per-master bus error from slave error, no-slave decode or timeout", "lines": [1015]},
+  {"id": "E77", "name": "COUNT_PENDING_TRANSACTIONS[*].lclpending", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Outstanding transactions per master; keeps grant until all acked", "lines": [1041, 1047]},
+  {"id": "E31", "name": "mempty", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "No pending transactions; allows master to switch channel", "lines": [1056, 482]},
+  {"id": "E29", "name": "mfull", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Pending counter full; blocks master strobe and forces stall", "lines": [1057, 304]},
+  {"id": "E32", "name": "timed_out", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Optional deadlock timeout forcing bus error; disabled when OPT_TIMEOUT=0", "lines": [1093, 1000]}
+ ],
+ "groups": [
+  {"name": "Master request decode", "kind": "DECODER", "anchor_ids": ["E4", "E6", "E7", "E9", "E46", "E23", "E36"], "member_ids": ["I1", "I2", "E47", "E48", "E49", "E50", "E51", "E52", "E53", "E54", "E35", "E37", "E38", "E39", "E40", "E5", "E8", "E41"], "description": "Per-master skid buffer and address decoder producing one-hot slave requests"},
+  {"name": "Priority arbiter", "kind": "ARBITER", "anchor_ids": ["E24", "E59", "E60", "E25", "E26", "E55", "E27", "E64"], "member_ids": ["E56", "E57", "E58", "E61", "E62", "E65"], "description": "Fixed-priority grant of slave channels to masters with hold while pending"},
+  {"name": "Routing index tables", "kind": "OTHER", "anchor_ids": ["E33", "E34"], "member_ids": ["E63", "E66", "E67", "E68"], "description": "Registered master-to-slave and slave-to-master indices steering forward and return muxes"},
+  {"name": "Slave port drivers", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E42", "E13", "E14", "E16", "E17"], "member_ids": ["E69", "E70", "E71", "E72", "E73", "E74", "E15", "E18"], "description": "Registered cyc/stb/we/addr/data/sel per slave selected from owning master"},
+  {"name": "Return path", "kind": "DATAPATH", "anchor_ids": ["E21", "E44", "E45", "E11", "E10", "E12"], "member_ids": ["E43", "E75", "E76", "E19", "E20", "E22"], "description": "Muxes slave data, ack and error back to each master by mindex"},
+  {"name": "Pending transaction counters", "kind": "COUNTER_TIMER", "anchor_ids": ["E77", "E31", "E29", "E32"], "member_ids": ["E78", "E79", "E80", "E30", "E28"], "description": "Per-master outstanding count with empty/full flags gating grant changes and strobes"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "master_request", "protocol": "REQ_ACK", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8"]},
+  {"name": "master_response", "protocol": "REQ_ACK", "direction": "OUT", "member_ids": ["E9", "E10", "E11", "E12"]},
+  {"name": "slave_request", "protocol": "REQ_ACK", "direction": "OUT", "member_ids": ["E13", "E14", "E15", "E16", "E17", "E18"]},
+  {"name": "slave_response", "protocol": "REQ_ACK", "direction": "IN", "member_ids": ["E19", "E20", "E21", "E22"]}
+ ]
+}

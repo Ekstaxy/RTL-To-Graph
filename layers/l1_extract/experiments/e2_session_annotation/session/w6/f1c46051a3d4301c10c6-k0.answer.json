@@ -1,0 +1,29 @@
+{
+  "module_summary": "Sequential 16x16 shift-and-add multiplier: one-hot 3-state FSM loads operands, accumulates masked shifted multiplicand for 16 cycles, then pulses done.",
+  "anchors": [
+    {"id": "E10", "name": "st", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "One-hot state register: idle, iterate, finish; gates load, accumulate and busy.", "lines": [15, 40, 54]},
+    {"id": "E8", "name": "sum", "role": "DATAPATH_MAJOR", "importance": "critical", "trace": "data_backward", "why": "Product accumulator adding partial product each iteration; drives p.", "lines": [13, 55, 62]},
+    {"id": "E13", "name": "mcand", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Multiplicand operand latched from a, shifted left each iteration.", "lines": [50, 56]},
+    {"id": "E12", "name": "mplier", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Multiplier operand latched from b, shifted right; LSB gates partial product.", "lines": [23, 51, 57]},
+    {"id": "E9", "name": "ctr", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Iteration counter; reaching 16 ends iterate state.", "lines": [24, 53, 58]},
+    {"id": "E3", "name": "s", "role": "COMMAND", "importance": "critical", "trace": "interface", "why": "Start command; in idle loads operands and enters iterate.", "lines": [4, 25, 30]},
+    {"id": "E4", "name": "a", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Multiplicand operand input.", "lines": [5, 50]},
+    {"id": "E5", "name": "b", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Multiplier operand input.", "lines": [6, 51]},
+    {"id": "E14", "name": "d", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Registered one-cycle done pulse from finish state, accompanying product.", "lines": [18, 44]},
+    {"id": "E6", "name": "bz", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Busy level while FSM iterates.", "lines": [8, 63]},
+    {"id": "E16", "name": "part", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Partial product: multiplicand masked by multiplier LSB.", "lines": [23, 55]},
+    {"id": "E17", "name": "load", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Operand load enable: idle and start clears sum and counter.", "lines": [25, 49]},
+    {"id": "E15", "name": "last", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Counter equals 16; triggers transition to finish.", "lines": [24, 32]}
+  ],
+  "groups": [
+    {"name": "mul_controller", "kind": "CONTROLLER", "anchor_ids": ["E10", "E17", "E15", "E14", "E6"], "member_ids": ["E11"], "description": "One-hot idle/iterate/finish FSM producing load, busy and done."},
+    {"name": "shift_add_datapath", "kind": "DATAPATH", "anchor_ids": ["E8", "E13", "E12", "E16"], "member_ids": ["E7"], "description": "Shifted multiplicand, shifting multiplier and accumulating adder."},
+    {"name": "iteration_counter", "kind": "COUNTER_TIMER", "anchor_ids": ["E9"], "member_ids": [], "description": "Five-bit cycle counter bounding 16 iterations."},
+    {"name": "operand_input", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E3", "E4", "E5"], "member_ids": [], "description": "Start command with two 16-bit operands."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "operands", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E3", "E4", "E5"]},
+    {"name": "result", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E7", "E14", "E6"]}
+  ]
+}

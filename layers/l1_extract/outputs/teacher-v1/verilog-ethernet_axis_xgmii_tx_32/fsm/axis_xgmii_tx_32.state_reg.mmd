@@ -1,0 +1,24 @@
+stateDiagram-v2
+    [*] --> STATE_IDLE
+    ANY_STATE --> STATE_IDLE
+    STATE_IDLE --> STATE_PREAMBLE : s_axis_tvalid && cfg_tx_enable
+    STATE_IDLE --> STATE_IDLE : !(s_axis_tvalid && cfg_tx_enable)
+    STATE_PREAMBLE --> STATE_PAYLOAD
+    STATE_PAYLOAD --> STATE_PAD : (!s_axis_tvalid || s_axis_tlast) && frame_min_count_reg && frame_min_count_reg > CTRL_WIDTH
+    STATE_PAYLOAD --> STATE_FCS_1 : (!s_axis_tvalid || s_axis_tlast) && frame_min_count_reg && !(frame_min_count_reg > CTRL_WIDTH)
+    STATE_PAYLOAD --> STATE_FCS_1 : (!s_axis_tvalid || s_axis_tlast) && !frame_min_count_reg
+    STATE_PAYLOAD --> STATE_PAYLOAD : !(!s_axis_tvalid || s_axis_tlast)
+    STATE_PAD --> STATE_PAD : frame_min_count_reg > CTRL_WIDTH
+    STATE_PAD --> STATE_FCS_1 : !(frame_min_count_reg > CTRL_WIDTH)
+    STATE_FCS_1 --> STATE_ERR : frame_error_reg
+    STATE_FCS_1 --> STATE_FCS_2 : !frame_error_reg
+    STATE_FCS_2 --> STATE_FCS_3 : extra_cycle
+    STATE_FCS_2 --> STATE_IFG : !extra_cycle
+    STATE_FCS_3 --> STATE_IFG : ifg_count_next > 8'd3
+    STATE_FCS_3 --> STATE_IDLE : !(ifg_count_next > 8'd3)
+    STATE_ERR --> STATE_IFG
+    STATE_IFG --> STATE_IFG : (ifg_count_next > 8'd3 || frame_reg)
+    STATE_IFG --> STATE_IDLE : !(ifg_count_next > 8'd3 || frame_reg)
+    %% output reset_crc (moore)
+    %% output start_packet_next (moore)
+    %% output update_crc (moore)

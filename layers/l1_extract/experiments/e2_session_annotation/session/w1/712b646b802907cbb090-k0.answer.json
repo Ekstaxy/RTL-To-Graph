@@ -1,0 +1,22 @@
+{
+ "module_summary": "Round-robin arbiter: double-width subtract trick picks the first requester at or after a one-hot priority pointer; grant locks until accepted, then pointer rotates.",
+ "anchors": [
+  {"id":"E7","name":"prio_q","role":"ARBITRATION","importance":"critical","trace":"control_backward","why":"One-hot round-robin pointer; rotated past the granted requester on accept."},
+  {"id":"E8","name":"gnt_q","role":"ARBITRATION","importance":"critical","trace":"control_backward","why":"Registered one-hot grant vector held while locked, drives gnt_o."},
+  {"id":"E10","name":"locked_q","role":"CONTROL_FLAG","importance":"critical","trace":"control_backward","why":"Grant-held flag; freezes grant until accept_i, triggers pointer rotation, drives gnt_valid_o."},
+  {"id":"E12","name":"dbl_gnt","role":"DATAPATH_MAJOR","importance":"minor","trace":"data_backward","why":"Double-width priority-select result folded into the next grant vector."},
+  {"id":"E3","name":"req_i","role":"HANDSHAKE_VALID","importance":"critical","trace":"interface","why":"Per-requester request vector arbitrated and starting a lock."},
+  {"id":"E4","name":"gnt_o","role":"HANDSHAKE_READY","importance":"critical","trace":"interface","why":"One-hot grant to requesters from gnt_q."},
+  {"id":"E6","name":"gnt_valid_o","role":"HANDSHAKE_VALID","importance":"major","trace":"interface","why":"Indicates a grant is held (locked_q)."},
+  {"id":"E5","name":"accept_i","role":"HANDSHAKE_READY","importance":"major","trace":"interface","why":"Acknowledges the grant; releases lock, clears grant, rotates priority."}
+ ],
+ "groups": [
+  {"name":"rr_select","kind":"ARBITER","anchor_ids":["E7","E8","E12"],"member_ids":["E9","E11"],"description":"Priority pointer and masked select logic computing the one-hot grant."},
+  {"name":"grant_lock","kind":"CONTROLLER","anchor_ids":["E10"],"member_ids":[],"description":"Holds grant until accepted, then releases and rotates priority."}
+ ],
+ "interfaces": [
+  {"name":"clk_rst","protocol":"CLOCK_RESET","direction":"IN","member_ids":["E1","E2"]},
+  {"name":"requesters","protocol":"REQ_ACK","direction":"IN","member_ids":["E3","E4"]},
+  {"name":"grant_handshake","protocol":"VALID_READY","direction":"OUT","member_ids":["E6","E5"]}
+ ]
+}

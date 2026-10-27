@@ -1,0 +1,411 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-axi_arbiter",
+ "tops": [
+  "arbiter"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "priority_encoder": {
+   "source": "heuristic",
+   "canonical_instance": "arbiter.priority_encoder_inst",
+   "file": "data/rtl/verilog-axi/rtl/priority_encoder.v",
+   "lines": [
+    34,
+    90
+   ],
+   "summary": "priority_encoder (heuristic)",
+   "blocks": [
+    {
+     "name": "storage",
+     "kind": "BUFFER",
+     "description": "storage",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "stage_valid",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 69.3,
+       "struct_score": 93.1,
+       "trace": "data_backward",
+       "why": "memory array",
+       "lines": []
+      },
+      {
+       "id": "E7",
+       "name": "stage_enc",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 69.8,
+       "struct_score": 94.6,
+       "trace": "data_backward",
+       "why": "memory array",
+       "lines": []
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E2",
+     "name": "output_valid",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 96.6,
+     "struct_score": 91.5,
+     "trace": "interface",
+     "why": "valid port",
+     "lines": []
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "input",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E1"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "input_unencoded",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "output",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E2",
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E2",
+       "name": "output_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E3",
+       "name": "output_encoded",
+       "kind": "port_out"
+      },
+      {
+       "id": "E4",
+       "name": "output_unencoded",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "arbiter": {
+   "source": "teacher",
+   "canonical_instance": "arbiter",
+   "file": "data/rtl/verilog-axi/rtl/arbiter.v",
+   "lines": [
+    34,
+    157
+   ],
+   "summary": "Parameterized arbiter: two priority encoders (plain and round-robin-masked) pick a requester, registered into one-hot grant, encoded index and valid, with optional blocking hold.",
+   "blocks": [
+    {
+     "name": "Grant controller",
+     "kind": "ARBITER",
+     "description": "Next-grant logic and grant registers selecting one requester per cycle.",
+     "anchors": [
+      {
+       "id": "E8",
+       "name": "grant_reg",
+       "role": "ARBITRATION",
+       "importance": "critical",
+       "score": 96.1,
+       "struct_score": 90.1,
+       "trace": "control_backward",
+       "why": "Registered one-hot grant vector chosen from priority-encoded requests; drives grant port.",
+       "lines": [
+        58,
+        63,
+        150
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "grant_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 97.7,
+       "struct_score": 94.3,
+       "trace": "control_backward",
+       "why": "Grant valid output from grant_valid_reg; used for blocking hold check.",
+       "lines": [
+        54,
+        62,
+        109
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "grant_encoded",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 57.1,
+       "struct_score": 58.9,
+       "trace": "interface",
+       "why": "Binary index of the granted port, from grant_encoded_reg.",
+       "lines": [
+        55,
+        64
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "request_valid",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 50.3,
+       "struct_score": 33.7,
+       "trace": "control_backward",
+       "why": "Any-request flag from priority encoder; enables issuing a new grant.",
+       "lines": [
+        66,
+        76,
+        114
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "request_index",
+       "role": "INDEX",
+       "importance": "minor",
+       "score": 17.0,
+       "struct_score": 12.2,
+       "trace": "data_backward",
+       "why": "Encoded index of highest-priority request, loaded into grant_encoded_next.",
+       "lines": [
+        67,
+        77,
+        128
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E9",
+       "name": "grant_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E10",
+       "name": "grant_valid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E11",
+       "name": "grant_valid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E12",
+       "name": "grant_encoded_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E13",
+       "name": "grant_encoded_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E5",
+       "name": "grant",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "request_mask",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Priority encoders",
+     "kind": "DECODER",
+     "description": "Plain and round-robin-masked priority encoders over requests.",
+     "anchors": [
+      {
+       "id": "E19",
+       "name": "masked_request_valid",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 22.3,
+       "struct_score": 33.7,
+       "trace": "control_backward",
+       "why": "Masked-request present flag choosing masked grant in round-robin mode.",
+       "lines": [
+        83,
+        93,
+        116
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "mask_reg",
+       "role": "ARBITRATION",
+       "importance": "minor",
+       "score": 37.6,
+       "struct_score": 83.8,
+       "trace": "control_backward",
+       "why": "Round-robin priority mask applied to requests; inactive with default ARB_TYPE_ROUND_ROBIN=0.",
+       "lines": [
+        81,
+        92,
+        153
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "priority_encoder_inst",
+       "module": "priority_encoder"
+      },
+      {
+       "id": "I2",
+       "instance": "priority_encoder_masked",
+       "module": "priority_encoder"
+      }
+     ],
+     "members": [
+      {
+       "id": "E18",
+       "name": "mask_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E20",
+       "name": "masked_request_index",
+       "kind": "wire"
+      },
+      {
+       "id": "E21",
+       "name": "masked_request_mask",
+       "kind": "wire"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E3",
+     "name": "request",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 97.6,
+     "struct_score": 93.8,
+     "trace": "interface",
+     "why": "Per-port request vector fed to both priority encoders.",
+     "lines": [
+      50,
+      75,
+      92
+     ]
+    },
+    {
+     "id": "E4",
+     "name": "acknowledge",
+     "role": "HANDSHAKE_READY",
+     "importance": "major",
+     "score": 65.8,
+     "struct_score": 84.4,
+     "trace": "interface",
+     "why": "Per-port acknowledge releasing a held grant in blocking-ack mode.",
+     "lines": [
+      51,
+      109
+     ]
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "request_ack",
+     "protocol": "REQ_ACK",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "request",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "acknowledge",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "grant_out",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E5",
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "grant",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "grant_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "grant_encoded",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

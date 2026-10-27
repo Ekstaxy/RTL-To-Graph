@@ -1,0 +1,308 @@
+[
+ {
+  "module": "axi_dma_rd",
+  "instance": "axi_dma.axi_dma_rd_inst",
+  "state": "axi_state_reg",
+  "next": "axi_state_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "AXI_STATE_IDLE",
+    "value": "1'b0"
+   },
+   {
+    "name": "AXI_STATE_START",
+    "value": "1'b1"
+   }
+  ],
+  "reset_state": "AXI_STATE_IDLE",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "AXI_STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "AXI_STATE_IDLE",
+    "dst": "AXI_STATE_START",
+    "cond": "s_axis_read_desc_ready && s_axis_read_desc_valid"
+   },
+   {
+    "src": "AXI_STATE_IDLE",
+    "dst": "AXI_STATE_IDLE",
+    "cond": "!(s_axis_read_desc_ready && s_axis_read_desc_valid)"
+   },
+   {
+    "src": "AXI_STATE_START",
+    "dst": "AXI_STATE_START",
+    "cond": "!m_axi_arvalid && op_word_count_next > 0"
+   },
+   {
+    "src": "AXI_STATE_START",
+    "dst": "AXI_STATE_IDLE",
+    "cond": "!m_axi_arvalid && !(op_word_count_next > 0)"
+   },
+   {
+    "src": "AXI_STATE_START",
+    "dst": "AXI_STATE_START",
+    "cond": "m_axi_arvalid"
+   }
+  ],
+  "outputs": [],
+  "warnings": [],
+  "semantic_check": "consistent"
+ },
+ {
+  "module": "axi_dma_rd",
+  "instance": "axi_dma.axi_dma_rd_inst",
+  "state": "axis_state_reg",
+  "next": "axis_state_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "AXIS_STATE_IDLE",
+    "value": "1'b0"
+   },
+   {
+    "name": "AXIS_STATE_READ",
+    "value": "1'b1"
+   }
+  ],
+  "reset_state": "AXIS_STATE_IDLE",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "AXIS_STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "AXIS_STATE_IDLE",
+    "dst": "AXIS_STATE_READ",
+    "cond": "axis_cmd_valid_reg"
+   },
+   {
+    "src": "AXIS_STATE_READ",
+    "dst": "AXIS_STATE_IDLE",
+    "cond": "(m_axi_rready && m_axi_rvalid || !input_active_reg) && output_last_cycle_reg"
+   },
+   {
+    "src": "AXIS_STATE_READ",
+    "dst": "AXIS_STATE_READ",
+    "cond": "(m_axi_rready && m_axi_rvalid || !input_active_reg) && !output_last_cycle_reg"
+   },
+   {
+    "src": "AXIS_STATE_READ",
+    "dst": "AXIS_STATE_READ",
+    "cond": "!(m_axi_rready && m_axi_rvalid || !input_active_reg)"
+   }
+  ],
+  "outputs": [],
+  "warnings": [],
+  "semantic_check": "consistent"
+ },
+ {
+  "module": "axi_dma_wr",
+  "instance": "axi_dma.axi_dma_wr_inst",
+  "state": "state_reg",
+  "next": "state_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "STATE_IDLE",
+    "value": "3'b0"
+   },
+   {
+    "name": "STATE_START",
+    "value": "3'b1"
+   },
+   {
+    "name": "STATE_WRITE",
+    "value": "3'b10"
+   },
+   {
+    "name": "STATE_FINISH_BURST",
+    "value": "3'b11"
+   },
+   {
+    "name": "STATE_DROP_DATA",
+    "value": "3'b100"
+   }
+  ],
+  "reset_state": "STATE_IDLE",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_START",
+    "cond": "s_axis_write_desc_ready && s_axis_write_desc_valid"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_IDLE",
+    "cond": "!(s_axis_write_desc_ready && s_axis_write_desc_valid)"
+   },
+   {
+    "src": "STATE_START",
+    "dst": "STATE_WRITE",
+    "cond": "!m_axi_awvalid_reg && active_count_av_reg && m_axi_awvalid_next"
+   },
+   {
+    "src": "STATE_START",
+    "dst": "STATE_START",
+    "cond": "!m_axi_awvalid_reg && active_count_av_reg && !m_axi_awvalid_next"
+   },
+   {
+    "src": "STATE_START",
+    "dst": "STATE_START",
+    "cond": "!(!m_axi_awvalid_reg && active_count_av_reg)"
+   },
+   {
+    "src": "STATE_WRITE",
+    "dst": "STATE_IDLE",
+    "cond": "((s_axis_write_data_tready && shift_axis_tvalid || !input_active_reg && !last_transfer_reg) || !shift_axis_input_tready) && shift_axis_tlast && output_last_cycle_reg"
+   },
+   {
+    "src": "STATE_WRITE",
+    "dst": "STATE_FINISH_BURST",
+    "cond": "((s_axis_write_data_tready && shift_axis_tvalid || !input_active_reg && !last_transfer_reg) || !shift_axis_input_tready) && shift_axis_tlast && !output_last_cycle_reg"
+   },
+   {
+    "src": "STATE_WRITE",
+    "dst": "STATE_START",
+    "cond": "((s_axis_write_data_tready && shift_axis_tvalid || !input_active_reg && !last_transfer_reg) || !shift_axis_input_tready) && !shift_axis_tlast && output_last_cycle_reg && op_word_count_reg > 0"
+   },
+   {
+    "src": "STATE_WRITE",
+    "dst": "STATE_DROP_DATA",
+    "cond": "((s_axis_write_data_tready && shift_axis_tvalid || !input_active_reg && !last_transfer_reg) || !shift_axis_input_tready) && !shift_axis_tlast && output_last_cycle_reg && !(op_word_count_reg > 0)"
+   },
+   {
+    "src": "STATE_WRITE",
+    "dst": "STATE_WRITE",
+    "cond": "((s_axis_write_data_tready && shift_axis_tvalid || !input_active_reg && !last_transfer_reg) || !shift_axis_input_tready) && !shift_axis_tlast && !output_last_cycle_reg"
+   },
+   {
+    "src": "STATE_WRITE",
+    "dst": "STATE_WRITE",
+    "cond": "!((s_axis_write_data_tready && shift_axis_tvalid || !input_active_reg && !last_transfer_reg) || !shift_axis_input_tready)"
+   },
+   {
+    "src": "STATE_FINISH_BURST",
+    "dst": "STATE_IDLE",
+    "cond": "m_axi_wready_int && output_last_cycle_reg"
+   },
+   {
+    "src": "STATE_FINISH_BURST",
+    "dst": "STATE_FINISH_BURST",
+    "cond": "m_axi_wready_int && !output_last_cycle_reg"
+   },
+   {
+    "src": "STATE_FINISH_BURST",
+    "dst": "STATE_FINISH_BURST",
+    "cond": "!m_axi_wready_int"
+   },
+   {
+    "src": "STATE_DROP_DATA",
+    "dst": "STATE_IDLE",
+    "cond": "shift_axis_tvalid && shift_axis_tlast"
+   },
+   {
+    "src": "STATE_DROP_DATA",
+    "dst": "STATE_DROP_DATA",
+    "cond": "shift_axis_tvalid && !shift_axis_tlast"
+   },
+   {
+    "src": "STATE_DROP_DATA",
+    "dst": "STATE_DROP_DATA",
+    "cond": "!shift_axis_tvalid"
+   }
+  ],
+  "outputs": [
+   {
+    "signal": "flush_save",
+    "kind": "moore",
+    "port": false
+   }
+  ],
+  "warnings": [],
+  "semantic_check": "consistent-subset"
+ },
+ {
+  "module": "axi_dma_rd",
+  "instance": "axi_dma.axi_dma_rd_inst",
+  "state": "m_axis_read_desc_status_error_reg",
+  "next": null,
+  "style": "semantic",
+  "states": [
+   {
+    "name": "S_0",
+    "value": "0"
+   },
+   {
+    "name": "S_4",
+    "value": "4"
+   },
+   {
+    "name": "S_5",
+    "value": "5"
+   }
+  ],
+  "reset_state": "S_0",
+  "transitions": [
+   {
+    "src": "S_0",
+    "dst": "S_0",
+    "cond": "(!output_last_cycle_reg) || (!axis_state_reg) || (input_active_reg && !m_axi_rready_reg) || (input_active_reg && !m_axi_rvalid) || (bubble_cycle_reg && first_cycle_reg && m_axi_rvalid && !m_axi_rready_reg && !m_axi_rresp[0])"
+   },
+   {
+    "src": "S_0",
+    "dst": "S_5",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "S_0",
+    "dst": "S_4",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "S_4",
+    "dst": "S_4",
+    "cond": "(!output_last_cycle_reg) || (!axis_state_reg) || (input_active_reg && !m_axi_rvalid) || (input_active_reg && !m_axi_rready_reg)"
+   },
+   {
+    "src": "S_4",
+    "dst": "S_0",
+    "cond": "!bubble_cycle_reg && axis_state_reg && output_last_cycle_reg && !first_cycle_reg && input_active_reg && m_axi_rvalid && m_axi_rready_reg && m_axi_rresp[0] || <datapath condition>"
+   },
+   {
+    "src": "S_4",
+    "dst": "S_5",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "S_5",
+    "dst": "S_5",
+    "cond": "(!output_last_cycle_reg) || (!axis_state_reg) || (input_active_reg && !m_axi_rvalid) || (input_active_reg && !m_axi_rready_reg)"
+   },
+   {
+    "src": "S_5",
+    "dst": "S_0",
+    "cond": "bubble_cycle_reg && axis_state_reg && output_last_cycle_reg && !first_cycle_reg && !input_active_reg && !m_axi_rvalid && !m_axi_rready_reg && !m_axi_rresp[0] || <datapath condition>"
+   },
+   {
+    "src": "S_5",
+    "dst": "S_4",
+    "cond": "<datapath condition>"
+   }
+  ],
+  "outputs": [],
+  "warnings": [
+   "extracted by execution (coding style not recognized syntactically)"
+  ],
+  "semantic_check": "semantic-only"
+ }
+]

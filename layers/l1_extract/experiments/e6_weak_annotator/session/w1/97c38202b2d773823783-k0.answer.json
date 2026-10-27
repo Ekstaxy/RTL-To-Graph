@@ -1,0 +1,105 @@
+{
+  "module_summary": "State machine that shifts input into 24-bit window and detects completion based on one-hot phase tracker.",
+  "anchors": [
+    {
+      "id": "E6",
+      "name": "oh",
+      "role": "FSM_STATE",
+      "importance": "critical",
+      "trace": "control_backward",
+      "why": "One-hot FSM state; cycles HUNT/MID0/MID1/FIN to track 3-cycle pipeline.",
+      "lines": [15, 29, 34]
+    },
+    {
+      "id": "E7",
+      "name": "win",
+      "role": "HOLDING_REG",
+      "importance": "critical",
+      "trace": "data_backward",
+      "why": "24-bit shift register window; accumulates 3 input bytes.",
+      "lines": [16, 24, 40]
+    },
+    {
+      "id": "E2",
+      "name": "in",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "data_backward",
+      "why": "8-bit input data; fed into shift register every cycle.",
+      "lines": [4, 20, 24]
+    },
+    {
+      "id": "E5",
+      "name": "done",
+      "role": "STATUS",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Completion flag; asserted when oh[FIN] reaches final state.",
+      "lines": [7, 38, 40]
+    },
+    {
+      "id": "E4",
+      "name": "out_bytes",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Output data; 24-bit window when done, else undefined.",
+      "lines": [6, 40, 21]
+    },
+    {
+      "id": "E8",
+      "name": "mk",
+      "role": "CONTROL_FLAG",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Mask from input bit[3]; gates state machine transitions.",
+      "lines": [17, 20, 35]
+    },
+    {
+      "id": "E9",
+      "name": "go_mid",
+      "role": "CONTROL_FLAG",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Transition signal; asserted when HUNT/FIN and mk valid.",
+      "lines": [18, 21, 35]
+    }
+  ],
+  "groups": [
+    {
+      "name": "FSM State Machine",
+      "kind": "CONTROLLER",
+      "anchor_ids": ["E6", "E8", "E9"],
+      "member_ids": [],
+      "description": "One-hot state tracker with 3-cycle pipeline sequencing."
+    },
+    {
+      "name": "Data Accumulator",
+      "kind": "DATAPATH",
+      "anchor_ids": ["E2", "E7"],
+      "member_ids": [],
+      "description": "Shift register accumulating 3 input bytes into 24-bit window."
+    },
+    {
+      "name": "Output and Status",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E4", "E5"],
+      "member_ids": [],
+      "description": "Output data and completion flag."
+    }
+  ],
+  "interfaces": [
+    {
+      "name": "data_input",
+      "protocol": "SIMPLE",
+      "direction": "IN",
+      "member_ids": ["E2"]
+    },
+    {
+      "name": "data_output",
+      "protocol": "VALID_READY",
+      "direction": "OUT",
+      "member_ids": ["E4", "E5"]
+    }
+  ]
+}

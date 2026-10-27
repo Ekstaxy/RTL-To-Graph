@@ -1,0 +1,35 @@
+{
+ "module_summary": "Sequential radix-2 restoring divider: a 16-bit shift register holds remainder/quotient, updated each cycle by a subtract-and-mux step under a bit counter, with valid/ready result handshake and sign correction.",
+ "anchors": [
+  {"id": "E12", "name": "SR", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "Shift register holding partial remainder (upper) and quotient (lower) during division.", "lines": [16, 57, 71]},
+  {"id": "E23", "name": "cnt", "role": "COUNTER", "importance": "critical", "trace": "control_backward", "why": "Iteration counter; cnt[3] ends division and raises res_valid.", "lines": [61, 69, 80]},
+  {"id": "E24", "name": "start_cnt", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Busy flag set on operation start, gates the iterative SR/cnt updates.", "lines": [50, 52, 60]},
+  {"id": "E6", "name": "opn_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Operation request; starts division and latches operands when idle.", "lines": [9, 50]},
+  {"id": "E7", "name": "res_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Result valid, set at count end, cleared on data_go acceptance.", "lines": [10, 79, 81]},
+  {"id": "E8", "name": "res_ready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Downstream accepts result; with res_valid forms data_go clearing valid.", "lines": [11, 77]},
+  {"id": "E9", "name": "result", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "16-bit output of sign-corrected remainder and quotient.", "lines": [12, 29]},
+  {"id": "E3", "name": "dividend", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Dividend operand input, absolute value loaded into SR.", "lines": [5, 26, 54]},
+  {"id": "E4", "name": "divisor", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Divisor operand input, negated into NEG_DIVISOR.", "lines": [6, 55, 58]},
+  {"id": "E5", "name": "sign", "role": "COMMAND", "importance": "major", "trace": "interface", "why": "Selects signed vs unsigned division; steers abs and result negation.", "lines": [7, 26, 28]},
+  {"id": "E13", "name": "NEG_DIVISOR", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Negated divisor held across the division, added to remainder each step.", "lines": [17, 35, 58]},
+  {"id": "E22", "name": "mux_result", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Restoring step result: subtraction or unchanged remainder shifted into SR.", "lines": [33, 37, 71]},
+  {"id": "E20", "name": "CO", "role": "CONTROL_FLAG", "importance": "minor", "trace": "data_backward", "why": "Carry-out of trial subtraction; selects mux_result and becomes quotient bit.", "lines": [35, 37, 66]},
+  {"id": "E21", "name": "sub_result", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Trial subtraction of remainder plus NEG_DIVISOR.", "lines": [32, 35, 37]},
+  {"id": "E10", "name": "dividend_save", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Latched dividend, its sign bit drives result sign correction.", "lines": [15, 54, 27]},
+  {"id": "E11", "name": "divisor_save", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Latched divisor, its sign bit decides quotient negation.", "lines": [15, 55, 28]},
+  {"id": "E18", "name": "remainer", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Sign-corrected remainder forming result upper byte.", "lines": [24, 27, 29]},
+  {"id": "E19", "name": "quotient", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Sign-corrected quotient forming result lower byte.", "lines": [24, 28, 29]},
+  {"id": "E25", "name": "data_go", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Handshake completion res_valid & res_ready, clears res_valid.", "lines": [76, 77, 81]}
+ ],
+ "groups": [
+  {"name": "Division control", "kind": "CONTROLLER", "anchor_ids": ["E23", "E24", "E25"], "member_ids": [], "description": "Counter and busy flag sequencing eight iterations and result handshake."},
+  {"name": "Shift-subtract datapath", "kind": "DATAPATH", "anchor_ids": ["E12", "E13", "E22", "E20", "E21"], "member_ids": ["E14", "E15", "E16"], "description": "SR shift register with trial subtraction and restoring mux."},
+  {"name": "Sign correction", "kind": "DATAPATH", "anchor_ids": ["E10", "E11", "E18", "E19", "E9"], "member_ids": [], "description": "Saved operand signs negate remainder and quotient into result."},
+  {"name": "Operation handshake", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E6", "E7", "E8", "E3", "E4", "E5"], "member_ids": [], "description": "Valid/ready request and result handshake with operand inputs."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "operation_request", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E6", "E3", "E4", "E5"]},
+  {"name": "result_response", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E7", "E8", "E9"]}
+ ]
+}

@@ -1,0 +1,32 @@
+digraph "picorv32.cpu_state" {
+  rankdir=LR; node [shape=ellipse, fontname="Helvetica", fontsize=10];
+  edge [fontname="Helvetica", fontsize=8];
+  labelloc=t; label="picorv32.cpu_state (one-process, 8 states)";
+  __reset [shape=point, width=0.15];
+  __reset -> "cpu_state_fetch" [label="reset"];
+  "cpu_state_trap" [label="cpu_state_trap"];
+  "cpu_state_fetch" [peripheries=2, label="cpu_state_fetch"];
+  "cpu_state_ld_rs1" [label="cpu_state_ld_rs1"];
+  "cpu_state_ld_rs2" [label="cpu_state_ld_rs2"];
+  "cpu_state_exec" [label="cpu_state_exec"];
+  "cpu_state_shift" [label="cpu_state_shift"];
+  "cpu_state_stmem" [label="cpu_state_stmem"];
+  "cpu_state_ldmem" [label="cpu_state_ldmem"];
+  "__any" [label="any state", shape=box, style="rounded,dashed", color="#e76f51", fontsize=9];
+  "cpu_state_fetch" -> "cpu_state_ld_rs1" [label="decoder_trigger && !instr_jal"];
+  "cpu_state_ld_rs1" -> "cpu_state_trap" [label="instr_trap"];
+  "cpu_state_ld_rs1" -> "cpu_state_fetch" [label="is_rdcycle_rdcycleh_rdinstr_rdinstrh"];
+  "cpu_state_ld_rs1" -> "cpu_state_exec" [label="is_lui_auipc_jal |\nis_jalr_addi_slti_sltiu_xori_ori_andi |\nelse"];
+  "cpu_state_ld_rs1" -> "cpu_state_ldmem" [label="is_lb_lh_lw_lbu_lhu && !instr_trap"];
+  "cpu_state_ld_rs1" -> "cpu_state_shift" [label="is_slli_srli_srai |\nelse && is_sll_srl_sra"];
+  "cpu_state_ld_rs1" -> "cpu_state_stmem" [label="else && is_sb_sh_sw"];
+  "cpu_state_ld_rs2" -> "cpu_state_stmem" [label="is_sb_sh_sw"];
+  "cpu_state_ld_rs2" -> "cpu_state_shift" [label="is_sll_srl_sra"];
+  "cpu_state_ld_rs2" -> "cpu_state_exec" [label="else"];
+  "cpu_state_exec" -> "cpu_state_fetch" [label="is_beq_bne_blt_bge_bltu_bgeu && mem_done |\n!is_beq_bne_blt_bge_bltu_bgeu"];
+  "cpu_state_shift" -> "cpu_state_fetch" [label="reg_sh == 0"];
+  "cpu_state_stmem" -> "cpu_state_fetch" [label="(!mem_do_prefetch || mem_done) && !mem_do_prefetch && mem_d…"];
+  "cpu_state_ldmem" -> "cpu_state_fetch" [label="(!mem_do_prefetch || mem_done) && !mem_do_prefetch && mem_d…"];
+  "__any" -> "cpu_state_trap" [label="resetn && (mem_do_rdata || mem_do_wdata) && mem_wordsize ==… |\nresetn && (mem_do_rdata || mem_do_wdata) && mem_wordsize ==… |\nresetn && mem_do_rinst && (COMPRESSED_ISA ? reg_pc[0] : |re…", style=dashed, color="#e76f51"];
+  __outs [shape=note, fontsize=9, label="outputs: eoi(moore), pcpi_valid(moore), trace_data(moore), trace_valid(moore), trap(moore), dbg_ascii_state(moore)"];
+}

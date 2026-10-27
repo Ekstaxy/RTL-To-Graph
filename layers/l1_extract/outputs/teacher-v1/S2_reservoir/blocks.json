@@ -1,0 +1,306 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "S2_reservoir",
+ "tops": [
+  "RefModule"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "rsv_track": {
+   "source": "teacher",
+   "canonical_instance": "RefModule.trk0",
+   "file": "experiments/e3_perturb_benchmark/data/reservoir/S2/Prob149_ece241_2013_q4_ref.sv",
+   "lines": [
+    2,
+    31
+   ],
+   "summary": "Reservoir level tracker FSM: six encoded states follow 3-bit level sensors with up/down hysteresis, the state register exported directly as cur.",
+   "blocks": [
+    {
+     "name": "level_fsm",
+     "kind": "CONTROLLER",
+     "description": "State register with comb next-state over sensor levels.",
+     "anchors": [
+      {
+       "id": "E4",
+       "name": "cur",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 100.0,
+       "struct_score": 100.0,
+       "trace": "control_backward",
+       "why": "Level FSM state register, also the output port.",
+       "lines": [
+        6,
+        14,
+        29
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "lv",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 70.2,
+       "struct_score": 95.5,
+       "trace": "interface",
+       "why": "Level sensor inputs steering every FSM transition.",
+       "lines": [
+        5,
+        15,
+        17
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E5",
+       "name": "tmp_n",
+       "kind": "comb"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "c",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "sr",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "sensors",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "lv",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "state_out",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "cur",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "RefModule": {
+   "source": "teacher",
+   "canonical_instance": "RefModule",
+   "file": "experiments/e3_perturb_benchmark/data/reservoir/S2/Prob149_ece241_2013_q4_ref.sv",
+   "lines": [
+    33,
+    73
+   ],
+   "summary": "Reservoir flow controller: a child six-state level-tracker FSM follows the sensor inputs, and a function decodes its state into flow-rate outputs fr2..fr0 plus the supplemental dfr valve.",
+   "blocks": [
+    {
+     "name": "level_tracker",
+     "kind": "CONTROLLER",
+     "description": "rsv_track child FSM following sensor levels with hysteresis.",
+     "anchors": [
+      {
+       "id": "E8",
+       "name": "zq",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 98.5,
+       "struct_score": 96.2,
+       "trace": "data_backward",
+       "why": "Encoded level-tracker state from child; sole input of the flow decoder.",
+       "lines": [
+        43,
+        62,
+        65
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "trk0",
+       "module": "rsv_track"
+      }
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "flow_decoder",
+     "kind": "DECODER",
+     "description": "Maps tracker state to flow-rate and supplemental valve outputs.",
+     "anchors": [
+      {
+       "id": "E9",
+       "name": "flow_vec",
+       "role": "DECODE",
+       "importance": "major",
+       "score": 58.6,
+       "struct_score": 64.3,
+       "trace": "control_backward",
+       "why": "State-decoded flow vector driving all four valve outputs.",
+       "lines": [
+        44,
+        65,
+        68
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "fr2",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 55.6,
+       "struct_score": 53.6,
+       "trace": "data_backward",
+       "why": "Flow-rate output bit (representative of fr2..fr0) decoded from state.",
+       "lines": [
+        37,
+        68
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "dfr",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 55.6,
+       "struct_score": 53.6,
+       "trace": "data_backward",
+       "why": "Supplemental flow valve output decoded from state.",
+       "lines": [
+        40,
+        70
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E5",
+       "name": "fr1",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "fr0",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "reset",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "sensors",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "valves",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E4",
+      "E5",
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "fr2",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "fr1",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "fr0",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "dfr",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

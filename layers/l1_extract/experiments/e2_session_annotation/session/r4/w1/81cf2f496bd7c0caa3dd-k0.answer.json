@@ -1,0 +1,25 @@
+{
+ "module_summary": "10GBASE-R 64b/66b block decoder: per-byte control-code lookup plus block-type case decode produce registered XGMII data/control, with a frame-state bit for sequence error checking.",
+ "anchors": [
+  {"id": "E3", "name": "encoded_rx_data", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "64-bit encoded block payload; block type and control codes decoded from it.", "lines": [158, 204, 208]},
+  {"id": "E4", "name": "encoded_rx_hdr", "role": "MUX_SELECT", "importance": "major", "trace": "interface", "why": "Sync header selects data pass-through versus control block decode, flags bad headers.", "lines": [203, 369, 370]},
+  {"id": "E5", "name": "xgmii_rxd", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Registered decoded XGMII data output.", "lines": [142]},
+  {"id": "E6", "name": "xgmii_rxc", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Registered XGMII per-byte control flags output.", "lines": [143]},
+  {"id": "E7", "name": "rx_bad_block", "role": "STATUS", "importance": "major", "trace": "data_backward", "why": "Registered flag for invalid header, block type or control code.", "lines": [145]},
+  {"id": "E8", "name": "rx_sequence_error", "role": "STATUS", "importance": "major", "trace": "data_backward", "why": "Registered flag for start-in-frame or terminate-outside-frame errors.", "lines": [146]},
+  {"id": "E9", "name": "decoded_ctrl", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Per-byte 7-bit control codes translated to XGMII control characters.", "lines": [160, 211, 297]},
+  {"id": "E10", "name": "decode_err", "role": "CONTROL_FLAG", "importance": "minor", "trace": "data_backward", "why": "Per-lane invalid control code flags feeding bad-block detection.", "lines": [197, 213, 223]},
+  {"id": "E19", "name": "frame_reg", "role": "FSM_STATE", "importance": "major", "trace": "control_backward", "why": "In-frame state set by start, cleared by terminate; checks sequence errors.", "lines": [140, 234, 300]}
+ ],
+ "groups": [
+  {"name": "Control code decoder", "kind": "DECODER", "anchor_ids": ["E9", "E10"], "member_ids": [], "description": "Lookup of eight 7-bit control codes into XGMII characters with error flags."},
+  {"name": "Block type decoder", "kind": "DECODER", "anchor_ids": ["E3", "E4", "E5", "E6", "E7"], "member_ids": ["E11", "E12", "E13", "E14", "E15", "E16"], "description": "Header/block-type case assembles XGMII data/control and bad-block flag into output registers."},
+  {"name": "Frame tracker", "kind": "CONTROLLER", "anchor_ids": ["E19", "E8"], "member_ids": ["E20", "E17", "E18"], "description": "Tracks in-frame state across start/terminate blocks to flag sequence errors."}
+ ],
+ "interfaces": [
+  {"name": "clock/reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "10GBASE-R encoded input", "protocol": "STREAM", "direction": "IN", "member_ids": ["E3", "E4"]},
+  {"name": "XGMII output", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E5", "E6"]},
+  {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E7", "E8"]}
+ ]
+}

@@ -1,0 +1,38 @@
+{
+ "module_summary": "PicoRV32 RISC-V core wrapped with a Wishbone master: a 3-state FSM latches the core's native memory request onto Wishbone signals, waits for ack, and returns read data with a one-cycle mem_ready.",
+ "anchors": [
+  {"id": "E33", "name": "state", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "IDLE/WBSTART/WBEND bridge FSM sequencing Wishbone cycles.", "lines": [2993, 3008, 3018]},
+  {"id": "E11", "name": "wbm_cyc_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Wishbone cycle asserted on core request until ack.", "lines": [2855, 3017, 3035]},
+  {"id": "E10", "name": "wbm_ack_i", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Wishbone ack ends cycle, captures read data and moves FSM.", "lines": [2854, 3028]},
+  {"id": "E4", "name": "wbm_adr_o", "role": "INTERFACE_ADDR", "importance": "critical", "trace": "data_backward", "why": "Wishbone address latched from core mem_addr.", "lines": [2848, 3011]},
+  {"id": "E9", "name": "wbm_stb_o", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Wishbone strobe asserted with cyc during WBSTART.", "lines": [2853, 3016, 3034]},
+  {"id": "E5", "name": "wbm_dat_o", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Wishbone write data latched from core mem_wdata.", "lines": [2849, 3012]},
+  {"id": "E6", "name": "wbm_dat_i", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Wishbone read data captured into mem_rdata on ack.", "lines": [2850, 3029]},
+  {"id": "E7", "name": "wbm_we_o", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Wishbone write enable from any nonzero strobe.", "lines": [2851, 3013]},
+  {"id": "E8", "name": "wbm_sel_o", "role": "ENABLE", "importance": "minor", "trace": "data_backward", "why": "Wishbone byte selects latched from mem_wstrb.", "lines": [2852, 3014]},
+  {"id": "E25", "name": "mem_valid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "data_backward", "why": "Core memory request starting a Wishbone cycle in IDLE.", "lines": [2899, 2943, 3010]},
+  {"id": "E29", "name": "mem_ready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "One-cycle completion pulse back to the core.", "lines": [2903, 3030, 2948]},
+  {"id": "E30", "name": "mem_rdata", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Holds Wishbone read data returned to the core.", "lines": [2904, 3029, 2949]},
+  {"id": "E34", "name": "we", "role": "DECODE", "importance": "minor", "trace": "control_backward", "why": "Write decode from OR of mem_wstrb bits.", "lines": [2995, 2996, 3013]},
+  {"id": "E28", "name": "mem_wstrb", "role": "ENABLE", "importance": "minor", "trace": "data_backward", "why": "Core byte write strobes, drive we and wbm_sel_o.", "lines": [2902, 2996, 3014]},
+  {"id": "E1", "name": "trap", "role": "STATUS", "importance": "major", "trace": "interface", "why": "Core trap status output.", "lines": [2842, 2941]},
+  {"id": "E24", "name": "mem_instr", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "Indicates current core memory access is instruction fetch.", "lines": [2897, 2947]},
+  {"id": "E12", "name": "pcpi_valid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Coprocessor request valid; PCPI disabled by default.", "lines": [2858, 2951]},
+  {"id": "E20", "name": "irq", "role": "COMMAND", "importance": "minor", "trace": "interface", "why": "Interrupt request inputs; IRQ disabled by default.", "lines": [2868, 2960]},
+  {"id": "E22", "name": "trace_valid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Trace output valid; trace disabled by default.", "lines": [2894, 2985]}
+ ],
+ "groups": [
+  {"name": "PicoRV32 core", "kind": "OTHER", "anchor_ids": ["E1", "E25", "E24"], "member_ids": ["I1", "E26", "E27", "E31", "E32"], "description": "Multi-cycle RISC-V core issuing native valid/ready memory requests."},
+  {"name": "Wishbone bridge FSM", "kind": "CONTROLLER", "anchor_ids": ["E33", "E29", "E30", "E34", "E28"], "member_ids": [], "description": "Converts core request into one Wishbone cycle and returns ready/rdata."},
+  {"name": "Wishbone master port", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11"], "member_ids": [], "description": "Registered Wishbone address, data, select, strobe and cycle outputs."},
+  {"name": "Coprocessor, IRQ and trace", "kind": "OTHER", "anchor_ids": ["E12", "E20", "E22"], "member_ids": ["E13", "E14", "E15", "E16", "E17", "E18", "E19", "E21", "E23"], "description": "Optional core side interfaces passed through to ports."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E2", "E3"]},
+  {"name": "wishbone_master", "protocol": "MEMORY_BUS", "direction": "BIDIR", "member_ids": ["E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11"]},
+  {"name": "pcpi", "protocol": "REQ_ACK", "direction": "OUT", "member_ids": ["E12", "E13", "E14", "E15", "E16", "E17", "E18", "E19"]},
+  {"name": "irq", "protocol": "SIMPLE", "direction": "BIDIR", "member_ids": ["E20", "E21"]},
+  {"name": "trace", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E22", "E23"]},
+  {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E1", "E24"]}
+ ]
+}

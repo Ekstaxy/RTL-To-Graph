@@ -1,0 +1,120 @@
+{
+  "module_summary": "Round-robin arbiter selecting one of N requesters; maintains token for fairness and busy state.",
+  "anchors": [
+    {
+      "id": "E3",
+      "name": "req_i",
+      "role": "HANDSHAKE_VALID",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "N-bit request input vector driving priority encoding and any-request detection.",
+      "lines": [21, 26]
+    },
+    {
+      "id": "E4",
+      "name": "gnt_o",
+      "role": "ARBITRATION",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "N-bit grant output: one-hot selection assigned from cur_sel.",
+      "lines": [45]
+    },
+    {
+      "id": "E5",
+      "name": "accept_i",
+      "role": "HANDSHAKE_READY",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Handshake acknowledge: when asserted, clears busy_flag and updates token.",
+      "lines": [34]
+    },
+    {
+      "id": "E6",
+      "name": "gnt_valid_o",
+      "role": "STATUS",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Single-bit valid indicator: asserted when grant is valid (not idle).",
+      "lines": [44]
+    },
+    {
+      "id": "E7",
+      "name": "cur_sel",
+      "role": "ARBITRATION",
+      "importance": "major",
+      "trace": "data_backward",
+      "why": "N-bit register storing current grant selection; updated each cycle if not busy.",
+      "lines": [40, 45]
+    },
+    {
+      "id": "E8",
+      "name": "busy_flag",
+      "role": "CONTROL_FLAG",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Busy flag indicating pending grant; controls state transitions and cur_sel updates.",
+      "lines": [35, 41, 44]
+    },
+    {
+      "id": "E9",
+      "name": "tok",
+      "role": "ARBITRATION",
+      "importance": "major",
+      "trace": "data_backward",
+      "why": "N-bit round-robin token; rotated upon accept to maintain fairness.",
+      "lines": [32, 36]
+    },
+    {
+      "id": "E15",
+      "name": "any_r",
+      "role": "CONTROL_FLAG",
+      "importance": "major",
+      "trace": "forward",
+      "why": "Indicates any request present; drives busy_flag state transitions.",
+      "lines": [26, 41]
+    }
+  ],
+  "groups": [
+    {
+      "name": "Arbitration State",
+      "kind": "ARBITER",
+      "anchor_ids": ["E7", "E9"],
+      "member_ids": [],
+      "description": "Current selection and round-robin token registers maintaining arbiter state."
+    },
+    {
+      "name": "Request/Grant Interface",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E3", "E4", "E5", "E6"],
+      "member_ids": [],
+      "description": "Handshake protocol: requests in, grant and valid out, accept handshake in."
+    },
+    {
+      "name": "Control Logic",
+      "kind": "CONTROLLER",
+      "anchor_ids": ["E8", "E15"],
+      "member_ids": [],
+      "description": "Busy flag and any-request detection controlling state updates and grant validity."
+    }
+  ],
+  "interfaces": [
+    {
+      "name": "Request Bus",
+      "protocol": "SIMPLE",
+      "direction": "IN",
+      "member_ids": ["E3"]
+    },
+    {
+      "name": "Grant Handshake",
+      "protocol": "VALID_READY",
+      "direction": "OUT",
+      "member_ids": ["E4", "E6", "E5"]
+    },
+    {
+      "name": "Clock/Reset",
+      "protocol": "CLOCK_RESET",
+      "direction": "IN",
+      "member_ids": ["E1", "E2"]
+    }
+  ]
+}

@@ -1,0 +1,203 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "rtllm_serial2parallel",
+ "tops": [
+  "serial2parallel"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "serial2parallel": {
+   "source": "teacher",
+   "canonical_instance": "serial2parallel",
+   "file": "data/rtl/RTLLM/Miscellaneous/Others/serial2parallel/verified_serial2parallel.v",
+   "lines": [
+    1,
+    44
+   ],
+   "summary": "Serial-to-parallel converter shifting valid serial bits into an 8-bit shift register under a bit counter, then emitting the byte with a valid pulse.",
+   "blocks": [
+    {
+     "name": "shift_in",
+     "kind": "SERIALIZER",
+     "description": "Shift register collecting valid serial bits.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "din_serial",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 93.1,
+       "struct_score": 82.5,
+       "trace": "interface",
+       "why": "Serial input bit shifted into din_tmp.",
+       "lines": [
+        4,
+        26
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "din_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 97.0,
+       "struct_score": 92.5,
+       "trace": "interface",
+       "why": "Input valid; gates counter advance and shifting.",
+       "lines": [
+        5,
+        16,
+        25
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "din_tmp",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 96.3,
+       "struct_score": 90.6,
+       "trace": "data_backward",
+       "why": "8-bit shift register accumulating serial bits MSB first.",
+       "lines": [
+        10,
+        26,
+        37
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "bit_counter",
+     "kind": "COUNTER_TIMER",
+     "description": "Counts received bits and marks the output cycle.",
+     "anchors": [
+      {
+       "id": "E8",
+       "name": "cnt",
+       "role": "COUNTER",
+       "importance": "critical",
+       "score": 93.3,
+       "struct_score": 83.2,
+       "trace": "control_backward",
+       "why": "Bit counter; gates shifting and triggers output when equal to 8.",
+       "lines": [
+        11,
+        17,
+        35
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "output_reg",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Registers the parallel byte and valid pulse.",
+     "anchors": [
+      {
+       "id": "E5",
+       "name": "dout_parallel",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 98.4,
+       "struct_score": 96.0,
+       "trace": "interface",
+       "why": "Parallel byte output loaded from din_tmp at count 8.",
+       "lines": [
+        6,
+        37
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "dout_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 97.8,
+       "struct_score": 94.4,
+       "trace": "interface",
+       "why": "One-cycle pulse accompanying dout_parallel when cnt reaches 8.",
+       "lines": [
+        7,
+        36
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_n",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "serial_in",
+     "protocol": "SERIAL",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "din_serial",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "din_valid",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "parallel_out",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E5",
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "dout_parallel",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "dout_valid",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

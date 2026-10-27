@@ -1,0 +1,34 @@
+{
+  "module_summary": "DarkRISCV unified dual-port block RAM: one 32-bit memory array serves a registered instruction read port and a data port with byte-enable writes and a wait-state ack counter.",
+  "anchors": [
+    {"id": "E17", "name": "MEM", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "2048x32 memory array shared by instruction fetch and data load/store.", "lines": [59, 124, 182]},
+    {"id": "E5", "name": "IADDR", "role": "INTERFACE_ADDR", "importance": "critical", "trace": "interface", "why": "Instruction fetch word address indexing MEM.", "lines": [41, 124]},
+    {"id": "E6", "name": "IDATA", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Fetched instruction from registered read ROMFF.", "lines": [42, 128]},
+    {"id": "E8", "name": "XDREQ", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Data-bus request starting reads and qualifying byte writes.", "lines": [45, 156, 182]},
+    {"id": "E15", "name": "XDACK", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Data-bus acknowledge: read wait-state done or immediate write.", "lines": [52, 194]},
+    {"id": "E12", "name": "XADDR", "role": "INTERFACE_ADDR", "importance": "critical", "trace": "interface", "why": "Data-bus word address for MEM read and byte writes.", "lines": [49, 160, 182]},
+    {"id": "E13", "name": "XATAI", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Store data written into MEM byte lanes.", "lines": [50, 182]},
+    {"id": "E14", "name": "XATAO", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Load data from registered read RAMFF.", "lines": [51, 189]},
+    {"id": "E9", "name": "XRD", "role": "COMMAND", "importance": "major", "trace": "interface", "why": "Read command starting the read wait-state counter.", "lines": [46, 156]},
+    {"id": "E10", "name": "XWR", "role": "COMMAND", "importance": "major", "trace": "interface", "why": "Write command enabling byte-lane writes and immediate ack.", "lines": [47, 182, 194]},
+    {"id": "E11", "name": "XBE", "role": "ENABLE", "importance": "major", "trace": "interface", "why": "Per-byte write enables for MEM data writes.", "lines": [48, 182, 185]},
+    {"id": "E20", "name": "DTACK", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Data read wait-state down-counter; ack when it reaches 1.", "lines": [141, 156, 194]},
+    {"id": "E4", "name": "IDREQ", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Instruction fetch request, passed straight to IDACK.", "lines": [40, 133]},
+    {"id": "E7", "name": "IDACK", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Instruction fetch acknowledge, equal to IDREQ without wait states.", "lines": [43, 133]},
+    {"id": "E16", "name": "DEBUG", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "Debug view of data-bus request, read, write and ack.", "lines": [54, 197]}
+  ],
+  "groups": [
+    {"name": "Unified memory", "kind": "MEMORY", "anchor_ids": ["E17"], "member_ids": [], "description": "Shared BRAM array initialized from darksocv.mem."},
+    {"name": "Instruction port", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E5", "E6", "E4", "E7"], "member_ids": ["E19", "E18"], "description": "Registered instruction read with request passthrough ack."},
+    {"name": "Data port", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E8", "E15", "E12", "E13", "E14", "E9", "E10", "E11"], "member_ids": ["E21"], "description": "Registered data read and byte-enable write path."},
+    {"name": "Data wait-state timer", "kind": "COUNTER_TIMER", "anchor_ids": ["E20"], "member_ids": [], "description": "Counts read wait states to generate XDACK."},
+    {"name": "Debug", "kind": "OTHER", "anchor_ids": ["E16"], "member_ids": [], "description": "Data-bus activity debug output."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "halt", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E3"]},
+    {"name": "instruction_bus", "protocol": "MEMORY_BUS", "direction": "OUT", "member_ids": ["E4", "E5", "E6", "E7"]},
+    {"name": "data_bus", "protocol": "MEMORY_BUS", "direction": "BIDIR", "member_ids": ["E8", "E9", "E10", "E11", "E12", "E13", "E14", "E15"]},
+    {"name": "debug", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E16"]}
+  ]
+}

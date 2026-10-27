@@ -1,0 +1,30 @@
+{
+  "module_summary": "Multi-channel UART SoC: per-channel sync_fifo buffers feed a round-robin arbiter whose one-hot grant muxes the winning byte into a uart_tx serializer.",
+  "anchors": [
+    {"id": "E3", "name": "ch_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Per-channel input valid into each channel FIFO write port."},
+    {"id": "E4", "name": "ch_ready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Per-channel FIFO not-full ready back to the channel producers."},
+    {"id": "E5", "name": "ch_data", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Per-channel input bytes written into the channel FIFOs."},
+    {"id": "E6", "name": "uart_tx", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Serial UART line output driven by the uart_tx child."},
+    {"id": "E7", "name": "uart_busy", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "Level busy indication from the UART transmitter."},
+    {"id": "E8", "name": "fifo_valid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "forward", "why": "FIFO non-empty flags acting as request vector into the arbiter."},
+    {"id": "E10", "name": "fifo_data", "role": "INTERFACE_DATA", "importance": "minor", "trace": "data_backward", "why": "Head bytes of each channel FIFO, candidates for the grant mux."},
+    {"id": "E11", "name": "gnt", "role": "ARBITRATION", "importance": "critical", "trace": "control_backward", "why": "One-hot grant selecting which FIFO's byte goes to the UART and which pops."},
+    {"id": "E12", "name": "gnt_valid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "Arbiter grant-valid, copied directly onto tx_valid."},
+    {"id": "E14", "name": "tx_valid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "forward", "why": "Valid of granted byte into the UART; with tx_ready forms accept/pop."},
+    {"id": "E13", "name": "tx_ready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "forward", "why": "UART ready; accepting a byte pops the granted FIFO and releases arbiter lock."},
+    {"id": "E9", "name": "fifo_pop", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Per-channel pop: grant ANDed with UART handshake, dequeues the winning FIFO."},
+    {"id": "E15", "name": "tx_byte", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Byte selected by one-hot grant mux, sent as UART tx_data."}
+  ],
+  "groups": [
+    {"name": "channel_fifos", "kind": "BUFFER", "anchor_ids": ["E3", "E4", "E5", "E8", "E10", "E9"], "member_ids": ["I1"], "description": "Per-channel sync_fifo buffers accepting channel bytes and popped on grant acceptance."},
+    {"name": "round_robin_arbiter", "kind": "ARBITER", "anchor_ids": ["E11", "E12"], "member_ids": ["I2"], "description": "rr_arbiter grants one non-empty FIFO, locked until the UART accepts its byte."},
+    {"name": "grant_mux", "kind": "DATAPATH", "anchor_ids": ["E15"], "member_ids": [], "description": "One-hot mux picking the granted FIFO head byte for transmission."},
+    {"name": "uart_transmitter", "kind": "SERIALIZER", "anchor_ids": ["E14", "E13", "E6", "E7"], "member_ids": ["I3"], "description": "uart_tx serializes the selected byte onto the UART line, reporting ready/busy."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "channel_inputs", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5"]},
+    {"name": "uart_out", "protocol": "SERIAL", "direction": "OUT", "member_ids": ["E6"]},
+    {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E7"]}
+  ]
+}

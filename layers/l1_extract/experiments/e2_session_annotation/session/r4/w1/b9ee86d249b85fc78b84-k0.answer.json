@@ -1,0 +1,38 @@
+{
+  "module_summary": "Ethernet frame N-to-1 multiplexer under external select/enable: a frame flag latches the selected source index and header per frame, and a select-indexed mux feeds payload into a skid-buffered AXI-Stream output.",
+  "anchors": [
+    {"id": "E33", "name": "frame_reg", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Frame-in-progress state: set on header accept, cleared on last payload beat; blocks reselection.", "lines": [156, 191]},
+    {"id": "E31", "name": "select_reg", "role": "MUX_SELECT", "importance": "critical", "trace": "control_backward", "why": "Source index latched at frame start; selects payload lanes for the whole frame.", "lines": [127, 190]},
+    {"id": "E30", "name": "select", "role": "COMMAND", "importance": "major", "trace": "interface", "why": "External source selection input sampled at frame start; picks header fields.", "lines": [156, 164]},
+    {"id": "E29", "name": "enable", "role": "COMMAND", "importance": "major", "trace": "interface", "why": "External enable permitting a new frame to start.", "lines": [156]},
+    {"id": "E3", "name": "s_eth_hdr_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Per-source header valid; selected bit triggers frame start.", "lines": [156]},
+    {"id": "E4", "name": "s_eth_hdr_ready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Header ready pulsed to selected source on frame start.", "lines": [117]},
+    {"id": "E16", "name": "m_eth_hdr_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Output header valid registered at frame start, held until ready.", "lines": [121, 156]},
+    {"id": "E17", "name": "m_eth_hdr_ready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Downstream header ready clearing header valid.", "lines": [144]},
+    {"id": "E18", "name": "m_eth_dest_mac", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Output header fields (dest/src MAC, type) latched from the selected source.", "lines": [122]},
+    {"id": "E8", "name": "s_eth_payload_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Concatenated per-source payload data muxed by select_reg.", "lines": [127]},
+    {"id": "E10", "name": "s_eth_payload_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Per-source payload valid; selected bit forms current beat valid.", "lines": [129]},
+    {"id": "E11", "name": "s_eth_payload_axis_tready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "Registered payload ready asserted only on selected source during frame.", "lines": [119, 130]},
+    {"id": "E21", "name": "m_eth_payload_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Output payload data from registered output slice.", "lines": [224]},
+    {"id": "E23", "name": "m_eth_payload_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Output payload valid from output register.", "lines": [226]},
+    {"id": "E24", "name": "m_eth_payload_axis_tready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Downstream payload ready deciding output/temp register transfers.", "lines": [233, 246]},
+    {"id": "E50", "name": "m_eth_payload_axis_tready_int_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Registered internal ready gating acceptance into output skid buffer.", "lines": [244, 265]},
+    {"id": "E72", "name": "temp_m_eth_payload_axis_tdata_reg", "role": "STORAGE", "importance": "minor", "trace": "data_backward", "why": "Skid buffer data register holding a beat when output stalls.", "lines": [277, 286]},
+    {"id": "E80", "name": "store_axis_int_to_output", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Load enable copying internal payload into output registers.", "lines": [249, 269]},
+    {"id": "E81", "name": "store_axis_int_to_temp", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Load enable capturing internal payload into temp registers.", "lines": [253, 285]},
+    {"id": "E82", "name": "store_axis_temp_to_output", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Load enable moving temp contents to output registers.", "lines": [259, 276]}
+  ],
+  "groups": [
+    {"name": "Frame and select control", "kind": "CONTROLLER", "anchor_ids": ["E33", "E31", "E30", "E29", "E3", "E4", "E16", "E17", "E18"], "member_ids": ["E32", "E34", "E35", "E36", "E39", "E40", "E41", "E42", "E43", "E44", "E45", "E46", "E19", "E20", "E5", "E6", "E7"], "description": "Starts a frame on enable and selected header valid, latches select and header fields."},
+    {"name": "Payload mux", "kind": "DATAPATH", "anchor_ids": ["E8", "E10", "E11"], "member_ids": ["E37", "E38", "E56", "E57", "E58", "E59", "E60", "E61", "E62", "E63", "E47", "E48", "E49", "E51", "E52", "E53", "E54", "E12"], "description": "Selects payload lanes of latched source and generates its tready."},
+    {"name": "Output skid buffer", "kind": "BUFFER", "anchor_ids": ["E21", "E23", "E24", "E50", "E72", "E80", "E81", "E82"], "member_ids": ["E55", "E64", "E65", "E66", "E67", "E68", "E69", "E70", "E71", "E73", "E74", "E75", "E76", "E77", "E78", "E79"], "description": "Output plus temp registers implementing registered AXI-Stream skid buffer."}
+  ],
+  "interfaces": [
+    {"name": "clock/reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "s_eth_hdr", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7"]},
+    {"name": "s_eth_payload_axis", "protocol": "STREAM", "direction": "IN", "member_ids": ["E8", "E9", "E10", "E11", "E12", "E13", "E14", "E15"]},
+    {"name": "m_eth_hdr", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E16", "E17", "E18", "E19", "E20"]},
+    {"name": "m_eth_payload_axis", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E21", "E22", "E23", "E24", "E25", "E26", "E27", "E28"]},
+    {"name": "control", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E29", "E30"]}
+  ]
+}

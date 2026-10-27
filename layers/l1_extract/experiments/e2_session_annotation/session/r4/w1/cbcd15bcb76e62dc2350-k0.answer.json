@@ -1,0 +1,32 @@
+{
+  "module_summary": "Wishbone classic-to-pipelined bridge: passes request fields combinationally, issues a single strobe tracked by last_stb, and registers ack, error and read data back.",
+  "anchors": [
+    {"id": "E4", "name": "i_sstb", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Upstream classic strobe; drives o_mstb and clears ack/err/last_stb when low", "lines": [50, 78, 89]},
+    {"id": "E3", "name": "i_scyc", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Upstream bus cycle forwarded to o_mcyc", "lines": [50, 88]},
+    {"id": "E5", "name": "i_swe", "role": "COMMAND", "importance": "major", "trace": "interface", "why": "Write-enable command forwarded to o_mwe", "lines": [50, 90]},
+    {"id": "E6", "name": "i_saddr", "role": "INTERFACE_ADDR", "importance": "major", "trace": "interface", "why": "Upstream address forwarded to o_maddr", "lines": [51, 91]},
+    {"id": "E7", "name": "i_sdata", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Upstream write data forwarded to o_mdata", "lines": [52, 92]},
+    {"id": "E9", "name": "o_sack", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Registered upstream ack set by i_mack, ends transfer", "lines": [54, 104, 108]},
+    {"id": "E10", "name": "o_sdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Read data register captured from i_mdata on ack", "lines": [55, 118]},
+    {"id": "E11", "name": "o_serr", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Registered bus error; also blocks o_mcyc and o_mstb", "lines": [56, 88, 110]},
+    {"id": "E15", "name": "o_mstb", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Downstream pipelined strobe, suppressed after first accepted beat via last_stb", "lines": [61, 89]},
+    {"id": "E14", "name": "o_mcyc", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Downstream bus cycle, dropped on error", "lines": [61, 88]},
+    {"id": "E17", "name": "o_maddr", "role": "INTERFACE_ADDR", "importance": "minor", "trace": "interface", "why": "Downstream address copied from i_saddr", "lines": [62, 91]},
+    {"id": "E18", "name": "o_mdata", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Downstream write data copied from i_sdata", "lines": [63, 92]},
+    {"id": "E20", "name": "i_mstall", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Downstream stall; strobe accepted when low, setting last_stb", "lines": [65, 80]},
+    {"id": "E21", "name": "i_mack", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Downstream ack setting o_sack and capturing read data", "lines": [66, 107, 117]},
+    {"id": "E22", "name": "i_mdata", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Downstream read data latched into o_sdata", "lines": [67, 118]},
+    {"id": "E23", "name": "i_merr", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "Downstream error input setting o_serr", "lines": [68, 109]},
+    {"id": "E24", "name": "last_stb", "role": "CONTROL_FLAG", "importance": "critical", "trace": "control_backward", "why": "Marks strobe already accepted downstream; masks o_mstb until ack/err", "lines": [72, 81, 89]}
+  ],
+  "groups": [
+    {"name": "Strobe control", "kind": "CONTROLLER", "anchor_ids": ["E24", "E15", "E14", "E20"], "member_ids": ["E4", "E3"], "description": "Issues one pipelined strobe per classic request using last_stb"},
+    {"name": "Request forwarding", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E5", "E6", "E7", "E17", "E18"], "member_ids": ["E8", "E16", "E19"], "description": "Combinational pass-through of we, address, data, select"},
+    {"name": "Response return", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E9", "E10", "E11", "E21", "E22", "E23"], "member_ids": [], "description": "Registers ack, error and read data back to classic side"}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "wb_classic_slave", "protocol": "MEMORY_BUS", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12", "E13"]},
+    {"name": "wb_pipelined_master", "protocol": "MEMORY_BUS", "direction": "OUT", "member_ids": ["E14", "E15", "E16", "E17", "E18", "E19", "E20", "E21", "E22", "E23"]}
+  ]
+}

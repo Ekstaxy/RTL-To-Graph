@@ -1,0 +1,25 @@
+{
+ "module_summary": "Destination side of a clearable two-phase CDC: synchronizes the toggling request, detects phase transitions to capture async data, presents it as valid/ready and toggles the ack.",
+ "anchors": [
+  {"id": "E7", "name": "async_req_i", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Two-phase async request toggle, synchronized by tc_sync.", "lines": [432, 450]},
+  {"id": "E8", "name": "async_ack_o", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Two-phase ack toggle back to source, driven by ack_dst_q.", "lines": [433, 483]},
+  {"id": "E9", "name": "async_data_i", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Async data captured into data_dst_q on request transition.", "lines": [434, 469]},
+  {"id": "E13", "name": "req_synced_q1", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Delayed synchronized request phase; edge detect and valid comparison with ack.", "lines": [468, 478, 481]},
+  {"id": "E12", "name": "req_synced", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "data_backward", "why": "Synchronizer output of async request; transition triggers data capture.", "lines": [451, 468]},
+  {"id": "E15", "name": "data_dst_q", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Captured data held until destination handshake completes; drives data_o.", "lines": [473, 482]},
+  {"id": "E5", "name": "valid_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Valid when ack phase differs from synced request phase.", "lines": [430, 459, 481]},
+  {"id": "E6", "name": "ready_i", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Downstream ready; with valid_o toggles ack_dst_q.", "lines": [431, 459]},
+  {"id": "E4", "name": "data_o", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Destination-domain data output from data_dst_q.", "lines": [429, 482]}
+ ],
+ "groups": [
+  {"name": "request_sync", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E7", "E12", "E13"], "member_ids": [], "description": "Synchronizer and delay register detecting request phase transitions."},
+  {"name": "ack_toggle", "kind": "CONTROLLER", "anchor_ids": ["E8"], "member_ids": ["E10", "E11"], "description": "Ack phase register toggled on accepted handshake, cleared by clear_i."},
+  {"name": "data_capture", "kind": "DATAPATH", "anchor_ids": ["E9", "E15", "E4"], "member_ids": ["E14"], "description": "Captures async data and holds it for destination output."},
+  {"name": "dst_handshake", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E5", "E6"], "member_ids": [], "description": "Destination valid/ready handshake."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2", "E3"]},
+  {"name": "async_in", "protocol": "REQ_ACK", "direction": "IN", "member_ids": ["E7", "E8", "E9"]},
+  {"name": "dst_out", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E4", "E5", "E6"]}
+ ]
+}

@@ -1,0 +1,102 @@
+[
+ {
+  "module": "udp_checksum_gen",
+  "instance": "udp_checksum_gen",
+  "state": "state_reg",
+  "next": "state_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "STATE_IDLE",
+    "value": "3'b0"
+   },
+   {
+    "name": "STATE_SUM_HEADER_1",
+    "value": "3'b1"
+   },
+   {
+    "name": "STATE_SUM_HEADER_2",
+    "value": "3'b10"
+   },
+   {
+    "name": "STATE_SUM_HEADER_3",
+    "value": "3'b11"
+   },
+   {
+    "name": "STATE_SUM_PAYLOAD",
+    "value": "3'b100"
+   },
+   {
+    "name": "STATE_FINISH_SUM",
+    "value": "3'b101"
+   }
+  ],
+  "reset_state": "STATE_IDLE",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_SUM_HEADER_1",
+    "cond": "s_udp_hdr_ready && s_udp_hdr_valid"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_IDLE",
+    "cond": "!(s_udp_hdr_ready && s_udp_hdr_valid)"
+   },
+   {
+    "src": "STATE_SUM_HEADER_1",
+    "dst": "STATE_SUM_HEADER_2",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_SUM_HEADER_2",
+    "dst": "STATE_SUM_HEADER_3",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_SUM_HEADER_3",
+    "dst": "STATE_SUM_PAYLOAD",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_SUM_PAYLOAD",
+    "dst": "STATE_FINISH_SUM",
+    "cond": "s_udp_payload_axis_tready && s_udp_payload_axis_tvalid && s_udp_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_SUM_PAYLOAD",
+    "dst": "STATE_SUM_PAYLOAD",
+    "cond": "s_udp_payload_axis_tready && s_udp_payload_axis_tvalid && !s_udp_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_SUM_PAYLOAD",
+    "dst": "STATE_SUM_PAYLOAD",
+    "cond": "!(s_udp_payload_axis_tready && s_udp_payload_axis_tvalid)"
+   },
+   {
+    "src": "STATE_FINISH_SUM",
+    "dst": "STATE_IDLE",
+    "cond": "1"
+   }
+  ],
+  "outputs": [
+   {
+    "signal": "hdr_valid_next",
+    "kind": "moore",
+    "port": false
+   },
+   {
+    "signal": "shift_payload_in",
+    "kind": "moore",
+    "port": false
+   }
+  ],
+  "warnings": [],
+  "semantic_check": "consistent-subset"
+ }
+]

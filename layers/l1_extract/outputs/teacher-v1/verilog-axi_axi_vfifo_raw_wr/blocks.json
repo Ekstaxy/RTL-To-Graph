@@ -1,0 +1,1364 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-axi_axi_vfifo_raw_wr",
+ "tops": [
+  "axi_vfifo_raw_wr"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "axi_vfifo_raw_wr": {
+   "source": "teacher",
+   "canonical_instance": "axi_vfifo_raw_wr",
+   "file": "data/rtl/verilog-axi/rtl/axi_vfifo_raw_wr.v",
+   "lines": [
+    34,
+    565
+   ],
+   "summary": "Virtual-FIFO write side: segmented input data crosses clock domains through a gray-pointer dual-clock FIFO, then a burst controller issues AXI write bursts into a ring buffer, tracking start/finish pointers via a response-length FIFO.",
+   "blocks": [
+    {
+     "name": "Input CDC FIFO",
+     "kind": "BUFFER",
+     "description": "Segmented dual-clock FIFO with gray-coded pointer synchronization.",
+     "anchors": [
+      {
+       "id": "E85",
+       "name": "write_fifo_seg[*].seg_mem_data",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 90.5,
+       "struct_score": 75.9,
+       "trace": "data_backward",
+       "why": "Per-segment dual-clock input FIFO RAM buffering write data.",
+       "lines": [
+        270,
+        296,
+        311
+       ]
+      },
+      {
+       "id": "E81",
+       "name": "write_fifo_seg[*].seg_wr_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "minor",
+       "score": 23.8,
+       "struct_score": 39.8,
+       "trace": "control_backward",
+       "why": "Input-clock write pointer of segment FIFO.",
+       "lines": [
+        262,
+        296,
+        299
+       ]
+      },
+      {
+       "id": "E66",
+       "name": "write_fifo_rd_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "minor",
+       "score": 24.1,
+       "struct_score": 40.8,
+       "trace": "control_backward",
+       "why": "System-clock read pointer of input FIFO.",
+       "lines": [
+        227,
+        311,
+        363
+       ]
+      },
+      {
+       "id": "E71",
+       "name": "write_fifo_wr_ptr_sync_reg",
+       "role": "FIFO_PTR",
+       "importance": "minor",
+       "score": 19.7,
+       "struct_score": 23.0,
+       "trace": "control_backward",
+       "why": "Write pointer synchronized via gray code into system clock domain.",
+       "lines": [
+        236,
+        340,
+        352
+       ]
+      },
+      {
+       "id": "E75",
+       "name": "write_fifo_occupancy_reg",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 49.8,
+       "struct_score": 31.8,
+       "trace": "control_backward",
+       "why": "Input FIFO occupancy; sizes bursts and triggers full-burst start.",
+       "lines": [
+        244,
+        459,
+        477
+       ]
+      },
+      {
+       "id": "E87",
+       "name": "write_fifo_seg[*].seg_full",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 15.9,
+       "struct_score": 7.9,
+       "trace": "control_backward",
+       "why": "Segment FIFO full; deasserts input_ready.",
+       "lines": [
+        274,
+        280
+       ]
+      },
+      {
+       "id": "E80",
+       "name": "write_fifo_empty",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.2,
+       "struct_score": 8.8,
+       "trace": "control_backward",
+       "why": "Input FIFO empty; blocks FIFO read and output valid.",
+       "lines": [
+        251,
+        310,
+        359
+       ]
+      },
+      {
+       "id": "E62",
+       "name": "input_valid_int_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 47.8,
+       "struct_score": 23.5,
+       "trace": "control_backward",
+       "why": "FIFO output word valid; gates burst start, timeout and data transfer.",
+       "lines": [
+        221,
+        475,
+        500
+       ]
+      },
+      {
+       "id": "E63",
+       "name": "input_read_en",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.7,
+       "struct_score": 7.0,
+       "trace": "control_backward",
+       "why": "Consumes FIFO output word into AXI write data.",
+       "lines": [
+        223,
+        354,
+        501
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "input_data",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 88.2,
+       "struct_score": 70.3,
+       "trace": "interface",
+       "why": "Segmented input data written into FIFO RAM.",
+       "lines": [
+        70,
+        296
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "input_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 84.9,
+       "struct_score": 58.4,
+       "trace": "interface",
+       "why": "Per-segment input valid writing segment FIFO.",
+       "lines": [
+        71,
+        295
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "input_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 86.1,
+       "struct_score": 62.7,
+       "trace": "interface",
+       "why": "Per-segment ready when FIFO not full and not in reset.",
+       "lines": [
+        72,
+        280,
+        295
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "input_watermark",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 16.5,
+       "struct_score": 10.2,
+       "trace": "data_backward",
+       "why": "Input FIFO above watermark or in reset.",
+       "lines": [
+        69,
+        253
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E61",
+       "name": "input_data_int",
+       "kind": "wire"
+      },
+      {
+       "id": "E64",
+       "name": "write_fifo_wr_ptr",
+       "kind": "wire"
+      },
+      {
+       "id": "E65",
+       "name": "write_fifo_wr_ptr_gray",
+       "kind": "wire"
+      },
+      {
+       "id": "E67",
+       "name": "write_fifo_rd_ptr_gray_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E68",
+       "name": "write_fifo_rd_ptr_temp",
+       "kind": "reg"
+      },
+      {
+       "id": "E69",
+       "name": "write_fifo_wr_ptr_gray_sync_1_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E70",
+       "name": "write_fifo_wr_ptr_gray_sync_2_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E72",
+       "name": "write_fifo_rd_ptr_gray_sync_1_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E73",
+       "name": "write_fifo_rd_ptr_gray_sync_2_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E74",
+       "name": "write_fifo_rd_ptr_sync_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E76",
+       "name": "write_fifo_seg_full",
+       "kind": "wire"
+      },
+      {
+       "id": "E77",
+       "name": "write_fifo_seg_empty",
+       "kind": "wire"
+      },
+      {
+       "id": "E78",
+       "name": "write_fifo_seg_watermark",
+       "kind": "wire"
+      },
+      {
+       "id": "E79",
+       "name": "write_fifo_full",
+       "kind": "wire"
+      },
+      {
+       "id": "E82",
+       "name": "write_fifo_seg[*].seg_wr_ptr_gray_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E83",
+       "name": "write_fifo_seg[*].seg_wr_ptr_temp",
+       "kind": "reg"
+      },
+      {
+       "id": "E84",
+       "name": "write_fifo_seg[*].seg_occupancy_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E86",
+       "name": "write_fifo_seg[*].seg_rd_data_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E88",
+       "name": "write_fifo_seg[*].seg_empty",
+       "kind": "wire"
+      },
+      {
+       "id": "E89",
+       "name": "write_fifo_seg[*].seg_watermark",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Reset synchronizer",
+     "kind": "OTHER",
+     "description": "Synchronizes cfg_reset into the input clock domain.",
+     "anchors": [
+      {
+       "id": "E5",
+       "name": "input_rst_out",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 21.1,
+       "struct_score": 29.0,
+       "trace": "data_backward",
+       "why": "Synchronized cfg_reset in input clock domain; clears input pointers.",
+       "lines": [
+        68,
+        204,
+        303
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E57",
+       "name": "rst_req_int",
+       "kind": "wire"
+      },
+      {
+       "id": "E58",
+       "name": "rst_sync_1_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E59",
+       "name": "rst_sync_2_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E60",
+       "name": "rst_sync_3_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Burst controller",
+     "kind": "CONTROLLER",
+     "description": "Decides burst start, length and timeout; streams W beats.",
+     "anchors": [
+      {
+       "id": "E93",
+       "name": "wr_burst_reg",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 94.7,
+       "struct_score": 86.6,
+       "trace": "control_backward",
+       "why": "Burst-active state: idle issues AW, active streams W beats.",
+       "lines": [
+        379,
+        467,
+        493
+       ]
+      },
+      {
+       "id": "E95",
+       "name": "wr_burst_len_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 50.7,
+       "struct_score": 35.5,
+       "trace": "control_backward",
+       "why": "Remaining beats in current burst; sets wlast and ends burst.",
+       "lines": [
+        380,
+        491,
+        503
+       ]
+      },
+      {
+       "id": "E97",
+       "name": "wr_timeout_count_reg",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 20.6,
+       "struct_score": 26.7,
+       "trace": "control_backward",
+       "why": "Partial-burst timeout countdown.",
+       "lines": [
+        381,
+        443,
+        448
+       ]
+      },
+      {
+       "id": "E99",
+       "name": "wr_timeout_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.1,
+       "struct_score": 12.7,
+       "trace": "control_backward",
+       "why": "Timeout flag allowing partial burst start.",
+       "lines": [
+        382,
+        477
+       ]
+      },
+      {
+       "id": "E101",
+       "name": "fifo_full_wr_blk_adj_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 45.2,
+       "struct_score": 12.9,
+       "trace": "control_backward",
+       "why": "Ring buffer has no space for next block; blocks burst start.",
+       "lines": [
+        383,
+        408,
+        475
+       ]
+      },
+      {
+       "id": "E35",
+       "name": "cfg_enable",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 18.9,
+       "struct_score": 20.0,
+       "trace": "interface",
+       "why": "Enables burst generation.",
+       "lines": [
+        110,
+        475
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E94",
+       "name": "wr_burst_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E96",
+       "name": "wr_burst_len_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E98",
+       "name": "wr_timeout_count_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E100",
+       "name": "wr_timeout_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E102",
+       "name": "fifo_full_wr_blk_adj_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E90",
+       "name": "wr_burst_len",
+       "kind": "comb"
+      },
+      {
+       "id": "E117",
+       "name": "fifo_occupancy_wr_blk_adj",
+       "kind": "wire"
+      },
+      {
+       "id": "E118",
+       "name": "fifo_full_wr_blk_adj",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Ring pointer tracking",
+     "kind": "OTHER",
+     "description": "Write start/finish pointers of the virtual FIFO ring buffer.",
+     "anchors": [
+      {
+       "id": "E103",
+       "name": "wr_start_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "critical",
+       "score": 80.1,
+       "struct_score": 40.9,
+       "trace": "control_backward",
+       "why": "Ring-buffer write start pointer; forms AXI address and occupancy.",
+       "lines": [
+        385,
+        472,
+        482
+       ]
+      },
+      {
+       "id": "E107",
+       "name": "wr_finish_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 48.8,
+       "struct_score": 27.7,
+       "trace": "control_backward",
+       "why": "Write completion pointer advanced on each B response.",
+       "lines": [
+        387,
+        396,
+        512
+       ]
+      },
+      {
+       "id": "E105",
+       "name": "wr_start_ptr_blk_adj_reg",
+       "role": "FIFO_PTR",
+       "importance": "minor",
+       "score": 21.1,
+       "struct_score": 28.8,
+       "trace": "control_backward",
+       "why": "Block-aligned start pointer for full-space check.",
+       "lines": [
+        386,
+        399
+       ]
+      },
+      {
+       "id": "E32",
+       "name": "rd_finish_ptr_in",
+       "role": "FIFO_PTR",
+       "importance": "minor",
+       "score": 30.2,
+       "struct_score": 63.0,
+       "trace": "interface",
+       "why": "Read-side finish pointer used for occupancy and full computation.",
+       "lines": [
+        103,
+        399,
+        404
+       ]
+      },
+      {
+       "id": "E33",
+       "name": "cfg_fifo_base_addr",
+       "role": "CONFIG_REG",
+       "importance": "minor",
+       "score": 20.0,
+       "struct_score": 24.4,
+       "trace": "interface",
+       "why": "Ring buffer base address added to burst address.",
+       "lines": [
+        108,
+        472
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E104",
+       "name": "wr_start_ptr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E106",
+       "name": "wr_start_ptr_blk_adj_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E108",
+       "name": "wr_finish_ptr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E91",
+       "name": "wr_start_ptr",
+       "kind": "comb"
+      },
+      {
+       "id": "E92",
+       "name": "wr_start_ptr_blk_adj",
+       "kind": "comb"
+      },
+      {
+       "id": "E29",
+       "name": "wr_start_ptr_out",
+       "kind": "port_out"
+      },
+      {
+       "id": "E30",
+       "name": "wr_finish_ptr_out",
+       "kind": "port_out"
+      },
+      {
+       "id": "E31",
+       "name": "rd_start_ptr_in",
+       "kind": "port_in"
+      },
+      {
+       "id": "E34",
+       "name": "cfg_fifo_size_mask",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "AXI write master",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Registered AXI AW and W channel outputs.",
+     "anchors": [
+      {
+       "id": "E18",
+       "name": "m_axi_awvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 86.3,
+       "struct_score": 63.5,
+       "trace": "data_backward",
+       "why": "AXI write address valid for each new burst.",
+       "lines": [
+        85,
+        191,
+        444
+       ]
+      },
+      {
+       "id": "E19",
+       "name": "m_axi_awready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 20.3,
+       "struct_score": 25.8,
+       "trace": "interface",
+       "why": "AXI AW ready clears address valid.",
+       "lines": [
+        86,
+        433
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "m_axi_awaddr",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 52.6,
+       "struct_score": 42.9,
+       "trace": "data_backward",
+       "why": "Burst address: base plus masked start pointer.",
+       "lines": [
+        78,
+        184
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "m_axi_awlen",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 26.4,
+       "struct_score": 49.2,
+       "trace": "data_backward",
+       "why": "Burst length output.",
+       "lines": [
+        79,
+        185
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "m_axi_wdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 89.0,
+       "struct_score": 72.3,
+       "trace": "data_backward",
+       "why": "AXI write data from FIFO output.",
+       "lines": [
+        87,
+        192
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "m_axi_wvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 54.2,
+       "struct_score": 48.5,
+       "trace": "data_backward",
+       "why": "AXI write data valid.",
+       "lines": [
+        90,
+        194
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "m_axi_wready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 52.7,
+       "struct_score": 43.2,
+       "trace": "interface",
+       "why": "AXI W ready advancing data transfer.",
+       "lines": [
+        91,
+        438,
+        488
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "m_axi_wlast",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 26.2,
+       "struct_score": 48.5,
+       "trace": "data_backward",
+       "why": "Last beat of burst.",
+       "lines": [
+        89,
+        195
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E41",
+       "name": "m_axi_awaddr_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E42",
+       "name": "m_axi_awaddr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E43",
+       "name": "m_axi_awlen_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E44",
+       "name": "m_axi_awlen_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E45",
+       "name": "m_axi_awvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E46",
+       "name": "m_axi_awvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E47",
+       "name": "m_axi_wdata_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E48",
+       "name": "m_axi_wdata_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E49",
+       "name": "m_axi_wstrb_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E50",
+       "name": "m_axi_wstrb_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E51",
+       "name": "m_axi_wlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E52",
+       "name": "m_axi_wlast_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E53",
+       "name": "m_axi_wvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E54",
+       "name": "m_axi_wvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E10",
+       "name": "m_axi_awid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "m_axi_awsize",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "m_axi_awburst",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "m_axi_awlock",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "m_axi_awcache",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "m_axi_awprot",
+       "kind": "port_out"
+      },
+      {
+       "id": "E21",
+       "name": "m_axi_wstrb",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "Response length FIFO",
+     "kind": "BUFFER",
+     "description": "Queues burst lengths to advance finish pointer on B responses.",
+     "anchors": [
+      {
+       "id": "E114",
+       "name": "resp_fifo_burst_len",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 56.0,
+       "struct_score": 54.9,
+       "trace": "data_backward",
+       "why": "FIFO of outstanding burst lengths for finish-pointer update.",
+       "lines": [
+        392,
+        512,
+        549
+       ]
+      },
+      {
+       "id": "E111",
+       "name": "resp_fifo_wr_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "minor",
+       "score": 20.4,
+       "struct_score": 25.8,
+       "trace": "control_backward",
+       "why": "Response FIFO write pointer.",
+       "lines": [
+        390,
+        549,
+        550
+       ]
+      },
+      {
+       "id": "E112",
+       "name": "resp_fifo_rd_ptr_reg",
+       "role": "FIFO_PTR",
+       "importance": "minor",
+       "score": 21.5,
+       "struct_score": 30.4,
+       "trace": "control_backward",
+       "why": "Response FIFO read pointer, advanced on bvalid.",
+       "lines": [
+        391,
+        512,
+        513
+       ]
+      },
+      {
+       "id": "E109",
+       "name": "resp_fifo_we_reg",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.8,
+       "struct_score": 7.2,
+       "trace": "control_backward",
+       "why": "Writes burst length into response FIFO.",
+       "lines": [
+        389,
+        548
+       ]
+      },
+      {
+       "id": "E27",
+       "name": "m_axi_bvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 25.0,
+       "struct_score": 44.1,
+       "trace": "interface",
+       "why": "Write response valid advancing finish pointer.",
+       "lines": [
+        94,
+        511
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E110",
+       "name": "resp_fifo_we_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E113",
+       "name": "resp_fifo_rd_ptr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E115",
+       "name": "resp_fifo_wr_burst_len_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E116",
+       "name": "resp_fifo_wr_burst_len_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E55",
+       "name": "m_axi_bready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E56",
+       "name": "m_axi_bready_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E25",
+       "name": "m_axi_bid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E26",
+       "name": "m_axi_bresp",
+       "kind": "port_in"
+      },
+      {
+       "id": "E28",
+       "name": "m_axi_bready",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "Status",
+     "kind": "OTHER",
+     "description": "Occupancy, empty, full and write-active status.",
+     "anchors": [
+      {
+       "id": "E37",
+       "name": "sts_fifo_occupancy",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 19.5,
+       "struct_score": 22.5,
+       "trace": "data_backward",
+       "why": "Virtual FIFO occupancy output.",
+       "lines": [
+        116,
+        404
+       ]
+      },
+      {
+       "id": "E40",
+       "name": "sts_write_active",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 16.6,
+       "struct_score": 10.7,
+       "trace": "data_backward",
+       "why": "Writes in progress or outstanding.",
+       "lines": [
+        119,
+        410
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E38",
+       "name": "sts_fifo_empty",
+       "kind": "port_out"
+      },
+      {
+       "id": "E39",
+       "name": "sts_fifo_full",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2",
+      "E36"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      },
+      {
+       "id": "E36",
+       "name": "cfg_reset",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "input_clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "input_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "input_rst",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "input_rst_out",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "segmented_input",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E6",
+      "E7",
+      "E8",
+      "E9"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "input_watermark",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "input_data",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "input_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "input_ready",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "m_axi_aw",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E10",
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18",
+      "E19"
+     ],
+     "members": [
+      {
+       "id": "E10",
+       "name": "m_axi_awid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E11",
+       "name": "m_axi_awaddr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "m_axi_awlen",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "m_axi_awsize",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "m_axi_awburst",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "m_axi_awlock",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "m_axi_awcache",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "m_axi_awprot",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "m_axi_awvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "m_axi_awready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axi_w",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E20",
+      "E21",
+      "E22",
+      "E23",
+      "E24"
+     ],
+     "members": [
+      {
+       "id": "E20",
+       "name": "m_axi_wdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E21",
+       "name": "m_axi_wstrb",
+       "kind": "port_out"
+      },
+      {
+       "id": "E22",
+       "name": "m_axi_wlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "m_axi_wvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E24",
+       "name": "m_axi_wready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axi_b",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E25",
+      "E26",
+      "E27",
+      "E28"
+     ],
+     "members": [
+      {
+       "id": "E25",
+       "name": "m_axi_bid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E26",
+       "name": "m_axi_bresp",
+       "kind": "port_in"
+      },
+      {
+       "id": "E27",
+       "name": "m_axi_bvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E28",
+       "name": "m_axi_bready",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "fifo_pointers",
+     "protocol": "OTHER",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E29",
+      "E30",
+      "E31",
+      "E32"
+     ],
+     "members": [
+      {
+       "id": "E29",
+       "name": "wr_start_ptr_out",
+       "kind": "port_out"
+      },
+      {
+       "id": "E30",
+       "name": "wr_finish_ptr_out",
+       "kind": "port_out"
+      },
+      {
+       "id": "E31",
+       "name": "rd_start_ptr_in",
+       "kind": "port_in"
+      },
+      {
+       "id": "E32",
+       "name": "rd_finish_ptr_in",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "config",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E33",
+      "E34",
+      "E35"
+     ],
+     "members": [
+      {
+       "id": "E33",
+       "name": "cfg_fifo_base_addr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E34",
+       "name": "cfg_fifo_size_mask",
+       "kind": "port_in"
+      },
+      {
+       "id": "E35",
+       "name": "cfg_enable",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E37",
+      "E38",
+      "E39",
+      "E40"
+     ],
+     "members": [
+      {
+       "id": "E37",
+       "name": "sts_fifo_occupancy",
+       "kind": "port_out"
+      },
+      {
+       "id": "E38",
+       "name": "sts_fifo_empty",
+       "kind": "port_out"
+      },
+      {
+       "id": "E39",
+       "name": "sts_fifo_full",
+       "kind": "port_out"
+      },
+      {
+       "id": "E40",
+       "name": "sts_write_active",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

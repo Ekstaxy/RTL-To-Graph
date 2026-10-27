@@ -1,0 +1,20 @@
+{
+ "module_summary": "AXI-stream frame length monitor: accumulates per-beat byte counts (decoded from tkeep) on each accepted transfer and emits the total with a one-cycle valid pulse on tlast.",
+ "anchors": [
+  {"id": "E9", "name": "frame_len_reg", "role": "COUNTER", "importance": "critical", "trace": "data_backward", "why": "accumulates frame length per transfer; cleared after valid pulse; drives frame_len", "lines": [65, 103, 68]},
+  {"id": "E8", "name": "frame_len_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "one-cycle pulse marking frame_len valid at end of frame", "lines": [62, 69]},
+  {"id": "E4", "name": "monitor_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "monitored valid; with tready qualifies counting transfer", "lines": [54, 81]},
+  {"id": "E5", "name": "monitor_axis_tready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "monitored ready; with tvalid qualifies counting transfer", "lines": [55, 81]},
+  {"id": "E3", "name": "monitor_axis_tkeep", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "byte-enable mask decoded into bytes-per-beat increment", "lines": [53, 93]},
+  {"id": "E14", "name": "bit_cnt", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "number of valid bytes in beat, added to frame length", "lines": [91, 93, 95]}
+ ],
+ "groups": [
+  {"name": "Length accumulator", "kind": "COUNTER_TIMER", "anchor_ids": ["E9", "E14", "E3"], "member_ids": ["E10", "E7"], "description": "Adds tkeep byte count per accepted beat to frame length"},
+  {"name": "Frame end control", "kind": "CONTROLLER", "anchor_ids": ["E8", "E4", "E5"], "member_ids": ["E11", "E12", "E6"], "description": "Detects accepted tlast beat and pulses length valid"}
+ ],
+ "interfaces": [
+  {"name": "clock/reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "AXI-stream monitor", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6"]},
+  {"name": "frame length status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E7", "E8"]}
+ ]
+}

@@ -1,0 +1,35 @@
+{
+  "module_summary": "Source side of a clearable gray-code CDC FIFO: a FIFO source half stores words and exports gray write pointer, while a reset-controller half sequences isolate/clear phases, gating valid/ready.",
+  "anchors": [
+    {"id": "E5", "name": "src_data_i", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Source-domain data written into the CDC FIFO storage.", "lines": [242, 302]},
+    {"id": "E6", "name": "src_valid_i", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Source write valid, gated by isolate request.", "lines": [243, 303]},
+    {"id": "E7", "name": "src_ready_o", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "FIFO not-full ready, masked during isolation.", "lines": [244, 311]},
+    {"id": "E8", "name": "async_data_o", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "FIFO data array exported to destination domain.", "lines": [246, 306]},
+    {"id": "E9", "name": "async_wptr_o", "role": "FIFO_PTR", "importance": "critical", "trace": "interface", "why": "Gray-coded write pointer sent to destination.", "lines": [247, 307]},
+    {"id": "E10", "name": "async_rptr_i", "role": "FIFO_PTR", "importance": "critical", "trace": "interface", "why": "Gray-coded read pointer from destination for full detection.", "lines": [248, 308]},
+    {"id": "E3", "name": "src_clear_i", "role": "COMMAND", "importance": "major", "trace": "forward", "why": "Requests a synchronized clear sequence of the FIFO.", "lines": [240, 281]},
+    {"id": "E20", "name": "src_isolate_req", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Isolation request gating valid and ready during clear sequence.", "lines": [284, 303, 311]},
+    {"id": "E17", "name": "src_clear_req", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Clear request from reset controller clearing FIFO source.", "lines": [282, 301]},
+    {"id": "E21", "name": "src_isolate_ack_q", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "One-cycle-delayed acknowledge of isolate request.", "lines": [285, 314]},
+    {"id": "E18", "name": "src_clear_ack_q", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "One-cycle-delayed acknowledge of clear request.", "lines": [283, 315]},
+    {"id": "E4", "name": "src_clear_pending_o", "role": "STATUS", "importance": "major", "trace": "data_backward", "why": "Indicates clear sequence in progress (isolate asserted).", "lines": [241, 317]},
+    {"id": "E11", "name": "async_reset_next_phase_o", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Clear-sequence phase sent to destination reset controller.", "lines": [249, 286]},
+    {"id": "E12", "name": "async_reset_req_o", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Request for clear-phase transfer to destination.", "lines": [250, 287]},
+    {"id": "E13", "name": "async_reset_ack_i", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Acknowledge of outgoing clear-phase transfer.", "lines": [251, 288]},
+    {"id": "E14", "name": "async_reset_next_phase_i", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Clear-sequence phase received from destination controller.", "lines": [252, 289]},
+    {"id": "E15", "name": "async_reset_req_i", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Incoming clear-phase request from destination.", "lines": [253, 290]},
+    {"id": "E16", "name": "async_reset_ack_o", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Acknowledge for incoming clear-phase transfer.", "lines": [254, 291]}
+  ],
+  "groups": [
+    {"name": "fifo_src", "kind": "BUFFER", "anchor_ids": ["E5", "E6", "E7", "E8", "E9", "E10"], "member_ids": ["I2", "E19"], "description": "Gray-code CDC FIFO source: storage and write pointer logic."},
+    {"name": "clear_controller", "kind": "CONTROLLER", "anchor_ids": ["E3", "E20", "E17", "E21", "E18", "E4", "E11", "E12", "E13", "E14", "E15", "E16"], "member_ids": ["I1"], "description": "Reset-controller half sequencing isolate and clear phases across domains."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "clear", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E3", "E4"]},
+    {"name": "src_stream", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E5", "E6", "E7"]},
+    {"name": "async_fifo", "protocol": "OTHER", "direction": "OUT", "member_ids": ["E8", "E9", "E10"]},
+    {"name": "async_reset_tx", "protocol": "REQ_ACK", "direction": "OUT", "member_ids": ["E11", "E12", "E13"]},
+    {"name": "async_reset_rx", "protocol": "REQ_ACK", "direction": "IN", "member_ids": ["E14", "E15", "E16"]}
+  ]
+}

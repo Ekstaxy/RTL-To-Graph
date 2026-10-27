@@ -1,0 +1,252 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "S1_serial2parallel",
+ "tops": [
+  "serial2parallel"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "serial2parallel": {
+   "source": "teacher",
+   "canonical_instance": "serial2parallel",
+   "file": "experiments/e3_perturb_benchmark/data/serial2parallel/S1/verified_serial2parallel.v",
+   "lines": [
+    1,
+    50
+   ],
+   "summary": "Serial-to-parallel converter: a 4-bit bit counter gates an 8-bit shift register; after 8 valid bits the word is loaded to the output with a one-cycle valid pulse.",
+   "blocks": [
+    {
+     "name": "Bit counter",
+     "kind": "COUNTER_TIMER",
+     "description": "Counts valid bits to 8 and flags word completion",
+     "anchors": [
+      {
+       "id": "E10",
+       "name": "k",
+       "role": "COUNTER",
+       "importance": "critical",
+       "score": 91.8,
+       "struct_score": 79.4,
+       "trace": "control_backward",
+       "why": "Bit counter 0..8 tracking received bits; reset when din_valid drops",
+       "lines": [
+        13,
+        26
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "wrap",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 53.9,
+       "struct_score": 47.4,
+       "trace": "control_backward",
+       "why": "Count==8 terminal flag: loads output, raises valid, clears counter",
+       "lines": [
+        17,
+        38,
+        44
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E9",
+       "name": "nxt",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Shift register",
+     "kind": "SERIALIZER",
+     "description": "Shifts serial bits into 8-bit word when take asserted",
+     "anchors": [
+      {
+       "id": "E11",
+       "name": "sh",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 93.9,
+       "struct_score": 84.5,
+       "trace": "data_backward",
+       "why": "8-bit shift register assembling serial input bits",
+       "lines": [
+        14,
+        27,
+        47
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "take",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 21.8,
+       "struct_score": 31.8,
+       "trace": "control_backward",
+       "why": "Shift enable: din_valid while counter below 8",
+       "lines": [
+        18,
+        27
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "sh_mirror",
+       "role": "STORAGE",
+       "importance": "minor",
+       "score": 34.1,
+       "struct_score": 75.0,
+       "trace": "none",
+       "why": "Redundant duplicate shift register with no fanout",
+       "lines": [
+        15,
+        32
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "din_serial",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 93.0,
+       "struct_score": 82.3,
+       "trace": "interface",
+       "why": "Serial input bit shifted into sh",
+       "lines": [
+        4,
+        27
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Output register",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Latches completed word and pulses dout_valid",
+     "anchors": [
+      {
+       "id": "E5",
+       "name": "dout_parallel",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 98.2,
+       "struct_score": 95.5,
+       "trace": "data_backward",
+       "why": "Parallel output word loaded from sh on wrap",
+       "lines": [
+        6,
+        47
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "dout_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 97.0,
+       "struct_score": 92.5,
+       "trace": "control_backward",
+       "why": "One-cycle valid pulse when a full byte is loaded",
+       "lines": [
+        7,
+        38
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E4",
+     "name": "din_valid",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 95.5,
+     "struct_score": 88.7,
+     "trace": "interface",
+     "why": "Input valid qualifying shifting and counting",
+     "lines": [
+      5,
+      18,
+      19
+     ]
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_n",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "serial_in",
+     "protocol": "SERIAL",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "din_serial",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "din_valid",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "parallel_out",
+     "protocol": "STREAM",
+     "direction": "OUT",
+     "member_ids": [
+      "E5",
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "dout_parallel",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "dout_valid",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

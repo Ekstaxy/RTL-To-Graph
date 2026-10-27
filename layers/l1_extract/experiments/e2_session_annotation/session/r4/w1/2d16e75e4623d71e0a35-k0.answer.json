@@ -1,0 +1,27 @@
+{
+ "module_summary": "Four-stage pipelined 64-bit ripple-carry adder: 16-bit slices add per stage with carry registers, skewed operand and sum delay registers, and an enable shift chain producing o_en.",
+ "anchors": [
+  {"id": "E4", "name": "adda", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "64-bit operand A, split into four 16-bit slices.", "lines": [10, 63, 65]},
+  {"id": "E5", "name": "addb", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "64-bit operand B, split into four 16-bit slices.", "lines": [11, 64, 66]},
+  {"id": "E6", "name": "result", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "65-bit sum concatenated from final carry and aligned slice sums.", "lines": [12, 193]},
+  {"id": "E3", "name": "i_en", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "forward", "why": "Input valid; enables first slice add and enters the stage enable chain.", "lines": [9, 80, 142]},
+  {"id": "E7", "name": "o_en", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Output valid, delayed from stage3, marks result availability.", "lines": [13, 83]},
+  {"id": "E8", "name": "stage1", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Pipeline valid chain bit enabling second slice addition; stage2/stage3 replicate it.", "lines": [16, 81, 156]},
+  {"id": "E35", "name": "s1", "role": "PIPELINE_REG", "importance": "major", "trace": "data_backward", "why": "First 16-bit slice sum register; s2-s4 are later stages.", "lines": [49, 143]},
+  {"id": "E38", "name": "s4", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Top slice sum computed in final stage, feeds result.", "lines": [52, 185, 193]},
+  {"id": "E31", "name": "c1", "role": "PIPELINE_REG", "importance": "major", "trace": "data_backward", "why": "Registered carry propagated between slice stages; c2-c4 replicate.", "lines": [44, 143, 157]},
+  {"id": "E19", "name": "a2_ff1", "role": "PIPELINE_REG", "importance": "minor", "trace": "data_backward", "why": "Operand skew register delaying upper slices to their stage.", "lines": [29, 103, 157]},
+  {"id": "E39", "name": "s1_ff1", "role": "PIPELINE_REG", "importance": "minor", "trace": "data_backward", "why": "Sum alignment delay register so lower slices exit with s4.", "lines": [54, 128, 129]}
+ ],
+ "groups": [
+  {"name": "Valid shift chain", "kind": "CONTROLLER", "anchor_ids": ["E3", "E8", "E7"], "member_ids": ["E9", "E10"], "description": "Shifts i_en through stage1-3 to o_en, enabling each slice add."},
+  {"name": "Slice adders", "kind": "PIPELINE_STAGE", "anchor_ids": ["E35", "E38", "E31"], "member_ids": ["E36", "E37", "E32", "E33", "E34"], "description": "Four 16-bit adders with registered carries chained across stages."},
+  {"name": "Operand skew", "kind": "PIPELINE_STAGE", "anchor_ids": ["E4", "E5", "E19"], "member_ids": ["E11", "E12", "E13", "E14", "E15", "E16", "E17", "E18", "E20", "E21", "E22", "E23", "E24", "E25", "E26", "E27", "E28", "E29", "E30"], "description": "Slices operands and delays upper slices to match carry arrival."},
+  {"name": "Sum alignment", "kind": "PIPELINE_STAGE", "anchor_ids": ["E39", "E6"], "member_ids": ["E40", "E41", "E42", "E43", "E44"], "description": "Delays lower slice sums so all slices form result together."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "operand_in", "protocol": "STREAM", "direction": "IN", "member_ids": ["E3", "E4", "E5"]},
+  {"name": "result_out", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E6", "E7"]}
+ ]
+}

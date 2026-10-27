@@ -1,0 +1,3171 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-axi_axi_adapter",
+ "tops": [
+  "axi_adapter"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "axi_adapter_wr": {
+   "source": "teacher",
+   "canonical_instance": "axi_adapter.axi_adapter_wr_inst",
+   "file": "data/rtl/verilog-axi/rtl/axi_adapter_wr.v",
+   "lines": [
+    34,
+    777
+   ],
+   "summary": "AXI write-channel width adapter: a 4-state FSM accepts AW bursts, repacks write data (pass, merge or split) with burst counters, and drives a skid-buffered master W channel and response return.",
+   "blocks": [
+    {
+     "name": "Write FSM",
+     "kind": "CONTROLLER",
+     "description": "Sequences AW accept, data transfer states and response collection",
+     "anchors": [
+      {
+       "id": "E51",
+       "name": "state_reg",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.4,
+       "struct_score": 98.4,
+       "trace": "control_backward",
+       "why": "IDLE/DATA/DATA_2/RESP controller sequencing address accept, data repacking and response return",
+       "lines": [
+        181,
+        291,
+        643
+       ]
+      },
+      {
+       "id": "E71",
+       "name": "burst_active_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.7,
+       "struct_score": 11.0,
+       "trace": "control_backward",
+       "why": "Slave burst still active; RESP re-issues new master burst instead of idling",
+       "lines": [
+        192,
+        624
+       ]
+      },
+      {
+       "id": "E73",
+       "name": "first_transfer_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 15.8,
+       "struct_score": 7.2,
+       "trace": "control_backward",
+       "why": "First split burst flag; gates bresp capture",
+       "lines": [
+        193,
+        610
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E52",
+       "name": "state_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E72",
+       "name": "burst_active_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E74",
+       "name": "first_transfer_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Burst tracking",
+     "kind": "COUNTER_TIMER",
+     "description": "Address and beat counters for slave and master bursts",
+     "anchors": [
+      {
+       "id": "E55",
+       "name": "addr_reg",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 51.8,
+       "struct_score": 39.9,
+       "trace": "data_backward",
+       "why": "Running burst address; selects segment offsets and re-issued master address",
+       "lines": [
+        184,
+        421,
+        621
+       ]
+      },
+      {
+       "id": "E63",
+       "name": "burst_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 51.1,
+       "struct_score": 37.1,
+       "trace": "control_backward",
+       "why": "Remaining slave beats counter; ends merge burst and drives burst_active",
+       "lines": [
+        188,
+        452,
+        556
+       ]
+      },
+      {
+       "id": "E67",
+       "name": "master_burst_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 50.5,
+       "struct_score": 34.5,
+       "trace": "control_backward",
+       "why": "Remaining master beats counter; ends split master burst to RESP",
+       "lines": [
+        190,
+        558,
+        560
+       ]
+      },
+      {
+       "id": "E65",
+       "name": "burst_size_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 16.3,
+       "struct_score": 9.3,
+       "trace": "data_backward",
+       "why": "Latched slave awsize used for address increment",
+       "lines": [
+        189,
+        421
+       ]
+      },
+      {
+       "id": "E69",
+       "name": "master_burst_size_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 16.6,
+       "struct_score": 10.5,
+       "trace": "data_backward",
+       "why": "Master beat size used for address increment and word boundary checks",
+       "lines": [
+        191,
+        454,
+        559
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E56",
+       "name": "addr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E64",
+       "name": "burst_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E68",
+       "name": "master_burst_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E66",
+       "name": "burst_size_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E70",
+       "name": "master_burst_size_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Address channel",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Captures slave AW, recomputes length/size, issues master AW",
+     "anchors": [
+      {
+       "id": "E14",
+       "name": "s_axi_awvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 91.0,
+       "struct_score": 77.2,
+       "trace": "interface",
+       "why": "Slave write-address valid; starts a new burst in IDLE",
+       "lines": [
+        85,
+        296
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "s_axi_awready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 62.6,
+       "struct_score": 76.3,
+       "trace": "interface",
+       "why": "Slave AW ready from s_axi_awready_reg, asserted in IDLE when master AW free",
+       "lines": [
+        86,
+        225,
+        296
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "s_axi_awaddr",
+       "role": "INTERFACE_ADDR",
+       "importance": "minor",
+       "score": 29.8,
+       "struct_score": 61.5,
+       "trace": "interface",
+       "why": "Slave burst start address captured into addr_reg and master AW",
+       "lines": [
+        75,
+        300,
+        377
+       ]
+      },
+      {
+       "id": "E28",
+       "name": "m_axi_awaddr",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 53.6,
+       "struct_score": 46.4,
+       "trace": "data_backward",
+       "why": "Master burst address, reissued from addr_reg for split bursts",
+       "lines": [
+        103,
+        233
+       ]
+      },
+      {
+       "id": "E38",
+       "name": "m_axi_awvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 60.2,
+       "struct_score": 70.2,
+       "trace": "control_backward",
+       "why": "Master AW valid set on burst start or burst re-issue",
+       "lines": [
+        113,
+        243,
+        294
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E75",
+       "name": "s_axi_awready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E76",
+       "name": "s_axi_awready_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E87",
+       "name": "m_axi_awid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E89",
+       "name": "m_axi_awaddr_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E91",
+       "name": "m_axi_awlen_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E93",
+       "name": "m_axi_awsize_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E95",
+       "name": "m_axi_awburst_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E97",
+       "name": "m_axi_awlock_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E99",
+       "name": "m_axi_awcache_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E101",
+       "name": "m_axi_awprot_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E103",
+       "name": "m_axi_awqos_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E105",
+       "name": "m_axi_awregion_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E107",
+       "name": "m_axi_awuser_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E109",
+       "name": "m_axi_awvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E110",
+       "name": "m_axi_awvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E39",
+       "name": "m_axi_awready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Width conversion datapath",
+     "kind": "DATAPATH",
+     "description": "Passes, merges or splits slave write data into master-width words",
+     "anchors": [
+      {
+       "id": "E16",
+       "name": "s_axi_wdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 87.5,
+       "struct_score": 67.9,
+       "trace": "interface",
+       "why": "Slave write data repacked into master-width words",
+       "lines": [
+        87,
+        322,
+        548
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "s_axi_wvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 60.6,
+       "struct_score": 71.2,
+       "trace": "interface",
+       "why": "Slave write data valid; qualifies data transfer in DATA states",
+       "lines": [
+        91,
+        321
+       ]
+      },
+      {
+       "id": "E21",
+       "name": "s_axi_wready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 60.5,
+       "struct_score": 71.1,
+       "trace": "control_backward",
+       "why": "Slave write ready, follows internal early-ready of output buffer",
+       "lines": [
+        92,
+        226,
+        321
+       ]
+      },
+      {
+       "id": "E57",
+       "name": "data_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 18.8,
+       "struct_score": 19.6,
+       "trace": "data_backward",
+       "why": "Accumulates merged segments or holds wide word being split",
+       "lines": [
+        185,
+        490,
+        579
+       ]
+      },
+      {
+       "id": "E59",
+       "name": "strb_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 16.3,
+       "struct_score": 9.2,
+       "trace": "data_backward",
+       "why": "Strobe companion of data_reg during merge/split",
+       "lines": [
+        186,
+        491,
+        580
+       ]
+      },
+      {
+       "id": "E113",
+       "name": "m_axi_wdata_int",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 18.3,
+       "struct_score": 17.6,
+       "trace": "data_backward",
+       "why": "Repacked write word from FSM feeding output skid buffer",
+       "lines": [
+        217,
+        448,
+        758
+       ]
+      },
+      {
+       "id": "E117",
+       "name": "m_axi_wvalid_int",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 20.4,
+       "struct_score": 25.9,
+       "trace": "control_backward",
+       "why": "Internal valid of repacked word into output buffer",
+       "lines": [
+        221,
+        730
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E58",
+       "name": "data_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E60",
+       "name": "strb_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E61",
+       "name": "wuser_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E62",
+       "name": "wuser_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E114",
+       "name": "m_axi_wstrb_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E115",
+       "name": "m_axi_wlast_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E116",
+       "name": "m_axi_wuser_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E77",
+       "name": "s_axi_wready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E78",
+       "name": "s_axi_wready_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Output skid buffer",
+     "kind": "BUFFER",
+     "description": "Two-entry register slice driving master W channel",
+     "anchors": [
+      {
+       "id": "E40",
+       "name": "m_axi_wdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 85.8,
+       "struct_score": 61.7,
+       "trace": "data_backward",
+       "why": "Master write data from output skid register",
+       "lines": [
+        115,
+        708
+       ]
+      },
+      {
+       "id": "E44",
+       "name": "m_axi_wvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 53.3,
+       "struct_score": 45.2,
+       "trace": "control_backward",
+       "why": "Master write data valid from m_axi_wvalid_reg",
+       "lines": [
+        119,
+        712
+       ]
+      },
+      {
+       "id": "E45",
+       "name": "m_axi_wready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 51.5,
+       "struct_score": 38.4,
+       "trace": "forward",
+       "why": "Master write ready; steers skid-buffer transfers and early ready",
+       "lines": [
+        120,
+        715,
+        728
+       ]
+      },
+      {
+       "id": "E118",
+       "name": "m_axi_wready_int_reg",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 20.6,
+       "struct_score": 26.9,
+       "trace": "control_backward",
+       "why": "Internal ready of output buffer; gates stores and split DATA_2 progress",
+       "lines": [
+        222,
+        578,
+        726
+       ]
+      },
+      {
+       "id": "E126",
+       "name": "temp_m_axi_wdata_reg",
+       "role": "STORAGE",
+       "importance": "minor",
+       "score": 24.5,
+       "struct_score": 42.5,
+       "trace": "data_backward",
+       "why": "Skid buffer temp data held when master not ready",
+       "lines": [
+        697,
+        763,
+        770
+       ]
+      },
+      {
+       "id": "E130",
+       "name": "temp_m_axi_wvalid_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.3,
+       "struct_score": 13.4,
+       "trace": "control_backward",
+       "why": "Temp skid slot occupied; affects early ready and output refill",
+       "lines": [
+        701,
+        715,
+        739
+       ]
+      },
+      {
+       "id": "E132",
+       "name": "store_axi_w_int_to_output",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.1,
+       "struct_score": 4.6,
+       "trace": "control_backward",
+       "why": "Loads internal word directly into output register",
+       "lines": [
+        704,
+        731,
+        757
+       ]
+      },
+      {
+       "id": "E133",
+       "name": "store_axi_w_int_to_temp",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.1,
+       "struct_score": 4.6,
+       "trace": "control_backward",
+       "why": "Loads internal word into temp skid register",
+       "lines": [
+        705,
+        735,
+        769
+       ]
+      },
+      {
+       "id": "E134",
+       "name": "store_axi_w_temp_to_output",
+       "role": "MUX_SELECT",
+       "importance": "minor",
+       "score": 17.0,
+       "struct_score": 12.4,
+       "trace": "control_backward",
+       "why": "Selects temp register as output register source",
+       "lines": [
+        706,
+        741,
+        762
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E119",
+       "name": "m_axi_wready_int_early",
+       "kind": "wire"
+      },
+      {
+       "id": "E120",
+       "name": "m_axi_wdata_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E121",
+       "name": "m_axi_wstrb_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E122",
+       "name": "m_axi_wlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E123",
+       "name": "m_axi_wuser_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E124",
+       "name": "m_axi_wvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E125",
+       "name": "m_axi_wvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E127",
+       "name": "temp_m_axi_wstrb_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E128",
+       "name": "temp_m_axi_wlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E129",
+       "name": "temp_m_axi_wuser_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E131",
+       "name": "temp_m_axi_wvalid_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Write response",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Collects master B responses and returns merged response with stored ID",
+     "anchors": [
+      {
+       "id": "E25",
+       "name": "s_axi_bvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 57.5,
+       "struct_score": 60.5,
+       "trace": "control_backward",
+       "why": "Write response valid to slave, set when final master response received",
+       "lines": [
+        96,
+        230
+       ]
+      },
+      {
+       "id": "E26",
+       "name": "s_axi_bready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 19.6,
+       "struct_score": 22.8,
+       "trace": "interface",
+       "why": "Slave response ready clears s_axi_bvalid",
+       "lines": [
+        97,
+        268
+       ]
+      },
+      {
+       "id": "E49",
+       "name": "m_axi_bvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 31.5,
+       "struct_score": 67.7,
+       "trace": "interface",
+       "why": "Master write response valid; completes RESP state",
+       "lines": [
+        124,
+        343
+       ]
+      },
+      {
+       "id": "E50",
+       "name": "m_axi_bready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 31.5,
+       "struct_score": 67.7,
+       "trace": "control_backward",
+       "why": "Master response ready asserted in RESP state",
+       "lines": [
+        125,
+        244,
+        343
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "s_axi_bresp",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 22.1,
+       "struct_score": 33.1,
+       "trace": "data_backward",
+       "why": "Write response code returned from master bresp",
+       "lines": [
+        94,
+        228
+       ]
+      },
+      {
+       "id": "E53",
+       "name": "id_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 16.5,
+       "struct_score": 10.2,
+       "trace": "data_backward",
+       "why": "Latched AW ID returned on s_axi_bid",
+       "lines": [
+        183,
+        298,
+        345
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E79",
+       "name": "s_axi_bid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E80",
+       "name": "s_axi_bid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E81",
+       "name": "s_axi_bresp_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E82",
+       "name": "s_axi_bresp_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E83",
+       "name": "s_axi_buser_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E84",
+       "name": "s_axi_buser_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E85",
+       "name": "s_axi_bvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E86",
+       "name": "s_axi_bvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E111",
+       "name": "m_axi_bready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E112",
+       "name": "m_axi_bready_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E54",
+       "name": "id_next",
+       "kind": "comb"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axi_aw",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axi_awid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axi_awaddr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axi_awlen",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_axi_awsize",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "s_axi_awburst",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_axi_awlock",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_axi_awcache",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "s_axi_awprot",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "s_axi_awqos",
+       "kind": "port_in"
+      },
+      {
+       "id": "E12",
+       "name": "s_axi_awregion",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "s_axi_awuser",
+       "kind": "port_in"
+      },
+      {
+       "id": "E14",
+       "name": "s_axi_awvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "s_axi_awready",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "s_axi_w",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20",
+      "E21"
+     ],
+     "members": [
+      {
+       "id": "E16",
+       "name": "s_axi_wdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E17",
+       "name": "s_axi_wstrb",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "s_axi_wlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E19",
+       "name": "s_axi_wuser",
+       "kind": "port_in"
+      },
+      {
+       "id": "E20",
+       "name": "s_axi_wvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E21",
+       "name": "s_axi_wready",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "s_axi_b",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E22",
+      "E23",
+      "E24",
+      "E25",
+      "E26"
+     ],
+     "members": [
+      {
+       "id": "E22",
+       "name": "s_axi_bid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "s_axi_bresp",
+       "kind": "port_out"
+      },
+      {
+       "id": "E24",
+       "name": "s_axi_buser",
+       "kind": "port_out"
+      },
+      {
+       "id": "E25",
+       "name": "s_axi_bvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E26",
+       "name": "s_axi_bready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axi_aw",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E27",
+      "E28",
+      "E29",
+      "E30",
+      "E31",
+      "E32",
+      "E33",
+      "E34",
+      "E35",
+      "E36",
+      "E37",
+      "E38",
+      "E39"
+     ],
+     "members": [
+      {
+       "id": "E27",
+       "name": "m_axi_awid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E28",
+       "name": "m_axi_awaddr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E29",
+       "name": "m_axi_awlen",
+       "kind": "port_out"
+      },
+      {
+       "id": "E30",
+       "name": "m_axi_awsize",
+       "kind": "port_out"
+      },
+      {
+       "id": "E31",
+       "name": "m_axi_awburst",
+       "kind": "port_out"
+      },
+      {
+       "id": "E32",
+       "name": "m_axi_awlock",
+       "kind": "port_out"
+      },
+      {
+       "id": "E33",
+       "name": "m_axi_awcache",
+       "kind": "port_out"
+      },
+      {
+       "id": "E34",
+       "name": "m_axi_awprot",
+       "kind": "port_out"
+      },
+      {
+       "id": "E35",
+       "name": "m_axi_awqos",
+       "kind": "port_out"
+      },
+      {
+       "id": "E36",
+       "name": "m_axi_awregion",
+       "kind": "port_out"
+      },
+      {
+       "id": "E37",
+       "name": "m_axi_awuser",
+       "kind": "port_out"
+      },
+      {
+       "id": "E38",
+       "name": "m_axi_awvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E39",
+       "name": "m_axi_awready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axi_w",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E40",
+      "E41",
+      "E42",
+      "E43",
+      "E44",
+      "E45"
+     ],
+     "members": [
+      {
+       "id": "E40",
+       "name": "m_axi_wdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E41",
+       "name": "m_axi_wstrb",
+       "kind": "port_out"
+      },
+      {
+       "id": "E42",
+       "name": "m_axi_wlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E43",
+       "name": "m_axi_wuser",
+       "kind": "port_out"
+      },
+      {
+       "id": "E44",
+       "name": "m_axi_wvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E45",
+       "name": "m_axi_wready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axi_b",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E46",
+      "E47",
+      "E48",
+      "E49",
+      "E50"
+     ],
+     "members": [
+      {
+       "id": "E46",
+       "name": "m_axi_bid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E47",
+       "name": "m_axi_bresp",
+       "kind": "port_in"
+      },
+      {
+       "id": "E48",
+       "name": "m_axi_buser",
+       "kind": "port_in"
+      },
+      {
+       "id": "E49",
+       "name": "m_axi_bvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E50",
+       "name": "m_axi_bready",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "axi_adapter_rd": {
+   "source": "teacher",
+   "canonical_instance": "axi_adapter.axi_adapter_rd_inst",
+   "file": "data/rtl/verilog-axi/rtl/axi_adapter_rd.v",
+   "lines": [
+    34,
+    684
+   ],
+   "summary": "AXI read-channel width adapter: an FSM forwards or re-sizes AR bursts to the master side, then splits or merges R beats via address tracking and a data register, emitting through a skid-buffered output stage.",
+   "blocks": [
+    {
+     "name": "Adapter FSM",
+     "kind": "CONTROLLER",
+     "description": "Sequences AR forwarding and R beat split/merge conversion.",
+     "anchors": [
+      {
+       "id": "E43",
+       "name": "state_reg",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.4,
+       "struct_score": 98.4,
+       "trace": "control_backward",
+       "why": "Adapter FSM: idle, data, data_read, data_split sequencing AR issue and R beat conversion.",
+       "lines": [
+        169,
+        260,
+        553
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "s_axi_arsize",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 19.7,
+       "struct_score": 23.1,
+       "trace": "forward",
+       "why": "Burst size decides split, merge or pass-through conversion.",
+       "lines": [
+        73,
+        332,
+        466
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E44",
+       "name": "state_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Burst tracking",
+     "kind": "COUNTER_TIMER",
+     "description": "Address and beat counters for slave and master bursts.",
+     "anchors": [
+      {
+       "id": "E47",
+       "name": "addr_reg",
+       "role": "INDEX",
+       "importance": "major",
+       "score": 48.3,
+       "struct_score": 25.5,
+       "trace": "control_backward",
+       "why": "Tracks current beat address; selects data segment and detects word boundaries.",
+       "lines": [
+        172,
+        368,
+        373
+       ]
+      },
+      {
+       "id": "E55",
+       "name": "burst_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 52.2,
+       "struct_score": 41.4,
+       "trace": "control_backward",
+       "why": "Remaining slave-side beats; ends burst at zero.",
+       "lines": [
+        176,
+        398,
+        400
+       ]
+      },
+      {
+       "id": "E59",
+       "name": "master_burst_reg",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 24.7,
+       "struct_score": 43.1,
+       "trace": "control_backward",
+       "why": "Remaining master-side beats; triggers new master burst at zero.",
+       "lines": [
+        178,
+        512,
+        520
+       ]
+      },
+      {
+       "id": "E57",
+       "name": "burst_size_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 17.1,
+       "struct_score": 12.5,
+       "trace": "data_backward",
+       "why": "Latched slave burst size for address increment.",
+       "lines": [
+        177,
+        373
+       ]
+      },
+      {
+       "id": "E61",
+       "name": "master_burst_size_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 16.4,
+       "struct_score": 10.0,
+       "trace": "data_backward",
+       "why": "Latched master burst size for boundary detection.",
+       "lines": [
+        179,
+        405,
+        513
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E48",
+       "name": "addr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E56",
+       "name": "burst_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E58",
+       "name": "burst_size_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E60",
+       "name": "master_burst_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E62",
+       "name": "master_burst_size_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Width conversion datapath",
+     "kind": "DATAPATH",
+     "description": "Segments wide beats or merges narrow beats into slave data width.",
+     "anchors": [
+      {
+       "id": "E49",
+       "name": "data_reg",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 55.5,
+       "struct_score": 53.2,
+       "trace": "data_backward",
+       "why": "Holds wide master beat for splitting or accumulates narrow beats when merging.",
+       "lines": [
+        173,
+        420,
+        502
+       ]
+      },
+      {
+       "id": "E51",
+       "name": "resp_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 15.9,
+       "struct_score": 7.7,
+       "trace": "data_backward",
+       "why": "Accumulated read response for merged/split beats.",
+       "lines": [
+        174,
+        421,
+        504
+       ]
+      },
+      {
+       "id": "E45",
+       "name": "id_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 17.0,
+       "struct_score": 12.1,
+       "trace": "data_backward",
+       "why": "Latched AR ID returned on s_axi_rid_int.",
+       "lines": [
+        171,
+        253
+       ]
+      },
+      {
+       "id": "E92",
+       "name": "s_axi_rdata_int",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 18.9,
+       "struct_score": 19.8,
+       "trace": "data_backward",
+       "why": "Converted read data feeding skid buffer output stage.",
+       "lines": [
+        199,
+        368,
+        663
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E50",
+       "name": "data_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E52",
+       "name": "resp_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E46",
+       "name": "id_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E53",
+       "name": "ruser_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E54",
+       "name": "ruser_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E91",
+       "name": "s_axi_rid_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E93",
+       "name": "s_axi_rresp_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E94",
+       "name": "s_axi_rlast_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E95",
+       "name": "s_axi_ruser_int",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "AR channel forwarding",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Registered master AR outputs derived from slave AR request.",
+     "anchors": [
+      {
+       "id": "E14",
+       "name": "s_axi_arvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 91.4,
+       "struct_score": 78.3,
+       "trace": "interface",
+       "why": "Slave AR request valid; accepted in idle to start a burst.",
+       "lines": [
+        81,
+        265
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "s_axi_arready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 91.3,
+       "struct_score": 78.0,
+       "trace": "control_backward",
+       "why": "Slave AR ready, registered from FSM when no master AR pending.",
+       "lines": [
+        82,
+        207,
+        265
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "s_axi_araddr",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 58.6,
+       "struct_score": 64.4,
+       "trace": "interface",
+       "why": "Slave read address, copied to m_axi_araddr_next and addr_next.",
+       "lines": [
+        71,
+        269,
+        329
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "s_axi_arlen",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 27.8,
+       "struct_score": 54.4,
+       "trace": "interface",
+       "why": "Slave burst length, loaded into burst_next and used to compute master arlen.",
+       "lines": [
+        72,
+        330,
+        339
+       ]
+      },
+      {
+       "id": "E34",
+       "name": "m_axi_arvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 89.1,
+       "struct_score": 72.5,
+       "trace": "control_backward",
+       "why": "Master AR valid, set on new burst and held until arready.",
+       "lines": [
+        105,
+        220
+       ]
+      },
+      {
+       "id": "E35",
+       "name": "m_axi_arready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 48.3,
+       "struct_score": 25.5,
+       "trace": "interface",
+       "why": "Master AR ready clears m_axi_arvalid_next.",
+       "lines": [
+        106,
+        248
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "m_axi_araddr",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 54.4,
+       "struct_score": 49.3,
+       "trace": "data_backward",
+       "why": "Master read address, from slave address or recomputed for split bursts.",
+       "lines": [
+        95,
+        210
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "m_axi_arlen",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 26.4,
+       "struct_score": 49.3,
+       "trace": "data_backward",
+       "why": "Master burst length, recomputed when resizing bursts.",
+       "lines": [
+        96,
+        211
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E63",
+       "name": "s_axi_arready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E64",
+       "name": "s_axi_arready_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E65",
+       "name": "m_axi_arid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E66",
+       "name": "m_axi_arid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E67",
+       "name": "m_axi_araddr_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E68",
+       "name": "m_axi_araddr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E69",
+       "name": "m_axi_arlen_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E70",
+       "name": "m_axi_arlen_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E71",
+       "name": "m_axi_arsize_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E72",
+       "name": "m_axi_arsize_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E73",
+       "name": "m_axi_arburst_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E74",
+       "name": "m_axi_arburst_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E75",
+       "name": "m_axi_arlock_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E76",
+       "name": "m_axi_arlock_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E77",
+       "name": "m_axi_arcache_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E78",
+       "name": "m_axi_arcache_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E79",
+       "name": "m_axi_arprot_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E80",
+       "name": "m_axi_arprot_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E81",
+       "name": "m_axi_arqos_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E82",
+       "name": "m_axi_arqos_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E83",
+       "name": "m_axi_arregion_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E84",
+       "name": "m_axi_arregion_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E85",
+       "name": "m_axi_aruser_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E86",
+       "name": "m_axi_aruser_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E87",
+       "name": "m_axi_arvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E88",
+       "name": "m_axi_arvalid_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "R output skid buffer",
+     "kind": "BUFFER",
+     "description": "Two-register skid buffer driving slave R channel with registered ready.",
+     "anchors": [
+      {
+       "id": "E17",
+       "name": "s_axi_rdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 86.8,
+       "struct_score": 65.2,
+       "trace": "data_backward",
+       "why": "Slave read data output from output register.",
+       "lines": [
+        84,
+        612
+       ]
+      },
+      {
+       "id": "E21",
+       "name": "s_axi_rvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 82.2,
+       "struct_score": 48.5,
+       "trace": "control_backward",
+       "why": "Slave R valid from skid-buffer output stage.",
+       "lines": [
+        88,
+        616
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "s_axi_rready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 52.7,
+       "struct_score": 43.1,
+       "trace": "interface",
+       "why": "Slave R ready; drives skid buffer transfers and rready_int_early.",
+       "lines": [
+        89,
+        619,
+        632
+       ]
+      },
+      {
+       "id": "E96",
+       "name": "s_axi_rvalid_int",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 21.4,
+       "struct_score": 29.9,
+       "trace": "control_backward",
+       "why": "Internal R valid from FSM into output skid buffer.",
+       "lines": [
+        203,
+        634
+       ]
+      },
+      {
+       "id": "E97",
+       "name": "s_axi_rready_int_reg",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 22.2,
+       "struct_score": 33.2,
+       "trace": "control_backward",
+       "why": "Internal ready from skid buffer back to FSM.",
+       "lines": [
+        204,
+        418,
+        630
+       ]
+      },
+      {
+       "id": "E107",
+       "name": "temp_s_axi_rdata_reg",
+       "role": "STORAGE",
+       "importance": "minor",
+       "score": 25.5,
+       "struct_score": 46.1,
+       "trace": "data_backward",
+       "why": "Skid buffer temp data register when output stalled.",
+       "lines": [
+        600,
+        669,
+        677
+       ]
+      },
+      {
+       "id": "E111",
+       "name": "temp_s_axi_rvalid_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.9,
+       "struct_score": 15.7,
+       "trace": "control_backward",
+       "why": "Skid buffer occupied flag gating ready_int_early.",
+       "lines": [
+        604,
+        619,
+        643
+       ]
+      },
+      {
+       "id": "E113",
+       "name": "store_axi_r_int_to_output",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.5,
+       "struct_score": 6.0,
+       "trace": "control_backward",
+       "why": "Load enable for output data registers from internal path.",
+       "lines": [
+        607,
+        635,
+        661
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E98",
+       "name": "s_axi_rready_int_early",
+       "kind": "wire"
+      },
+      {
+       "id": "E99",
+       "name": "s_axi_rid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E100",
+       "name": "s_axi_rdata_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E101",
+       "name": "s_axi_rresp_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E102",
+       "name": "s_axi_rlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E103",
+       "name": "s_axi_ruser_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E104",
+       "name": "s_axi_rvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E105",
+       "name": "s_axi_rvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E106",
+       "name": "temp_s_axi_rid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E108",
+       "name": "temp_s_axi_rresp_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E109",
+       "name": "temp_s_axi_rlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E110",
+       "name": "temp_s_axi_ruser_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E112",
+       "name": "temp_s_axi_rvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E114",
+       "name": "store_axi_r_int_to_temp",
+       "kind": "comb"
+      },
+      {
+       "id": "E115",
+       "name": "store_axi_r_temp_to_output",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "Master R input",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Accepts master read beats with registered rready.",
+     "anchors": [
+      {
+       "id": "E37",
+       "name": "m_axi_rdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 88.5,
+       "struct_score": 70.9,
+       "trace": "interface",
+       "why": "Master read data, shifted/split or merged into data_reg.",
+       "lines": [
+        108,
+        368,
+        502
+       ]
+      },
+      {
+       "id": "E41",
+       "name": "m_axi_rvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 62.7,
+       "struct_score": 76.6,
+       "trace": "interface",
+       "why": "Master R valid, gates beat acceptance in data states.",
+       "lines": [
+        112,
+        290
+       ]
+      },
+      {
+       "id": "E42",
+       "name": "m_axi_rready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 62.6,
+       "struct_score": 76.3,
+       "trace": "control_backward",
+       "why": "Master R ready, registered from FSM and downstream readiness.",
+       "lines": [
+        113,
+        221,
+        290
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E89",
+       "name": "m_axi_rready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E90",
+       "name": "m_axi_rready_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E36",
+       "name": "m_axi_rid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E38",
+       "name": "m_axi_rresp",
+       "kind": "port_in"
+      },
+      {
+       "id": "E39",
+       "name": "m_axi_rlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E40",
+       "name": "m_axi_ruser",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axi_ar",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axi_arid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axi_araddr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axi_arlen",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_axi_arsize",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "s_axi_arburst",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_axi_arlock",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_axi_arcache",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "s_axi_arprot",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "s_axi_arqos",
+       "kind": "port_in"
+      },
+      {
+       "id": "E12",
+       "name": "s_axi_arregion",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "s_axi_aruser",
+       "kind": "port_in"
+      },
+      {
+       "id": "E14",
+       "name": "s_axi_arvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "s_axi_arready",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "s_axi_r",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20",
+      "E21",
+      "E22"
+     ],
+     "members": [
+      {
+       "id": "E16",
+       "name": "s_axi_rid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "s_axi_rdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "s_axi_rresp",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "s_axi_rlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "s_axi_ruser",
+       "kind": "port_out"
+      },
+      {
+       "id": "E21",
+       "name": "s_axi_rvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E22",
+       "name": "s_axi_rready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axi_ar",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E23",
+      "E24",
+      "E25",
+      "E26",
+      "E27",
+      "E28",
+      "E29",
+      "E30",
+      "E31",
+      "E32",
+      "E33",
+      "E34",
+      "E35"
+     ],
+     "members": [
+      {
+       "id": "E23",
+       "name": "m_axi_arid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E24",
+       "name": "m_axi_araddr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E25",
+       "name": "m_axi_arlen",
+       "kind": "port_out"
+      },
+      {
+       "id": "E26",
+       "name": "m_axi_arsize",
+       "kind": "port_out"
+      },
+      {
+       "id": "E27",
+       "name": "m_axi_arburst",
+       "kind": "port_out"
+      },
+      {
+       "id": "E28",
+       "name": "m_axi_arlock",
+       "kind": "port_out"
+      },
+      {
+       "id": "E29",
+       "name": "m_axi_arcache",
+       "kind": "port_out"
+      },
+      {
+       "id": "E30",
+       "name": "m_axi_arprot",
+       "kind": "port_out"
+      },
+      {
+       "id": "E31",
+       "name": "m_axi_arqos",
+       "kind": "port_out"
+      },
+      {
+       "id": "E32",
+       "name": "m_axi_arregion",
+       "kind": "port_out"
+      },
+      {
+       "id": "E33",
+       "name": "m_axi_aruser",
+       "kind": "port_out"
+      },
+      {
+       "id": "E34",
+       "name": "m_axi_arvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E35",
+       "name": "m_axi_arready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axi_r",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E36",
+      "E37",
+      "E38",
+      "E39",
+      "E40",
+      "E41",
+      "E42"
+     ],
+     "members": [
+      {
+       "id": "E36",
+       "name": "m_axi_rid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E37",
+       "name": "m_axi_rdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E38",
+       "name": "m_axi_rresp",
+       "kind": "port_in"
+      },
+      {
+       "id": "E39",
+       "name": "m_axi_rlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E40",
+       "name": "m_axi_ruser",
+       "kind": "port_in"
+      },
+      {
+       "id": "E41",
+       "name": "m_axi_rvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E42",
+       "name": "m_axi_rready",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "axi_adapter": {
+   "source": "teacher",
+   "canonical_instance": "axi_adapter",
+   "file": "data/rtl/verilog-axi/rtl/axi_adapter.v",
+   "lines": [
+    34,
+    322
+   ],
+   "summary": "AXI4 width adapter wrapper: independent write-channel and read-channel adapter instances convert slave-side bursts to master-side data width; no logic of its own.",
+   "blocks": [
+    {
+     "name": "Write channel adapter",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Write adapter instance resizing AW/W bursts and returning B responses.",
+     "anchors": [
+      {
+       "id": "E14",
+       "name": "s_axi_awvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 82.2,
+       "struct_score": 48.5,
+       "trace": "interface",
+       "why": "Slave write address valid into write adapter.",
+       "lines": [
+        93,
+        211
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "s_axi_awaddr",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 54.3,
+       "struct_score": 49.0,
+       "trace": "interface",
+       "why": "Slave write burst address into write adapter.",
+       "lines": [
+        83,
+        201
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "s_axi_wdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 87.0,
+       "struct_score": 65.8,
+       "trace": "interface",
+       "why": "Slave-width write data repacked by write adapter.",
+       "lines": [
+        95,
+        213
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "s_axi_wvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 26.2,
+       "struct_score": 48.5,
+       "trace": "interface",
+       "why": "Slave write data valid into write adapter.",
+       "lines": [
+        99,
+        217
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "s_axi_bvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 27.6,
+       "struct_score": 53.6,
+       "trace": "interface",
+       "why": "Write response valid returned to slave side.",
+       "lines": [
+        104,
+        222
+       ]
+      },
+      {
+       "id": "E48",
+       "name": "m_axi_awaddr",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 55.6,
+       "struct_score": 53.5,
+       "trace": "interface",
+       "why": "Master-side write address from write adapter.",
+       "lines": [
+        131,
+        229
+       ]
+      },
+      {
+       "id": "E60",
+       "name": "m_axi_wdata",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 60.2,
+       "struct_score": 70.2,
+       "trace": "interface",
+       "why": "Master-width write data from write adapter.",
+       "lines": [
+        143,
+        241
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "axi_adapter_wr_inst",
+       "module": "axi_adapter_wr"
+      }
+     ],
+     "members": []
+    },
+    {
+     "name": "Read channel adapter",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Read adapter instance resizing AR bursts and R data beats.",
+     "anchors": [
+      {
+       "id": "E38",
+       "name": "s_axi_arvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 82.2,
+       "struct_score": 48.5,
+       "trace": "interface",
+       "why": "Slave read address valid into read adapter.",
+       "lines": [
+        117,
+        287
+       ]
+      },
+      {
+       "id": "E28",
+       "name": "s_axi_araddr",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 54.3,
+       "struct_score": 49.0,
+       "trace": "interface",
+       "why": "Slave read burst address into read adapter.",
+       "lines": [
+        107,
+        277
+       ]
+      },
+      {
+       "id": "E41",
+       "name": "s_axi_rdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 88.2,
+       "struct_score": 70.2,
+       "trace": "interface",
+       "why": "Slave-width read data produced by read adapter.",
+       "lines": [
+        120,
+        290
+       ]
+      },
+      {
+       "id": "E45",
+       "name": "s_axi_rvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 27.6,
+       "struct_score": 53.6,
+       "trace": "interface",
+       "why": "Read data valid to slave side.",
+       "lines": [
+        124,
+        294
+       ]
+      },
+      {
+       "id": "E72",
+       "name": "m_axi_araddr",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 55.6,
+       "struct_score": 53.5,
+       "trace": "interface",
+       "why": "Master-side read address from read adapter.",
+       "lines": [
+        155,
+        301
+       ]
+      },
+      {
+       "id": "E85",
+       "name": "m_axi_rdata",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 59.0,
+       "struct_score": 65.8,
+       "trace": "interface",
+       "why": "Master-width read data into read adapter.",
+       "lines": [
+        168,
+        314
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I2",
+       "instance": "axi_adapter_rd_inst",
+       "module": "axi_adapter_rd"
+      }
+     ],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axi_write",
+     "protocol": "MEMORY_BUS",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20",
+      "E21",
+      "E22",
+      "E23",
+      "E24",
+      "E25",
+      "E26"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axi_awid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axi_awaddr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axi_awlen",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_axi_awsize",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "s_axi_awburst",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_axi_awlock",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_axi_awcache",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "s_axi_awprot",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "s_axi_awqos",
+       "kind": "port_in"
+      },
+      {
+       "id": "E12",
+       "name": "s_axi_awregion",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "s_axi_awuser",
+       "kind": "port_in"
+      },
+      {
+       "id": "E14",
+       "name": "s_axi_awvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "s_axi_awready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "s_axi_wdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E17",
+       "name": "s_axi_wstrb",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "s_axi_wlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E19",
+       "name": "s_axi_wuser",
+       "kind": "port_in"
+      },
+      {
+       "id": "E20",
+       "name": "s_axi_wvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E21",
+       "name": "s_axi_wready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E22",
+       "name": "s_axi_bid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "s_axi_bresp",
+       "kind": "port_out"
+      },
+      {
+       "id": "E24",
+       "name": "s_axi_buser",
+       "kind": "port_out"
+      },
+      {
+       "id": "E25",
+       "name": "s_axi_bvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E26",
+       "name": "s_axi_bready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axi_read",
+     "protocol": "MEMORY_BUS",
+     "direction": "OUT",
+     "member_ids": [
+      "E27",
+      "E28",
+      "E29",
+      "E30",
+      "E31",
+      "E32",
+      "E33",
+      "E34",
+      "E35",
+      "E36",
+      "E37",
+      "E38",
+      "E39",
+      "E40",
+      "E41",
+      "E42",
+      "E43",
+      "E44",
+      "E45",
+      "E46"
+     ],
+     "members": [
+      {
+       "id": "E27",
+       "name": "s_axi_arid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E28",
+       "name": "s_axi_araddr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E29",
+       "name": "s_axi_arlen",
+       "kind": "port_in"
+      },
+      {
+       "id": "E30",
+       "name": "s_axi_arsize",
+       "kind": "port_in"
+      },
+      {
+       "id": "E31",
+       "name": "s_axi_arburst",
+       "kind": "port_in"
+      },
+      {
+       "id": "E32",
+       "name": "s_axi_arlock",
+       "kind": "port_in"
+      },
+      {
+       "id": "E33",
+       "name": "s_axi_arcache",
+       "kind": "port_in"
+      },
+      {
+       "id": "E34",
+       "name": "s_axi_arprot",
+       "kind": "port_in"
+      },
+      {
+       "id": "E35",
+       "name": "s_axi_arqos",
+       "kind": "port_in"
+      },
+      {
+       "id": "E36",
+       "name": "s_axi_arregion",
+       "kind": "port_in"
+      },
+      {
+       "id": "E37",
+       "name": "s_axi_aruser",
+       "kind": "port_in"
+      },
+      {
+       "id": "E38",
+       "name": "s_axi_arvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E39",
+       "name": "s_axi_arready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E40",
+       "name": "s_axi_rid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E41",
+       "name": "s_axi_rdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E42",
+       "name": "s_axi_rresp",
+       "kind": "port_out"
+      },
+      {
+       "id": "E43",
+       "name": "s_axi_rlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E44",
+       "name": "s_axi_ruser",
+       "kind": "port_out"
+      },
+      {
+       "id": "E45",
+       "name": "s_axi_rvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E46",
+       "name": "s_axi_rready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axi_write",
+     "protocol": "MEMORY_BUS",
+     "direction": "OUT",
+     "member_ids": [
+      "E47",
+      "E48",
+      "E49",
+      "E50",
+      "E51",
+      "E52",
+      "E53",
+      "E54",
+      "E55",
+      "E56",
+      "E57",
+      "E58",
+      "E59",
+      "E60",
+      "E61",
+      "E62",
+      "E63",
+      "E64",
+      "E65",
+      "E66",
+      "E67",
+      "E68",
+      "E69",
+      "E70"
+     ],
+     "members": [
+      {
+       "id": "E47",
+       "name": "m_axi_awid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E48",
+       "name": "m_axi_awaddr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E49",
+       "name": "m_axi_awlen",
+       "kind": "port_out"
+      },
+      {
+       "id": "E50",
+       "name": "m_axi_awsize",
+       "kind": "port_out"
+      },
+      {
+       "id": "E51",
+       "name": "m_axi_awburst",
+       "kind": "port_out"
+      },
+      {
+       "id": "E52",
+       "name": "m_axi_awlock",
+       "kind": "port_out"
+      },
+      {
+       "id": "E53",
+       "name": "m_axi_awcache",
+       "kind": "port_out"
+      },
+      {
+       "id": "E54",
+       "name": "m_axi_awprot",
+       "kind": "port_out"
+      },
+      {
+       "id": "E55",
+       "name": "m_axi_awqos",
+       "kind": "port_out"
+      },
+      {
+       "id": "E56",
+       "name": "m_axi_awregion",
+       "kind": "port_out"
+      },
+      {
+       "id": "E57",
+       "name": "m_axi_awuser",
+       "kind": "port_out"
+      },
+      {
+       "id": "E58",
+       "name": "m_axi_awvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E59",
+       "name": "m_axi_awready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E60",
+       "name": "m_axi_wdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E61",
+       "name": "m_axi_wstrb",
+       "kind": "port_out"
+      },
+      {
+       "id": "E62",
+       "name": "m_axi_wlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E63",
+       "name": "m_axi_wuser",
+       "kind": "port_out"
+      },
+      {
+       "id": "E64",
+       "name": "m_axi_wvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E65",
+       "name": "m_axi_wready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E66",
+       "name": "m_axi_bid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E67",
+       "name": "m_axi_bresp",
+       "kind": "port_in"
+      },
+      {
+       "id": "E68",
+       "name": "m_axi_buser",
+       "kind": "port_in"
+      },
+      {
+       "id": "E69",
+       "name": "m_axi_bvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E70",
+       "name": "m_axi_bready",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "m_axi_read",
+     "protocol": "MEMORY_BUS",
+     "direction": "IN",
+     "member_ids": [
+      "E71",
+      "E72",
+      "E73",
+      "E74",
+      "E75",
+      "E76",
+      "E77",
+      "E78",
+      "E79",
+      "E80",
+      "E81",
+      "E82",
+      "E83",
+      "E84",
+      "E85",
+      "E86",
+      "E87",
+      "E88",
+      "E89",
+      "E90"
+     ],
+     "members": [
+      {
+       "id": "E71",
+       "name": "m_axi_arid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E72",
+       "name": "m_axi_araddr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E73",
+       "name": "m_axi_arlen",
+       "kind": "port_out"
+      },
+      {
+       "id": "E74",
+       "name": "m_axi_arsize",
+       "kind": "port_out"
+      },
+      {
+       "id": "E75",
+       "name": "m_axi_arburst",
+       "kind": "port_out"
+      },
+      {
+       "id": "E76",
+       "name": "m_axi_arlock",
+       "kind": "port_out"
+      },
+      {
+       "id": "E77",
+       "name": "m_axi_arcache",
+       "kind": "port_out"
+      },
+      {
+       "id": "E78",
+       "name": "m_axi_arprot",
+       "kind": "port_out"
+      },
+      {
+       "id": "E79",
+       "name": "m_axi_arqos",
+       "kind": "port_out"
+      },
+      {
+       "id": "E80",
+       "name": "m_axi_arregion",
+       "kind": "port_out"
+      },
+      {
+       "id": "E81",
+       "name": "m_axi_aruser",
+       "kind": "port_out"
+      },
+      {
+       "id": "E82",
+       "name": "m_axi_arvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E83",
+       "name": "m_axi_arready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E84",
+       "name": "m_axi_rid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E85",
+       "name": "m_axi_rdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E86",
+       "name": "m_axi_rresp",
+       "kind": "port_in"
+      },
+      {
+       "id": "E87",
+       "name": "m_axi_rlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E88",
+       "name": "m_axi_ruser",
+       "kind": "port_in"
+      },
+      {
+       "id": "E89",
+       "name": "m_axi_rvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E90",
+       "name": "m_axi_rready",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

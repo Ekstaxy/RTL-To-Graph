@@ -1,0 +1,38 @@
+{
+ "module_summary": "AXI-Stream N:1 arbitrated mux: registered inputs feed an arbiter-selected mux whose output passes through a two-register skid buffer.",
+ "anchors": [
+  {"id": "E5", "name": "s_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Per-input valid vector; raises arbitration requests and loads input registers.", "lines": [171, 196]},
+  {"id": "E6", "name": "s_axis_tready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Per-input ready from empty input reg or granted port with internal ready; enables input capture.", "lines": [141, 193]},
+  {"id": "E3", "name": "s_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Concatenated input stream payloads captured into input registers.", "lines": [194]},
+  {"id": "E11", "name": "m_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Muxed output payload driven from the output register.", "lines": [231]},
+  {"id": "E13", "name": "m_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "data_backward", "why": "Output valid driven by the output skid register valid.", "lines": [233]},
+  {"id": "E14", "name": "m_axis_tready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Downstream ready; steers skid buffer transfers and internal ready.", "lines": [240, 253, 262]},
+  {"id": "E21", "name": "grant", "role": "ARBITRATION", "importance": "critical", "trace": "control_backward", "why": "One-hot grant from arbiter; gates input ready, request and acknowledge.", "lines": [141, 171, 172]},
+  {"id": "E23", "name": "grant_encoded", "role": "MUX_SELECT", "importance": "major", "trace": "control_backward", "why": "Encoded grant index selects which registered input drives the output mux.", "lines": [144, 146, 182]},
+  {"id": "E19", "name": "request", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "Arbiter request vector from live or registered input valids.", "lines": [171]},
+  {"id": "E20", "name": "acknowledge", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Releases grant at end of packet (tlast) when transfer accepted.", "lines": [172]},
+  {"id": "E22", "name": "grant_valid", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Indicates a grant exists; qualifies internal output valid.", "lines": [178]},
+  {"id": "E24", "name": "s_axis_tdata_reg", "role": "PIPELINE_REG", "importance": "major", "trace": "data_backward", "why": "Input register stage hiding arbitration delay; source of muxed data.", "lines": [122, 144, 194]},
+  {"id": "E26", "name": "s_axis_tvalid_reg", "role": "PIPELINE_REG", "importance": "minor", "trace": "control_backward", "why": "Registered input valids; drive ready, request and muxed valid.", "lines": [141, 146, 196]},
+  {"id": "E40", "name": "current_s_tdata", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Mux output: selected input's registered data.", "lines": [144, 176]},
+  {"id": "E33", "name": "m_axis_tvalid_int", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "Internal valid into skid buffer, qualified by ready and grant_valid.", "lines": [178, 255]},
+  {"id": "E34", "name": "m_axis_tready_int_reg", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Registered internal ready; gates input ready, ack and skid-buffer transfers.", "lines": [141, 251, 272]},
+  {"id": "E48", "name": "m_axis_tdata_reg", "role": "PIPELINE_REG", "importance": "major", "trace": "data_backward", "why": "Output register of skid buffer driving m_axis_tdata.", "lines": [210, 277, 284]},
+  {"id": "E56", "name": "temp_m_axis_tdata_reg", "role": "STORAGE", "importance": "major", "trace": "data_backward", "why": "Skid temp register holding data when output stalls.", "lines": [218, 293, 284]},
+  {"id": "E58", "name": "temp_m_axis_tvalid_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Skid temp occupancy; affects early ready and output refill.", "lines": [240, 264, 273]},
+  {"id": "E64", "name": "store_axis_int_to_output", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Loads output register from internal mux data.", "lines": [256, 276]},
+  {"id": "E65", "name": "store_axis_int_to_temp", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Loads temp skid register when output stalled.", "lines": [260, 292]},
+  {"id": "E66", "name": "store_axis_temp_to_output", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Moves temp register contents into output register.", "lines": [266, 283]}
+ ],
+ "groups": [
+  {"name": "Input register stage", "kind": "PIPELINE_STAGE", "anchor_ids": ["E24", "E26"], "member_ids": ["E25", "E27", "E28", "E29", "E30"], "description": "Per-port registers capturing input beats while ready, hiding arbitration latency."},
+  {"name": "Arbiter", "kind": "ARBITER", "anchor_ids": ["E21", "E19", "E20", "E22"], "member_ids": ["I1", "E23"], "description": "Arbiter instance grants one input per packet, released on tlast acknowledge."},
+  {"name": "Input mux", "kind": "DATAPATH", "anchor_ids": ["E23", "E40", "E33"], "member_ids": ["E41", "E42", "E43", "E44", "E45", "E46", "E47", "E31", "E32", "E35", "E36", "E37", "E38"], "description": "Selects granted port's registered fields by grant_encoded into internal stream."},
+  {"name": "Output skid buffer", "kind": "BUFFER", "anchor_ids": ["E48", "E56", "E58", "E34", "E64", "E65", "E66"], "member_ids": ["E49", "E50", "E51", "E52", "E53", "E54", "E55", "E57", "E59", "E60", "E61", "E62", "E63", "E39"], "description": "Output plus temp register pair giving full-throughput registered AXIS output."}
+ ],
+ "interfaces": [
+  {"name": "clock/reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "s_axis", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10"]},
+  {"name": "m_axis", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E11", "E12", "E13", "E14", "E15", "E16", "E17", "E18"]}
+ ]
+}

@@ -1,0 +1,34 @@
+{
+  "module_summary": "I2C slave exposing one 8-bit register: glitch-filtered SCL/SDA feed edge and start/stop detectors driving an FSM that shifts address and data through a shift register.",
+  "anchors": [
+    {"id": "E12", "name": "state_reg", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "I2C slave FSM: idle, address, ack, write and read byte phases.", "lines": [111, 117, 139]},
+    {"id": "E13", "name": "data_reg", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "The single register, written over I2C or by data_latch, read out.", "lines": [185, 238, 95]},
+    {"id": "E14", "name": "shift_reg", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "Serial shift register for address and data bytes in and out.", "lines": [132, 137, 196]},
+    {"id": "E16", "name": "bit_count_reg", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Counts bits remaining in current address or data byte.", "lines": [129, 131, 153]},
+    {"id": "E15", "name": "mode_read_reg", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Latched R/W bit selecting read or write path after ACK.", "lines": [136, 154]},
+    {"id": "E28", "name": "start_bit", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Start condition detection resetting FSM to address phase.", "lines": [102, 107]},
+    {"id": "E29", "name": "stop_bit", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Stop condition detection returning FSM to idle.", "lines": [103, 112]},
+    {"id": "E24", "name": "scl_posedge", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "SCL rising edge strobe sampling SDA bits.", "lines": [97, 128]},
+    {"id": "E25", "name": "scl_negedge", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "SCL falling edge strobe updating SDA output.", "lines": [98, 151]},
+    {"id": "E17", "name": "scl_i_filter_reg", "role": "STORAGE", "importance": "minor", "trace": "data_backward", "why": "SCL glitch filter shift register; sda filter is its twin.", "lines": [241, 244]},
+    {"id": "E19", "name": "scl_i_reg", "role": "PIPELINE_REG", "importance": "minor", "trace": "data_backward", "why": "Filtered SCL level used for edge and start/stop detection.", "lines": [245, 97]},
+    {"id": "E20", "name": "sda_i_reg", "role": "PIPELINE_REG", "importance": "minor", "trace": "data_backward", "why": "Filtered SDA level shifted into shift_reg.", "lines": [251, 132]},
+    {"id": "E7", "name": "sda_o", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "SDA output driving ACK and read data bits from sda_o_reg.", "lines": [92]},
+    {"id": "E6", "name": "sda_i", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Raw SDA input sampled into glitch filter.", "lines": [242]},
+    {"id": "E3", "name": "scl_i", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Raw SCL input sampled into glitch filter.", "lines": [241]},
+    {"id": "E10", "name": "data_latch", "role": "ENABLE", "importance": "major", "trace": "interface", "why": "Parallel load enable writing data_in into data_reg.", "lines": [237]},
+    {"id": "E9", "name": "data_in", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Parallel data loaded into data_reg.", "lines": [238]},
+    {"id": "E11", "name": "data_out", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Parallel readout of data_reg.", "lines": [95]}
+  ],
+  "groups": [
+    {"name": "I2C slave FSM", "kind": "CONTROLLER", "anchor_ids": ["E12", "E15", "E16"], "member_ids": [], "description": "Sequences address match, ACK, write and read byte phases."},
+    {"name": "Bit shifter", "kind": "SERIALIZER", "anchor_ids": ["E14", "E7"], "member_ids": ["E21", "E8"], "description": "Shifts address/data in from SDA and read data out to SDA."},
+    {"name": "Input filter and edge detect", "kind": "OTHER", "anchor_ids": ["E17", "E19", "E20", "E24", "E25", "E28", "E29", "E3", "E6"], "member_ids": ["E18", "E22", "E23", "E26", "E27"], "description": "Glitch filters SCL/SDA and detects edges plus start/stop conditions."},
+    {"name": "Data register", "kind": "REGISTER_BANK", "anchor_ids": ["E13", "E10", "E9", "E11"], "member_ids": [], "description": "Single 8-bit register shared by I2C and parallel interface."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "i2c_bus", "protocol": "SERIAL", "direction": "BIDIR", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8"]},
+    {"name": "data_register", "protocol": "SIMPLE", "direction": "BIDIR", "member_ids": ["E9", "E10", "E11"]}
+  ]
+}

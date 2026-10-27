@@ -1,0 +1,315 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "common_cells_cc_edge_propagator_rx",
+ "tops": [
+  "cc_edge_propagator_rx"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "cc_sync_wedge": {
+   "source": "teacher",
+   "canonical_instance": "cc_edge_propagator_rx.i_sync_clkb",
+   "file": "data/rtl/common_cells/src/cc_sync_wedge.sv",
+   "lines": [
+    15,
+    41
+   ],
+   "summary": "Synchronizing edge detector: serial_i passes a multi-stage tc_sync synchronizer, then a delay flop compares old and new values to emit rising/falling edge pulses.",
+   "blocks": [
+    {
+     "name": "synchronizer",
+     "kind": "OTHER",
+     "description": "tc_sync multi-flop synchronizer of serial_i",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "serial_i",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 89.0,
+       "struct_score": 72.3,
+       "trace": "interface",
+       "why": "Asynchronous input signal fed into synchronizer",
+       "lines": [
+        20,
+        36
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "serial",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 52.1,
+       "struct_score": 40.8,
+       "trace": "data_backward",
+       "why": "Synchronized input from tc_sync, compared with delayed copy for edges",
+       "lines": [
+        28,
+        29,
+        37
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "edge_detect",
+     "kind": "DATAPATH",
+     "description": "Delay flop and XOR-style compare producing rising and falling edge pulses",
+     "anchors": [
+      {
+       "id": "E8",
+       "name": "serial_q",
+       "role": "PIPELINE_REG",
+       "importance": "major",
+       "score": 59.2,
+       "struct_score": 66.6,
+       "trace": "data_backward",
+       "why": "One-cycle delay of synchronized signal for edge comparison; drives serial_o",
+       "lines": [
+        28,
+        29,
+        40
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "r_edge_o",
+       "role": "DATAPATH_MAJOR",
+       "importance": "critical",
+       "score": 90.9,
+       "struct_score": 77.1,
+       "trace": "data_backward",
+       "why": "Rising-edge pulse: synchronized high and delayed low",
+       "lines": [
+        21,
+        29
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "f_edge_o",
+       "role": "DATAPATH_MAJOR",
+       "importance": "critical",
+       "score": 90.9,
+       "struct_score": 77.1,
+       "trace": "data_backward",
+       "why": "Falling-edge pulse: synchronized low and delayed high",
+       "lines": [
+        22,
+        28
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E6",
+       "name": "serial_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_ni",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "serial_in",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "serial_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "edge_out",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E4",
+      "E5",
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "r_edge_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "f_edge_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "serial_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "cc_edge_propagator_rx": {
+   "source": "teacher",
+   "canonical_instance": "cc_edge_propagator_rx",
+   "file": "data/rtl/common_cells/src/cc_edge_propagator_rx.sv",
+   "lines": [
+    13,
+    30
+   ],
+   "summary": "Receive side of a clock-domain edge propagator: cc_sync_wedge synchronizes the incoming level, returns it as ack and pulses valid on its rising edge.",
+   "blocks": [
+    {
+     "name": "rx_synchronizer",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Child synchronizing edge detector producing valid pulse and ack level.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "valid_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 97.2,
+       "struct_score": 92.9,
+       "trace": "interface",
+       "why": "Incoming level from transmit domain, synchronized by child wedge.",
+       "lines": [
+        16,
+        24
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "valid_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 97.5,
+       "struct_score": 93.6,
+       "trace": "data_backward",
+       "why": "One-cycle pulse on rising edge of synchronized valid_i.",
+       "lines": [
+        18,
+        25
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "ack_o",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 95.0,
+       "struct_score": 87.4,
+       "trace": "data_backward",
+       "why": "Synchronized level returned to transmitter as acknowledge.",
+       "lines": [
+        17,
+        27
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "i_sync_clkb",
+       "module": "cc_sync_wedge"
+      }
+     ],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_ni",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "cdc_handshake_in",
+     "protocol": "REQ_ACK",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "valid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "ack_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "valid_out",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "valid_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

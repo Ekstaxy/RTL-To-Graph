@@ -1,0 +1,592 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-ethernet_ptp_td_rel2tod",
+ "tops": [
+  "ptp_td_rel2tod"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "ptp_td_rel2tod": {
+   "source": "teacher",
+   "canonical_instance": "ptp_td_rel2tod",
+   "file": "data/rtl/verilog-ethernet/rtl/ptp_td_rel2tod.v",
+   "lines": [
+    34,
+    311
+   ],
+   "summary": "Deserializes a PTP time-distribution serial stream, syncs words into clk domain via toggle CDC, stores ToD/offset banks, and converts relative timestamps to ToD by adding offsets and selecting the in-range result.",
+   "blocks": [
+    {
+     "name": "TD deserializer",
+     "kind": "SERIALIZER",
+     "description": "Pipelines serial TD input, shifts in 16-bit words, tags them with message/index id.",
+     "anchors": [
+      {
+       "id": "E5",
+       "name": "ptp_td_sdi",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 82.0,
+       "struct_score": 48.0,
+       "trace": "interface",
+       "why": "Serial time-distribution input carrying ToD and offset words.",
+       "lines": [
+        53,
+        74
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "td_shift_reg",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 59.5,
+       "struct_score": 67.7,
+       "trace": "data_backward",
+       "why": "16-bit deserializer shift register assembling serial TD words.",
+       "lines": [
+        96,
+        109,
+        118
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "bit_cnt_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 55.7,
+       "struct_score": 53.8,
+       "trace": "control_backward",
+       "why": "Bit counter framing each 16-bit word after start bit.",
+       "lines": [
+        97,
+        113,
+        130
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "td_valid_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 21.4,
+       "struct_score": 30.1,
+       "trace": "control_backward",
+       "why": "Marks a word in progress; triggers word capture when counter expires.",
+       "lines": [
+        98,
+        117,
+        131
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "td_index_reg",
+       "role": "INDEX",
+       "importance": "minor",
+       "score": 16.9,
+       "struct_score": 12.0,
+       "trace": "control_backward",
+       "why": "Word index within a TD message, reset on idle.",
+       "lines": [
+        99,
+        122,
+        126
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "td_msg_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 17.9,
+       "struct_score": 15.7,
+       "trace": "data_backward",
+       "why": "Message type latched from word 0, forms upper word id.",
+       "lines": [
+        100,
+        121,
+        123
+       ]
+      },
+      {
+       "id": "E19",
+       "name": "td_tdata_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 19.7,
+       "struct_score": 23.3,
+       "trace": "data_backward",
+       "why": "Captured deserialized word held for clock-domain crossing.",
+       "lines": [
+        102,
+        118,
+        167
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "td_tid_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 19.0,
+       "struct_score": 20.5,
+       "trace": "data_backward",
+       "why": "Word id {msg,index} accompanying captured word across CDC.",
+       "lines": [
+        105,
+        121,
+        169
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E12",
+       "name": "ptp_td_sdi_pipe",
+       "kind": "mem"
+      },
+      {
+       "id": "E13",
+       "name": "pipe_stage[*].ptp_td_sdi_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E20",
+       "name": "td_tvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E21",
+       "name": "td_tlast_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Toggle CDC",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Toggle synchronizer moving TD words and ids from ptp_clk to clk.",
+     "anchors": [
+      {
+       "id": "E23",
+       "name": "td_sync_reg",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 22.9,
+       "struct_score": 36.4,
+       "trace": "forward",
+       "why": "Toggle flag signaling a new word to clk domain.",
+       "lines": [
+        106,
+        127,
+        158
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "dst_td_tvalid_reg",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 53.8,
+       "struct_score": 47.1,
+       "trace": "control_backward",
+       "why": "clk-domain word valid pulse from toggle edge detect; enables field updates.",
+       "lines": [
+        147,
+        168,
+        222
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "dst_td_tdata_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 25.0,
+       "struct_score": 44.2,
+       "trace": "data_backward",
+       "why": "Synchronized TD word written into ToD/offset registers.",
+       "lines": [
+        146,
+        167,
+        229
+       ]
+      },
+      {
+       "id": "E26",
+       "name": "dst_td_tid_reg",
+       "role": "INDEX",
+       "importance": "minor",
+       "score": 19.2,
+       "struct_score": 21.1,
+       "trace": "control_backward",
+       "why": "Synchronized word id decoded to select which field slice to write.",
+       "lines": [
+        148,
+        169,
+        227
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E27",
+       "name": "td_sync_sync1_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E28",
+       "name": "td_sync_sync2_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E29",
+       "name": "td_sync_sync3_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "ToD register banks",
+     "kind": "REGISTER_BANK",
+     "description": "Two ToD seconds/ns-offset banks written by decoded TD words, swapped by ts_sel_reg.",
+     "anchors": [
+      {
+       "id": "E30",
+       "name": "ts_sel_reg",
+       "role": "MUX_SELECT",
+       "importance": "major",
+       "score": 51.2,
+       "struct_score": 37.2,
+       "trace": "control_backward",
+       "why": "Selects which bank (0/1) receives current vs alternate ToD values.",
+       "lines": [
+        177,
+        224,
+        228
+       ]
+      },
+      {
+       "id": "E31",
+       "name": "ts_tod_s_0_reg",
+       "role": "HOLDING_REG",
+       "importance": "critical",
+       "score": 78.4,
+       "struct_score": 34.0,
+       "trace": "data_backward",
+       "why": "ToD seconds bank 0; selected into output seconds.",
+       "lines": [
+        179,
+        209,
+        245
+       ]
+      },
+      {
+       "id": "E32",
+       "name": "ts_tod_offset_ns_0_reg",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 50.0,
+       "struct_score": 32.4,
+       "trace": "data_backward",
+       "why": "Nanosecond offset bank 0 added to relative timestamp.",
+       "lines": [
+        180,
+        200,
+        231
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E33",
+       "name": "ts_tod_s_1_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E34",
+       "name": "ts_tod_offset_ns_1_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Timestamp conversion",
+     "kind": "DATAPATH",
+     "description": "Adds both offsets to relative ns, picks in-range result, registers ToD output.",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "input_ts_rel",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 95.6,
+       "struct_score": 88.9,
+       "trace": "interface",
+       "why": "Relative timestamp input to be converted to ToD.",
+       "lines": [
+        58,
+        200,
+        215
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "input_ts_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 58.9,
+       "struct_score": 65.7,
+       "trace": "interface",
+       "why": "Input timestamp valid, registered into output valid.",
+       "lines": [
+        60,
+        217
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "input_ts_tag",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 31.2,
+       "struct_score": 66.8,
+       "trace": "interface",
+       "why": "Timestamp tag passed through to output.",
+       "lines": [
+        59,
+        216
+       ]
+      },
+      {
+       "id": "E45",
+       "name": "ts_tod_ns_0",
+       "role": "DATAPATH_MAJOR",
+       "importance": "critical",
+       "score": 75.9,
+       "struct_score": 24.0,
+       "trace": "data_backward",
+       "why": "Relative ns plus offset 0; range-checked to choose output ToD.",
+       "lines": [
+        190,
+        200,
+        208
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "output_ts_tod",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 95.8,
+       "struct_score": 89.5,
+       "trace": "interface",
+       "why": "Converted ToD timestamp {s, ns, fns} output.",
+       "lines": [
+        61,
+        193
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "output_ts_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 60.3,
+       "struct_score": 70.4,
+       "trace": "interface",
+       "why": "Output timestamp valid pulse from output register.",
+       "lines": [
+        63,
+        195
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "output_ts_tag",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 32.6,
+       "struct_score": 71.2,
+       "trace": "interface",
+       "why": "Registered tag accompanying converted timestamp.",
+       "lines": [
+        62,
+        194
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E46",
+       "name": "ts_tod_ns_1",
+       "kind": "comb"
+      },
+      {
+       "id": "E35",
+       "name": "output_ts_tod_s_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E36",
+       "name": "output_ts_tod_s_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E37",
+       "name": "output_ts_tod_ns_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E38",
+       "name": "output_ts_tod_ns_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E39",
+       "name": "output_ts_fns_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E40",
+       "name": "output_ts_fns_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E41",
+       "name": "output_ts_tag_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E42",
+       "name": "output_ts_tag_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E43",
+       "name": "output_ts_valid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E44",
+       "name": "output_ts_valid_next",
+       "kind": "comb"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clocks_resets",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2",
+      "E3",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "ptp_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "ptp_rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "ptp_td_serial",
+     "protocol": "SERIAL",
+     "direction": "IN",
+     "member_ids": [
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E5",
+       "name": "ptp_td_sdi",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "input_timestamp",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E6",
+      "E7",
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "input_ts_rel",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "input_ts_tag",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "input_ts_valid",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "output_timestamp",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E9",
+      "E10",
+      "E11"
+     ],
+     "members": [
+      {
+       "id": "E9",
+       "name": "output_ts_tod",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "output_ts_tag",
+       "kind": "port_out"
+      },
+      {
+       "id": "E11",
+       "name": "output_ts_valid",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

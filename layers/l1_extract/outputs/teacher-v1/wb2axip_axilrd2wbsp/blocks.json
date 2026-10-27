@@ -1,0 +1,605 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "wb2axip_axilrd2wbsp",
+ "tops": [
+  "axilrd2wbsp"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "axilrd2wbsp": {
+   "source": "teacher",
+   "canonical_instance": "axilrd2wbsp",
+   "file": "data/rtl/wb2axip/rtl/axilrd2wbsp.v",
+   "lines": [
+    37,
+    598
+   ],
+   "summary": "AXI-Lite read to pipelined Wishbone bridge: accepted AR requests issue WB strobes (with a one-deep stall shadow), returned data fills a small FIFO tracked by first/mid/last pointers, with error-flush handling.",
+   "blocks": [
+    {
+     "name": "Return data FIFO",
+     "kind": "BUFFER",
+     "description": "Request/return/read pointers and storage for WB return data",
+     "anchors": [
+      {
+       "id": "E22",
+       "name": "dfifo",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 96.3,
+       "struct_score": 90.7,
+       "trace": "data_backward",
+       "why": "Return data FIFO written on WB ack, read at r_last for AXI R",
+       "lines": [
+        100,
+        274,
+        284
+       ]
+      },
+      {
+       "id": "E26",
+       "name": "r_mid",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 57.5,
+       "struct_score": 60.6,
+       "trace": "control_backward",
+       "why": "FIFO write pointer for returned WB data",
+       "lines": [
+        103,
+        255,
+        274
+       ]
+      },
+      {
+       "id": "E27",
+       "name": "r_last",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 57.0,
+       "struct_score": 58.6,
+       "trace": "control_backward",
+       "why": "FIFO read pointer advancing on AXI R handshake",
+       "lines": [
+        103,
+        267,
+        284
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "r_first",
+       "role": "FIFO_PTR",
+       "importance": "minor",
+       "score": 25.2,
+       "struct_score": 45.0,
+       "trace": "control_backward",
+       "why": "Request count pointer advanced on AR handshake",
+       "lines": [
+        103,
+        245,
+        320
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "fifo_full",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 19.5,
+       "struct_score": 22.2,
+       "trace": "control_backward",
+       "why": "FIFO full flag holding arready low",
+       "lines": [
+        101,
+        197,
+        226
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E24",
+       "name": "fifo_empty",
+       "kind": "reg"
+      },
+      {
+       "id": "E28",
+       "name": "next_first",
+       "kind": "wire"
+      },
+      {
+       "id": "E29",
+       "name": "next_last",
+       "kind": "wire"
+      },
+      {
+       "id": "E32",
+       "name": "read_data",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Wishbone request issue",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Issues WB strobes/addresses with stall shadow and tracks outstanding acks",
+     "anchors": [
+      {
+       "id": "E12",
+       "name": "o_wb_stb",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 98.9,
+       "struct_score": 97.3,
+       "trace": "control_backward",
+       "why": "Wishbone strobe issued per AXI read request until not stalled",
+       "lines": [
+        69,
+        120,
+        175
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "o_wb_addr",
+       "role": "INTERFACE_ADDR",
+       "importance": "critical",
+       "score": 92.3,
+       "struct_score": 80.6,
+       "trace": "data_backward",
+       "why": "Wishbone word address from araddr or shadow r_addr",
+       "lines": [
+        70,
+        132,
+        134
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "o_wb_cyc",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 41.9,
+       "struct_score": 94.8,
+       "trace": "control_backward",
+       "why": "Wishbone cycle while strobing or acks outstanding",
+       "lines": [
+        68,
+        125
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "r_stb",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 19.4,
+       "struct_score": 22.0,
+       "trace": "control_backward",
+       "why": "Shadow request pending while WB stalled",
+       "lines": [
+        95,
+        131,
+        150
+       ]
+      },
+      {
+       "id": "E21",
+       "name": "r_addr",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 22.9,
+       "struct_score": 36.2,
+       "trace": "data_backward",
+       "why": "Shadow address held for stalled second request",
+       "lines": [
+        96,
+        132,
+        151
+       ]
+      },
+      {
+       "id": "E31",
+       "name": "wb_outstanding",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 26.7,
+       "struct_score": 50.4,
+       "trace": "control_backward",
+       "why": "Counts WB requests awaiting ack",
+       "lines": [
+        106,
+        171,
+        175
+       ]
+      },
+      {
+       "id": "E30",
+       "name": "wb_pending",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 22.3,
+       "struct_score": 33.7,
+       "trace": "control_backward",
+       "why": "Acks outstanding; keeps o_wb_cyc asserted",
+       "lines": [
+        105,
+        125,
+        172
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E14",
+       "name": "o_wb_sel",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "AXI read channel control",
+     "kind": "CONTROLLER",
+     "description": "Generates arready, rvalid, rdata and rresp",
+     "anchors": [
+      {
+       "id": "E4",
+       "name": "o_axi_arready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 98.0,
+       "struct_score": 95.1,
+       "trace": "control_backward",
+       "why": "AR ready dropped on stall, FIFO full or error state",
+       "lines": [
+        54,
+        119,
+        244
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "o_axi_rvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 98.6,
+       "struct_score": 96.6,
+       "trace": "control_backward",
+       "why": "Read data valid set on WB ack/err, cleared when FIFO drains",
+       "lines": [
+        60,
+        266,
+        333
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "o_axi_rdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 94.1,
+       "struct_score": 85.1,
+       "trace": "data_backward",
+       "why": "AXI read data from dfifo head",
+       "lines": [
+        62,
+        285
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "o_axi_rresp",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 26.5,
+       "struct_score": 49.6,
+       "trace": "control_backward",
+       "why": "Read response: OKAY, SLVERR at error, DECERR after",
+       "lines": [
+        63,
+        306,
+        308
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Error handling",
+     "kind": "CONTROLLER",
+     "description": "Flushes outstanding requests after WB error and marks error responses",
+     "anchors": [
+      {
+       "id": "E33",
+       "name": "err_state",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 53.3,
+       "struct_score": 45.3,
+       "trace": "control_backward",
+       "why": "Bus error flush mode: halts strobes, blocks arready, alters rresp",
+       "lines": [
+        108,
+        117,
+        323
+       ]
+      },
+      {
+       "id": "E34",
+       "name": "err_loc",
+       "role": "INDEX",
+       "importance": "minor",
+       "score": 16.9,
+       "struct_score": 11.9,
+       "trace": "data_backward",
+       "why": "FIFO slot of the errored transaction for rresp",
+       "lines": [
+        109,
+        281,
+        305
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E3",
+     "name": "i_axi_arvalid",
+     "role": "HANDSHAKE_VALID",
+     "importance": "minor",
+     "score": 37.5,
+     "struct_score": 83.5,
+     "trace": "interface",
+     "why": "AXI read address valid launching WB strobes",
+     "lines": [
+      53,
+      119,
+      244
+     ]
+    },
+    {
+     "id": "E5",
+     "name": "i_axi_araddr",
+     "role": "INTERFACE_ADDR",
+     "importance": "major",
+     "score": 62.9,
+     "struct_score": 77.0,
+     "trace": "interface",
+     "why": "AXI read address converted to WB word address",
+     "lines": [
+      55,
+      134,
+      151
+     ]
+    },
+    {
+     "id": "E8",
+     "name": "i_axi_rready",
+     "role": "HANDSHAKE_READY",
+     "importance": "minor",
+     "score": 32.4,
+     "struct_score": 70.8,
+     "trace": "interface",
+     "why": "AXI master accepts read data, advancing r_last",
+     "lines": [
+      61,
+      266
+     ]
+    },
+    {
+     "id": "E15",
+     "name": "i_wb_stall",
+     "role": "HANDSHAKE_READY",
+     "importance": "minor",
+     "score": 33.2,
+     "struct_score": 72.7,
+     "trace": "interface",
+     "why": "WB stall holding strobe and triggering shadow request",
+     "lines": [
+      72,
+      121,
+      148
+     ]
+    },
+    {
+     "id": "E16",
+     "name": "i_wb_ack",
+     "role": "HANDSHAKE_READY",
+     "importance": "major",
+     "score": 59.3,
+     "struct_score": 66.9,
+     "trace": "interface",
+     "why": "WB acknowledge writing data into dfifo and advancing r_mid",
+     "lines": [
+      73,
+      254,
+      273
+     ]
+    },
+    {
+     "id": "E17",
+     "name": "i_wb_data",
+     "role": "INTERFACE_DATA",
+     "importance": "major",
+     "score": 64.6,
+     "struct_score": 81.4,
+     "trace": "interface",
+     "why": "Wishbone return data stored in dfifo",
+     "lines": [
+      74,
+      274
+     ]
+    },
+    {
+     "id": "E18",
+     "name": "i_wb_err",
+     "role": "STATUS",
+     "importance": "minor",
+     "score": 25.7,
+     "struct_score": 46.6,
+     "trace": "interface",
+     "why": "WB bus error entering err_state and setting rresp",
+     "lines": [
+      75,
+      280,
+      322
+     ]
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "Clock and reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "i_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "i_axi_reset_n",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "AXI read address",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "i_axi_arvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "o_axi_arready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "i_axi_araddr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "i_axi_arprot",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "AXI read data",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E7",
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E7",
+       "name": "o_axi_rvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E8",
+       "name": "i_axi_rready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "o_axi_rdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "o_axi_rresp",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "Wishbone master",
+     "protocol": "MEMORY_BUS",
+     "direction": "IN",
+     "member_ids": [
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "o_wb_cyc",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "o_wb_stb",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "o_wb_addr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "o_wb_sel",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "i_wb_stall",
+       "kind": "port_in"
+      },
+      {
+       "id": "E16",
+       "name": "i_wb_ack",
+       "kind": "port_in"
+      },
+      {
+       "id": "E17",
+       "name": "i_wb_data",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "i_wb_err",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

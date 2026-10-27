@@ -1,0 +1,21 @@
+{
+ "module_summary": "Serial-to-parallel converter: an 8-bit shift register collects valid serial bits under a bit counter, then latches the byte to the output with a valid pulse.",
+ "anchors": [
+  {"id": "E8", "name": "cnt", "role": "COUNTER", "importance": "critical", "trace": "control_backward", "why": "Counts received valid bits 0..8; gates shifting and triggers output latch at 8.", "lines": [17, 25, 35]},
+  {"id": "E7", "name": "din_tmp", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "8-bit shift register accumulating serial input bits.", "lines": [26, 37]},
+  {"id": "E3", "name": "din_serial", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Serial input bit shifted into din_tmp.", "lines": [26]},
+  {"id": "E4", "name": "din_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Input valid enabling counting and shifting of serial bits.", "lines": [16, 25]},
+  {"id": "E5", "name": "dout_parallel", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Parallel byte output loaded from din_tmp when cnt reaches 8.", "lines": [37]},
+  {"id": "E6", "name": "dout_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "One-cycle pulse accompanying dout_parallel when byte completes.", "lines": [36, 40]}
+ ],
+ "groups": [
+  {"name": "bit_counter", "kind": "COUNTER_TIMER", "anchor_ids": ["E8"], "member_ids": [], "description": "Counts valid serial bits and signals byte completion."},
+  {"name": "shift_deserializer", "kind": "SERIALIZER", "anchor_ids": ["E7", "E3", "E4"], "member_ids": [], "description": "Shifts serial bits into an 8-bit register while valid."},
+  {"name": "output_latch", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E5", "E6"], "member_ids": [], "description": "Latches completed byte and pulses output valid."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "serial_in", "protocol": "SERIAL", "direction": "IN", "member_ids": ["E3", "E4"]},
+  {"name": "parallel_out", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E5", "E6"]}
+ ]
+}

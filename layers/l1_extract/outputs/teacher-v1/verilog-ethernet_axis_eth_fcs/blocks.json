@@ -1,0 +1,406 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-ethernet_axis_eth_fcs",
+ "tops": [
+  "axis_eth_fcs"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "lfsr": {
+   "source": "heuristic",
+   "canonical_instance": "axis_eth_fcs.crc[0].eth_crc_inst",
+   "file": "data/rtl/verilog-ethernet/rtl/lfsr.v",
+   "lines": [
+    34,
+    445
+   ],
+   "summary": "lfsr (heuristic)",
+   "blocks": [],
+   "ungrouped_anchors": [
+    {
+     "id": "E1",
+     "name": "data_in",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 41.8,
+     "struct_score": 94.5,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    },
+    {
+     "id": "E2",
+     "name": "state_in",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 42.8,
+     "struct_score": 97.0,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    },
+    {
+     "id": "E3",
+     "name": "data_out",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 41.9,
+     "struct_score": 94.6,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    },
+    {
+     "id": "E4",
+     "name": "state_out",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 43.6,
+     "struct_score": 99.0,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "data",
+     "protocol": "SIMPLE",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E1",
+      "E3"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "data_in",
+       "kind": "port_in"
+      },
+      {
+       "id": "E3",
+       "name": "data_out",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "state",
+     "protocol": "SIMPLE",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E2",
+      "E4"
+     ],
+     "members": [
+      {
+       "id": "E2",
+       "name": "state_in",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "state_out",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "axis_eth_fcs": {
+   "source": "teacher",
+   "canonical_instance": "axis_eth_fcs",
+   "file": "data/rtl/verilog-ethernet/rtl/axis_eth_fcs.v",
+   "lines": [
+    34,
+    139
+   ],
+   "summary": "Computes Ethernet FCS over an AXI-Stream: per-byte LFSR CRC32 instances update a running CRC register each beat, and on tlast the inverted CRC is latched with a valid pulse.",
+   "blocks": [
+    {
+     "name": "CRC engine",
+     "kind": "DATAPATH",
+     "description": "LFSR CRC32 instances updating running crc_state each valid beat.",
+     "anchors": [
+      {
+       "id": "E11",
+       "name": "crc_state",
+       "role": "HOLDING_REG",
+       "importance": "critical",
+       "score": 84.2,
+       "struct_score": 55.9,
+       "trace": "data_backward",
+       "why": "Running CRC32 accumulator, reset to all ones per frame.",
+       "lines": [
+        73,
+        100,
+        115
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "crc_next",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 62.8,
+       "struct_score": 76.8,
+       "trace": "data_backward",
+       "why": "Next CRC values from LFSR instances per byte lane.",
+       "lines": [
+        77,
+        102,
+        115
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "s_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 93.6,
+       "struct_score": 83.9,
+       "trace": "interface",
+       "why": "Stream payload fed into LFSR CRC instances.",
+       "lines": [
+        51,
+        99
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "crc[*].eth_crc_inst",
+       "module": "lfsr"
+      }
+     ],
+     "members": []
+    },
+    {
+     "name": "Frame control",
+     "kind": "CONTROLLER",
+     "description": "Valid/tlast/tkeep decide CRC update, reset and final lane select.",
+     "anchors": [
+      {
+       "id": "E5",
+       "name": "s_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 95.9,
+       "struct_score": 89.6,
+       "trace": "interface",
+       "why": "Beat valid; enables CRC state update and FCS capture.",
+       "lines": [
+        53,
+        114
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_tlast",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 60.4,
+       "struct_score": 70.7,
+       "trace": "forward",
+       "why": "End of frame: latches FCS, reinitializes CRC state.",
+       "lines": [
+        55,
+        117
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_tkeep",
+       "role": "MUX_SELECT",
+       "importance": "minor",
+       "score": 32.3,
+       "struct_score": 70.5,
+       "trace": "interface",
+       "why": "Byte keep selects which partial CRC becomes final FCS.",
+       "lines": [
+        52,
+        122
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 32.8,
+       "struct_score": 71.8,
+       "trace": "none",
+       "why": "Tied high; module always accepts data.",
+       "lines": [
+        54,
+        79
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "FCS output",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Registers inverted CRC and valid pulse at frame end.",
+     "anchors": [
+      {
+       "id": "E9",
+       "name": "output_fcs",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 97.0,
+       "struct_score": 92.5,
+       "trace": "data_backward",
+       "why": "Final frame check sequence output from fcs_reg.",
+       "lines": [
+        61,
+        80
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "output_fcs_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 94.6,
+       "struct_score": 86.3,
+       "trace": "data_backward",
+       "why": "One-cycle pulse marking output_fcs valid.",
+       "lines": [
+        62,
+        81
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "fcs_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 30.4,
+       "struct_score": 63.7,
+       "trace": "data_backward",
+       "why": "Latches inverted CRC at frame end; drives output_fcs.",
+       "lines": [
+        74,
+        120,
+        127
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "fcs_valid_reg",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 21.6,
+       "struct_score": 30.7,
+       "trace": "control_backward",
+       "why": "Registered FCS valid pulse set on tlast.",
+       "lines": [
+        75,
+        112,
+        129
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axis",
+     "protocol": "STREAM",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axis_tdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_tkeep",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_tvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_tready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_axis_tuser",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "fcs_out",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E9",
+       "name": "output_fcs",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "output_fcs_valid",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

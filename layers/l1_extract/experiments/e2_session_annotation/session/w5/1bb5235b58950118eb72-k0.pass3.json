@@ -1,0 +1,33 @@
+{
+  "module_summary": "SERV bit-serial PC controller: the PC is a 32-bit shift register; serial adders compute PC+4/2 and PC+offset with carry flops, and a mux selects trap, jump or sequential next PC.",
+  "anchors": [
+    {"id": "E19", "name": "o_ibus_adr", "role": "INTERFACE_ADDR", "importance": "critical", "trace": "data_backward", "why": "PC shift register driving instruction bus address; shifts in new_pc when enabled.", "lines": [38, 109, 112]},
+    {"id": "E31", "name": "new_pc", "role": "DATAPATH_MAJOR", "importance": "critical", "trace": "data_backward", "why": "Next-PC mux result: trap vector, jump target or PC+4.", "lines": [75, 80, 112]},
+    {"id": "E20", "name": "pc_plus_4", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Serial sequential-PC adder result feeding new_pc and o_rd.", "lines": [70, 75, 83]},
+    {"id": "E28", "name": "pc_plus_offset_aligned", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Aligned PC+offset adder result: jump target, AUIPC result, bad PC.", "lines": [68, 75, 97]},
+    {"id": "E3", "name": "i_pc_en", "role": "ENABLE", "importance": "major", "trace": "forward", "why": "Enables PC shift and carry register updates.", "lines": [104, 108, 111]},
+    {"id": "E8", "name": "i_jump", "role": "MUX_SELECT", "importance": "major", "trace": "forward", "why": "Selects jump target versus PC+4 for new_pc.", "lines": [25, 75, 80]},
+    {"id": "E12", "name": "i_trap", "role": "MUX_SELECT", "importance": "major", "trace": "forward", "why": "Selects CSR trap vector as next PC.", "lines": [29, 75]},
+    {"id": "E17", "name": "o_rd", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Serial rd writeback data: PC+offset for U-type or PC+4 for JAL/JALR.", "lines": [35, 83]},
+    {"id": "E22", "name": "pc_plus_4_cy_r", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Carry flop of bit-serial PC+4 adder held between bit cycles.", "lines": [104, 99]},
+    {"id": "E26", "name": "pc_plus_offset_cy_r", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Carry flop of bit-serial PC+offset adder.", "lines": [105, 98]},
+    {"id": "E33", "name": "offset_b", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Offset adder operand: gated immediate for U-type else buffered offset.", "lines": [86, 87]},
+    {"id": "E10", "name": "i_utype", "role": "MUX_SELECT", "importance": "minor", "trace": "forward", "why": "Selects immediate offset and U-type rd result.", "lines": [83, 86]},
+    {"id": "E29", "name": "plus_4", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Increment bits: 2 for compressed, 4 otherwise, injected at count bit.", "lines": [62, 70]},
+    {"id": "E18", "name": "o_bad_pc", "role": "INTERFACE_DATA", "importance": "minor", "trace": "data_backward", "why": "Misaligned jump target reported to CSR for mtval.", "lines": [36, 68]}
+  ],
+  "groups": [
+    {"name": "PC register", "kind": "REGISTER_BANK", "anchor_ids": ["E19", "E3"], "member_ids": ["E30"], "description": "Shift-register PC driving instruction bus, updated when pc_en."},
+    {"name": "Sequential PC adder", "kind": "DATAPATH", "anchor_ids": ["E20", "E22", "E29"], "member_ids": ["E21", "E23", "E13", "E6", "E7"], "description": "Bit-serial PC+4/PC+2 adder with carry flop."},
+    {"name": "Offset adder", "kind": "DATAPATH", "anchor_ids": ["E28", "E26", "E33", "E10"], "member_ids": ["E24", "E25", "E27", "E32", "E11", "E14", "E15", "E4"], "description": "Bit-serial PC-relative/immediate adder for jumps and AUIPC/LUI."},
+    {"name": "Next-PC select", "kind": "DATAPATH", "anchor_ids": ["E31", "E8", "E12", "E17", "E18"], "member_ids": ["E16", "E9"], "description": "Chooses trap, jump or sequential PC; forms rd result."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "state_counts", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7"]},
+    {"name": "control", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E8", "E9", "E10", "E11", "E12", "E13"]},
+    {"name": "serial_data_in", "protocol": "STREAM", "direction": "IN", "member_ids": ["E14", "E15", "E16"]},
+    {"name": "serial_data_out", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E17", "E18"]},
+    {"name": "ibus", "protocol": "MEMORY_BUS", "direction": "OUT", "member_ids": ["E19"]}
+  ]
+}

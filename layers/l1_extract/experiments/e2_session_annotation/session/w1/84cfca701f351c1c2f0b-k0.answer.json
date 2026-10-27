@@ -1,0 +1,31 @@
+{
+ "module_summary": "Iterative radix-2 restoring divider: an 8-step counter shifts a remainder/quotient register SR through a subtract-and-select datapath, with sign fixup and valid/ready handshake.",
+ "anchors": [
+  {"id":"E12","name":"SR","role":"STORAGE","importance":"critical","trace":"data_backward","why":"Combined remainder/quotient shift register updated each iteration"},
+  {"id":"E23","name":"cnt","role":"COUNTER","importance":"critical","trace":"forward","why":"Iteration counter; bit 3 ends division and sets res_valid"},
+  {"id":"E24","name":"start_cnt","role":"CONTROL_FLAG","importance":"critical","trace":"control_backward","why":"Busy flag: set on accepted request, gates iterative SR updates"},
+  {"id":"E7","name":"res_valid","role":"HANDSHAKE_VALID","importance":"critical","trace":"control_backward","why":"Result valid; set at completion, cleared on res_ready, blocks new requests"},
+  {"id":"E6","name":"opn_valid","role":"HANDSHAKE_VALID","importance":"major","trace":"interface","why":"Operation request; starts division and captures operands when idle"},
+  {"id":"E8","name":"res_ready","role":"HANDSHAKE_READY","importance":"major","trace":"interface","why":"Consumer accept; with res_valid clears result valid"},
+  {"id":"E9","name":"result","role":"DATAPATH_MAJOR","importance":"major","trace":"data_backward","why":"Sign-corrected remainder and quotient concatenated output"},
+  {"id":"E13","name":"NEG_DIVISOR","role":"STORAGE","importance":"major","trace":"data_backward","why":"Negated absolute divisor captured at start, added to partial remainder"},
+  {"id":"E22","name":"mux_result","role":"DATAPATH_MAJOR","importance":"major","trace":"data_backward","why":"Restoring select: difference or unchanged remainder written back into SR"},
+  {"id":"E20","name":"CO","role":"MUX_SELECT","importance":"major","trace":"data_backward","why":"Subtraction carry-out; selects restore path and becomes quotient bit"},
+  {"id":"E21","name":"sub_result","role":"DATAPATH_MAJOR","importance":"minor","trace":"data_backward","why":"Partial remainder plus negated divisor trial subtraction"},
+  {"id":"E10","name":"dividend_save","role":"STORAGE","importance":"minor","trace":"data_backward","why":"Captured dividend; sign bit drives remainder/quotient sign correction"},
+  {"id":"E11","name":"divisor_save","role":"STORAGE","importance":"minor","trace":"data_backward","why":"Captured divisor; sign bit drives quotient sign correction"},
+  {"id":"E16","name":"divident_abs","role":"DATAPATH_MAJOR","importance":"minor","trace":"data_backward","why":"Absolute dividend loaded into SR at operation start"},
+  {"id":"E25","name":"data_go","role":"CONTROL_FLAG","importance":"minor","trace":"control_backward","why":"Handshake completion res_valid & res_ready, clears res_valid"}
+ ],
+ "groups": [
+  {"name":"control","kind":"CONTROLLER","anchor_ids":["E23","E24"],"member_ids":[],"description":"Busy flag and iteration counter sequencing start, 8 steps, and finish"},
+  {"name":"divide_datapath","kind":"DATAPATH","anchor_ids":["E12","E13","E22","E20","E21","E16"],"member_ids":["E14","E15"],"description":"Shift register SR with trial subtract and restoring mux"},
+  {"name":"sign_fixup","kind":"DATAPATH","anchor_ids":["E9","E10","E11"],"member_ids":["E18","E19"],"description":"Saved operand signs negate remainder and quotient for signed result"},
+  {"name":"handshake","kind":"INTERFACE_ADAPTER","anchor_ids":["E6","E7","E8","E25"],"member_ids":[],"description":"Request valid input and result valid/ready output handshake"}
+ ],
+ "interfaces": [
+  {"name":"clock_reset","protocol":"CLOCK_RESET","direction":"IN","member_ids":["E1","E2"]},
+  {"name":"operation_request","protocol":"VALID_READY","direction":"IN","member_ids":["E3","E4","E5","E6"]},
+  {"name":"result_response","protocol":"VALID_READY","direction":"OUT","member_ids":["E7","E8","E9"]}
+ ]
+}

@@ -1,0 +1,182 @@
+[
+ {
+  "module": "axisgfsm",
+  "instance": "axisgfsm",
+  "state": "sgstate",
+  "next": null,
+  "style": "one-process",
+  "states": [
+   {
+    "name": "SG_IDLE",
+    "value": "3'b0"
+   },
+   {
+    "name": "SG_SRCHALF",
+    "value": "3'b1"
+   },
+   {
+    "name": "SG_SRCADDR",
+    "value": "3'b10"
+   },
+   {
+    "name": "SG_DSTHALF",
+    "value": "3'b11"
+   },
+   {
+    "name": "SG_DSTADDR",
+    "value": "3'b100"
+   },
+   {
+    "name": "SG_LENGTH",
+    "value": "3'b101"
+   },
+   {
+    "name": "SG_CONTROL",
+    "value": "3'b110"
+   },
+   {
+    "name": "SG_WAIT",
+    "value": "3'b111"
+   }
+  ],
+  "reset_state": "SG_IDLE",
+  "transitions": [
+   {
+    "src": "SG_IDLE",
+    "dst": "SG_SRCADDR",
+    "cond": "i_start"
+   },
+   {
+    "src": "SG_SRCHALF",
+    "dst": "SG_SRCADDR",
+    "cond": "i_pf_valid && (!o_dmac_wvalid || i_dmac_wready)"
+   },
+   {
+    "src": "SG_SRCADDR",
+    "dst": "SG_DSTADDR",
+    "cond": "i_pf_valid && o_pf_ready"
+   },
+   {
+    "src": "SG_SRCADDR",
+    "dst": "SG_SRCADDR",
+    "cond": "i_pf_valid && o_pf_ready && i_pf_insn[31:30] == 2'b10"
+   },
+   {
+    "src": "SG_SRCADDR",
+    "dst": "SG_SRCADDR",
+    "cond": "i_pf_valid && o_pf_ready && i_pf_insn[31:30] == 2'b11"
+   },
+   {
+    "src": "SG_DSTHALF",
+    "dst": "SG_DSTADDR",
+    "cond": "i_pf_valid && (!o_dmac_wvalid || i_dmac_wready)"
+   },
+   {
+    "src": "SG_DSTADDR",
+    "dst": "SG_LENGTH",
+    "cond": "i_pf_valid && (!o_dmac_wvalid || i_dmac_wready)"
+   },
+   {
+    "src": "SG_LENGTH",
+    "dst": "SG_CONTROL",
+    "cond": "i_pf_valid && (!o_dmac_wvalid || i_dmac_wready)"
+   },
+   {
+    "src": "SG_LENGTH",
+    "dst": "SG_IDLE",
+    "cond": "i_pf_valid && (!o_dmac_wvalid || i_dmac_wready) && i_pf_insn <= 0 && tbl_last"
+   },
+   {
+    "src": "SG_LENGTH",
+    "dst": "SG_SRCADDR",
+    "cond": "i_pf_valid && (!o_dmac_wvalid || i_dmac_wready) && i_pf_insn <= 0 && !tbl_last"
+   },
+   {
+    "src": "SG_CONTROL",
+    "dst": "SG_WAIT",
+    "cond": "(!o_dmac_wvalid || i_dmac_wready)"
+   },
+   {
+    "src": "SG_WAIT",
+    "dst": "SG_IDLE",
+    "cond": "dma_op_complete && dma_terminate"
+   },
+   {
+    "src": "SG_WAIT",
+    "dst": "SG_SRCADDR",
+    "cond": "dma_op_complete && !dma_terminate"
+   },
+   {
+    "src": "*",
+    "dst": "SG_IDLE",
+    "cond": "i_pf_valid && i_pf_illegal && sgstate != SG_CONTROL && sgstate != SG_WAIT && !o_new_pc && !o_pf_clear_cache"
+   },
+   {
+    "src": "*",
+    "dst": "SG_IDLE",
+    "cond": "i_abort && (!o_dmac_wvalid || i_dmac_wready) && !dma_busy && (sgstate != SG_WAIT)"
+   }
+  ],
+  "outputs": [
+   {
+    "signal": "o_busy",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "o_dmac_waddr",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "o_dmac_wdata",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "o_dmac_wvalid",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "o_done",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "o_err",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "o_int",
+    "kind": "mealy",
+    "port": true
+   },
+   {
+    "signal": "o_new_pc",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "o_pf_clear_cache",
+    "kind": "moore",
+    "port": true
+   },
+   {
+    "signal": "o_pf_ready",
+    "kind": "mealy",
+    "port": true
+   },
+   {
+    "signal": "o_tbl_addr",
+    "kind": "moore",
+    "port": true
+   }
+  ],
+  "warnings": [
+   "semantic_check: unsupported (unsupported: constant \" // Clear any errors\\r\\n\\t\\t\\t\\t\\t1'b1\")"
+  ],
+  "semantic_check": "unsupported"
+ }
+]

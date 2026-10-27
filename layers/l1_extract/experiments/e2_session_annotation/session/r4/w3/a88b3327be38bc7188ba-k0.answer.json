@@ -1,0 +1,23 @@
+{
+ "module_summary": "Source half of a clearable gray-code CDC FIFO: a pointer submodule tracks the gray write pointer against the synchronized read pointer for ready, and a data submodule writes entries exported asynchronously.",
+ "anchors": [
+  {"id": "E5", "name": "src_valid_i", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Source push request; combined with ready forms src_write.", "lines": [425, 436, 457]},
+  {"id": "E6", "name": "src_ready_o", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Not-full ready from pointer logic; gates writes into storage.", "lines": [426, 436, 458]},
+  {"id": "E4", "name": "src_data_i", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Source data payload written into the FIFO storage.", "lines": [424, 444]},
+  {"id": "E7", "name": "async_data_o", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Whole FIFO storage array exported to the destination clock domain.", "lines": [428, 447]},
+  {"id": "E8", "name": "async_wptr_o", "role": "FIFO_PTR", "importance": "critical", "trace": "data_backward", "why": "Gray-coded write pointer sent across the clock domain.", "lines": [429, 460]},
+  {"id": "E9", "name": "async_rptr_i", "role": "FIFO_PTR", "importance": "major", "trace": "interface", "why": "Gray read pointer from destination, synchronized for full detection.", "lines": [430, 461]},
+  {"id": "E10", "name": "src_widx", "role": "FIFO_PTR", "importance": "major", "trace": "data_backward", "why": "Binary write index from pointer logic selecting the storage entry.", "lines": [433, 445, 459]},
+  {"id": "E11", "name": "src_write", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Write enable to storage on valid-and-ready handshake.", "lines": [434, 436, 446]}
+ ],
+ "groups": [
+  {"name": "write_pointer_logic", "kind": "CONTROLLER", "anchor_ids": ["E6", "E8", "E9", "E10"], "member_ids": ["I2"], "description": "Gray write pointer, synchronized read pointer, full compare and ready generation."},
+  {"name": "fifo_storage", "kind": "MEMORY", "anchor_ids": ["E4", "E7", "E11"], "member_ids": ["I1"], "description": "Register array written at src_widx on src_write, exported asynchronously."},
+  {"name": "src_handshake", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E5"], "member_ids": [], "description": "Source valid/ready push interface producing the write strobe."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2", "E3"]},
+  {"name": "src_stream", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E4", "E5", "E6"]},
+  {"name": "async_cdc", "protocol": "OTHER", "direction": "OUT", "member_ids": ["E7", "E8", "E9"]}
+ ]
+}

@@ -1,0 +1,37 @@
+{
+  "module_summary": "Wishbone PicoRV32 wrapper: a 3-state IDLE/WBSTART/WBEND FSM latches the picorv32 core's native bus request into registered Wishbone master outputs and returns ack data as mem_ready/mem_rdata.",
+  "anchors": [
+    {"id": "E33", "name": "state", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Wishbone bridge FSM: launches cycle on mem_valid, waits ack, pulses mem_ready."},
+    {"id": "E25", "name": "mem_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "forward", "why": "Core native bus request starting a Wishbone cycle from IDLE."},
+    {"id": "E29", "name": "mem_ready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Registered one-cycle completion pulse back to the core on Wishbone ack."},
+    {"id": "E30", "name": "mem_rdata", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Latches wbm_dat_i on ack and returns read data to the core."},
+    {"id": "E26", "name": "mem_addr", "role": "INTERFACE_ADDR", "importance": "minor", "trace": "data_backward", "why": "Core request address, latched into wbm_adr_o."},
+    {"id": "E27", "name": "mem_wdata", "role": "INTERFACE_DATA", "importance": "minor", "trace": "data_backward", "why": "Core store data, latched into wbm_dat_o."},
+    {"id": "E28", "name": "mem_wstrb", "role": "COMMAND", "importance": "minor", "trace": "data_backward", "why": "Core byte strobes, latched into wbm_sel_o and ORed to form write flag."},
+    {"id": "E34", "name": "we", "role": "DECODE", "importance": "minor", "trace": "control_backward", "why": "Write flag decoded from any nonzero strobe, latched into wbm_we_o."},
+    {"id": "E9", "name": "wbm_stb_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Registered Wishbone strobe asserted from IDLE until ack."},
+    {"id": "E10", "name": "wbm_ack_i", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Wishbone ack ending the cycle, capturing read data and pulsing mem_ready."},
+    {"id": "E4", "name": "wbm_adr_o", "role": "INTERFACE_ADDR", "importance": "major", "trace": "data_backward", "why": "Registered Wishbone address latched from core mem_addr."},
+    {"id": "E5", "name": "wbm_dat_o", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Registered Wishbone write data latched from core mem_wdata."},
+    {"id": "E6", "name": "wbm_dat_i", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Wishbone read data captured into mem_rdata on ack."},
+    {"id": "E7", "name": "wbm_we_o", "role": "COMMAND", "importance": "major", "trace": "control_backward", "why": "Registered Wishbone write-enable selecting read or write cycle."},
+    {"id": "E8", "name": "wbm_sel_o", "role": "INTERFACE_DATA", "importance": "minor", "trace": "data_backward", "why": "Registered Wishbone byte selects from core strobes."},
+    {"id": "E11", "name": "wbm_cyc_o", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "control_backward", "why": "Wishbone cycle-valid, asserted together with stb."},
+    {"id": "E1", "name": "trap", "role": "STATUS", "importance": "major", "trace": "data_backward", "why": "Core trap/halt status output."},
+    {"id": "E12", "name": "pcpi_valid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Co-processor request passthrough from the core."},
+    {"id": "E22", "name": "trace_valid", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Trace stream valid passthrough from the core."}
+  ],
+  "groups": [
+    {"name": "cpu_core", "kind": "OTHER", "anchor_ids": ["E25", "E26", "E27", "E28", "E1", "E12", "E22"], "member_ids": ["I1", "E24"], "description": "picorv32 core issuing native memory requests; PCPI/IRQ/trace passthrough."},
+    {"name": "wishbone_bridge_fsm", "kind": "CONTROLLER", "anchor_ids": ["E33", "E29", "E34"], "member_ids": [], "description": "IDLE/WBSTART/WBEND FSM sequencing one Wishbone cycle per native request."},
+    {"name": "wishbone_master_regs", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E9", "E10", "E4", "E5", "E6", "E7", "E8", "E11", "E30"], "member_ids": [], "description": "Registered Wishbone master outputs and ack-captured read data."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E2", "E3"]},
+    {"name": "wishbone_master", "protocol": "REQ_ACK", "direction": "BIDIR", "member_ids": ["E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11"]},
+    {"name": "pcpi", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E12", "E13", "E14", "E15", "E16", "E17", "E18", "E19"]},
+    {"name": "irq", "protocol": "OTHER", "direction": "IN", "member_ids": ["E20", "E21"]},
+    {"name": "trace", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E22", "E23"]},
+    {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E1", "E24"]}
+  ]
+}

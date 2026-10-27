@@ -1,0 +1,1476 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "wb2axip_axi32axi",
+ "tops": [
+  "axi32axi"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "skidbuffer": {
+   "source": "teacher",
+   "canonical_instance": "axi32axi.GEN_AWCACHE.awskid",
+   "file": "data/rtl/wb2axip/rtl/skidbuffer.v",
+   "lines": [
+    81,
+    501
+   ],
+   "summary": "Valid/ready skid buffer: a one-entry side register captures input data when the downstream stalls, while a registered output stage muxes skid or input data, giving full-throughput registered handshakes.",
+   "blocks": [
+    {
+     "name": "Skid register",
+     "kind": "BUFFER",
+     "description": "One-entry overflow buffer and its occupancy flag driving o_ready.",
+     "anchors": [
+      {
+       "id": "E10",
+       "name": "LOGIC.r_valid",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 58.1,
+       "struct_score": 62.8,
+       "trace": "control_backward",
+       "why": "Skid-occupied flag; set on downstream stall, drives o_ready and output mux.",
+       "lines": [
+        139,
+        160,
+        212
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "LOGIC.r_data",
+       "role": "STORAGE",
+       "importance": "major",
+       "score": 70.2,
+       "struct_score": 95.5,
+       "trace": "data_backward",
+       "why": "One-entry skid storage holding data accepted during a stall.",
+       "lines": [
+        153,
+        213
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "o_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 95.3,
+       "struct_score": 88.1,
+       "trace": "control_backward",
+       "why": "Upstream ready, low whenever skid register holds data.",
+       "lines": [
+        152,
+        160
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E9",
+       "name": "w_data",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Output register",
+     "kind": "PIPELINE_STAGE",
+     "description": "Registered valid and data selecting skid or input payload.",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "o_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 98.7,
+       "struct_score": 96.7,
+       "trace": "control_backward",
+       "why": "Downstream valid driven from registered ro_valid.",
+       "lines": [
+        137,
+        200
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "o_data",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 99.5,
+       "struct_score": 98.7,
+       "trace": "data_backward",
+       "why": "Registered output payload chosen from skid or input data.",
+       "lines": [
+        213,
+        215
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "LOGIC.REG_OUTPUT.ro_valid",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 28.0,
+       "struct_score": 55.1,
+       "trace": "control_backward",
+       "why": "Registered output valid flop behind o_valid.",
+       "lines": [
+        198,
+        200
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Input port",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Upstream valid/data and downstream ready controlling transfers.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "i_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 96.9,
+       "struct_score": 92.2,
+       "trace": "interface",
+       "why": "Upstream valid; loads skid register or output register.",
+       "lines": [
+        137,
+        198
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "i_data",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 98.2,
+       "struct_score": 95.4,
+       "trace": "interface",
+       "why": "Incoming payload captured into skid or output register.",
+       "lines": [
+        153,
+        215
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "i_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 94.2,
+       "struct_score": 85.5,
+       "trace": "interface",
+       "why": "Downstream ready; stall triggers skid capture, ready drains it.",
+       "lines": [
+        137,
+        140,
+        197
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "i_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "i_reset",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "slave_in",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "i_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "o_ready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "i_data",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "master_out",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E6",
+      "E7",
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "o_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "i_ready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "o_data",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "axi3reorder": {
+   "source": "heuristic",
+   "canonical_instance": "axi32axi.widreorder",
+   "file": "data/rtl/wb2axip/rtl/axi3reorder.v",
+   "lines": [
+    84,
+    742
+   ],
+   "summary": "axi3reorder (heuristic)",
+   "blocks": [],
+   "ungrouped_anchors": [
+    {
+     "id": "E3",
+     "name": "S_AXI3_AWVALID",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 91.8,
+     "struct_score": 79.3,
+     "trace": "interface",
+     "why": "valid port",
+     "lines": []
+    },
+    {
+     "id": "E4",
+     "name": "S_AXI3_AWREADY",
+     "role": "HANDSHAKE_READY",
+     "importance": "critical",
+     "score": 84.6,
+     "struct_score": 57.2,
+     "trace": "interface",
+     "why": "ready/ack port",
+     "lines": []
+    },
+    {
+     "id": "E6",
+     "name": "S_AXI3_WVALID",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 90.3,
+     "struct_score": 75.6,
+     "trace": "interface",
+     "why": "valid port",
+     "lines": []
+    },
+    {
+     "id": "E7",
+     "name": "S_AXI3_WREADY",
+     "role": "HANDSHAKE_READY",
+     "importance": "critical",
+     "score": 85.9,
+     "struct_score": 62.1,
+     "trace": "interface",
+     "why": "ready/ack port",
+     "lines": []
+    },
+    {
+     "id": "E9",
+     "name": "S_AXI3_WDATA",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 38.1,
+     "struct_score": 85.1,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    },
+    {
+     "id": "E12",
+     "name": "M_AXI_WVALID",
+     "role": "HANDSHAKE_VALID",
+     "importance": "critical",
+     "score": 91.0,
+     "struct_score": 77.3,
+     "trace": "interface",
+     "why": "valid port",
+     "lines": []
+    },
+    {
+     "id": "E13",
+     "name": "M_AXI_WREADY",
+     "role": "HANDSHAKE_READY",
+     "importance": "critical",
+     "score": 85.2,
+     "struct_score": 59.4,
+     "trace": "interface",
+     "why": "ready/ack port",
+     "lines": []
+    },
+    {
+     "id": "E15",
+     "name": "M_AXI_WDATA",
+     "role": "INTERFACE_DATA",
+     "importance": "minor",
+     "score": 38.6,
+     "struct_score": 86.3,
+     "trace": "interface",
+     "why": "wide data port",
+     "lines": []
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "S_AXI_ACLK",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "S_AXI_ARESETN",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "S_AXI3_AWVALID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "S_AXI3_AWREADY",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "S_AXI3_AWID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "S_AXI3_WVALID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "S_AXI3_WREADY",
+       "kind": "port_out"
+      },
+      {
+       "id": "E8",
+       "name": "S_AXI3_WID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "S_AXI3_WDATA",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "S_AXI3_WSTRB",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "S_AXI3_WLAST",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E12",
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17"
+     ],
+     "members": [
+      {
+       "id": "E12",
+       "name": "M_AXI_WVALID",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "M_AXI_WREADY",
+       "kind": "port_in"
+      },
+      {
+       "id": "E14",
+       "name": "M_AXI_WID",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "M_AXI_WDATA",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "M_AXI_WSTRB",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "M_AXI_WLAST",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "axi32axi": {
+   "source": "teacher",
+   "canonical_instance": "axi32axi",
+   "file": "data/rtl/wb2axip/rtl/axi32axi.v",
+   "lines": [
+    59,
+    376
+   ],
+   "summary": "AXI3-to-AXI4 bridge: remaps AxCACHE/AxLOCK, registers AW/AR through skid buffers, de-interleaves write data by WID via a reorder block, and forwards B/R channels directly.",
+   "blocks": [
+    {
+     "name": "aw_channel_skid",
+     "kind": "PIPELINE_STAGE",
+     "description": "AW cache/lock remap and skid buffer registering write address.",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "S_AXI_AWADDR",
+       "role": "INTERFACE_ADDR",
+       "importance": "critical",
+       "score": 82.6,
+       "struct_score": 50.1,
+       "trace": "interface",
+       "why": "AXI3 write address packed into the AW skid buffer.",
+       "lines": [
+        81,
+        213
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "S_AXI_AWVALID",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 57.0,
+       "struct_score": 58.8,
+       "trace": "interface",
+       "why": "AW valid feeding skid buffer and reorder AW ID FIFO.",
+       "lines": [
+        78,
+        211,
+        263
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "S_AXI_AWREADY",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 55.5,
+       "struct_score": 53.1,
+       "trace": "control_backward",
+       "why": "AW ready requiring both skid buffer and reorder readiness.",
+       "lines": [
+        79,
+        226
+       ]
+      },
+      {
+       "id": "E78",
+       "name": "axi4_awcache",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 43.3,
+       "struct_score": 5.1,
+       "trace": "data_backward",
+       "why": "AXI3-to-AXI4 remapped write cache attribute sent to AW skid buffer.",
+       "lines": [
+        177,
+        188,
+        215
+       ]
+      },
+      {
+       "id": "E80",
+       "name": "axi4_awlock",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 14.8,
+       "struct_score": 3.4,
+       "trace": "data_backward",
+       "why": "AXI4 single-bit lock derived from AXI3 AWLOCK.",
+       "lines": [
+        178,
+        197,
+        214
+       ]
+      },
+      {
+       "id": "E82",
+       "name": "awskd_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 16.1,
+       "struct_score": 8.6,
+       "trace": "control_backward",
+       "why": "AW skid buffer ready combined into S_AXI_AWREADY.",
+       "lines": [
+        179,
+        212,
+        226
+       ]
+      },
+      {
+       "id": "E44",
+       "name": "M_AXI_AWADDR",
+       "role": "INTERFACE_ADDR",
+       "importance": "minor",
+       "score": 27.9,
+       "struct_score": 54.6,
+       "trace": "interface",
+       "why": "Registered write address from AW skid buffer.",
+       "lines": [
+        129,
+        218
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "GEN_AWCACHE.awskid",
+       "module": "skidbuffer"
+      }
+     ],
+     "members": [
+      {
+       "id": "E41",
+       "name": "M_AXI_AWVALID",
+       "kind": "port_out"
+      },
+      {
+       "id": "E42",
+       "name": "M_AXI_AWREADY",
+       "kind": "port_in"
+      },
+      {
+       "id": "E45",
+       "name": "M_AXI_AWLEN",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "wid_reorder",
+     "kind": "BUFFER",
+     "description": "De-interleaves AXI3 write beats by WID into AXI4 write order.",
+     "anchors": [
+      {
+       "id": "E17",
+       "name": "S_AXI_WDATA",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 87.3,
+       "struct_score": 67.1,
+       "trace": "interface",
+       "why": "AXI3 write data fed into WID reorder block.",
+       "lines": [
+        94,
+        270
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "S_AXI_WID",
+       "role": "INTERFACE_ADDR",
+       "importance": "critical",
+       "score": 75.6,
+       "struct_score": 22.9,
+       "trace": "interface",
+       "why": "Write ID used by reorder block to de-interleave write beats.",
+       "lines": [
+        93,
+        269
+       ]
+      },
+      {
+       "id": "E54",
+       "name": "M_AXI_WDATA",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 88.6,
+       "struct_score": 71.1,
+       "trace": "data_backward",
+       "why": "Reordered AXI4 write data output from reorder block.",
+       "lines": [
+        141,
+        277
+       ]
+      },
+      {
+       "id": "E83",
+       "name": "wid_reorder_awready",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 44.9,
+       "struct_score": 11.6,
+       "trace": "control_backward",
+       "why": "Reorder block AW ready gating AW skid input and S_AXI_AWREADY.",
+       "lines": [
+        180,
+        226,
+        264
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "S_AXI_WVALID",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 54.5,
+       "struct_score": 49.8,
+       "trace": "interface",
+       "why": "W valid into the reorder block.",
+       "lines": [
+        91,
+        267
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "S_AXI_WREADY",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 50.9,
+       "struct_score": 36.1,
+       "trace": "interface",
+       "why": "W ready from the reorder block.",
+       "lines": [
+        92,
+        268
+       ]
+      },
+      {
+       "id": "E52",
+       "name": "M_AXI_WVALID",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 28.0,
+       "struct_score": 54.9,
+       "trace": "interface",
+       "why": "Reordered W valid to AXI4 master.",
+       "lines": [
+        139,
+        274
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I2",
+       "instance": "widreorder",
+       "module": "axi3reorder"
+      }
+     ],
+     "members": [
+      {
+       "id": "E84",
+       "name": "reordered_wid",
+       "kind": "wire"
+      },
+      {
+       "id": "E53",
+       "name": "M_AXI_WREADY",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "ar_channel_skid",
+     "kind": "PIPELINE_STAGE",
+     "description": "AR cache/lock remap and skid buffer registering read address.",
+     "anchors": [
+      {
+       "id": "E27",
+       "name": "S_AXI_ARADDR",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 54.6,
+       "struct_score": 50.1,
+       "trace": "interface",
+       "why": "Read address packed into the AR skid buffer.",
+       "lines": [
+        108,
+        320
+       ]
+      },
+      {
+       "id": "E79",
+       "name": "axi4_arcache",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 15.3,
+       "struct_score": 5.1,
+       "trace": "data_backward",
+       "why": "Remapped read cache attribute sent to AR skid buffer.",
+       "lines": [
+        177,
+        296,
+        322
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "S_AXI_ARVALID",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 26.5,
+       "struct_score": 49.8,
+       "trace": "interface",
+       "why": "AR valid into AR skid buffer.",
+       "lines": [
+        105,
+        319
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "S_AXI_ARREADY",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 22.9,
+       "struct_score": 36.1,
+       "trace": "interface",
+       "why": "AR ready from AR skid buffer.",
+       "lines": [
+        106,
+        319
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I3",
+       "instance": "GEN_ARCACHE.arskid",
+       "module": "skidbuffer"
+      }
+     ],
+     "members": [
+      {
+       "id": "E81",
+       "name": "axi4_arlock",
+       "kind": "comb"
+      },
+      {
+       "id": "E61",
+       "name": "M_AXI_ARVALID",
+       "kind": "port_out"
+      },
+      {
+       "id": "E62",
+       "name": "M_AXI_ARREADY",
+       "kind": "port_in"
+      },
+      {
+       "id": "E65",
+       "name": "M_AXI_ARLEN",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "response_passthrough",
+     "kind": "OTHER",
+     "description": "B and R channels forwarded combinationally from master to slave.",
+     "anchors": [
+      {
+       "id": "E38",
+       "name": "S_AXI_RDATA",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 60.7,
+       "struct_score": 71.5,
+       "trace": "interface",
+       "why": "Read data forwarded directly from master R channel.",
+       "lines": [
+        120,
+        353
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "S_AXI_BVALID",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 28.1,
+       "struct_score": 55.4,
+       "trace": "interface",
+       "why": "Write response valid forwarded from master.",
+       "lines": [
+        99,
+        286
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E35",
+       "name": "S_AXI_RVALID",
+       "kind": "port_out"
+      },
+      {
+       "id": "E73",
+       "name": "M_AXI_RREADY",
+       "kind": "port_out"
+      },
+      {
+       "id": "E58",
+       "name": "M_AXI_BREADY",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "S_AXI_ACLK",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "S_AXI_ARESETN",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axi3_aw",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12",
+      "E13"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "S_AXI_AWVALID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "S_AXI_AWREADY",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "S_AXI_AWID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "S_AXI_AWADDR",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "S_AXI_AWLEN",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "S_AXI_AWSIZE",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "S_AXI_AWBURST",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "S_AXI_AWLOCK",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "S_AXI_AWCACHE",
+       "kind": "port_in"
+      },
+      {
+       "id": "E12",
+       "name": "S_AXI_AWPROT",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "S_AXI_AWQOS",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axi3_w",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18",
+      "E19"
+     ],
+     "members": [
+      {
+       "id": "E14",
+       "name": "S_AXI_WVALID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "S_AXI_WREADY",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "S_AXI_WID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E17",
+       "name": "S_AXI_WDATA",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "S_AXI_WSTRB",
+       "kind": "port_in"
+      },
+      {
+       "id": "E19",
+       "name": "S_AXI_WLAST",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axi3_b",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E20",
+      "E21",
+      "E22",
+      "E23"
+     ],
+     "members": [
+      {
+       "id": "E20",
+       "name": "S_AXI_BVALID",
+       "kind": "port_out"
+      },
+      {
+       "id": "E21",
+       "name": "S_AXI_BREADY",
+       "kind": "port_in"
+      },
+      {
+       "id": "E22",
+       "name": "S_AXI_BID",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "S_AXI_BRESP",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "s_axi3_ar",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E24",
+      "E25",
+      "E26",
+      "E27",
+      "E28",
+      "E29",
+      "E30",
+      "E31",
+      "E32",
+      "E33",
+      "E34"
+     ],
+     "members": [
+      {
+       "id": "E24",
+       "name": "S_AXI_ARVALID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E25",
+       "name": "S_AXI_ARREADY",
+       "kind": "port_out"
+      },
+      {
+       "id": "E26",
+       "name": "S_AXI_ARID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E27",
+       "name": "S_AXI_ARADDR",
+       "kind": "port_in"
+      },
+      {
+       "id": "E28",
+       "name": "S_AXI_ARLEN",
+       "kind": "port_in"
+      },
+      {
+       "id": "E29",
+       "name": "S_AXI_ARSIZE",
+       "kind": "port_in"
+      },
+      {
+       "id": "E30",
+       "name": "S_AXI_ARBURST",
+       "kind": "port_in"
+      },
+      {
+       "id": "E31",
+       "name": "S_AXI_ARLOCK",
+       "kind": "port_in"
+      },
+      {
+       "id": "E32",
+       "name": "S_AXI_ARCACHE",
+       "kind": "port_in"
+      },
+      {
+       "id": "E33",
+       "name": "S_AXI_ARPROT",
+       "kind": "port_in"
+      },
+      {
+       "id": "E34",
+       "name": "S_AXI_ARQOS",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axi3_r",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E35",
+      "E36",
+      "E37",
+      "E38",
+      "E39",
+      "E40"
+     ],
+     "members": [
+      {
+       "id": "E35",
+       "name": "S_AXI_RVALID",
+       "kind": "port_out"
+      },
+      {
+       "id": "E36",
+       "name": "S_AXI_RREADY",
+       "kind": "port_in"
+      },
+      {
+       "id": "E37",
+       "name": "S_AXI_RID",
+       "kind": "port_out"
+      },
+      {
+       "id": "E38",
+       "name": "S_AXI_RDATA",
+       "kind": "port_out"
+      },
+      {
+       "id": "E39",
+       "name": "S_AXI_RLAST",
+       "kind": "port_out"
+      },
+      {
+       "id": "E40",
+       "name": "S_AXI_RRESP",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "m_axi4_aw",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E41",
+      "E42",
+      "E43",
+      "E44",
+      "E45",
+      "E46",
+      "E47",
+      "E48",
+      "E49",
+      "E50",
+      "E51"
+     ],
+     "members": [
+      {
+       "id": "E41",
+       "name": "M_AXI_AWVALID",
+       "kind": "port_out"
+      },
+      {
+       "id": "E42",
+       "name": "M_AXI_AWREADY",
+       "kind": "port_in"
+      },
+      {
+       "id": "E43",
+       "name": "M_AXI_AWID",
+       "kind": "port_out"
+      },
+      {
+       "id": "E44",
+       "name": "M_AXI_AWADDR",
+       "kind": "port_out"
+      },
+      {
+       "id": "E45",
+       "name": "M_AXI_AWLEN",
+       "kind": "port_out"
+      },
+      {
+       "id": "E46",
+       "name": "M_AXI_AWSIZE",
+       "kind": "port_out"
+      },
+      {
+       "id": "E47",
+       "name": "M_AXI_AWBURST",
+       "kind": "port_out"
+      },
+      {
+       "id": "E48",
+       "name": "M_AXI_AWLOCK",
+       "kind": "port_out"
+      },
+      {
+       "id": "E49",
+       "name": "M_AXI_AWCACHE",
+       "kind": "port_out"
+      },
+      {
+       "id": "E50",
+       "name": "M_AXI_AWPROT",
+       "kind": "port_out"
+      },
+      {
+       "id": "E51",
+       "name": "M_AXI_AWQOS",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "m_axi4_w",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E52",
+      "E53",
+      "E54",
+      "E55",
+      "E56"
+     ],
+     "members": [
+      {
+       "id": "E52",
+       "name": "M_AXI_WVALID",
+       "kind": "port_out"
+      },
+      {
+       "id": "E53",
+       "name": "M_AXI_WREADY",
+       "kind": "port_in"
+      },
+      {
+       "id": "E54",
+       "name": "M_AXI_WDATA",
+       "kind": "port_out"
+      },
+      {
+       "id": "E55",
+       "name": "M_AXI_WSTRB",
+       "kind": "port_out"
+      },
+      {
+       "id": "E56",
+       "name": "M_AXI_WLAST",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "m_axi4_b",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E57",
+      "E58",
+      "E59",
+      "E60"
+     ],
+     "members": [
+      {
+       "id": "E57",
+       "name": "M_AXI_BVALID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E58",
+       "name": "M_AXI_BREADY",
+       "kind": "port_out"
+      },
+      {
+       "id": "E59",
+       "name": "M_AXI_BID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E60",
+       "name": "M_AXI_BRESP",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axi4_ar",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E61",
+      "E62",
+      "E63",
+      "E64",
+      "E65",
+      "E66",
+      "E67",
+      "E68",
+      "E69",
+      "E70",
+      "E71"
+     ],
+     "members": [
+      {
+       "id": "E61",
+       "name": "M_AXI_ARVALID",
+       "kind": "port_out"
+      },
+      {
+       "id": "E62",
+       "name": "M_AXI_ARREADY",
+       "kind": "port_in"
+      },
+      {
+       "id": "E63",
+       "name": "M_AXI_ARID",
+       "kind": "port_out"
+      },
+      {
+       "id": "E64",
+       "name": "M_AXI_ARADDR",
+       "kind": "port_out"
+      },
+      {
+       "id": "E65",
+       "name": "M_AXI_ARLEN",
+       "kind": "port_out"
+      },
+      {
+       "id": "E66",
+       "name": "M_AXI_ARSIZE",
+       "kind": "port_out"
+      },
+      {
+       "id": "E67",
+       "name": "M_AXI_ARBURST",
+       "kind": "port_out"
+      },
+      {
+       "id": "E68",
+       "name": "M_AXI_ARLOCK",
+       "kind": "port_out"
+      },
+      {
+       "id": "E69",
+       "name": "M_AXI_ARCACHE",
+       "kind": "port_out"
+      },
+      {
+       "id": "E70",
+       "name": "M_AXI_ARPROT",
+       "kind": "port_out"
+      },
+      {
+       "id": "E71",
+       "name": "M_AXI_ARQOS",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "m_axi4_r",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E72",
+      "E73",
+      "E74",
+      "E75",
+      "E76",
+      "E77"
+     ],
+     "members": [
+      {
+       "id": "E72",
+       "name": "M_AXI_RVALID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E73",
+       "name": "M_AXI_RREADY",
+       "kind": "port_out"
+      },
+      {
+       "id": "E74",
+       "name": "M_AXI_RID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E75",
+       "name": "M_AXI_RDATA",
+       "kind": "port_in"
+      },
+      {
+       "id": "E76",
+       "name": "M_AXI_RLAST",
+       "kind": "port_in"
+      },
+      {
+       "id": "E77",
+       "name": "M_AXI_RRESP",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,33 @@
+{
+ "module_summary": "SERV buffer register: a bit-serial adder sums gated rs1 and immediate into a 32-bit shift register that provides the data-bus address, shifts and serial output.",
+ "anchors": [
+  {"id": "E24", "name": "data", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "32-bit shift register holding computed address/rs1; feeds o_q, o_dbus_adr, o_ext_rs1.", "lines": [41, 64, 98]},
+  {"id": "E22", "name": "q", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Serial adder sum of gated rs1, gated imm and carry, shifted into data.", "lines": [39, 52, 64]},
+  {"id": "E23", "name": "c_r", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Carry flip-flop of the serial adder held between bit cycles.", "lines": [40, 52, 57]},
+  {"id": "E5", "name": "i_en", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Shift enable for data register, carry update and o_q output gating.", "lines": [17, 57, 63]},
+  {"id": "E6", "name": "i_init", "role": "MUX_SELECT", "importance": "minor", "trace": "control_backward", "why": "Selects loading adder sum vs sign-fill shift into data register.", "lines": [18, 64, 66]},
+  {"id": "E9", "name": "i_rs1_en", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Gates rs1 operand into the serial adder.", "lines": [22, 52]},
+  {"id": "E10", "name": "i_imm_en", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Gates immediate operand into the serial adder.", "lines": [23, 52]},
+  {"id": "E25", "name": "clr_lsb", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Clears immediate LSB at cnt0 for jalr target alignment.", "lines": [42, 44, 52]},
+  {"id": "E15", "name": "i_sh_signed", "role": "COMMAND", "importance": "minor", "trace": "forward", "why": "Selects arithmetic sign fill when shifting data register.", "lines": [28, 64]},
+  {"id": "E16", "name": "i_rs1", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Serial rs1 operand input to the adder.", "lines": [30, 52]},
+  {"id": "E17", "name": "i_imm", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Serial immediate operand input to the adder.", "lines": [31, 52]},
+  {"id": "E18", "name": "o_q", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Serial output bit from data register gated by i_en.", "lines": [32, 70, 93]},
+  {"id": "E19", "name": "o_dbus_adr", "role": "INTERFACE_ADDR", "importance": "critical", "trace": "data_backward", "why": "Word-aligned data bus address taken from data register.", "lines": [34, 98]},
+  {"id": "E8", "name": "o_lsb", "role": "INTERFACE_ADDR", "importance": "major", "trace": "data_backward", "why": "Address low bits for byte-lane selection, zero for MDU ops.", "lines": [20, 69, 92]},
+  {"id": "E20", "name": "o_ext_rs1", "role": "INTERFACE_DATA", "importance": "minor", "trace": "data_backward", "why": "Full parallel data register exported to extension units.", "lines": [36, 99]}
+ ],
+ "groups": [
+  {"name": "Serial adder", "kind": "DATAPATH", "anchor_ids": ["E22", "E23", "E9", "E10", "E25", "E16", "E17"], "member_ids": ["E21", "E2", "E11"], "description": "Bit-serial add of gated rs1 and immediate with carry flip-flop."},
+  {"name": "Buffer shift register", "kind": "BUFFER", "anchor_ids": ["E24", "E5", "E6", "E15"], "member_ids": ["E3", "E4", "E12", "E13", "E14"], "description": "32-bit shift register loaded from adder or shifted with sign fill."},
+  {"name": "Outputs", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E18", "E19", "E8", "E20"], "member_ids": ["E7"], "description": "Serial output, data bus address, address LSBs and extension rs1."}
+ ],
+ "interfaces": [
+  {"name": "clock", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1"]},
+  {"name": "state", "protocol": "SIMPLE", "direction": "BIDIR", "member_ids": ["E2", "E3", "E4", "E5", "E6", "E7", "E8"]},
+  {"name": "control", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E9", "E10", "E11", "E12", "E13", "E14", "E15"]},
+  {"name": "data", "protocol": "STREAM", "direction": "BIDIR", "member_ids": ["E16", "E17", "E18"]},
+  {"name": "dbus_address", "protocol": "MEMORY_BUS", "direction": "OUT", "member_ids": ["E19"]},
+  {"name": "extension", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E20"]}
+ ]
+}

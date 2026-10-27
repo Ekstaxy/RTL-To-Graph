@@ -1,0 +1,22 @@
+{
+ "module_summary": "MUX-based clock-domain-crossing synchronizer: data and enable are registered in clk_a, the enable passes a two-flop synchronizer in clk_b, and the synchronized enable selects data_reg into dataout.",
+ "anchors": [
+  {"id": "E8", "name": "data_reg", "role": "HOLDING_REG", "importance": "critical", "trace": "data_backward", "why": "clk_a-domain register holding data_in, sampled across domain into dataout", "lines": [16, 41]},
+  {"id": "E9", "name": "en_data_reg", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "clk_a-domain registered data_en fed into the clk_b synchronizer", "lines": [22, 30]},
+  {"id": "E10", "name": "en_clap_one", "role": "PIPELINE_REG", "importance": "major", "trace": "data_backward", "why": "First clk_b synchronizer flop for the enable", "lines": [30, 35]},
+  {"id": "E11", "name": "en_clap_two", "role": "MUX_SELECT", "importance": "critical", "trace": "control_backward", "why": "Synchronized enable selecting data_reg versus held dataout", "lines": [35, 41]},
+  {"id": "E7", "name": "dataout", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "clk_b-domain output updated from data_reg when enable synchronized", "lines": [41]},
+  {"id": "E5", "name": "data_in", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Source-domain data input captured into data_reg", "lines": [16]},
+  {"id": "E6", "name": "data_en", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Source-domain data-valid enable to be synchronized", "lines": [22]}
+ ],
+ "groups": [
+  {"name": "Source domain capture", "kind": "PIPELINE_STAGE", "anchor_ids": ["E8", "E9", "E5", "E6"], "member_ids": [], "description": "clk_a registers capturing data and enable"},
+  {"name": "Enable synchronizer", "kind": "PIPELINE_STAGE", "anchor_ids": ["E10", "E11"], "member_ids": [], "description": "Two-flop clk_b synchronizer for the data enable"},
+  {"name": "Output mux register", "kind": "DATAPATH", "anchor_ids": ["E7"], "member_ids": [], "description": "clk_b output register loading data_reg on synchronized enable"}
+ ],
+ "interfaces": [
+  {"name": "clocks_resets", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2", "E3", "E4"]},
+  {"name": "data_input", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E5", "E6"]},
+  {"name": "data_output", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E7"]}
+ ]
+}

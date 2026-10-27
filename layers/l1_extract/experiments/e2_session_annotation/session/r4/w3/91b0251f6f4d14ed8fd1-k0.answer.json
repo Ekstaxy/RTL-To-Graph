@@ -1,0 +1,40 @@
+{
+ "module_summary": "10G Ethernet MAC wrapper: separate XGMII RX and TX engines convert between XGMII and AXI-stream, with optional MAC-control/pause blocks disabled here so streams pass straight through.",
+ "anchors": [
+  {"id": "E5", "name": "tx_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Transmit AXI-stream payload fed to the XGMII TX engine.", "lines": [62, 689]},
+  {"id": "E18", "name": "xgmii_txd", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "XGMII transmit data produced by TX engine.", "lines": [269]},
+  {"id": "E16", "name": "xgmii_rxd", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "XGMII receive data into RX engine.", "lines": [231]},
+  {"id": "E11", "name": "rx_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Received frame payload output on AXI stream.", "lines": [696]},
+  {"id": "E7", "name": "tx_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Transmit stream valid into TX engine.", "lines": [691]},
+  {"id": "E8", "name": "tx_axis_tready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "TX engine backpressure to transmit stream.", "lines": [692]},
+  {"id": "E13", "name": "rx_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Received stream valid from RX engine.", "lines": [698]},
+  {"id": "E42", "name": "rx_error_bad_fcs", "role": "STATUS", "importance": "major", "trace": "interface", "why": "RX CRC/FCS error status pulse.", "lines": [242]},
+  {"id": "E39", "name": "tx_error_underflow", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "TX underflow error status.", "lines": [278]},
+  {"id": "E41", "name": "rx_error_bad_frame", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "RX bad frame error status.", "lines": [241]},
+  {"id": "E40", "name": "rx_start_packet", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "RX start-of-packet indication per lane.", "lines": [240]},
+  {"id": "E38", "name": "tx_start_packet", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "TX start-of-packet indication per lane.", "lines": [277]},
+  {"id": "E62", "name": "cfg_tx_enable", "role": "ENABLE", "importance": "minor", "trace": "interface", "why": "Enables the transmit engine.", "lines": [276]},
+  {"id": "E63", "name": "cfg_rx_enable", "role": "ENABLE", "importance": "minor", "trace": "interface", "why": "Enables the receive engine.", "lines": [239]},
+  {"id": "E61", "name": "cfg_ifg", "role": "CONFIG_REG", "importance": "minor", "trace": "interface", "why": "Configured inter-frame gap for TX engine.", "lines": [275]},
+  {"id": "E19", "name": "xgmii_txc", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "XGMII transmit control lanes.", "lines": [270]},
+  {"id": "E17", "name": "xgmii_rxc", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "XGMII receive control lanes.", "lines": [232]},
+  {"id": "E9", "name": "tx_axis_tlast", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Transmit end-of-frame marker.", "lines": [693]},
+  {"id": "E14", "name": "rx_axis_tlast", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Received end-of-frame marker.", "lines": [699]},
+  {"id": "E22", "name": "tx_axis_ptp_ts", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Captured TX PTP timestamp (PTP disabled by parameter).", "lines": [272]}
+ ],
+ "groups": [
+  {"name": "XGMII transmit path", "kind": "SERIALIZER", "anchor_ids": ["E5", "E7", "E8", "E9", "E18", "E19", "E39", "E38", "E62", "E61", "E22"], "member_ids": ["I2", "E95", "E96", "E97", "E98", "E99", "E100", "E10", "E20", "E23", "E24"], "description": "AXI-stream to XGMII TX engine with preamble, CRC and IFG insertion."},
+  {"name": "XGMII receive path", "kind": "SERIALIZER", "anchor_ids": ["E16", "E17", "E11", "E13", "E14", "E42", "E41", "E40", "E63"], "member_ids": ["I1", "E101", "E102", "E103", "E104", "E105", "E12", "E15", "E21"], "description": "XGMII to AXI-stream RX engine with framing and FCS check."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2", "E3", "E4"]},
+  {"name": "tx_axis", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E5", "E6", "E7", "E8", "E9", "E10"]},
+  {"name": "rx_axis", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E11", "E12", "E13", "E14", "E15"]},
+  {"name": "xgmii_rx", "protocol": "STREAM", "direction": "IN", "member_ids": ["E16", "E17"]},
+  {"name": "xgmii_tx", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E18", "E19"]},
+  {"name": "ptp", "protocol": "OTHER", "direction": "BIDIR", "member_ids": ["E20", "E21", "E22", "E23", "E24"]},
+  {"name": "flow_control_pause", "protocol": "OTHER", "direction": "BIDIR", "member_ids": ["E25", "E26", "E27", "E28", "E29", "E30", "E31", "E32", "E33", "E34", "E35", "E36", "E37"]},
+  {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E38", "E39", "E40", "E41", "E42", "E43", "E44", "E45", "E46", "E47", "E48", "E49", "E50", "E51", "E52", "E53", "E54", "E55", "E56", "E57", "E58", "E59", "E60"]},
+  {"name": "config", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E61", "E62", "E63", "E64", "E65", "E66", "E67", "E68", "E69", "E70", "E71", "E72", "E73", "E74", "E75", "E76", "E77", "E78", "E79", "E80", "E81", "E82", "E83", "E84", "E85", "E86", "E87", "E88", "E89", "E90", "E91", "E92", "E93", "E94"]}
+ ]
+}

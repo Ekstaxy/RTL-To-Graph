@@ -1,0 +1,27 @@
+{
+ "module_summary": "Gshare branch predictor: 7-bit global history XOR pc indexes a 128-entry 2-bit saturating-counter PHT, with separate predict and train ports.",
+ "anchors": [
+  {"id": "E12", "name": "pht", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "128-entry table of 2-bit saturating counters, read for prediction, updated on training."},
+  {"id": "E13", "name": "predict_history_r", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "Global history shift register; shifts in predictions, restored from train_history on misprediction."},
+  {"id": "E3", "name": "predict_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Prediction request; gates outputs and shifts predicted direction into history."},
+  {"id": "E5", "name": "predict_taken", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Predicted direction: MSB of PHT counter at predict_index."},
+  {"id": "E7", "name": "train_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Training request; enables PHT counter update and history recovery."},
+  {"id": "E14", "name": "predict_index", "role": "INDEX", "importance": "major", "trace": "data_backward", "why": "History XOR predict_pc hash addressing the PHT read."},
+  {"id": "E15", "name": "train_index", "role": "INDEX", "importance": "major", "trace": "data_backward", "why": "train_history XOR train_pc hash selecting the PHT entry to update."},
+  {"id": "E4", "name": "predict_pc", "role": "INTERFACE_ADDR", "importance": "major", "trace": "interface", "why": "Branch pc hashed with global history to form prediction index."},
+  {"id": "E11", "name": "train_pc", "role": "INTERFACE_ADDR", "importance": "major", "trace": "interface", "why": "Trained branch pc hashed with train_history into train_index."},
+  {"id": "E8", "name": "train_taken", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Actual outcome; increments or decrements PHT counter and feeds history recovery."},
+  {"id": "E9", "name": "train_mispredicted", "role": "COMMAND", "importance": "major", "trace": "forward", "why": "Triggers history register recovery, overriding prediction-side history update."},
+  {"id": "E10", "name": "train_history", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "History snapshot of trained branch; hashed into train_index and restores history."}
+ ],
+ "groups": [
+  {"name": "pattern_history_table", "kind": "MEMORY", "anchor_ids": ["E12", "E15", "E7", "E8", "E11", "E10"], "member_ids": [], "description": "PHT of saturating counters updated at train_index when train_valid."},
+  {"name": "prediction_path", "kind": "DATAPATH", "anchor_ids": ["E3", "E4", "E14", "E5"], "member_ids": ["E6"], "description": "Hash pc with history, read PHT counter MSB as predicted direction."},
+  {"name": "global_history", "kind": "REGISTER_BANK", "anchor_ids": ["E13", "E9"], "member_ids": ["E6"], "description": "Global history register shifted on prediction, recovered on mispredicted training."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "predict", "protocol": "OTHER", "direction": "OUT", "member_ids": ["E3", "E4", "E5", "E6"]},
+  {"name": "train", "protocol": "OTHER", "direction": "IN", "member_ids": ["E7", "E8", "E9", "E10", "E11"]}
+ ]
+}

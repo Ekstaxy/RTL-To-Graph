@@ -1,0 +1,40 @@
+{
+ "module_summary": "Wishbone bus downsizer: latches each wide request into data/select shift registers, issues per-subword narrow strobes, tags them in a FIFO and reassembles narrow acks into a wide response.",
+ "anchors": [
+  {"id": "E14", "name": "o_sstb", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Narrow-bus strobe per subword, from r_stb gated by FIFO full", "lines": [754, 773]},
+  {"id": "E13", "name": "o_scyc", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Narrow-bus cycle, held from wide request until abort or error", "lines": [753]},
+  {"id": "E9", "name": "o_wstall", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Stalls wide bus while subwords remain, FIFO full or narrow stall", "lines": [848, 603]},
+  {"id": "E10", "name": "o_wack", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Wide-bus ack issued after last subword ack or null request", "lines": [846, 798]},
+  {"id": "E4", "name": "i_wstb", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Wide-bus request strobe loading a new transaction", "lines": [603, 640]},
+  {"id": "E19", "name": "i_sstall", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Narrow-bus stall holding the current subword", "lines": [754, 773]},
+  {"id": "E20", "name": "i_sack", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Narrow-bus ack; pops tag FIFO and merges returned data", "lines": [777, 800]},
+  {"id": "E32", "name": "DOWNSIZE.s_data", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "Shift register holding wide write data, shifted one subword per issued strobe", "lines": [730, 746, 763]},
+  {"id": "E35", "name": "DOWNSIZE.s_sel", "role": "STORAGE", "importance": "major", "trace": "data_backward", "why": "Shift register of byte selects, decides remaining subwords and o_ssel", "lines": [731, 748, 764]},
+  {"id": "E16", "name": "o_saddr", "role": "INTERFACE_ADDR", "importance": "major", "trace": "data_backward", "why": "Narrow-bus address from r_addr, subaddress advanced per subword", "lines": [756, 775]},
+  {"id": "E17", "name": "o_sdata", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Narrow-bus write data, top subword of s_data", "lines": [763]},
+  {"id": "E7", "name": "i_wdata", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Wide-bus write data latched into s_data", "lines": [730]},
+  {"id": "E28", "name": "DOWNSIZE.r_first", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "First-cycle flag: further subwords pending, stalls wide bus and advances address", "lines": [610, 613, 848]},
+  {"id": "E31", "name": "DOWNSIZE.s_last", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Marks last subword; tags FIFO entry for ack and releases stall", "lines": [660, 774, 850]},
+  {"id": "E30", "name": "DOWNSIZE.s_null", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Empty-select request, acknowledged without narrow access", "lines": [640, 832, 849]},
+  {"id": "E37", "name": "DOWNSIZE.r_shift", "role": "MUX_SELECT", "importance": "minor", "trace": "data_backward", "why": "Subword shift amount for data, select and address advance", "lines": [695, 727, 746]},
+  {"id": "E39", "name": "DOWNSIZE.i_subaddr", "role": "DECODE", "importance": "minor", "trace": "data_backward", "why": "First active subword index decoded from i_wsel", "lines": [590, 724]},
+  {"id": "E33", "name": "DOWNSIZE.r_data", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Accumulates narrow read data into wide response word driving o_wdata", "lines": [820, 845]},
+  {"id": "E34", "name": "DOWNSIZE.nxt_data", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Merges i_sdata into r_data at subword position from fifo_addr", "lines": [809, 810]},
+  {"id": "E38", "name": "DOWNSIZE.fifo_addr", "role": "INDEX", "importance": "minor", "trace": "data_backward", "why": "Subword position of returning ack popped from tag FIFO", "lines": [778, 810]},
+  {"id": "E42", "name": "DOWNSIZE.fifo_ack", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Last-subword tag from FIFO, generates wide ack", "lines": [778, 830]},
+  {"id": "E40", "name": "DOWNSIZE.fifo_full", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Tag FIFO full, blocks narrow strobes and stalls wide bus", "lines": [754, 848]},
+  {"id": "E41", "name": "DOWNSIZE.fifo_empty", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "No outstanding narrow requests; selects null ack path", "lines": [829, 849]},
+  {"id": "E12", "name": "o_werr", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "Wide-bus error from registered narrow error, aborts cycle", "lines": [847, 583]},
+  {"id": "E21", "name": "i_sdata", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Narrow-bus read data merged into response", "lines": [810]}
+ ],
+ "groups": [
+  {"name": "request_serializer", "kind": "SERIALIZER", "anchor_ids": ["E14", "E13", "E9", "E4", "E19", "E32", "E35", "E16", "E17", "E7", "E28", "E31", "E30", "E37", "E39", "E40"], "member_ids": ["E23", "E24", "E25", "E29", "E36", "E15", "E18", "E5", "E6", "E8"], "description": "Splits wide request into narrow subword strobes via data/select shift registers"},
+  {"name": "ack_tag_fifo", "kind": "BUFFER", "anchor_ids": ["E42", "E38", "E41"], "member_ids": ["I1", "E43"], "description": "FIFO tagging outstanding narrow requests with subword position and last flag"},
+  {"name": "response_assembler", "kind": "DATAPATH", "anchor_ids": ["E33", "E34", "E10", "E20", "E12", "E21"], "member_ids": ["E26", "E27", "E11", "E22"], "description": "Reassembles narrow read data into wide word and generates wide ack/err"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "wide_wb_slave", "protocol": "MEMORY_BUS", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12"]},
+  {"name": "narrow_wb_master", "protocol": "MEMORY_BUS", "direction": "OUT", "member_ids": ["E13", "E14", "E15", "E16", "E17", "E18", "E19", "E20", "E21", "E22"]}
+ ]
+}

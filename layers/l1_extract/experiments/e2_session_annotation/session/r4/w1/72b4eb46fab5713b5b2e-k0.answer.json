@@ -1,0 +1,22 @@
+{
+ "module_summary": "10GBASE-R block sync: counts valid and invalid 2-bit sync headers over 64-block windows to acquire or lose block lock, pulsing SERDES bitslip with hold-off timing until aligned.",
+ "anchors": [
+  {"id": "E3", "name": "serdes_rx_hdr", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Received sync header checked for valid 01/10 patterns", "lines": [47, 96]},
+  {"id": "E14", "name": "rx_block_lock_reg", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Lock state: set after clean window, cleared on excess invalid headers", "lines": [77, 111, 133]},
+  {"id": "E5", "name": "rx_block_lock", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Block lock status output", "lines": [53, 80]},
+  {"id": "E4", "name": "serdes_rx_bitslip", "role": "ENABLE", "importance": "critical", "trace": "control_backward", "why": "Bitslip command pulse to SERDES on lost alignment", "lines": [48, 79]},
+  {"id": "E6", "name": "sh_count_reg", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Sync header window counter; overflow evaluates lock", "lines": [71, 98, 99]},
+  {"id": "E8", "name": "sh_invalid_count_reg", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Invalid header counter; overflow drops lock and triggers bitslip", "lines": [72, 110, 111]},
+  {"id": "E10", "name": "bitslip_count_reg", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Timer for bitslip high and low hold-off cycles", "lines": [73, 91, 92]}
+ ],
+ "groups": [
+  {"name": "Block lock controller", "kind": "CONTROLLER", "anchor_ids": ["E14", "E5", "E3"], "member_ids": ["E15"], "description": "Lock state machine driven by sync header validity"},
+  {"name": "Header counters", "kind": "COUNTER_TIMER", "anchor_ids": ["E6", "E8"], "member_ids": ["E7", "E9"], "description": "Window and invalid-header counters deciding lock acquisition and loss"},
+  {"name": "Bitslip control", "kind": "COUNTER_TIMER", "anchor_ids": ["E4", "E10"], "member_ids": ["E11", "E12", "E13"], "description": "Generates bitslip pulse and enforces high/low hold-off timing"}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "serdes", "protocol": "SIMPLE", "direction": "BIDIR", "member_ids": ["E3", "E4"]},
+  {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E5"]}
+ ]
+}

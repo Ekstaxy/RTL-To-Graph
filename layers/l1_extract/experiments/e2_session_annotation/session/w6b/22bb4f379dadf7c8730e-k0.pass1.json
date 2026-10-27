@@ -1,0 +1,26 @@
+{
+ "module_summary": "16x16 sequential multiplier wrapper: a one-hot idle/run/finish FSM loads operands into a shift-add core child on start, steps it until its last flag, then pulses done.",
+ "anchors": [
+  {"id": "E9", "name": "w", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "One-hot state (idle/run/finish) sequencing load, stepping and completion of the core.", "lines": [40, 53, 54]},
+  {"id": "E3", "name": "s", "role": "COMMAND", "importance": "critical", "trace": "interface", "why": "Start input: in idle loads operands into core and enters run.", "lines": [36, 46, 53]},
+  {"id": "E4", "name": "a", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Multiplicand operand passed to the core.", "lines": [37, 46]},
+  {"id": "E5", "name": "b", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Multiplier operand passed to the core.", "lines": [37, 46]},
+  {"id": "E8", "name": "p", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Product output, driven by the core accumulator.", "lines": [39, 46]},
+  {"id": "E6", "name": "d", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "One-cycle done pulse from fin register after the finish state.", "lines": [38, 57]},
+  {"id": "E7", "name": "bz", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Busy level while FSM is in the run state.", "lines": [38, 58]},
+  {"id": "E12", "name": "hot_r", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Run-state decode driving the core go/step enable.", "lines": [44, 46, 54]},
+  {"id": "E14", "name": "ends", "role": "CONTROL_FLAG", "importance": "major", "trace": "data_backward", "why": "Core step-counter completion flag; moves FSM run to finish.", "lines": [42, 46, 54]},
+  {"id": "E11", "name": "hot_i", "role": "DECODE", "importance": "minor", "trace": "control_backward", "why": "Idle-state decode; with start forms the core load strobe.", "lines": [43, 46, 53]},
+  {"id": "E13", "name": "hot_f", "role": "DECODE", "importance": "minor", "trace": "control_backward", "why": "Finish-state decode registered into fin for the done pulse.", "lines": [45, 52]}
+ ],
+ "groups": [
+  {"name": "sequencer", "kind": "CONTROLLER", "anchor_ids": ["E9", "E3", "E12", "E14", "E11", "E13"], "member_ids": [], "description": "One-hot FSM issuing load and step to the core until its last flag."},
+  {"name": "multiplier_core", "kind": "DATAPATH", "anchor_ids": ["E4", "E5", "E8"], "member_ids": ["I1"], "description": "um_core shift-add multiplier child producing the 32-bit product."},
+  {"name": "status_out", "kind": "OTHER", "anchor_ids": ["E6", "E7"], "member_ids": ["E10"], "description": "Done pulse register and busy level outputs."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "start_operands", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E3", "E4", "E5"]},
+  {"name": "result", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E6", "E7", "E8"]}
+ ]
+}

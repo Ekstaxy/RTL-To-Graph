@@ -1,0 +1,30 @@
+{
+ "module_summary": "Synchronous valid/ready FIFO: a pointer/occupancy controller child advances head/tail and fill on push/pop strobes, a register-file child stores entries written at tail and read at head.",
+ "anchors": [
+  {"id": "E4", "name": "in_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Producer push request; with not-full forms the push strobe.", "lines": [69, 88]},
+  {"id": "E5", "name": "in_ready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Push-side ready, asserted when FIFO is not full.", "lines": [70, 86]},
+  {"id": "E6", "name": "in_data", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Write data payload driven into the storage bank write port.", "lines": [71, 107]},
+  {"id": "E7", "name": "out_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Pop-side valid, asserted when FIFO is not empty.", "lines": [72, 87]},
+  {"id": "E8", "name": "out_ready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Consumer ready; with not-empty forms the pop strobe.", "lines": [73, 89]},
+  {"id": "E9", "name": "out_data", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Read data from the storage bank at the head pointer.", "lines": [74, 109]},
+  {"id": "E11", "name": "lvl", "role": "FIFO_PTR", "importance": "critical", "trace": "data_backward", "why": "Occupancy count from controller; decoded into full/empty and exported as count.", "lines": [79, 84, 100]},
+  {"id": "E12", "name": "rd_at", "role": "FIFO_PTR", "importance": "major", "trace": "data_backward", "why": "Read (head) pointer from controller addressing bank read port.", "lines": [80, 98, 108]},
+  {"id": "E13", "name": "wr_at", "role": "FIFO_PTR", "importance": "major", "trace": "data_backward", "why": "Write (tail) pointer from controller addressing bank write port.", "lines": [80, 99, 106]},
+  {"id": "E15", "name": "give", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Push strobe: bank write enable and controller increment.", "lines": [88, 96, 105]},
+  {"id": "E14", "name": "take", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Pop strobe: controller decrement / head advance.", "lines": [81, 89, 97]},
+  {"id": "E16", "name": "brim", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Full flag: blocks push strobe and deasserts in_ready.", "lines": [84, 86, 88]},
+  {"id": "E17", "name": "dry", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Empty flag: blocks pop strobe and deasserts out_valid.", "lines": [85, 87, 89]},
+  {"id": "E10", "name": "count_o", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "Occupancy count output, copy of lvl.", "lines": [75, 90]}
+ ],
+ "groups": [
+  {"name": "handshake_logic", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E4", "E5", "E7", "E8", "E15", "E14"], "member_ids": [], "description": "Converts valid/ready handshakes plus full/empty into push and pop strobes."},
+  {"name": "pointer_controller", "kind": "CONTROLLER", "anchor_ids": ["E11", "E12", "E13", "E16", "E17", "E10"], "member_ids": ["I1"], "description": "sf_ctl child keeps head, tail and fill; full/empty decoded from fill."},
+  {"name": "storage_bank", "kind": "MEMORY", "anchor_ids": ["E6", "E9"], "member_ids": ["I2"], "description": "sf_bank register file written at tail on push, read at head."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2", "E3"]},
+  {"name": "push", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E4", "E5", "E6"]},
+  {"name": "pop", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E7", "E8", "E9"]},
+  {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E10"]}
+ ]
+}

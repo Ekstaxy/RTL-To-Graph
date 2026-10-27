@@ -1,0 +1,990 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-ethernet_axis_frame_length_adjust",
+ "tops": [
+  "axis_frame_length_adjust"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "axis_frame_length_adjust": {
+   "source": "teacher",
+   "canonical_instance": "axis_frame_length_adjust",
+   "file": "data/rtl/verilog-ethernet/lib/axis/rtl/axis_frame_length_adjust.v",
+   "lines": [
+    34,
+    615
+   ],
+   "summary": "AXI-stream frame length adjuster: a 4-state FSM (idle/transfer/pad/truncate) uses min/max down-counters and a frame pointer to zero-pad short frames and truncate long ones, with a skid-buffered output and a status valid/ready report per frame.",
+   "blocks": [
+    {
+     "name": "length_fsm",
+     "kind": "CONTROLLER",
+     "description": "Idle/transfer/pad/truncate controller driving datapath and status.",
+     "anchors": [
+      {
+       "id": "E27",
+       "name": "state_reg",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.5,
+       "struct_score": 98.7,
+       "trace": "control_backward",
+       "why": "IDLE/TRANSFER/PAD/TRUNCATE controller selecting pass-through, zero padding or dropping.",
+       "lines": [
+        119,
+        200,
+        490
+       ]
+      },
+      {
+       "id": "E29",
+       "name": "store_last_word",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 16.5,
+       "struct_score": 10.3,
+       "trace": "control_backward",
+       "why": "Load enable capturing last_word_* registers before pad or truncate.",
+       "lines": [
+        122,
+        253,
+        507
+       ]
+      },
+      {
+       "id": "E63",
+       "name": "word_cnt",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 24.6,
+       "struct_score": 42.7,
+       "trace": "data_backward",
+       "why": "Valid words in current beat from tkeep; compared with counters.",
+       "lines": [
+        164,
+        222,
+        238
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E28",
+       "name": "state_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "length_counters",
+     "kind": "COUNTER_TIMER",
+     "description": "Min/max remaining-length counters and frame pointer.",
+     "anchors": [
+      {
+       "id": "E33",
+       "name": "short_counter_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 58.1,
+       "struct_score": 62.8,
+       "trace": "control_backward",
+       "why": "Bytes remaining to reach length_min; decides padding and pad end.",
+       "lines": [
+        129,
+        259,
+        494
+       ]
+      },
+      {
+       "id": "E35",
+       "name": "long_counter_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 58.6,
+       "struct_score": 64.6,
+       "trace": "control_backward",
+       "why": "Bytes remaining before length_max; triggers truncation and final tkeep.",
+       "lines": [
+        130,
+        238,
+        495
+       ]
+      },
+      {
+       "id": "E30",
+       "name": "frame_ptr_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 56.1,
+       "struct_score": 55.4,
+       "trace": "control_backward",
+       "why": "Running frame byte count giving original and output frame length.",
+       "lines": [
+        124,
+        224,
+        492
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "length_min",
+       "role": "CONFIG_REG",
+       "importance": "minor",
+       "score": 25.3,
+       "struct_score": 45.3,
+       "trace": "interface",
+       "why": "Minimum frame length loaded into short_counter.",
+       "lines": [
+        97,
+        214
+       ]
+      },
+      {
+       "id": "E26",
+       "name": "length_max",
+       "role": "CONFIG_REG",
+       "importance": "minor",
+       "score": 23.5,
+       "struct_score": 38.8,
+       "trace": "interface",
+       "why": "Maximum frame length loaded into long_counter.",
+       "lines": [
+        98,
+        215
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E31",
+       "name": "frame_ptr_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E34",
+       "name": "short_counter_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E36",
+       "name": "long_counter_next",
+       "kind": "comb"
+      }
+     ]
+    },
+    {
+     "name": "frame_datapath",
+     "kind": "DATAPATH",
+     "description": "Input masking, pad/truncate data selection and last-word holding registers.",
+     "anchors": [
+      {
+       "id": "E37",
+       "name": "last_word_data_reg",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 45.5,
+       "struct_score": 14.2,
+       "trace": "data_backward",
+       "why": "Last kept word held during truncation; representative of last_word_* registers.",
+       "lines": [
+        132,
+        444,
+        508
+       ]
+      },
+      {
+       "id": "E32",
+       "name": "s_axis_tdata_masked",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 16.3,
+       "struct_score": 9.2,
+       "trace": "data_backward",
+       "why": "Input data with tkeep-disabled lanes zeroed, forwarded to output.",
+       "lines": [
+        126,
+        206
+       ]
+      },
+      {
+       "id": "E52",
+       "name": "m_axis_tdata_int",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 18.0,
+       "struct_score": 16.3,
+       "trace": "data_backward",
+       "why": "FSM-selected output data: input, zero pad or held last word.",
+       "lines": [
+        145,
+        444,
+        584
+       ]
+      },
+      {
+       "id": "E53",
+       "name": "m_axis_tkeep_int",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 16.8,
+       "struct_score": 11.5,
+       "trace": "data_backward",
+       "why": "Output keep mask trimmed to min/max length boundary.",
+       "lines": [
+        146,
+        239,
+        585
+       ]
+      },
+      {
+       "id": "E54",
+       "name": "m_axis_tvalid_int",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 22.4,
+       "struct_score": 34.3,
+       "trace": "control_backward",
+       "why": "Internal valid from FSM into the output skid buffer.",
+       "lines": [
+        147,
+        400,
+        562
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "s_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 83.6,
+       "struct_score": 53.6,
+       "trace": "interface",
+       "why": "Input frame data, masked and forwarded.",
+       "lines": [
+        63,
+        194
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_tkeep",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 27.9,
+       "struct_score": 54.8,
+       "trace": "interface",
+       "why": "Input byte enables used for masking and word count.",
+       "lines": [
+        64,
+        222
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 92.6,
+       "struct_score": 81.3,
+       "trace": "interface",
+       "why": "Input valid; with ready advances counters and FSM.",
+       "lines": [
+        65,
+        217
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 92.5,
+       "struct_score": 81.0,
+       "trace": "interface",
+       "why": "Input ready from s_axis_tready_reg; dropped during padding.",
+       "lines": [
+        66,
+        156,
+        217
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_tlast",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 32.0,
+       "struct_score": 69.6,
+       "trace": "interface",
+       "why": "End of input frame deciding pad, truncate or status report.",
+       "lines": [
+        67,
+        240
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E38",
+       "name": "last_word_keep_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E39",
+       "name": "last_word_id_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E40",
+       "name": "last_word_dest_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E41",
+       "name": "last_word_user_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E56",
+       "name": "m_axis_tlast_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E57",
+       "name": "m_axis_tid_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E58",
+       "name": "m_axis_tdest_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E59",
+       "name": "m_axis_tuser_int",
+       "kind": "comb"
+      },
+      {
+       "id": "E61",
+       "name": "s_axis_tready_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E62",
+       "name": "s_axis_tready_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E8",
+       "name": "s_axis_tid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_axis_tdest",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "s_axis_tuser",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "output_skid_buffer",
+     "kind": "BUFFER",
+     "description": "Output and temp registers forming an AXI-stream skid buffer.",
+     "anchors": [
+      {
+       "id": "E55",
+       "name": "m_axis_tready_int_reg",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 24.7,
+       "struct_score": 43.2,
+       "trace": "control_backward",
+       "why": "Registered internal ready advancing padding and output transfers.",
+       "lines": [
+        148,
+        406,
+        579
+       ]
+      },
+      {
+       "id": "E72",
+       "name": "temp_m_axis_tdata_reg",
+       "role": "STORAGE",
+       "importance": "minor",
+       "score": 23.6,
+       "struct_score": 38.9,
+       "trace": "data_backward",
+       "why": "Skid buffer temp data held while output is stalled.",
+       "lines": [
+        525,
+        591,
+        600
+       ]
+      },
+      {
+       "id": "E74",
+       "name": "temp_m_axis_tvalid_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.9,
+       "struct_score": 20.1,
+       "trace": "control_backward",
+       "why": "Skid temp occupied flag affecting early ready and temp-to-output.",
+       "lines": [
+        527,
+        547,
+        580
+       ]
+      },
+      {
+       "id": "E80",
+       "name": "store_axis_int_to_output",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 16.3,
+       "struct_score": 9.2,
+       "trace": "control_backward",
+       "why": "Loads output registers from internal datapath.",
+       "lines": [
+        534,
+        583
+       ]
+      },
+      {
+       "id": "E81",
+       "name": "store_axis_int_to_temp",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 16.3,
+       "struct_score": 9.2,
+       "trace": "control_backward",
+       "why": "Loads skid temp registers when output stalls.",
+       "lines": [
+        535,
+        599
+       ]
+      },
+      {
+       "id": "E82",
+       "name": "store_axis_temp_to_output",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 16.1,
+       "struct_score": 8.7,
+       "trace": "control_backward",
+       "why": "Moves temp registers into output registers.",
+       "lines": [
+        536,
+        590
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "m_axis_tdata",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 84.6,
+       "struct_score": 57.2,
+       "trace": "interface",
+       "why": "Adjusted output frame data from output register.",
+       "lines": [
+        75,
+        538
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "m_axis_tvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 84.3,
+       "struct_score": 56.3,
+       "trace": "interface",
+       "why": "Output valid from m_axis_tvalid_reg.",
+       "lines": [
+        77,
+        540
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "m_axis_tready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 83.5,
+       "struct_score": 53.2,
+       "trace": "interface",
+       "why": "Downstream ready steering output/temp register transfers.",
+       "lines": [
+        78,
+        547,
+        560
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "m_axis_tlast",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 23.7,
+       "struct_score": 39.5,
+       "trace": "interface",
+       "why": "Output end-of-frame including after padding.",
+       "lines": [
+        79,
+        541
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E60",
+       "name": "m_axis_tready_int_early",
+       "kind": "wire"
+      },
+      {
+       "id": "E64",
+       "name": "m_axis_tdata_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E65",
+       "name": "m_axis_tkeep_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E66",
+       "name": "m_axis_tvalid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E67",
+       "name": "m_axis_tvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E68",
+       "name": "m_axis_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E69",
+       "name": "m_axis_tid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E70",
+       "name": "m_axis_tdest_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E71",
+       "name": "m_axis_tuser_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E73",
+       "name": "temp_m_axis_tkeep_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E75",
+       "name": "temp_m_axis_tvalid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E76",
+       "name": "temp_m_axis_tlast_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E77",
+       "name": "temp_m_axis_tid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E78",
+       "name": "temp_m_axis_tdest_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E79",
+       "name": "temp_m_axis_tuser_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E12",
+       "name": "m_axis_tkeep",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "m_axis_tid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "m_axis_tdest",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "m_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "status_report",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Registered per-frame status with pad/truncate flags and lengths.",
+     "anchors": [
+      {
+       "id": "E19",
+       "name": "status_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 56.3,
+       "struct_score": 56.3,
+       "trace": "interface",
+       "why": "Per-frame status report valid, held until status_ready.",
+       "lines": [
+        87,
+        158
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "status_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 24.3,
+       "struct_score": 41.7,
+       "trace": "interface",
+       "why": "Status consumer ready; clears status_valid and gates new frame acceptance.",
+       "lines": [
+        88,
+        186,
+        204
+       ]
+      },
+      {
+       "id": "E21",
+       "name": "status_frame_pad",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 16.9,
+       "struct_score": 11.9,
+       "trace": "control_backward",
+       "why": "Reports that the frame was padded.",
+       "lines": [
+        89,
+        159
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "status_frame_truncate",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 16.9,
+       "struct_score": 11.9,
+       "trace": "control_backward",
+       "why": "Reports that the frame was truncated.",
+       "lines": [
+        90,
+        160
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "status_frame_length",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 30.7,
+       "struct_score": 65.0,
+       "trace": "data_backward",
+       "why": "Output frame length reported on status interface.",
+       "lines": [
+        91,
+        161
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E24",
+       "name": "status_frame_original_length",
+       "kind": "port_out"
+      },
+      {
+       "id": "E42",
+       "name": "status_valid_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E43",
+       "name": "status_valid_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E44",
+       "name": "status_frame_pad_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E45",
+       "name": "status_frame_pad_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E46",
+       "name": "status_frame_truncate_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E47",
+       "name": "status_frame_truncate_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E48",
+       "name": "status_frame_length_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E49",
+       "name": "status_frame_length_next",
+       "kind": "comb"
+      },
+      {
+       "id": "E50",
+       "name": "status_frame_original_length_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E51",
+       "name": "status_frame_original_length_next",
+       "kind": "comb"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clk_rst",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axis",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "s_axis_tdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "s_axis_tkeep",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "s_axis_tvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "s_axis_tready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "s_axis_tlast",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "s_axis_tid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "s_axis_tdest",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "s_axis_tuser",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "m_axis",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18"
+     ],
+     "members": [
+      {
+       "id": "E11",
+       "name": "m_axis_tdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "m_axis_tkeep",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "m_axis_tvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "m_axis_tready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "m_axis_tlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "m_axis_tid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "m_axis_tdest",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "m_axis_tuser",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "status",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E19",
+      "E20",
+      "E21",
+      "E22",
+      "E23",
+      "E24"
+     ],
+     "members": [
+      {
+       "id": "E19",
+       "name": "status_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "status_ready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E21",
+       "name": "status_frame_pad",
+       "kind": "port_out"
+      },
+      {
+       "id": "E22",
+       "name": "status_frame_truncate",
+       "kind": "port_out"
+      },
+      {
+       "id": "E23",
+       "name": "status_frame_length",
+       "kind": "port_out"
+      },
+      {
+       "id": "E24",
+       "name": "status_frame_original_length",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "config",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E25",
+      "E26"
+     ],
+     "members": [
+      {
+       "id": "E25",
+       "name": "length_min",
+       "kind": "port_in"
+      },
+      {
+       "id": "E26",
+       "name": "length_max",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

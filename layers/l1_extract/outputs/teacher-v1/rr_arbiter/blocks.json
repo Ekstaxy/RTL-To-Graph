@@ -1,0 +1,202 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "rr_arbiter",
+ "tops": [
+  "rr_arbiter"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "rr_arbiter": {
+   "source": "teacher",
+   "canonical_instance": "rr_arbiter",
+   "file": "examples/rtl/rr_arbiter.sv",
+   "lines": [
+    2,
+    44
+   ],
+   "summary": "Round-robin arbiter: a double-width masked priority trick picks a grant from a one-hot priority pointer, locks it until accept_i, then rotates priority.",
+   "blocks": [
+    {
+     "name": "priority_select",
+     "kind": "ARBITER",
+     "description": "Double-width priority search from round-robin pointer producing the grant register.",
+     "anchors": [
+      {
+       "id": "E7",
+       "name": "prio_q",
+       "role": "ARBITRATION",
+       "importance": "critical",
+       "score": 93.3,
+       "struct_score": 83.1,
+       "trace": "control_backward",
+       "why": "One-hot round-robin pointer, rotated past the granted requester on accept.",
+       "lines": [
+        19,
+        28,
+        36
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "dbl_gnt",
+       "role": "ARBITRATION",
+       "importance": "minor",
+       "score": 35.6,
+       "struct_score": 78.9,
+       "trace": "data_backward",
+       "why": "Combinational masked-priority grant, folded into gnt_d when unlocked.",
+       "lines": [
+        19,
+        23
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "gnt_o",
+       "role": "ARBITRATION",
+       "importance": "critical",
+       "score": 97.5,
+       "struct_score": 93.7,
+       "trace": "data_backward",
+       "why": "Registered one-hot grant vector output from gnt_q.",
+       "lines": [
+        42
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E11",
+       "name": "dbl_req",
+       "kind": "wire"
+      },
+      {
+       "id": "E9",
+       "name": "gnt_d",
+       "kind": "comb"
+      },
+      {
+       "id": "E8",
+       "name": "gnt_q",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "grant_lock",
+     "kind": "CONTROLLER",
+     "description": "Lock flag holding the grant until accept, then rotating priority.",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "gnt_valid_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 95.3,
+       "struct_score": 88.1,
+       "trace": "control_backward",
+       "why": "Grant valid output, mirrors locked_q while grant is held.",
+       "lines": [
+        43
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "accept_i",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 93.7,
+       "struct_score": 84.1,
+       "trace": "interface",
+       "why": "Acknowledge releasing the lock, rotating priority and clearing grant.",
+       "lines": [
+        34
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "req_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 98.2,
+       "struct_score": 95.4,
+       "trace": "interface",
+       "why": "Request vector feeding priority selection and lock trigger.",
+       "lines": [
+        18,
+        33
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E10",
+       "name": "locked_q",
+       "kind": "reg"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_n",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "request_grant",
+     "protocol": "REQ_ACK",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "req_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "gnt_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "accept_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "gnt_valid_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

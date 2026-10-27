@@ -1,0 +1,38 @@
+{
+  "module_summary": "AXI write-to-RAM command adapter: 3-state FSM accepts an AW burst, generates incrementing RAM write commands per W beat, then issues the B response.",
+  "anchors": [
+    {"id": "E41", "name": "state_reg", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "FSM idle/burst/response sequencing address accept, data beats and write response.", "lines": [130, 192, 260]},
+    {"id": "E14", "name": "s_axi_awvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "AW valid; with ready latches burst address and parameters.", "lines": [75, 196]},
+    {"id": "E15", "name": "s_axi_awready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "AW ready asserted in idle state by registered FSM output.", "lines": [76, 150, 196]},
+    {"id": "E4", "name": "s_axi_awaddr", "role": "INTERFACE_ADDR", "importance": "major", "trace": "interface", "why": "Burst start address loaded into write address register.", "lines": [65, 198]},
+    {"id": "E16", "name": "s_axi_wdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Write data passed straight through to RAM command data.", "lines": [77, 165]},
+    {"id": "E20", "name": "s_axi_wvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "W beat valid; generates RAM write enable and advances burst.", "lines": [81, 168, 222]},
+    {"id": "E21", "name": "s_axi_wready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "W ready when address valid and RAM ready.", "lines": [82, 151, 222]},
+    {"id": "E25", "name": "s_axi_bvalid", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Write response valid after final beat, held until bready.", "lines": [86, 155, 233]},
+    {"id": "E26", "name": "s_axi_bready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Response ready clearing bvalid and allowing FSM to return idle.", "lines": [87, 190, 247]},
+    {"id": "E28", "name": "ram_wr_cmd_addr", "role": "INTERFACE_ADDR", "importance": "critical", "trace": "data_backward", "why": "RAM write address from burst address register.", "lines": [93, 158]},
+    {"id": "E35", "name": "ram_wr_cmd_data", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "RAM write data from AXI W channel.", "lines": [100, 165]},
+    {"id": "E38", "name": "ram_wr_cmd_en", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "RAM write command enable when address valid and wvalid.", "lines": [103, 168]},
+    {"id": "E40", "name": "ram_wr_cmd_ready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "RAM ready gating AXI wready.", "lines": [105, 151]},
+    {"id": "E45", "name": "write_addr_reg", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Current burst address, incremented by transfer size per beat.", "lines": [133, 224, 263]},
+    {"id": "E63", "name": "write_count_reg", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Remaining beat count loaded from awlen; decides burst end.", "lines": [142, 226, 228]},
+    {"id": "E59", "name": "write_addr_valid_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Burst active flag gating wready and RAM write enable.", "lines": [140, 151, 168]},
+    {"id": "E61", "name": "write_last_reg", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Marks last beat of burst, drives ram_wr_cmd_last.", "lines": [141, 169, 227]},
+    {"id": "E43", "name": "write_id_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Latched AW id driven on RAM command and copied to bid.", "lines": [132, 157, 234]},
+    {"id": "E65", "name": "write_size_reg", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Latched clamped transfer size setting address increment.", "lines": [143, 224]},
+    {"id": "E67", "name": "write_burst_reg", "role": "MUX_SELECT", "importance": "minor", "trace": "control_backward", "why": "Burst type; fixed burst disables address increment.", "lines": [144, 223]}
+  ],
+  "groups": [
+    {"name": "write_fsm", "kind": "CONTROLLER", "anchor_ids": ["E41", "E59", "E61"], "member_ids": ["E42", "E60", "E62", "E69", "E70"], "description": "Idle/burst/response FSM controlling AW accept, beat handling and response."},
+    {"name": "burst_address_gen", "kind": "DATAPATH", "anchor_ids": ["E45", "E63", "E65", "E67", "E43"], "member_ids": ["E46", "E64", "E66", "E68", "E44", "E47", "E48", "E49", "E50", "E51", "E52", "E53", "E54", "E55", "E56", "E57", "E58"], "description": "Latches AW parameters, increments address and counts remaining beats."},
+    {"name": "axi_slave_port", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E14", "E15", "E4", "E16", "E20", "E21", "E25", "E26"], "member_ids": ["E71", "E72", "E73", "E74", "E22", "E23", "E24"], "description": "AXI AW, W and B channel handshakes."},
+    {"name": "ram_cmd_port", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E28", "E35", "E38", "E40"], "member_ids": ["E27", "E29", "E30", "E31", "E32", "E33", "E34", "E36", "E37", "E39"], "description": "RAM write command outputs with ready backpressure."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "s_axi_aw", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12", "E13", "E14", "E15"]},
+    {"name": "s_axi_w", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E16", "E17", "E18", "E19", "E20", "E21"]},
+    {"name": "s_axi_b", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E22", "E23", "E24", "E25", "E26"]},
+    {"name": "ram_wr_cmd", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E27", "E28", "E29", "E30", "E31", "E32", "E33", "E34", "E35", "E36", "E37", "E38", "E39", "E40"]}
+  ]
+}

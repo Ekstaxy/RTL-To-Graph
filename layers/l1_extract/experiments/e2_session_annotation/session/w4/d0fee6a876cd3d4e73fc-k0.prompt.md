@@ -1,0 +1,71 @@
+MODULE: n13_6ea
+DETAIL: full (importance tiers drive the coarser views)
+
+ENTITY TABLE:
+id | name | kind | size | type | driven_by | fan | flags | line
+E1 | n8_e81 | port_in | 1b | logic | driven_by=port_in | fanin=0 fanout=1 ctrl_fanout=0 addr_fanout=0 | CLOCK | L3
+E2 | n21_ac3 | port_in | 1b | logic | driven_by=port_in | fanin=0 fanout=1 ctrl_fanout=0 addr_fanout=0 | RESET | L4
+E3 | n5_691 | port_in | 1b | logic | driven_by=port_in | fanin=0 fanout=1 ctrl_fanout=1 addr_fanout=0 | - | L5
+E4 | n17_f3c | port_out | 1b | reg | driven_by=always_comb | fanin=1 fanout=0 ctrl_fanout=0 addr_fanout=0 | - | L6
+E5 | n12_7d2 | port_out | 1b | reg | driven_by=always_comb | fanin=1 fanout=0 ctrl_fanout=0 addr_fanout=0 | - | L7
+E6 | n16_a72 | port_in | 1b | logic | driven_by=port_in | fanin=0 fanout=1 ctrl_fanout=1 addr_fanout=0 | - | L8
+E7 | n6_ba8 | port_out | 1b | reg | driven_by=always_comb | fanin=1 fanout=0 ctrl_fanout=0 addr_fanout=0 | - | L9
+E8 | n7_ccc | port_in | 1b | logic | driven_by=port_in | fanin=0 fanout=1 ctrl_fanout=1 addr_fanout=0 | - | L10
+E9 | n14_1f2 | reg | 4b | n13_6ea.n9_14c{n11_7cc,n18_df2,n1_1ad,n2_55f,n3_f3f,n15_ff2,n20_788,n4_f01,n0_331,n10_9e6} | driven_by=always_ff | fanin=3 fanout=4 ctrl_fanout=4 addr_fanout=0 | STATE FSM? | L17
+E10 | n19_bb6 | comb | 4b | n13_6ea.n9_14c{n11_7cc,n18_df2,n1_1ad,n2_55f,n3_f3f,n15_ff2,n20_788,n4_f01,n0_331,n10_9e6} | driven_by=always_comb | fanin=4 fanout=1 ctrl_fanout=0 addr_fanout=0 | - | L17
+
+RTL (line-numbered):
+   2| module n13_6ea (
+   3|   input n8_e81,
+   4|   input n21_ac3,
+   5|   input n5_691,
+   6|   output reg n17_f3c,
+   7|   output reg n12_7d2,
+   8|   input n16_a72,
+   9|   output reg n6_ba8,
+  10|   input n7_ccc
+  11| );
+  12| 
+  13|   typedef enum logic[3:0] {
+  14|     n11_7cc, n18_df2, n1_1ad, n2_55f, n3_f3f, n15_ff2, n20_788, n4_f01, n0_331, n10_9e6
+  15|   } n9_14c;
+  16| 
+  17|   n9_14c n14_1f2, n19_bb6;
+  18| 
+  19|   always_comb begin
+  20|     case (n14_1f2)
+  21|       n11_7cc: n19_bb6 = n9_14c'(n5_691 ? n18_df2: n11_7cc);
+  22|       n18_df2: n19_bb6 = n9_14c'(n5_691 ? n1_1ad: n11_7cc);
+  23|       n1_1ad: n19_bb6 = n9_14c'(n5_691 ? n1_1ad : n2_55f);
+  24|       n2_55f: n19_bb6 = n9_14c'(n5_691 ? n3_f3f : n11_7cc);
+  25|       n3_f3f: n19_bb6 = n15_ff2;
+  26|       n15_ff2: n19_bb6 = n20_788;
+  27|       n20_788: n19_bb6 = n4_f01;
+  28|       n4_f01: n19_bb6 = n0_331;
+  29|       n0_331: n19_bb6 = n9_14c'(n16_a72 ? n10_9e6 : n0_331);
+  30|       n10_9e6: n19_bb6 = n9_14c'(n7_ccc ? n11_7cc : n10_9e6);
+  31|       default: n19_bb6 = n9_14c'(4'bx);
+  32|     endcase
+  33|   end
+  34| 
+  35|   always @(posedge n8_e81) begin
+  36|     if (n21_ac3) n14_1f2 <= n11_7cc;
+  37|     else n14_1f2 <= n19_bb6;
+  38|   end
+  39| 
+  40|   always_comb begin
+  41|     n17_f3c = 0; n12_7d2 = 0; n6_ba8 = 0;
+  42|     if (n14_1f2 == n3_f3f || n14_1f2 == n15_ff2 || n14_1f2 == n20_788 || n14_1f2 == n4_f01)
+  43|       n17_f3c = 1;
+  44|     if (n14_1f2 == n0_331)
+  45|       n12_7d2 = 1;
+  46|     if (n14_1f2 == n10_9e6)
+  47|       n6_ba8 = 1;
+  48| 
+  49|     if (|n14_1f2 === 1'bx) begin
+  50|       {n17_f3c, n12_7d2, n6_ba8} = 'x;
+  51|     end
+  52| 
+  53|   end
+  54| 
+  55| endmodule

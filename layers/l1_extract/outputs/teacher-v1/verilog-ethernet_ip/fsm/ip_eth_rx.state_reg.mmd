@@ -1,0 +1,21 @@
+stateDiagram-v2
+    [*] --> STATE_IDLE
+    ANY_STATE --> STATE_IDLE
+    STATE_IDLE --> STATE_READ_HEADER : s_eth_hdr_ready && s_eth_hdr_valid
+    STATE_IDLE --> STATE_IDLE : !(s_eth_hdr_ready && s_eth_hdr_valid)
+    STATE_READ_HEADER --> STATE_READ_HEADER : s_eth_payload_axis_tready && s_eth_payload_axis_tvalid
+    STATE_READ_HEADER --> STATE_WAIT_LAST : s_eth_payload_axis_tready && s_eth_payload_axis_tvalid && hdr_ptr_reg == 6'h13 && (m_ip_version_reg != 4'd4 || m_ip_ihl_reg != 4'd5)
+    STATE_READ_HEADER --> STATE_WAIT_LAST : s_eth_payload_axis_tready && s_eth_payload_axis_tvalid && hdr_ptr_reg == 6'h13 && !(m_ip_version_reg != 4'd4 || m_ip_ihl_reg != 4'd5) && hdr_sum_next != 16'hffff
+    STATE_READ_HEADER --> STATE_READ_PAYLOAD : s_eth_payload_axis_tready && s_eth_payload_axis_tvalid && hdr_ptr_reg == 6'h13 && !(m_ip_version_reg != 4'd4 || m_ip_ihl_reg != 4'd5) && !(hdr_sum_next != 16'hffff)
+    STATE_READ_HEADER --> STATE_IDLE : s_eth_payload_axis_tready && s_eth_payload_axis_tvalid && s_eth_payload_axis_tlast
+    STATE_READ_HEADER --> STATE_READ_HEADER : !(s_eth_payload_axis_tready && s_eth_payload_axis_tvalid)
+    STATE_READ_PAYLOAD --> STATE_IDLE : s_eth_payload_axis_tready && s_eth_payload_axis_tvalid && s_eth_payload_axis_tlast
+    STATE_READ_PAYLOAD --> STATE_READ_PAYLOAD_LAST : s_eth_payload_axis_tready && s_eth_payload_axis_tvalid && !s_eth_payload_axis_tlast && word_count_reg == 16'd1
+    STATE_READ_PAYLOAD --> STATE_READ_PAYLOAD : s_eth_payload_axis_tready && s_eth_payload_axis_tvalid && !s_eth_payload_axis_tlast && !(word_count_reg == 16'd1)
+    STATE_READ_PAYLOAD --> STATE_READ_PAYLOAD : !(s_eth_payload_axis_tready && s_eth_payload_axis_tvalid)
+    STATE_READ_PAYLOAD_LAST --> STATE_IDLE : s_eth_payload_axis_tready && s_eth_payload_axis_tvalid && s_eth_payload_axis_tlast
+    STATE_READ_PAYLOAD_LAST --> STATE_READ_PAYLOAD_LAST : s_eth_payload_axis_tready && s_eth_payload_axis_tvalid && !s_eth_payload_axis_tlast
+    STATE_READ_PAYLOAD_LAST --> STATE_READ_PAYLOAD_LAST : !(s_eth_payload_axis_tready && s_eth_payload_axis_tvalid)
+    STATE_WAIT_LAST --> STATE_IDLE : s_eth_payload_axis_tready && s_eth_payload_axis_tvalid && s_eth_payload_axis_tlast
+    STATE_WAIT_LAST --> STATE_WAIT_LAST : s_eth_payload_axis_tready && s_eth_payload_axis_tvalid && !s_eth_payload_axis_tlast
+    STATE_WAIT_LAST --> STATE_WAIT_LAST : !(s_eth_payload_axis_tready && s_eth_payload_axis_tvalid)

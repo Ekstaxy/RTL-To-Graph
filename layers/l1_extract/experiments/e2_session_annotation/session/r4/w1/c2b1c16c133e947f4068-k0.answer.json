@@ -1,0 +1,34 @@
+{
+ "module_summary": "SPI flash byte transfer engine: latches a byte command, then shifts obuffer/ibuffer over 1/2/4-bit (optionally DDR) flash IO under bit and dummy-cycle counters, returning tagged read bytes.",
+ "anchors": [
+  {"id": "E3", "name": "din_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Byte request valid; with din_ready latches transfer parameters and starts shifting.", "lines": [381, 441, 562]},
+  {"id": "E4", "name": "din_ready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Accepts new byte when previous transfer finishes (next_fetch).", "lines": [382, 441, 562]},
+  {"id": "E5", "name": "din_data", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Byte to transmit, loaded into obuffer; dummy cycle count on reads.", "lines": [383, 567, 568]},
+  {"id": "E12", "name": "dout_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Pulse marking received byte ready, DDR-aware timing from fetch.", "lines": [391, 443]},
+  {"id": "E13", "name": "dout_data", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Received byte output driven from ibuffer.", "lines": [392, 444]},
+  {"id": "E29", "name": "obuffer", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "Output shift register driving flash IO data bits MSB first.", "lines": [413, 467, 568]},
+  {"id": "E30", "name": "ibuffer", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "Input shift register collecting flash IO sample bits.", "lines": [414, 473, 559]},
+  {"id": "E31", "name": "count", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Remaining bit counter decremented per shift; zero completes byte.", "lines": [416, 556, 566]},
+  {"id": "E32", "name": "dummy_count", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Dummy clock cycle counter that suspends shifting while nonzero.", "lines": [417, 463, 554]},
+  {"id": "E16", "name": "flash_clk", "role": "CLOCK_GEN", "importance": "critical", "trace": "control_backward", "why": "Generated SPI clock toggled while counting; edges select shift vs sample.", "lines": [396, 469, 557]},
+  {"id": "E15", "name": "flash_csb", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Flash chip select, asserted low on accepted request.", "lines": [395, 539, 563]},
+  {"id": "E36", "name": "xfer_ddr", "role": "MUX_SELECT", "importance": "major", "trace": "control_backward", "why": "Latched DDR mode selecting shift case and dout_valid timing.", "lines": [422, 464, 551]},
+  {"id": "E35", "name": "xfer_qspi", "role": "MUX_SELECT", "importance": "major", "trace": "control_backward", "why": "Latched quad mode selecting 4-bit IO shift case; xfer_dspi sibling.", "lines": [421, 464, 573]},
+  {"id": "E38", "name": "xfer_rd", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Read flag disabling IO output enables in multi-bit modes.", "lines": [424, 479, 575]},
+  {"id": "E45", "name": "next_fetch", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Byte-complete flag gating din_ready and dout_valid.", "lines": [433, 441, 476]},
+  {"id": "E39", "name": "xfer_tag", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Holds request tag returned as dout_tag after delay.", "lines": [425, 438, 570]},
+  {"id": "E21", "name": "flash_io0_do", "role": "INTERFACE_DATA", "importance": "major", "trace": "data_backward", "why": "Flash IO data out bit from obuffer; io1-3 do/oe replicate.", "lines": [403, 467]}
+ ],
+ "groups": [
+  {"name": "Request intake", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E3", "E4", "E5", "E36", "E35", "E38", "E39"], "member_ids": ["E6", "E7", "E8", "E9", "E10", "E11", "E33", "E34"], "description": "Accepts byte command and latches mode, tag and read flags."},
+  {"name": "Shift datapath", "kind": "SERIALIZER", "anchor_ids": ["E29", "E30", "E21"], "member_ids": ["E41", "E42", "E17", "E18", "E19", "E20", "E22", "E23", "E24", "E25", "E26", "E27", "E28"], "description": "Shifts obuffer out and ibuffer in over 1/2/4 IO lines."},
+  {"name": "Transfer sequencing", "kind": "COUNTER_TIMER", "anchor_ids": ["E31", "E32", "E16", "E15", "E45"], "member_ids": ["E43", "E44", "E46", "E37"], "description": "Bit and dummy counters, SPI clock and fetch completion."},
+  {"name": "Response output", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E12", "E13"], "member_ids": ["E14", "E40"], "description": "Presents received byte and tag with valid pulse."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "din", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11"]},
+  {"name": "dout", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E12", "E13", "E14"]},
+  {"name": "flash_spi", "protocol": "SERIAL", "direction": "BIDIR", "member_ids": ["E15", "E16", "E17", "E18", "E19", "E20", "E21", "E22", "E23", "E24", "E25", "E26", "E27", "E28"]}
+ ]
+}

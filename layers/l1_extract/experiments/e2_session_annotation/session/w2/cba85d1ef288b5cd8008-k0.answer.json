@@ -1,0 +1,18 @@
+{
+  "module_summary": "PS/2-style packet framer: a 4-state FSM syncs on in[3] to count three bytes while a 24-bit shift register captures them, output when done.",
+  "anchors": [
+    {"id": "E6", "name": "state", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Byte-position controller (BYTE1/2/3/DONE) synchronised by in[3]."},
+    {"id": "E9", "name": "out_bytes_r", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "24-bit shift register holding the last three input bytes."},
+    {"id": "E5", "name": "done", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "One-cycle pulse marking out_bytes valid after third byte."},
+    {"id": "E2", "name": "in", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Input byte stream shifted into out_bytes_r; bit 3 drives framing."}
+  ],
+  "groups": [
+    {"name": "Framing controller", "kind": "CONTROLLER", "anchor_ids": ["E6", "E5"], "member_ids": ["E7", "E8"], "description": "FSM locating message boundaries and pulsing done."},
+    {"name": "Byte shift datapath", "kind": "DATAPATH", "anchor_ids": ["E9", "E2"], "member_ids": ["E4"], "description": "Three-byte shift register exposed on out_bytes when done."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E3"]},
+    {"name": "byte_stream_in", "protocol": "STREAM", "direction": "IN", "member_ids": ["E2"]},
+    {"name": "message_out", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E4", "E5"]}
+  ]
+}

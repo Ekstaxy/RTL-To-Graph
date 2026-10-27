@@ -1,0 +1,30 @@
+{
+  "module_summary": "Synchronous 8-entry FIFO: register-array storage with wrapping read/write pointers and an occupancy counter deriving valid/ready handshakes, plus synchronous flush.",
+  "anchors": [
+    {"id": "E11", "name": "mem_q", "role": "STORAGE", "importance": "critical", "trace": "data_backward", "why": "8x32 storage array written at wptr_q on push, read at rptr_q."},
+    {"id": "E12", "name": "wptr_q", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "Write pointer indexing mem_q, increments on push, cleared on flush."},
+    {"id": "E13", "name": "rptr_q", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "Read pointer selecting out_data from mem_q, increments on pop."},
+    {"id": "E14", "name": "count_q", "role": "FIFO_PTR", "importance": "major", "trace": "control_backward", "why": "Occupancy count; derives in_ready (not full) and out_valid (not empty), drives count_o."},
+    {"id": "E4", "name": "in_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Write-side valid; with in_ready forms push."},
+    {"id": "E5", "name": "in_ready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Write-side ready, asserted when FIFO not full."},
+    {"id": "E6", "name": "in_data", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Write data stored into mem_q."},
+    {"id": "E7", "name": "out_valid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Read-side valid, asserted when FIFO not empty."},
+    {"id": "E8", "name": "out_ready", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Read-side ready; with out_valid forms pop."},
+    {"id": "E9", "name": "out_data", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Head entry mem_q[rptr_q]."},
+    {"id": "E3", "name": "flush_i", "role": "COMMAND", "importance": "major", "trace": "interface", "why": "Synchronous flush clearing pointers and count."},
+    {"id": "E15", "name": "do_push", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Push enable: writes mem_q, advances wptr_q, increments count."},
+    {"id": "E16", "name": "do_pop", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Pop enable: advances rptr_q, decrements count."}
+  ],
+  "groups": [
+    {"name": "fifo_storage", "kind": "MEMORY", "anchor_ids": ["E11", "E6", "E9"], "member_ids": [], "description": "Register array holding queued entries."},
+    {"name": "fifo_pointers", "kind": "BUFFER", "anchor_ids": ["E12", "E13", "E14", "E3", "E15", "E16"], "member_ids": ["E10"], "description": "Read/write pointers and occupancy count with flush and push/pop enables."},
+    {"name": "write_handshake", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E4", "E5"], "member_ids": [], "description": "Write-side valid/ready handshake."},
+    {"name": "read_handshake", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E7", "E8"], "member_ids": [], "description": "Read-side valid/ready handshake."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "write_port", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E4", "E5", "E6"]},
+    {"name": "read_port", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E7", "E8", "E9"]},
+    {"name": "control_status", "protocol": "SIMPLE", "direction": "BIDIR", "member_ids": ["E3", "E10"]}
+  ]
+}

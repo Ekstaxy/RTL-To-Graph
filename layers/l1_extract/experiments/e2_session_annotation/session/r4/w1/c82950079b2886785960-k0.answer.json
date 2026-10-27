@@ -1,0 +1,32 @@
+{
+ "module_summary": "Two-master Wishbone arbiter: a 1-bit owner register (alternating scheme) muxes A or B request signals onto the shared bus and routes ack/stall/err back to the owner.",
+ "anchors": [
+  {"id": "E30", "name": "r_a_owner", "role": "ARBITRATION", "importance": "critical", "trace": "control_backward", "why": "Grant bit selecting master A or B; steers all output muxes and return-path gating.", "lines": [116, 143, 201]},
+  {"id": "E31", "name": "ALT.last_owner", "role": "ARBITRATION", "importance": "major", "trace": "control_backward", "why": "Remembers last bus owner so idle grant alternates between masters.", "lines": [133, 137, 143]},
+  {"id": "E21", "name": "o_cyc", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Arbitrated bus-cycle output, copy of owner's cyc line.", "lines": [116]},
+  {"id": "E22", "name": "o_stb", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Arbitrated strobe output from owning master.", "lines": [200]},
+  {"id": "E24", "name": "o_adr", "role": "INTERFACE_ADDR", "importance": "major", "trace": "interface", "why": "Muxed address from owning master to the shared bus.", "lines": [201]},
+  {"id": "E25", "name": "o_dat", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Muxed write data from owning master to shared bus.", "lines": [202]},
+  {"id": "E23", "name": "o_we", "role": "COMMAND", "importance": "minor", "trace": "interface", "why": "Muxed write-enable command from owning master.", "lines": [173]},
+  {"id": "E26", "name": "o_sel", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "Muxed byte-select lanes from owning master.", "lines": [203]},
+  {"id": "E27", "name": "i_ack", "role": "HANDSHAKE_READY", "importance": "major", "trace": "forward", "why": "Slave acknowledge routed back only to the owning master.", "lines": [208, 209]},
+  {"id": "E28", "name": "i_stall", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "forward", "why": "Slave stall forwarded to owner; non-owner always stalled.", "lines": [213, 214]},
+  {"id": "E9", "name": "o_a_ack", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Acknowledge to master A, gated by ownership.", "lines": [208]},
+  {"id": "E18", "name": "o_b_ack", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Acknowledge to master B, gated by ownership.", "lines": [209]},
+  {"id": "E10", "name": "o_a_stall", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Stall to master A; forced high when A lacks the bus.", "lines": [213]},
+  {"id": "E19", "name": "o_b_stall", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Stall to master B; forced high when B lacks the bus.", "lines": [214]},
+  {"id": "E3", "name": "i_a_cyc", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Master A bus request; drives grant decisions and o_cyc.", "lines": [136, 142, 116]},
+  {"id": "E12", "name": "i_b_cyc", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Master B bus request; drives grant decisions and o_cyc.", "lines": [138, 142, 116]}
+ ],
+ "groups": [
+  {"name": "Arbiter", "kind": "ARBITER", "anchor_ids": ["E30", "E31", "E3", "E12"], "member_ids": ["E4", "E13"], "description": "Alternating grant logic choosing owner from A/B cyc and stb requests."},
+  {"name": "Request mux", "kind": "DATAPATH", "anchor_ids": ["E21", "E22", "E23", "E24", "E25", "E26"], "member_ids": ["E5", "E6", "E7", "E8", "E14", "E15", "E16", "E17"], "description": "Muxes owning master's cyc/stb/we/adr/dat/sel onto shared bus."},
+  {"name": "Response router", "kind": "DATAPATH", "anchor_ids": ["E27", "E28", "E9", "E18", "E10", "E19"], "member_ids": ["E29", "E11", "E20"], "description": "Routes ack/stall/err from slave back to the owning master only."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "wb_master_a", "protocol": "MEMORY_BUS", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11"]},
+  {"name": "wb_master_b", "protocol": "MEMORY_BUS", "direction": "IN", "member_ids": ["E12", "E13", "E14", "E15", "E16", "E17", "E18", "E19", "E20"]},
+  {"name": "wb_shared_bus", "protocol": "MEMORY_BUS", "direction": "OUT", "member_ids": ["E21", "E22", "E23", "E24", "E25", "E26", "E27", "E28", "E29"]}
+ ]
+}

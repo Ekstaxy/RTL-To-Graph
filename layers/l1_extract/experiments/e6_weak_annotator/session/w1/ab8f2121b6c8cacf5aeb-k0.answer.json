@@ -1,0 +1,102 @@
+{
+  "module_summary": "8-to-16 width converter: collects two 8-bit inputs over two cycles and outputs combined 16-bit value using toggle-flag state machine.",
+  "anchors": [
+    {
+      "id": "E3",
+      "name": "valid_in",
+      "role": "HANDSHAKE_VALID",
+      "importance": "critical",
+      "trace": "control_backward",
+      "why": "Input valid signal triggers state transitions for data collection and output generation.",
+      "lines": [5, 17, 31, 40]
+    },
+    {
+      "id": "E4",
+      "name": "data_in",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "data_backward",
+      "why": "Input data stream (8-bit) collected and buffered for width expansion.",
+      "lines": [6, 18, 41]
+    },
+    {
+      "id": "E5",
+      "name": "valid_out",
+      "role": "HANDSHAKE_VALID",
+      "importance": "critical",
+      "trace": "forward",
+      "why": "Output valid pulse indicates 16-bit combined result ready; one pulse per two inputs.",
+      "lines": [8, 32, 34]
+    },
+    {
+      "id": "E6",
+      "name": "data_out",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "forward",
+      "why": "Output port carries 16-bit combined data: {data_lock, data_in} on every second valid input.",
+      "lines": [9, 39, 41]
+    },
+    {
+      "id": "E7",
+      "name": "data_lock",
+      "role": "HOLDING_REG",
+      "importance": "critical",
+      "trace": "data_backward",
+      "why": "Buffer holding first 8-bit value until second arrives for width concatenation.",
+      "lines": [11, 18, 41]
+    },
+    {
+      "id": "E8",
+      "name": "flag",
+      "role": "FSM_STATE",
+      "importance": "critical",
+      "trace": "control_backward",
+      "why": "2-state toggle flag: 0=collect first byte to buffer, 1=collect second byte and output combined.",
+      "lines": [12, 25, 31]
+    }
+  ],
+  "groups": [
+    {
+      "name": "State machine",
+      "kind": "CONTROLLER",
+      "anchor_ids": ["E8"],
+      "member_ids": [],
+      "description": "Toggle flag controls buffering vs. output phase of width conversion."
+    },
+    {
+      "name": "Data buffering",
+      "kind": "BUFFER",
+      "anchor_ids": ["E7"],
+      "member_ids": [],
+      "description": "Holding register for first byte while waiting for second input."
+    },
+    {
+      "name": "Input/output interface",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E3", "E4", "E5", "E6"],
+      "member_ids": [],
+      "description": "Valid-based handshake: accepts 8-bit inputs, outputs 16-bit combined result every two cycles."
+    }
+  ],
+  "interfaces": [
+    {
+      "name": "Input data stream",
+      "protocol": "VALID_READY",
+      "direction": "IN",
+      "member_ids": ["E3", "E4"]
+    },
+    {
+      "name": "Output data stream",
+      "protocol": "SIMPLE",
+      "direction": "OUT",
+      "member_ids": ["E5", "E6"]
+    },
+    {
+      "name": "Clock and reset",
+      "protocol": "CLOCK_RESET",
+      "direction": "IN",
+      "member_ids": ["E1", "E2"]
+    }
+  ]
+}

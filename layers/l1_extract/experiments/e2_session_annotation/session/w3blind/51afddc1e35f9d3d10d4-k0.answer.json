@@ -1,0 +1,29 @@
+{
+  "module_summary": "Multi-cycle IEEE-754 single-precision multiplier: a free-running 3-bit step counter sequences unpack, special-case handling, subnormal pre-normalization, mantissa multiply/exponent add, guard/round/sticky extraction, normalize/round and pack into the 32-bit result.",
+  "anchors": [
+    {"id": "E6", "name": "n9_47f", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Step counter sequencing the seven phases; every phase block is gated on its value."},
+    {"id": "E3", "name": "n4_113", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "First float operand unpacked into sign, exponent and mantissa."},
+    {"id": "E4", "name": "n11_144", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Second float operand unpacked into sign, exponent and mantissa."},
+    {"id": "E5", "name": "n18_dfc", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Packed float product, or NaN/Inf/zero from special-case handling."},
+    {"id": "E7", "name": "n5_c26", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Operand mantissa with hidden bit, pre-normalized for subnormals before multiply."},
+    {"id": "E10", "name": "n15_077", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "Unbiased operand exponent, checked for specials and adjusted during pre-normalization."},
+    {"id": "E16", "name": "n8_4bb", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Full mantissa product feeding result mantissa and guard/round/sticky bits."},
+    {"id": "E9", "name": "n17_bde", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Result mantissa normalized, denormal-shifted and rounded before packing."},
+    {"id": "E12", "name": "n19_d34", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Result exponent: sum of exponents, adjusted by normalization, rounding and underflow."},
+    {"id": "E15", "name": "n14_7c6", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Result sign, XOR of operand signs."},
+    {"id": "E18", "name": "n12_cc4", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Round bit; with guard and sticky decides round-up of mantissa."},
+    {"id": "E2", "name": "n2_49c", "role": "COMMAND", "importance": "minor", "trace": "interface", "why": "Clears step counter, restarting the multiply sequence."}
+  ],
+  "groups": [
+    {"name": "step_sequencer", "kind": "CONTROLLER", "anchor_ids": ["E6", "E2"], "member_ids": [], "description": "Step counter decoding the seven multiply phases."},
+    {"name": "unpack", "kind": "DECODER", "anchor_ids": ["E7", "E10"], "member_ids": ["E8", "E11", "E13", "E14"], "description": "Operand mantissa, exponent and sign fields with subnormal pre-normalization."},
+    {"name": "multiply_core", "kind": "DATAPATH", "anchor_ids": ["E16", "E12", "E15"], "member_ids": [], "description": "Mantissa multiply, exponent add and sign XOR."},
+    {"name": "normalize_round", "kind": "DATAPATH", "anchor_ids": ["E9", "E18"], "member_ids": ["E17", "E19"], "description": "Normalize, denormalize, guard/round/sticky rounding of result mantissa."},
+    {"name": "pack", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E5"], "member_ids": [], "description": "Packs result fields or special values into float output."}
+  ],
+  "interfaces": [
+    {"name": "clk_rst", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "operands", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E3", "E4"]},
+    {"name": "product", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E5"]}
+  ]
+}

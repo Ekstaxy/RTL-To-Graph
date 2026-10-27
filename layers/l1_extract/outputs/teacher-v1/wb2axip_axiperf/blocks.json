@@ -1,0 +1,1696 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "wb2axip_axiperf",
+ "tops": [
+  "axiperf"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "skidbuffer": {
+   "source": "teacher",
+   "canonical_instance": "axiperf.axilawskid",
+   "file": "data/rtl/wb2axip/rtl/skidbuffer.v",
+   "lines": [
+    81,
+    501
+   ],
+   "summary": "Valid/ready skid buffer: a one-entry side register captures incoming data when the output stalls, with optionally registered output valid/data.",
+   "blocks": [
+    {
+     "name": "Skid buffer",
+     "kind": "BUFFER",
+     "description": "One-entry overflow register and its full flag absorbing a downstream stall.",
+     "anchors": [
+      {
+       "id": "E10",
+       "name": "LOGIC.r_valid",
+       "role": "CONTROL_FLAG",
+       "importance": "critical",
+       "score": 87.4,
+       "struct_score": 67.3,
+       "trace": "control_backward",
+       "why": "Skid register full flag; deasserts o_ready and selects buffered data for output.",
+       "lines": [
+        137,
+        160,
+        212
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "LOGIC.r_data",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 96.0,
+       "struct_score": 89.8,
+       "trace": "data_backward",
+       "why": "One-entry skid buffer holding i_data captured while downstream is stalled.",
+       "lines": [
+        153,
+        213
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E9",
+       "name": "w_data",
+       "kind": "wire"
+      },
+      {
+       "id": "E12",
+       "name": "unused",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Input handshake",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Upstream valid/ready/data port accepted when skid register empty.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "i_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 97.4,
+       "struct_score": 93.3,
+       "trace": "interface",
+       "why": "Upstream valid; with o_ready accepts data into output or skid register.",
+       "lines": [
+        137,
+        198
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "o_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 95.9,
+       "struct_score": 89.6,
+       "trace": "interface",
+       "why": "Upstream ready, low while skid register holds data.",
+       "lines": [
+        160
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "i_data",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 67.6,
+       "struct_score": 88.8,
+       "trace": "interface",
+       "why": "Incoming payload written to r_data or forwarded to o_data.",
+       "lines": [
+        153,
+        215
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Output stage",
+     "kind": "PIPELINE_STAGE",
+     "description": "Optional output register muxing skid or input data onto downstream port.",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "o_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 98.7,
+       "struct_score": 96.8,
+       "trace": "interface",
+       "why": "Downstream valid, registered or combinational from i_valid or r_valid.",
+       "lines": [
+        172,
+        200
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "i_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 91.8,
+       "struct_score": 79.3,
+       "trace": "interface",
+       "why": "Downstream ready; stall causes capture into skid register, else drains it.",
+       "lines": [
+        137,
+        140,
+        209
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "o_data",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 97.1,
+       "struct_score": 92.6,
+       "trace": "data_backward",
+       "why": "Outgoing payload selected from r_data or i_data.",
+       "lines": [
+        213,
+        215
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "i_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "i_reset",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "input_stream",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "i_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "o_ready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "i_data",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "output_stream",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E6",
+      "E7",
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "o_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "i_ready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "o_data",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "axiperf": {
+   "source": "teacher",
+   "canonical_instance": "axiperf",
+   "file": "data/rtl/wb2axip/rtl/axiperf.v",
+   "lines": [
+    338,
+    1602
+   ],
+   "summary": "Passive AXI4 performance monitor: snoops all five AXI channels and, while triggered via AXI-lite control, accumulates beat, burst, byte, stall, lag and outstanding-burst counters read back over AXI-lite.",
+   "blocks": [
+    {
+     "name": "Measurement controller",
+     "kind": "CONTROLLER",
+     "description": "Start/stop/clear sequencing at bus idle, active-time counter and error tracking.",
+     "anchors": [
+      {
+       "id": "E73",
+       "name": "triggered",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 97.5,
+       "struct_score": 93.8,
+       "trace": "control_backward",
+       "why": "Run/stop state set on start when bus idle; enables every statistics counter.",
+       "lines": [
+        731,
+        733,
+        742
+       ]
+      },
+      {
+       "id": "E75",
+       "name": "clear_request",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 51.5,
+       "struct_score": 38.6,
+       "trace": "control_backward",
+       "why": "Pending clear request; resets all counters and trigger state.",
+       "lines": [
+        607,
+        726
+       ]
+      },
+      {
+       "id": "E76",
+       "name": "start_request",
+       "role": "COMMAND",
+       "importance": "major",
+       "score": 43.2,
+       "struct_score": 4.7,
+       "trace": "control_backward",
+       "why": "Software start command latched from control register, applied when bus idle.",
+       "lines": [
+        610,
+        730
+       ]
+      },
+      {
+       "id": "E74",
+       "name": "stop_request",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 15.1,
+       "struct_score": 4.6,
+       "trace": "control_backward",
+       "why": "Software stop command clearing triggered at bus idle.",
+       "lines": [
+        609,
+        732
+       ]
+      },
+      {
+       "id": "E77",
+       "name": "idle_bus",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 43.8,
+       "struct_score": 7.3,
+       "trace": "control_backward",
+       "why": "No outstanding AXI transactions; gates start/stop/clear application.",
+       "lines": [
+        728,
+        763
+       ]
+      },
+      {
+       "id": "E78",
+       "name": "active_time",
+       "role": "COUNTER",
+       "importance": "critical",
+       "score": 77.5,
+       "struct_score": 30.4,
+       "trace": "control_backward",
+       "why": "Cycle counter while triggered with overflow bit; total measurement time.",
+       "lines": [
+        635,
+        745
+       ]
+      },
+      {
+       "id": "E82",
+       "name": "perf_err",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 42.7,
+       "struct_score": 2.8,
+       "trace": "control_backward",
+       "why": "Sticky error when outstanding counters overflow; reported in control word.",
+       "lines": [
+        690,
+        773
+       ]
+      },
+      {
+       "id": "E79",
+       "name": "wr_aw_err",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.4,
+       "struct_score": 9.7,
+       "trace": "control_backward",
+       "why": "Write-address outstanding counter overflow; freezes counter, sets perf_err.",
+       "lines": [
+        772,
+        877
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E72",
+       "name": "r_idle_bus",
+       "kind": "reg"
+      },
+      {
+       "id": "E80",
+       "name": "wr_w_err",
+       "kind": "reg"
+      },
+      {
+       "id": "E81",
+       "name": "rd_err",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "AXI-lite register interface",
+     "kind": "REGISTER_BANK",
+     "description": "Skidbuffered AXI-lite control writes and counter readback mux.",
+     "anchors": [
+      {
+       "id": "E60",
+       "name": "axil_write_ready",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.6,
+       "struct_score": 6.4,
+       "trace": "control_backward",
+       "why": "AXI-lite write strobe updating start/stop/clear requests.",
+       "lines": [
+        536,
+        601
+       ]
+      },
+      {
+       "id": "E61",
+       "name": "awskd_addr",
+       "role": "INDEX",
+       "importance": "minor",
+       "score": 14.8,
+       "struct_score": 3.2,
+       "trace": "control_backward",
+       "why": "AXI-lite write register index; 0x1f selects control word.",
+       "lines": [
+        603
+       ]
+      },
+      {
+       "id": "E62",
+       "name": "wskd_data",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 22.2,
+       "struct_score": 33.5,
+       "trace": "data_backward",
+       "why": "AXI-lite write data with start/clear bits.",
+       "lines": [
+        608,
+        609
+       ]
+      },
+      {
+       "id": "E66",
+       "name": "arskd_addr",
+       "role": "MUX_SELECT",
+       "importance": "major",
+       "score": 44.5,
+       "struct_score": 10.3,
+       "trace": "control_backward",
+       "why": "Read register address selecting which counter is returned.",
+       "lines": [
+        631
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "S_AXIL_RDATA",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 86.0,
+       "struct_score": 62.2,
+       "trace": "data_backward",
+       "why": "AXI-lite readback of selected performance counter.",
+       "lines": [
+        579
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "S_AXIL_RVALID",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 27.9,
+       "struct_score": 54.6,
+       "trace": "interface",
+       "why": "AXI-lite read response valid.",
+       "lines": [
+        578,
+        628
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "S_AXIL_BVALID",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 30.2,
+       "struct_score": 63.0,
+       "trace": "interface",
+       "why": "AXI-lite write response valid.",
+       "lines": [
+        548
+       ]
+      },
+      {
+       "id": "E65",
+       "name": "axil_read_ready",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 15.0,
+       "struct_score": 4.0,
+       "trace": "control_backward",
+       "why": "Accepts AXI-lite read address and sets read valid.",
+       "lines": [
+        566,
+        573
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "axilawskid",
+       "module": "skidbuffer"
+      },
+      {
+       "id": "I2",
+       "instance": "axilwskid",
+       "module": "skidbuffer"
+      },
+      {
+       "id": "I3",
+       "instance": "axilarskid",
+       "module": "skidbuffer"
+      }
+     ],
+     "members": [
+      {
+       "id": "E63",
+       "name": "wskd_strb",
+       "kind": "wire"
+      },
+      {
+       "id": "E64",
+       "name": "axil_bvalid",
+       "kind": "reg"
+      },
+      {
+       "id": "E67",
+       "name": "axil_read_data",
+       "kind": "reg"
+      },
+      {
+       "id": "E68",
+       "name": "axil_read_valid",
+       "kind": "reg"
+      },
+      {
+       "id": "E69",
+       "name": "awskd_valid",
+       "kind": "wire"
+      },
+      {
+       "id": "E70",
+       "name": "wskd_valid",
+       "kind": "wire"
+      },
+      {
+       "id": "E71",
+       "name": "arskd_valid",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "AXI bus snoop",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Monitored AXI4 channel handshakes and burst attributes feeding statistics.",
+     "anchors": [
+      {
+       "id": "E22",
+       "name": "M_AXI_AWVALID",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 89.8,
+       "struct_score": 74.2,
+       "trace": "interface",
+       "why": "Snooped write-address valid; drives write burst and byte statistics.",
+       "lines": [
+        754,
+        803
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "M_AXI_AWREADY",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 27.6,
+       "struct_score": 53.7,
+       "trace": "interface",
+       "why": "Snooped write-address ready for burst counting and stall bins.",
+       "lines": [
+        803
+       ]
+      },
+      {
+       "id": "E33",
+       "name": "M_AXI_WVALID",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 62.0,
+       "struct_score": 74.8,
+       "trace": "interface",
+       "why": "Snooped write-data valid; drives beat counts and stall bins.",
+       "lines": [
+        823,
+        974
+       ]
+      },
+      {
+       "id": "E34",
+       "name": "M_AXI_WREADY",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 28.2,
+       "struct_score": 55.9,
+       "trace": "interface",
+       "why": "Snooped write-data ready.",
+       "lines": [
+        823
+       ]
+      },
+      {
+       "id": "E37",
+       "name": "M_AXI_WLAST",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 27.3,
+       "struct_score": 52.4,
+       "trace": "interface",
+       "why": "Snooped last write beat; ends write bursts in counters.",
+       "lines": [
+        813,
+        976
+       ]
+      },
+      {
+       "id": "E36",
+       "name": "M_AXI_WSTRB",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 21.1,
+       "struct_score": 29.0,
+       "trace": "interface",
+       "why": "Snooped write strobes counted into written byte totals.",
+       "lines": [
+        845
+       ]
+      },
+      {
+       "id": "E26",
+       "name": "M_AXI_AWLEN",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 25.0,
+       "struct_score": 44.2,
+       "trace": "interface",
+       "why": "Snooped burst length for max-burst and byte counts.",
+       "lines": [
+        793,
+        835
+       ]
+      },
+      {
+       "id": "E38",
+       "name": "M_AXI_BVALID",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 33.2,
+       "struct_score": 72.7,
+       "trace": "interface",
+       "why": "Snooped write response valid; retires outstanding write bursts.",
+       "lines": [
+        875
+       ]
+      },
+      {
+       "id": "E39",
+       "name": "M_AXI_BREADY",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 27.9,
+       "struct_score": 54.8,
+       "trace": "interface",
+       "why": "Snooped write response ready.",
+       "lines": [
+        875
+       ]
+      },
+      {
+       "id": "E42",
+       "name": "M_AXI_ARVALID",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 87.0,
+       "struct_score": 66.1,
+       "trace": "interface",
+       "why": "Snooped read-address valid; drives read burst and byte statistics.",
+       "lines": [
+        1152,
+        1309
+       ]
+      },
+      {
+       "id": "E43",
+       "name": "M_AXI_ARREADY",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 24.0,
+       "struct_score": 40.4,
+       "trace": "interface",
+       "why": "Snooped read-address ready for byte counts and AR stalls.",
+       "lines": [
+        1152,
+        1311
+       ]
+      },
+      {
+       "id": "E46",
+       "name": "M_AXI_ARLEN",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 25.0,
+       "struct_score": 44.2,
+       "trace": "interface",
+       "why": "Snooped read burst length for max-burst and byte counts.",
+       "lines": [
+        1133,
+        1154
+       ]
+      },
+      {
+       "id": "E44",
+       "name": "M_AXI_ARID",
+       "role": "INTERFACE_ADDR",
+       "importance": "minor",
+       "score": 20.1,
+       "struct_score": 24.9,
+       "trace": "interface",
+       "why": "Snooped read ID indexing per-ID outstanding counters.",
+       "lines": [
+        1210
+       ]
+      },
+      {
+       "id": "E53",
+       "name": "M_AXI_RVALID",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 60.0,
+       "struct_score": 69.5,
+       "trace": "interface",
+       "why": "Snooped read-data valid; drives read beat, stall and lag bins.",
+       "lines": [
+        1163,
+        1303
+       ]
+      },
+      {
+       "id": "E54",
+       "name": "M_AXI_RREADY",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 24.4,
+       "struct_score": 42.1,
+       "trace": "interface",
+       "why": "Snooped read-data ready.",
+       "lines": [
+        1163,
+        1279
+       ]
+      },
+      {
+       "id": "E57",
+       "name": "M_AXI_RLAST",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 28.6,
+       "struct_score": 57.1,
+       "trace": "interface",
+       "why": "Snooped last read beat closing a read burst.",
+       "lines": [
+        1143
+       ]
+      },
+      {
+       "id": "E55",
+       "name": "M_AXI_RID",
+       "role": "INTERFACE_ADDR",
+       "importance": "minor",
+       "score": 21.2,
+       "struct_score": 29.3,
+       "trace": "interface",
+       "why": "Snooped read response ID for per-ID in-flight tracking.",
+       "lines": [
+        1212,
+        1234
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E27",
+       "name": "M_AXI_AWSIZE",
+       "kind": "port_in"
+      },
+      {
+       "id": "E47",
+       "name": "M_AXI_ARSIZE",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Write statistics",
+     "kind": "COUNTER_TIMER",
+     "description": "Write channel beat, burst, byte, outstanding and orthogonal stall/lag counters.",
+     "anchors": [
+      {
+       "id": "E84",
+       "name": "wr_awburst_count",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 50.8,
+       "struct_score": 35.9,
+       "trace": "control_backward",
+       "why": "Counts accepted write address bursts.",
+       "lines": [
+        804
+       ]
+      },
+      {
+       "id": "E86",
+       "name": "wr_beat_count",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 50.8,
+       "struct_score": 35.9,
+       "trace": "control_backward",
+       "why": "Counts accepted write data beats.",
+       "lines": [
+        824
+       ]
+      },
+      {
+       "id": "E87",
+       "name": "wr_aw_byte_count",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 23.2,
+       "struct_score": 37.2,
+       "trace": "control_backward",
+       "why": "Accumulates requested write bytes from AWLEN and AWSIZE.",
+       "lines": [
+        834
+       ]
+      },
+      {
+       "id": "E88",
+       "name": "wr_w_byte_count",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 23.1,
+       "struct_score": 37.1,
+       "trace": "control_backward",
+       "why": "Accumulates written bytes from active strobes.",
+       "lines": [
+        857
+       ]
+      },
+      {
+       "id": "E111",
+       "name": "wstrb_count",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 15.0,
+       "struct_score": 4.1,
+       "trace": "data_backward",
+       "why": "Popcount of WSTRB added to written byte count.",
+       "lines": [
+        846,
+        858
+       ]
+      },
+      {
+       "id": "E83",
+       "name": "wr_max_burst_size",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 15.2,
+       "struct_score": 4.9,
+       "trace": "control_backward",
+       "why": "Maximum observed AWLEN.",
+       "lines": [
+        793
+       ]
+      },
+      {
+       "id": "E89",
+       "name": "wr_aw_outstanding",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 50.5,
+       "struct_score": 34.7,
+       "trace": "control_backward",
+       "why": "Write bursts addressed but not yet responded; feeds idle detection.",
+       "lines": [
+        877,
+        881
+       ]
+      },
+      {
+       "id": "E90",
+       "name": "wr_w_outstanding",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 22.7,
+       "struct_score": 35.3,
+       "trace": "control_backward",
+       "why": "Write data bursts completed awaiting B response.",
+       "lines": [
+        917,
+        921
+       ]
+      },
+      {
+       "id": "E95",
+       "name": "wr_aw_zero_outstanding",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.8,
+       "struct_score": 19.5,
+       "trace": "control_backward",
+       "why": "No outstanding write addresses; selects orthogonal write stall bin.",
+       "lines": [
+        1061,
+        1101
+       ]
+      },
+      {
+       "id": "E96",
+       "name": "wr_w_zero_outstanding",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.9,
+       "struct_score": 20.0,
+       "trace": "control_backward",
+       "why": "No outstanding write data bursts; selects write bin.",
+       "lines": [
+        1061,
+        1104
+       ]
+      },
+      {
+       "id": "E97",
+       "name": "wr_in_progress",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.6,
+       "struct_score": 18.9,
+       "trace": "control_backward",
+       "why": "Write data burst in progress between first WVALID and WLAST.",
+       "lines": [
+        979,
+        1062
+       ]
+      },
+      {
+       "id": "E93",
+       "name": "wr_max_outstanding",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 15.5,
+       "struct_score": 6.0,
+       "trace": "control_backward",
+       "why": "Maximum outstanding write bursts observed.",
+       "lines": [
+        964
+       ]
+      },
+      {
+       "id": "E98",
+       "name": "wr_idle_cycles",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 51.9,
+       "struct_score": 40.1,
+       "trace": "control_backward",
+       "why": "Representative orthogonal write-channel bin counter (idle cycles).",
+       "lines": [
+        1066
+       ]
+      },
+      {
+       "id": "E108",
+       "name": "wr_bias",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 22.6,
+       "struct_score": 35.0,
+       "trace": "control_backward",
+       "why": "Signed address-before-data versus data-before-address cycle count.",
+       "lines": [
+        1106,
+        1113
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E91",
+       "name": "wr_aw_max_outstanding",
+       "kind": "reg"
+      },
+      {
+       "id": "E92",
+       "name": "wr_w_max_outstanding",
+       "kind": "reg"
+      },
+      {
+       "id": "E94",
+       "name": "wr_now_outstanding",
+       "kind": "comb"
+      },
+      {
+       "id": "E99",
+       "name": "wr_b_lag_count",
+       "kind": "reg"
+      },
+      {
+       "id": "E100",
+       "name": "wr_b_stall_count",
+       "kind": "reg"
+      },
+      {
+       "id": "E101",
+       "name": "wr_b_end_count",
+       "kind": "reg"
+      },
+      {
+       "id": "E102",
+       "name": "wr_slow_data",
+       "kind": "reg"
+      },
+      {
+       "id": "E103",
+       "name": "wr_stall",
+       "kind": "reg"
+      },
+      {
+       "id": "E104",
+       "name": "wr_early_beat",
+       "kind": "reg"
+      },
+      {
+       "id": "E105",
+       "name": "wr_addr_lag",
+       "kind": "reg"
+      },
+      {
+       "id": "E106",
+       "name": "wr_data_lag",
+       "kind": "reg"
+      },
+      {
+       "id": "E107",
+       "name": "wr_awr_early",
+       "kind": "reg"
+      },
+      {
+       "id": "E109",
+       "name": "wr_addr_stall",
+       "kind": "reg"
+      },
+      {
+       "id": "E110",
+       "name": "wr_early_stall",
+       "kind": "reg"
+      },
+      {
+       "id": "E85",
+       "name": "wr_wburst_count",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Read statistics",
+     "kind": "COUNTER_TIMER",
+     "description": "Read channel beat, burst, byte, per-ID outstanding and orthogonal lag counters.",
+     "anchors": [
+      {
+       "id": "E115",
+       "name": "rd_burst_count",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 51.0,
+       "struct_score": 36.6,
+       "trace": "control_backward",
+       "why": "Counts completed read bursts (RLAST).",
+       "lines": [
+        1144
+       ]
+      },
+      {
+       "id": "E117",
+       "name": "rd_beat_count",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 22.8,
+       "struct_score": 35.9,
+       "trace": "control_backward",
+       "why": "Counts accepted read data beats.",
+       "lines": [
+        1164
+       ]
+      },
+      {
+       "id": "E116",
+       "name": "rd_byte_count",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 23.2,
+       "struct_score": 37.2,
+       "trace": "control_backward",
+       "why": "Accumulates requested read bytes from ARLEN and ARSIZE.",
+       "lines": [
+        1153
+       ]
+      },
+      {
+       "id": "E122",
+       "name": "rd_max_burst_size",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 15.2,
+       "struct_score": 4.9,
+       "trace": "control_backward",
+       "why": "Maximum observed ARLEN.",
+       "lines": [
+        1134
+       ]
+      },
+      {
+       "id": "E121",
+       "name": "rd_outstanding_bursts",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 49.8,
+       "struct_score": 31.5,
+       "trace": "control_backward",
+       "why": "Read bursts requested but not completed; feeds idle detection.",
+       "lines": [
+        1179,
+        1180
+       ]
+      },
+      {
+       "id": "E124",
+       "name": "rd_outstanding_bursts_id",
+       "role": "STORAGE",
+       "importance": "minor",
+       "score": 29.9,
+       "struct_score": 62.0,
+       "trace": "data_backward",
+       "why": "Per-ID outstanding read burst counter array.",
+       "lines": [
+        1214,
+        1219
+       ]
+      },
+      {
+       "id": "E125",
+       "name": "rd_nonzero_outstanding_id",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 20.7,
+       "struct_score": 27.1,
+       "trace": "control_backward",
+       "why": "Per-ID outstanding flags selecting read lag bin and first-request detect.",
+       "lines": [
+        1307,
+        1328
+       ]
+      },
+      {
+       "id": "E126",
+       "name": "rd_bursts_in_flight",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 20.6,
+       "struct_score": 26.8,
+       "trace": "control_backward",
+       "why": "Per-ID read bursts mid-response; selects slow-link bin.",
+       "lines": [
+        1250,
+        1305
+       ]
+      },
+      {
+       "id": "E128",
+       "name": "rd_responding",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 18.2,
+       "struct_score": 17.1,
+       "trace": "control_backward",
+       "why": "Number of IDs concurrently responding, for max responding stat.",
+       "lines": [
+        1258,
+        1268
+       ]
+      },
+      {
+       "id": "E112",
+       "name": "rd_idle_cycles",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 51.2,
+       "struct_score": 37.2,
+       "trace": "control_backward",
+       "why": "Representative orthogonal read-channel bin counter (idle cycles).",
+       "lines": [
+        1310
+       ]
+      },
+      {
+       "id": "E131",
+       "name": "rd_first",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 15.4,
+       "struct_score": 5.5,
+       "trace": "control_backward",
+       "why": "Waiting for first read response from idle bus; enables first-lag count.",
+       "lines": [
+        1327,
+        1334
+       ]
+      },
+      {
+       "id": "E130",
+       "name": "rd_first_lag",
+       "role": "COUNTER",
+       "importance": "minor",
+       "score": 22.6,
+       "struct_score": 35.1,
+       "trace": "control_backward",
+       "why": "Cycles of first-response read latency.",
+       "lines": [
+        1335
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E113",
+       "name": "rd_lag_counter",
+       "kind": "reg"
+      },
+      {
+       "id": "E114",
+       "name": "rd_slow_link",
+       "kind": "reg"
+      },
+      {
+       "id": "E118",
+       "name": "rd_ar_stalls",
+       "kind": "reg"
+      },
+      {
+       "id": "E119",
+       "name": "rd_r_stalls",
+       "kind": "reg"
+      },
+      {
+       "id": "E120",
+       "name": "rd_ar_cycles",
+       "kind": "reg"
+      },
+      {
+       "id": "E123",
+       "name": "rd_max_outstanding_bursts",
+       "kind": "reg"
+      },
+      {
+       "id": "E127",
+       "name": "rd_total_in_flight",
+       "kind": "comb"
+      },
+      {
+       "id": "E129",
+       "name": "rd_max_responding_bursts",
+       "kind": "reg"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "S_AXI_ACLK",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "S_AXI_ARESETN",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "s_axil_control",
+     "protocol": "MEMORY_BUS",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20",
+      "E21"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "S_AXIL_AWVALID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "S_AXIL_AWREADY",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "S_AXIL_AWADDR",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "S_AXIL_AWPROT",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "S_AXIL_WVALID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "S_AXIL_WREADY",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "S_AXIL_WDATA",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "S_AXIL_WSTRB",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "S_AXIL_BVALID",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "S_AXIL_BREADY",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "S_AXIL_BRESP",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "S_AXIL_ARVALID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "S_AXIL_ARREADY",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "S_AXIL_ARADDR",
+       "kind": "port_in"
+      },
+      {
+       "id": "E17",
+       "name": "S_AXIL_ARPROT",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "S_AXIL_RVALID",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "S_AXIL_RREADY",
+       "kind": "port_in"
+      },
+      {
+       "id": "E20",
+       "name": "S_AXIL_RDATA",
+       "kind": "port_out"
+      },
+      {
+       "id": "E21",
+       "name": "S_AXIL_RRESP",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "axi_write_monitor",
+     "protocol": "MEMORY_BUS",
+     "direction": "IN",
+     "member_ids": [
+      "E22",
+      "E23",
+      "E24",
+      "E25",
+      "E26",
+      "E27",
+      "E28",
+      "E29",
+      "E30",
+      "E31",
+      "E32",
+      "E33",
+      "E34",
+      "E35",
+      "E36",
+      "E37",
+      "E38",
+      "E39",
+      "E40",
+      "E41"
+     ],
+     "members": [
+      {
+       "id": "E22",
+       "name": "M_AXI_AWVALID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E23",
+       "name": "M_AXI_AWREADY",
+       "kind": "port_in"
+      },
+      {
+       "id": "E24",
+       "name": "M_AXI_AWID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E25",
+       "name": "M_AXI_AWADDR",
+       "kind": "port_in"
+      },
+      {
+       "id": "E26",
+       "name": "M_AXI_AWLEN",
+       "kind": "port_in"
+      },
+      {
+       "id": "E27",
+       "name": "M_AXI_AWSIZE",
+       "kind": "port_in"
+      },
+      {
+       "id": "E28",
+       "name": "M_AXI_AWBURST",
+       "kind": "port_in"
+      },
+      {
+       "id": "E29",
+       "name": "M_AXI_AWLOCK",
+       "kind": "port_in"
+      },
+      {
+       "id": "E30",
+       "name": "M_AXI_AWCACHE",
+       "kind": "port_in"
+      },
+      {
+       "id": "E31",
+       "name": "M_AXI_AWPROT",
+       "kind": "port_in"
+      },
+      {
+       "id": "E32",
+       "name": "M_AXI_AWQOS",
+       "kind": "port_in"
+      },
+      {
+       "id": "E33",
+       "name": "M_AXI_WVALID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E34",
+       "name": "M_AXI_WREADY",
+       "kind": "port_in"
+      },
+      {
+       "id": "E35",
+       "name": "M_AXI_WDATA",
+       "kind": "port_in"
+      },
+      {
+       "id": "E36",
+       "name": "M_AXI_WSTRB",
+       "kind": "port_in"
+      },
+      {
+       "id": "E37",
+       "name": "M_AXI_WLAST",
+       "kind": "port_in"
+      },
+      {
+       "id": "E38",
+       "name": "M_AXI_BVALID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E39",
+       "name": "M_AXI_BREADY",
+       "kind": "port_in"
+      },
+      {
+       "id": "E40",
+       "name": "M_AXI_BID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E41",
+       "name": "M_AXI_BRESP",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "axi_read_monitor",
+     "protocol": "MEMORY_BUS",
+     "direction": "IN",
+     "member_ids": [
+      "E42",
+      "E43",
+      "E44",
+      "E45",
+      "E46",
+      "E47",
+      "E48",
+      "E49",
+      "E50",
+      "E51",
+      "E52",
+      "E53",
+      "E54",
+      "E55",
+      "E56",
+      "E57",
+      "E58"
+     ],
+     "members": [
+      {
+       "id": "E42",
+       "name": "M_AXI_ARVALID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E43",
+       "name": "M_AXI_ARREADY",
+       "kind": "port_in"
+      },
+      {
+       "id": "E44",
+       "name": "M_AXI_ARID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E45",
+       "name": "M_AXI_ARADDR",
+       "kind": "port_in"
+      },
+      {
+       "id": "E46",
+       "name": "M_AXI_ARLEN",
+       "kind": "port_in"
+      },
+      {
+       "id": "E47",
+       "name": "M_AXI_ARSIZE",
+       "kind": "port_in"
+      },
+      {
+       "id": "E48",
+       "name": "M_AXI_ARBURST",
+       "kind": "port_in"
+      },
+      {
+       "id": "E49",
+       "name": "M_AXI_ARLOCK",
+       "kind": "port_in"
+      },
+      {
+       "id": "E50",
+       "name": "M_AXI_ARCACHE",
+       "kind": "port_in"
+      },
+      {
+       "id": "E51",
+       "name": "M_AXI_ARPROT",
+       "kind": "port_in"
+      },
+      {
+       "id": "E52",
+       "name": "M_AXI_ARQOS",
+       "kind": "port_in"
+      },
+      {
+       "id": "E53",
+       "name": "M_AXI_RVALID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E54",
+       "name": "M_AXI_RREADY",
+       "kind": "port_in"
+      },
+      {
+       "id": "E55",
+       "name": "M_AXI_RID",
+       "kind": "port_in"
+      },
+      {
+       "id": "E56",
+       "name": "M_AXI_RDATA",
+       "kind": "port_in"
+      },
+      {
+       "id": "E57",
+       "name": "M_AXI_RLAST",
+       "kind": "port_in"
+      },
+      {
+       "id": "E58",
+       "name": "M_AXI_RRESP",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,24 @@
+stateDiagram-v2
+    [*] --> STATE_IDLE
+    ANY_STATE --> STATE_IDLE
+    STATE_IDLE --> STATE_READ_HEADER : s_eth_hdr_ready && s_eth_hdr_valid
+    STATE_IDLE --> STATE_IDLE : !(s_eth_hdr_ready && s_eth_hdr_valid)
+    STATE_READ_HEADER --> STATE_READ_HEADER : s_eth_payload_axis_tvalid
+    STATE_READ_HEADER --> STATE_WAIT_LAST : s_eth_payload_axis_tvalid && hdr_ptr_reg == 6'h10 && (m_ip_version_reg != 4'd4 || m_ip_ihl_reg != 4'd5)
+    STATE_READ_HEADER --> STATE_READ_PAYLOAD : s_eth_payload_axis_tvalid && hdr_ptr_reg == 6'h10 && !(m_ip_version_reg != 4'd4 || m_ip_ihl_reg != 4'd5)
+    STATE_READ_HEADER --> STATE_IDLE : s_eth_payload_axis_tvalid && shift_eth_payload_axis_tlast
+    STATE_READ_HEADER --> STATE_READ_HEADER : !s_eth_payload_axis_tvalid
+    STATE_READ_PAYLOAD --> STATE_IDLE : m_ip_payload_axis_tready_int_reg && shift_eth_payload_axis_tvalid && word_count_reg <= 8 && shift_eth_payload_axis_tlast
+    STATE_READ_PAYLOAD --> STATE_READ_PAYLOAD_LAST : m_ip_payload_axis_tready_int_reg && shift_eth_payload_axis_tvalid && word_count_reg <= 8 && !shift_eth_payload_axis_tlast
+    STATE_READ_PAYLOAD --> STATE_IDLE : m_ip_payload_axis_tready_int_reg && shift_eth_payload_axis_tvalid && !(word_count_reg <= 8) && shift_eth_payload_axis_tlast
+    STATE_READ_PAYLOAD --> STATE_READ_PAYLOAD : m_ip_payload_axis_tready_int_reg && shift_eth_payload_axis_tvalid && !(word_count_reg <= 8) && !shift_eth_payload_axis_tlast
+    STATE_READ_PAYLOAD --> STATE_READ_PAYLOAD : !(m_ip_payload_axis_tready_int_reg && shift_eth_payload_axis_tvalid)
+    STATE_READ_PAYLOAD --> STATE_IDLE : check_hdr_reg && hdr_sum_temp != 19'h0ffff && hdr_sum_temp != 19'h1fffe && shift_eth_payload_axis_tlast && shift_eth_payload_axis_tvalid
+    STATE_READ_PAYLOAD --> STATE_WAIT_LAST : check_hdr_reg && hdr_sum_temp != 19'h0ffff && hdr_sum_temp != 19'h1fffe && !(shift_eth_payload_axis_tlast && shift_eth_payload_axis_tvalid)
+    STATE_READ_PAYLOAD_LAST --> STATE_IDLE : m_ip_payload_axis_tready_int_reg && shift_eth_payload_axis_tvalid && shift_eth_payload_axis_tlast
+    STATE_READ_PAYLOAD_LAST --> STATE_READ_PAYLOAD_LAST : m_ip_payload_axis_tready_int_reg && shift_eth_payload_axis_tvalid && !shift_eth_payload_axis_tlast
+    STATE_READ_PAYLOAD_LAST --> STATE_READ_PAYLOAD_LAST : !(m_ip_payload_axis_tready_int_reg && shift_eth_payload_axis_tvalid)
+    STATE_WAIT_LAST --> STATE_IDLE : shift_eth_payload_axis_tvalid && shift_eth_payload_axis_tlast
+    STATE_WAIT_LAST --> STATE_WAIT_LAST : shift_eth_payload_axis_tvalid && !shift_eth_payload_axis_tlast
+    STATE_WAIT_LAST --> STATE_WAIT_LAST : !shift_eth_payload_axis_tvalid
+    %% output store_last_word (moore)

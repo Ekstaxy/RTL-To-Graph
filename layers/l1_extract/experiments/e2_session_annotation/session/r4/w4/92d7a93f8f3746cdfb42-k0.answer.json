@@ -1,0 +1,40 @@
+{
+ "module_summary": "1G Ethernet MAC with GMII PHY interface: wraps an AXI-stream MAC and GMII I/O block, plus a speed detector counting RX clock edges against gtx_clk to pick 10/100/1000 and MII mode.",
+ "anchors": [
+  {"id": "E7", "name": "tx_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Transmit AXI-stream payload into the MAC.", "lines": [61, 227]},
+  {"id": "E8", "name": "tx_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Valid for transmit AXI-stream input.", "lines": [62, 228]},
+  {"id": "E9", "name": "tx_axis_tready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "MAC ready backpressuring the transmit stream.", "lines": [63, 229]},
+  {"id": "E12", "name": "rx_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Received frame payload output from the MAC.", "lines": [70, 232]},
+  {"id": "E13", "name": "rx_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Valid for received AXI-stream output.", "lines": [71, 233]},
+  {"id": "E17", "name": "gmii_rxd", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "PHY GMII receive data into the PHY interface block.", "lines": [79, 206]},
+  {"id": "E22", "name": "gmii_txd", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "GMII transmit data driven to the PHY.", "lines": [84, 211]},
+  {"id": "E32", "name": "mac_gmii_rxd", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Registered GMII receive data from PHY interface to MAC.", "lines": [104, 196, 236]},
+  {"id": "E35", "name": "mac_gmii_txd", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "MAC transmit GMII data to the PHY interface block.", "lines": [107, 201, 239]},
+  {"id": "E39", "name": "mii_select_reg", "role": "MUX_SELECT", "importance": "major", "trace": "control_backward", "why": "Selects MII vs GMII mode for PHY interface clocking and MAC.", "lines": [112, 163, 215]},
+  {"id": "E38", "name": "speed_reg", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Detected link speed code driving speed output.", "lines": [111, 162, 183]},
+  {"id": "E44", "name": "rx_speed_count_1", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Reference gtx_clk counter; overflow means 10M, high bits distinguish 100M.", "lines": [142, 152, 158]},
+  {"id": "E45", "name": "rx_speed_count_2", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Counts prescaled RX clock edges; overflow triggers speed decision.", "lines": [143, 155, 166]},
+  {"id": "E42", "name": "rx_prescale", "role": "COUNTER", "importance": "minor", "trace": "forward", "why": "RX-clock prescaler whose MSB is synchronized for speed detection.", "lines": [129, 132, 139]},
+  {"id": "E43", "name": "rx_prescale_sync", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Synchronizer of prescaled RX clock into gtx_clk; edge increments count_2.", "lines": [136, 139, 154]},
+  {"id": "E40", "name": "tx_mii_select_sync", "role": "MUX_SELECT", "importance": "minor", "trace": "data_backward", "why": "mii_select synchronized into tx_clk for MAC TX.", "lines": [115, 118, 245]},
+  {"id": "E25", "name": "tx_error_underflow", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "MAC transmit underflow status.", "lines": [91, 246]},
+  {"id": "E26", "name": "rx_error_bad_frame", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "MAC received bad frame status.", "lines": [92, 247]},
+  {"id": "E29", "name": "cfg_ifg", "role": "CONFIG_REG", "importance": "minor", "trace": "interface", "why": "Inter-frame gap configuration for MAC transmitter.", "lines": [99, 249]},
+  {"id": "E30", "name": "cfg_tx_enable", "role": "ENABLE", "importance": "minor", "trace": "interface", "why": "Enables MAC transmit.", "lines": [100, 250]},
+  {"id": "E31", "name": "cfg_rx_enable", "role": "ENABLE", "importance": "minor", "trace": "interface", "why": "Enables MAC receive.", "lines": [101, 251]}
+ ],
+ "groups": [
+  {"name": "mac", "kind": "DATAPATH", "anchor_ids": ["E7", "E8", "E9", "E12", "E13", "E25", "E26", "E29", "E30", "E31"], "member_ids": ["I2", "E10", "E11", "E14", "E15", "E27"], "description": "1G MAC converting AXI-stream to/from GMII with config and error status."},
+  {"name": "gmii_phy_if", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E17", "E22", "E32", "E35"], "member_ids": ["I1", "E16", "E18", "E19", "E20", "E21", "E23", "E24", "E33", "E34", "E36", "E37"], "description": "GMII I/O registers and clock mux between MAC and PHY."},
+  {"name": "speed_detect", "kind": "COUNTER_TIMER", "anchor_ids": ["E44", "E45", "E42", "E43", "E38", "E39", "E40"], "member_ids": ["E41", "E28"], "description": "Compares RX clock rate against gtx_clk to set speed and mii_select."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "BIDIR", "member_ids": ["E1", "E2", "E3", "E4", "E5", "E6"]},
+  {"name": "tx_axis", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E7", "E8", "E9", "E10", "E11"]},
+  {"name": "rx_axis", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E12", "E13", "E14", "E15"]},
+  {"name": "gmii_rx", "protocol": "STREAM", "direction": "IN", "member_ids": ["E16", "E17", "E18", "E19"]},
+  {"name": "gmii_tx", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E20", "E21", "E22", "E23", "E24"]},
+  {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E25", "E26", "E27", "E28"]},
+  {"name": "config", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E29", "E30", "E31"]}
+ ]
+}

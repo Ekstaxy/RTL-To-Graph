@@ -1,0 +1,1111 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "wb2axip_wbm2axisp",
+ "tops": [
+  "wbm2axisp"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "skidbuffer": {
+   "source": "teacher",
+   "canonical_instance": "wbm2axisp.skid",
+   "file": "data/rtl/wb2axip/rtl/skidbuffer.v",
+   "lines": [
+    81,
+    501
+   ],
+   "summary": "Valid/ready skid buffer: a one-entry side register captures incoming data when the output stalls, with optionally registered output valid/data.",
+   "blocks": [
+    {
+     "name": "Skid buffer",
+     "kind": "BUFFER",
+     "description": "One-entry overflow register and its full flag absorbing a downstream stall.",
+     "anchors": [
+      {
+       "id": "E10",
+       "name": "LOGIC.r_valid",
+       "role": "CONTROL_FLAG",
+       "importance": "critical",
+       "score": 87.4,
+       "struct_score": 67.3,
+       "trace": "control_backward",
+       "why": "Skid register full flag; deasserts o_ready and selects buffered data for output.",
+       "lines": [
+        137,
+        160,
+        212
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "LOGIC.r_data",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 98.6,
+       "struct_score": 96.5,
+       "trace": "data_backward",
+       "why": "One-entry skid buffer holding i_data captured while downstream is stalled.",
+       "lines": [
+        153,
+        213
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E9",
+       "name": "w_data",
+       "kind": "wire"
+      },
+      {
+       "id": "E12",
+       "name": "unused",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Input handshake",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Upstream valid/ready/data port accepted when skid register empty.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "i_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 97.4,
+       "struct_score": 93.3,
+       "trace": "interface",
+       "why": "Upstream valid; with o_ready accepts data into output or skid register.",
+       "lines": [
+        137,
+        198
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "o_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 95.9,
+       "struct_score": 89.6,
+       "trace": "interface",
+       "why": "Upstream ready, low while skid register holds data.",
+       "lines": [
+        160
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "i_data",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 70.5,
+       "struct_score": 96.1,
+       "trace": "interface",
+       "why": "Incoming payload written to r_data or forwarded to o_data.",
+       "lines": [
+        153,
+        215
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Output stage",
+     "kind": "PIPELINE_STAGE",
+     "description": "Optional output register muxing skid or input data onto downstream port.",
+     "anchors": [
+      {
+       "id": "E6",
+       "name": "o_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 98.7,
+       "struct_score": 96.8,
+       "trace": "interface",
+       "why": "Downstream valid, registered or combinational from i_valid or r_valid.",
+       "lines": [
+        172,
+        200
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "i_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 91.8,
+       "struct_score": 79.3,
+       "trace": "interface",
+       "why": "Downstream ready; stall causes capture into skid register, else drains it.",
+       "lines": [
+        137,
+        140,
+        209
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "o_data",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 99.0,
+       "struct_score": 97.6,
+       "trace": "data_backward",
+       "why": "Outgoing payload selected from r_data or i_data.",
+       "lines": [
+        213,
+        215
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "i_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "i_reset",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "input_stream",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "i_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "o_ready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E5",
+       "name": "i_data",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "output_stream",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E6",
+      "E7",
+      "E8"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "o_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "i_ready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "o_data",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "wbm2axisp": {
+   "source": "teacher",
+   "canonical_instance": "wbm2axisp",
+   "file": "data/rtl/wb2axip/rtl/wbm2axisp.v",
+   "lines": [
+    48,
+    1154
+   ],
+   "summary": "Wishbone-to-AXI4 bridge: skid-buffered Wishbone requests issue single-beat AXI reads or writes in one direction at a time, tracked by a pending counter, with a subword address FIFO selecting returned read data.",
+   "blocks": [
+    {
+     "name": "Wishbone input buffer",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Skid buffer capturing Wishbone requests with stall and accept gating",
+     "anchors": [
+      {
+       "id": "E41",
+       "name": "i_wb_stb",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 83.8,
+       "struct_score": 54.3,
+       "trace": "interface",
+       "why": "Wishbone request strobe entering the input skid buffer",
+       "lines": [
+        275
+       ]
+      },
+      {
+       "id": "E57",
+       "name": "m_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 50.6,
+       "struct_score": 35.1,
+       "trace": "control_backward",
+       "why": "Buffered Wishbone request valid launching AXI address/data",
+       "lines": [
+        277,
+        321,
+        384
+       ]
+      },
+      {
+       "id": "E58",
+       "name": "m_we",
+       "role": "COMMAND",
+       "importance": "major",
+       "score": 43.8,
+       "struct_score": 7.4,
+       "trace": "control_backward",
+       "why": "Buffered write-enable choosing AXI write versus read transaction",
+       "lines": [
+        219,
+        321,
+        384
+       ]
+      },
+      {
+       "id": "E59",
+       "name": "m_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 78.0,
+       "struct_score": 32.6,
+       "trace": "control_backward",
+       "why": "Accepts buffered request unless flushing, nearfull, direction change or AXI stalled",
+       "lines": [
+        287,
+        289,
+        291
+       ]
+      },
+      {
+       "id": "E46",
+       "name": "o_wb_stall",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 52.1,
+       "struct_score": 41.0,
+       "trace": "interface",
+       "why": "Wishbone stall from skid buffer not ready",
+       "lines": [
+        283
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "skid",
+       "module": "skidbuffer"
+      }
+     ],
+     "members": [
+      {
+       "id": "E56",
+       "name": "skid_ready",
+       "kind": "wire"
+      },
+      {
+       "id": "E60",
+       "name": "m_addr",
+       "kind": "wire"
+      },
+      {
+       "id": "E61",
+       "name": "m_data",
+       "kind": "wire"
+      },
+      {
+       "id": "E62",
+       "name": "m_sel",
+       "kind": "wire"
+      },
+      {
+       "id": "E42",
+       "name": "i_wb_we",
+       "kind": "port_in"
+      },
+      {
+       "id": "E43",
+       "name": "i_wb_addr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E44",
+       "name": "i_wb_data",
+       "kind": "port_in"
+      },
+      {
+       "id": "E45",
+       "name": "i_wb_sel",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Transaction controller",
+     "kind": "CONTROLLER",
+     "description": "Pending counter, direction lock and flush state controlling request acceptance",
+     "anchors": [
+      {
+       "id": "E55",
+       "name": "npending",
+       "role": "COUNTER",
+       "importance": "critical",
+       "score": 83.2,
+       "struct_score": 52.0,
+       "trace": "control_backward",
+       "why": "Outstanding AXI transactions; derives empty, nearfull and full",
+       "lines": [
+        234,
+        236,
+        241
+       ]
+      },
+      {
+       "id": "E50",
+       "name": "direction",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 45.1,
+       "struct_score": 12.6,
+       "trace": "control_backward",
+       "why": "Current transfer direction; blocks opposite-direction requests until drained",
+       "lines": [
+        219,
+        289
+       ]
+      },
+      {
+       "id": "E53",
+       "name": "flushing",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 47.3,
+       "struct_score": 21.7,
+       "trace": "control_backward",
+       "why": "Set on bus error or cycle abort; suppresses acks and new requests until empty",
+       "lines": [
+        255,
+        257,
+        289
+       ]
+      },
+      {
+       "id": "E52",
+       "name": "empty",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 20.0,
+       "struct_score": 24.4,
+       "trace": "control_backward",
+       "why": "No pending transactions; allows direction change and ends flush",
+       "lines": [
+        218,
+        242,
+        256
+       ]
+      },
+      {
+       "id": "E54",
+       "name": "nearfull",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.5,
+       "struct_score": 18.2,
+       "trace": "control_backward",
+       "why": "Pending count near limit; stalls new requests",
+       "lines": [
+        236,
+        289
+       ]
+      },
+      {
+       "id": "E51",
+       "name": "full",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 16.1,
+       "struct_score": 8.4,
+       "trace": "control_backward",
+       "why": "Pending counter full indication",
+       "lines": [
+        237,
+        243
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "AXI request issue",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Generates single-beat AXI write and read address/data channels",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "o_axi_awvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 66.9,
+       "struct_score": 87.1,
+       "trace": "interface",
+       "why": "AXI write address valid set on accepted Wishbone write",
+       "lines": [
+        291,
+        323,
+        327
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "o_axi_wvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 39.6,
+       "struct_score": 88.8,
+       "trace": "interface",
+       "why": "AXI write data valid set with awvalid on accepted write",
+       "lines": [
+        293,
+        324,
+        329
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "o_axi_wdata",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 67.7,
+       "struct_score": 89.2,
+       "trace": "interface",
+       "why": "Wishbone write data replicated across the wide AXI word",
+       "lines": [
+        337
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "o_axi_wstrb",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 35.3,
+       "struct_score": 78.1,
+       "trace": "interface",
+       "why": "Byte strobes shifted to the addressed subword lane",
+       "lines": [
+        347,
+        355
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "o_axi_awaddr",
+       "role": "INTERFACE_ADDR",
+       "importance": "minor",
+       "score": 31.4,
+       "struct_score": 67.5,
+       "trace": "interface",
+       "why": "AXI write address from Wishbone address",
+       "lines": [
+        399
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "o_axi_arvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 66.9,
+       "struct_score": 87.1,
+       "trace": "interface",
+       "why": "AXI read address valid set on accepted Wishbone read",
+       "lines": [
+        295,
+        385,
+        388
+       ]
+      },
+      {
+       "id": "E26",
+       "name": "o_axi_araddr",
+       "role": "INTERFACE_ADDR",
+       "importance": "minor",
+       "score": 31.4,
+       "struct_score": 67.5,
+       "trace": "interface",
+       "why": "AXI read address from Wishbone address",
+       "lines": [
+        403
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E4",
+       "name": "i_axi_awready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "i_axi_wready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E24",
+       "name": "i_axi_arready",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Response return",
+     "kind": "DATAPATH",
+     "description": "Converts AXI B/R responses to Wishbone ack/err and lane-selected read data",
+     "anchors": [
+      {
+       "id": "E47",
+       "name": "o_wb_ack",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 90.1,
+       "struct_score": 75.0,
+       "trace": "interface",
+       "why": "Wishbone acknowledge from successful AXI B or R response",
+       "lines": [
+        458,
+        460
+       ]
+      },
+      {
+       "id": "E48",
+       "name": "o_wb_data",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 64.5,
+       "struct_score": 81.1,
+       "trace": "interface",
+       "why": "Wishbone read data selected from wide AXI read word",
+       "lines": [
+        437,
+        511
+       ]
+      },
+      {
+       "id": "E49",
+       "name": "o_wb_err",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 19.8,
+       "struct_score": 23.7,
+       "trace": "interface",
+       "why": "Wishbone error from AXI error response",
+       "lines": [
+        466,
+        468
+       ]
+      },
+      {
+       "id": "E34",
+       "name": "i_axi_rvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 61.7,
+       "struct_score": 74.0,
+       "trace": "interface",
+       "why": "AXI read response; decrements pending and produces Wishbone ack",
+       "lines": [
+        252,
+        460,
+        487
+       ]
+      },
+      {
+       "id": "E19",
+       "name": "i_axi_bvalid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 33.7,
+       "struct_score": 74.0,
+       "trace": "interface",
+       "why": "AXI write response; decrements pending and produces Wishbone ack",
+       "lines": [
+        253,
+        461,
+        487
+       ]
+      },
+      {
+       "id": "E37",
+       "name": "i_axi_rdata",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 66.7,
+       "struct_score": 86.7,
+       "trace": "interface",
+       "why": "Wide AXI read data shifted down to Wishbone width",
+       "lines": [
+        437,
+        496
+       ]
+      },
+      {
+       "id": "E63",
+       "name": "READ_FIFO_DATA_SELECT.addr_fifo",
+       "role": "STORAGE",
+       "importance": "minor",
+       "score": 31.4,
+       "struct_score": 67.6,
+       "trace": "data_backward",
+       "why": "FIFO of subword address bits for selecting returned read data lane",
+       "lines": [
+        481,
+        491
+       ]
+      },
+      {
+       "id": "E65",
+       "name": "READ_FIFO_DATA_SELECT.wr_addr",
+       "role": "FIFO_PTR",
+       "importance": "minor",
+       "score": 22.7,
+       "struct_score": 35.5,
+       "trace": "control_backward",
+       "why": "Subword FIFO write pointer advanced per accepted request",
+       "lines": [
+        477,
+        481
+       ]
+      },
+      {
+       "id": "E66",
+       "name": "READ_FIFO_DATA_SELECT.rd_addr",
+       "role": "FIFO_PTR",
+       "importance": "minor",
+       "score": 21.6,
+       "struct_score": 30.9,
+       "trace": "control_backward",
+       "why": "Subword FIFO read pointer advanced per AXI response",
+       "lines": [
+        488,
+        491
+       ]
+      },
+      {
+       "id": "E67",
+       "name": "READ_FIFO_DATA_SELECT.return_data",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 22.6,
+       "struct_score": 34.9,
+       "trace": "data_backward",
+       "why": "AXI read word shifted by stored subword index to Wishbone data",
+       "lines": [
+        496,
+        511
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E64",
+       "name": "READ_FIFO_DATA_SELECT.fifo_value",
+       "kind": "comb"
+      },
+      {
+       "id": "E22",
+       "name": "i_axi_bresp",
+       "kind": "port_in"
+      },
+      {
+       "id": "E38",
+       "name": "i_axi_rresp",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "i_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "i_reset",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "wishbone_slave",
+     "protocol": "MEMORY_BUS",
+     "direction": "IN",
+     "member_ids": [
+      "E40",
+      "E41",
+      "E42",
+      "E43",
+      "E44",
+      "E45",
+      "E46",
+      "E47",
+      "E48",
+      "E49"
+     ],
+     "members": [
+      {
+       "id": "E40",
+       "name": "i_wb_cyc",
+       "kind": "port_in"
+      },
+      {
+       "id": "E41",
+       "name": "i_wb_stb",
+       "kind": "port_in"
+      },
+      {
+       "id": "E42",
+       "name": "i_wb_we",
+       "kind": "port_in"
+      },
+      {
+       "id": "E43",
+       "name": "i_wb_addr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E44",
+       "name": "i_wb_data",
+       "kind": "port_in"
+      },
+      {
+       "id": "E45",
+       "name": "i_wb_sel",
+       "kind": "port_in"
+      },
+      {
+       "id": "E46",
+       "name": "o_wb_stall",
+       "kind": "port_out"
+      },
+      {
+       "id": "E47",
+       "name": "o_wb_ack",
+       "kind": "port_out"
+      },
+      {
+       "id": "E48",
+       "name": "o_wb_data",
+       "kind": "port_out"
+      },
+      {
+       "id": "E49",
+       "name": "o_wb_err",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "axi_write",
+     "protocol": "MEMORY_BUS",
+     "direction": "OUT",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12",
+      "E13",
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20",
+      "E21",
+      "E22"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "o_axi_awvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E4",
+       "name": "i_axi_awready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "o_axi_awid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "o_axi_awaddr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E7",
+       "name": "o_axi_awlen",
+       "kind": "port_out"
+      },
+      {
+       "id": "E8",
+       "name": "o_axi_awsize",
+       "kind": "port_out"
+      },
+      {
+       "id": "E9",
+       "name": "o_axi_awburst",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "o_axi_awlock",
+       "kind": "port_out"
+      },
+      {
+       "id": "E11",
+       "name": "o_axi_awcache",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "o_axi_awprot",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "o_axi_awqos",
+       "kind": "port_out"
+      },
+      {
+       "id": "E14",
+       "name": "o_axi_wvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "i_axi_wready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E16",
+       "name": "o_axi_wdata",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "o_axi_wstrb",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "o_axi_wlast",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "i_axi_bvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E20",
+       "name": "o_axi_bready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E21",
+       "name": "i_axi_bid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E22",
+       "name": "i_axi_bresp",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "axi_read",
+     "protocol": "MEMORY_BUS",
+     "direction": "IN",
+     "member_ids": [
+      "E23",
+      "E24",
+      "E25",
+      "E26",
+      "E27",
+      "E28",
+      "E29",
+      "E30",
+      "E31",
+      "E32",
+      "E33",
+      "E34",
+      "E35",
+      "E36",
+      "E37",
+      "E38",
+      "E39"
+     ],
+     "members": [
+      {
+       "id": "E23",
+       "name": "o_axi_arvalid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E24",
+       "name": "i_axi_arready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E25",
+       "name": "o_axi_arid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E26",
+       "name": "o_axi_araddr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E27",
+       "name": "o_axi_arlen",
+       "kind": "port_out"
+      },
+      {
+       "id": "E28",
+       "name": "o_axi_arsize",
+       "kind": "port_out"
+      },
+      {
+       "id": "E29",
+       "name": "o_axi_arburst",
+       "kind": "port_out"
+      },
+      {
+       "id": "E30",
+       "name": "o_axi_arlock",
+       "kind": "port_out"
+      },
+      {
+       "id": "E31",
+       "name": "o_axi_arcache",
+       "kind": "port_out"
+      },
+      {
+       "id": "E32",
+       "name": "o_axi_arprot",
+       "kind": "port_out"
+      },
+      {
+       "id": "E33",
+       "name": "o_axi_arqos",
+       "kind": "port_out"
+      },
+      {
+       "id": "E34",
+       "name": "i_axi_rvalid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E35",
+       "name": "o_axi_rready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E36",
+       "name": "i_axi_rid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E37",
+       "name": "i_axi_rdata",
+       "kind": "port_in"
+      },
+      {
+       "id": "E38",
+       "name": "i_axi_rresp",
+       "kind": "port_in"
+      },
+      {
+       "id": "E39",
+       "name": "i_axi_rlast",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

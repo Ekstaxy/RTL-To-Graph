@@ -1,0 +1,22 @@
+{
+  "module_summary": "Lemmings with dig and splatter: a 7-state Moore FSM plus a saturating fall-duration counter decides walking, falling, digging or death.",
+  "anchors": [
+    {"id": "E11", "name": "state", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "Holds walk/fall/dig per direction plus DEAD; drives all four outputs."},
+    {"id": "E13", "name": "fall_counter", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Counts fall cycles saturating at 20; selects DEAD on landing after long fall."},
+    {"id": "E6", "name": "dig", "role": "COMMAND", "importance": "minor", "trace": "interface", "why": "Dig command moves a walking lemming into DIGL/DIGR states."},
+    {"id": "E7", "name": "walk_left", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Decoded from WL state; indicates walking left."},
+    {"id": "E8", "name": "walk_right", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Decoded from WR state; indicates walking right."},
+    {"id": "E9", "name": "aaah", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Decoded from FALLL/FALLR; indicates falling."},
+    {"id": "E10", "name": "digging", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Decoded from DIGL/DIGR; indicates digging."}
+  ],
+  "groups": [
+    {"name": "lemming_fsm", "kind": "CONTROLLER", "anchor_ids": ["E11", "E6"], "member_ids": ["E12", "E3", "E4", "E5"], "description": "Prioritized fall/dig/bump transitions per direction, with terminal DEAD state."},
+    {"name": "fall_timer", "kind": "COUNTER_TIMER", "anchor_ids": ["E13"], "member_ids": [], "description": "Counts cycles in falling states, cleared otherwise; feeds splatter decision."},
+    {"name": "output_decode", "kind": "DECODER", "anchor_ids": ["E7", "E8", "E9", "E10"], "member_ids": [], "description": "Moore decode of state into walk, aaah and digging outputs; all zero when DEAD."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "sensors_and_command_in", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6"]},
+    {"name": "behavior_out", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E7", "E8", "E9", "E10"]}
+  ]
+}

@@ -1,0 +1,41 @@
+{
+ "module_summary": "10G Ethernet MAC+PHY wrapper: independent TX and RX children convert AXI-stream frames to/from 64b/66b scrambled SERDES blocks in separate clock domains, exporting link and error status.",
+ "anchors": [
+  {"id": "E5", "name": "tx_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Transmit AXI-stream payload encoded by the TX path.", "lines": [68, 190]},
+  {"id": "E7", "name": "tx_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Valid for transmit AXI-stream input.", "lines": [70, 192]},
+  {"id": "E8", "name": "tx_axis_tready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "TX path ready backpressuring the transmit stream.", "lines": [71, 193]},
+  {"id": "E11", "name": "rx_axis_tdata", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Decoded received frame payload from RX path.", "lines": [78, 146]},
+  {"id": "E13", "name": "rx_axis_tvalid", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Valid for received AXI-stream output.", "lines": [80, 148]},
+  {"id": "E16", "name": "serdes_tx_data", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Scrambled 64b/66b transmit block data to SERDES.", "lines": [87, 196]},
+  {"id": "E18", "name": "serdes_rx_data", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "SERDES receive block data into the RX PHY path.", "lines": [89, 151]},
+  {"id": "E17", "name": "serdes_tx_hdr", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "64b/66b sync header for transmitted blocks.", "lines": [88, 197]},
+  {"id": "E19", "name": "serdes_rx_hdr", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "64b/66b sync header of received blocks.", "lines": [90, 152]},
+  {"id": "E20", "name": "serdes_rx_bitslip", "role": "COMMAND", "importance": "major", "trace": "control_backward", "why": "Bitslip request to SERDES from RX block-sync logic.", "lines": [91, 153]},
+  {"id": "E21", "name": "serdes_rx_reset_req", "role": "COMMAND", "importance": "minor", "trace": "control_backward", "why": "RX SERDES reset request from RX status logic.", "lines": [92, 154]},
+  {"id": "E34", "name": "rx_block_lock", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "RX 64b/66b block lock indication.", "lines": [113, 161]},
+  {"id": "E36", "name": "rx_status", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "RX link status output.", "lines": [115, 163]},
+  {"id": "E35", "name": "rx_high_ber", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "RX high bit-error-rate indication.", "lines": [114, 162]},
+  {"id": "E30", "name": "rx_error_count", "role": "STATUS", "importance": "minor", "trace": "control_backward", "why": "RX block error count output.", "lines": [109, 157]},
+  {"id": "E28", "name": "tx_error_underflow", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "Transmit underflow error.", "lines": [107, 203]},
+  {"id": "E31", "name": "rx_error_bad_frame", "role": "STATUS", "importance": "minor", "trace": "interface", "why": "Received bad frame error.", "lines": [110, 158]},
+  {"id": "E24", "name": "tx_axis_ptp_ts", "role": "INTERFACE_DATA", "importance": "minor", "trace": "interface", "why": "TX PTP timestamp output (PTP disabled by default).", "lines": [99, 199]},
+  {"id": "E37", "name": "cfg_ifg", "role": "CONFIG_REG", "importance": "minor", "trace": "interface", "why": "Inter-frame gap configuration for TX encoder.", "lines": [120, 204]},
+  {"id": "E38", "name": "cfg_tx_enable", "role": "ENABLE", "importance": "minor", "trace": "interface", "why": "Enables transmit path.", "lines": [121, 205]},
+  {"id": "E39", "name": "cfg_rx_enable", "role": "ENABLE", "importance": "minor", "trace": "interface", "why": "Enables receive path.", "lines": [122, 164]},
+  {"id": "E40", "name": "cfg_tx_prbs31_enable", "role": "COMMAND", "importance": "minor", "trace": "interface", "why": "Selects PRBS31 test pattern on TX.", "lines": [123, 206]}
+ ],
+ "groups": [
+  {"name": "tx_path", "kind": "SERIALIZER", "anchor_ids": ["E5", "E7", "E8", "E16", "E17", "E28", "E24", "E37", "E38", "E40"], "member_ids": ["I2", "E6", "E9", "E10", "E22", "E25", "E26", "E27"], "description": "AXI-stream to 64b/66b encode, scramble and SERDES output."},
+  {"name": "rx_path", "kind": "SERIALIZER", "anchor_ids": ["E11", "E13", "E18", "E19", "E20", "E21", "E34", "E36", "E35", "E30", "E31", "E39"], "member_ids": ["I1", "E12", "E14", "E15", "E23", "E29", "E32", "E33", "E41"], "description": "SERDES block sync, descramble and decode into AXI-stream with link status."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2", "E3", "E4"]},
+  {"name": "tx_axis", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E5", "E6", "E7", "E8", "E9", "E10"]},
+  {"name": "rx_axis", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E11", "E12", "E13", "E14", "E15"]},
+  {"name": "serdes_tx", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E16", "E17"]},
+  {"name": "serdes_rx", "protocol": "STREAM", "direction": "IN", "member_ids": ["E18", "E19", "E20", "E21"]},
+  {"name": "ptp", "protocol": "OTHER", "direction": "BIDIR", "member_ids": ["E22", "E23", "E24", "E25", "E26"]},
+  {"name": "status", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E27", "E28", "E29", "E30", "E31", "E32", "E33", "E34", "E35", "E36"]},
+  {"name": "config", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E37", "E38", "E39", "E40", "E41"]}
+ ]
+}

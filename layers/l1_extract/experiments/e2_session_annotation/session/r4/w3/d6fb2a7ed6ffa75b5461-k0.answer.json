@@ -1,0 +1,44 @@
+{
+ "module_summary": "AXI3-to-AXI4 bridge: remaps AxCACHE/AxLOCK, registers AW/AR through skid buffers, de-interleaves write data by WID via a reorder block, and forwards B/R channels directly.",
+ "anchors": [
+  {"id": "E6", "name": "S_AXI_AWADDR", "role": "INTERFACE_ADDR", "importance": "critical", "trace": "interface", "why": "AXI3 write address packed into the AW skid buffer.", "lines": [81, 213]},
+  {"id": "E17", "name": "S_AXI_WDATA", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "AXI3 write data fed into WID reorder block.", "lines": [94, 270]},
+  {"id": "E16", "name": "S_AXI_WID", "role": "INTERFACE_ADDR", "importance": "critical", "trace": "interface", "why": "Write ID used by reorder block to de-interleave write beats.", "lines": [93, 269]},
+  {"id": "E54", "name": "M_AXI_WDATA", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Reordered AXI4 write data output from reorder block.", "lines": [141, 277]},
+  {"id": "E83", "name": "wid_reorder_awready", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "Reorder block AW ready gating AW skid input and S_AXI_AWREADY.", "lines": [180, 226, 264]},
+  {"id": "E3", "name": "S_AXI_AWVALID", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "AW valid feeding skid buffer and reorder AW ID FIFO.", "lines": [78, 211, 263]},
+  {"id": "E4", "name": "S_AXI_AWREADY", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "AW ready requiring both skid buffer and reorder readiness.", "lines": [79, 226]},
+  {"id": "E14", "name": "S_AXI_WVALID", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "W valid into the reorder block.", "lines": [91, 267]},
+  {"id": "E15", "name": "S_AXI_WREADY", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "W ready from the reorder block.", "lines": [92, 268]},
+  {"id": "E78", "name": "axi4_awcache", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "AXI3-to-AXI4 remapped write cache attribute sent to AW skid buffer.", "lines": [177, 188, 215]},
+  {"id": "E27", "name": "S_AXI_ARADDR", "role": "INTERFACE_ADDR", "importance": "major", "trace": "interface", "why": "Read address packed into the AR skid buffer.", "lines": [108, 320]},
+  {"id": "E38", "name": "S_AXI_RDATA", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "Read data forwarded directly from master R channel.", "lines": [120, 353]},
+  {"id": "E79", "name": "axi4_arcache", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Remapped read cache attribute sent to AR skid buffer.", "lines": [177, 296, 322]},
+  {"id": "E80", "name": "axi4_awlock", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "AXI4 single-bit lock derived from AXI3 AWLOCK.", "lines": [178, 197, 214]},
+  {"id": "E82", "name": "awskd_ready", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "AW skid buffer ready combined into S_AXI_AWREADY.", "lines": [179, 212, 226]},
+  {"id": "E52", "name": "M_AXI_WVALID", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Reordered W valid to AXI4 master.", "lines": [139, 274]},
+  {"id": "E44", "name": "M_AXI_AWADDR", "role": "INTERFACE_ADDR", "importance": "minor", "trace": "interface", "why": "Registered write address from AW skid buffer.", "lines": [129, 218]},
+  {"id": "E24", "name": "S_AXI_ARVALID", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "AR valid into AR skid buffer.", "lines": [105, 319]},
+  {"id": "E25", "name": "S_AXI_ARREADY", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "AR ready from AR skid buffer.", "lines": [106, 319]},
+  {"id": "E20", "name": "S_AXI_BVALID", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Write response valid forwarded from master.", "lines": [99, 286]}
+ ],
+ "groups": [
+  {"name": "aw_channel_skid", "kind": "PIPELINE_STAGE", "anchor_ids": ["E6", "E3", "E4", "E78", "E80", "E82", "E44"], "member_ids": ["I1", "E41", "E42", "E45"], "description": "AW cache/lock remap and skid buffer registering write address."},
+  {"name": "wid_reorder", "kind": "BUFFER", "anchor_ids": ["E17", "E16", "E54", "E83", "E14", "E15", "E52"], "member_ids": ["I2", "E84", "E53"], "description": "De-interleaves AXI3 write beats by WID into AXI4 write order."},
+  {"name": "ar_channel_skid", "kind": "PIPELINE_STAGE", "anchor_ids": ["E27", "E79", "E24", "E25"], "member_ids": ["I3", "E81", "E61", "E62", "E65"], "description": "AR cache/lock remap and skid buffer registering read address."},
+  {"name": "response_passthrough", "kind": "OTHER", "anchor_ids": ["E38", "E20"], "member_ids": ["E35", "E73", "E58"], "description": "B and R channels forwarded combinationally from master to slave."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "s_axi3_aw", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10", "E11", "E12", "E13"]},
+  {"name": "s_axi3_w", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E14", "E15", "E16", "E17", "E18", "E19"]},
+  {"name": "s_axi3_b", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E20", "E21", "E22", "E23"]},
+  {"name": "s_axi3_ar", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E24", "E25", "E26", "E27", "E28", "E29", "E30", "E31", "E32", "E33", "E34"]},
+  {"name": "s_axi3_r", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E35", "E36", "E37", "E38", "E39", "E40"]},
+  {"name": "m_axi4_aw", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E41", "E42", "E43", "E44", "E45", "E46", "E47", "E48", "E49", "E50", "E51"]},
+  {"name": "m_axi4_w", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E52", "E53", "E54", "E55", "E56"]},
+  {"name": "m_axi4_b", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E57", "E58", "E59", "E60"]},
+  {"name": "m_axi4_ar", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E61", "E62", "E63", "E64", "E65", "E66", "E67", "E68", "E69", "E70", "E71"]},
+  {"name": "m_axi4_r", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E72", "E73", "E74", "E75", "E76", "E77"]}
+ ]
+}

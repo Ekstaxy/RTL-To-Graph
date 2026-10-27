@@ -1,0 +1,1289 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "biriscv_biriscv_mmu",
+ "tops": [
+  "biriscv_mmu"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "biriscv_mmu": {
+   "source": "teacher",
+   "canonical_instance": "biriscv_mmu",
+   "file": "data/rtl/biriscv/src/core/biriscv_mmu.v",
+   "lines": [
+    26,
+    554
+   ],
+   "summary": "RISC-V Sv32 MMU: single-entry instruction and data TLBs translate fetch and LSU addresses with permission fault checks; a 2-level page-table-walk FSM refills them via PTE reads muxed onto the LSU memory port.",
+   "blocks": [
+    {
+     "name": "Page table walker",
+     "kind": "CONTROLLER",
+     "description": "Two-level Sv32 walk FSM fetching PTEs and building translation entries",
+     "anchors": [
+      {
+       "id": "E56",
+       "name": "genblk1.state_q",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 99.0,
+       "struct_score": 97.6,
+       "trace": "control_backward",
+       "why": "Page table walker FSM: idle, first level, second level, TLB update",
+       "lines": [
+        125,
+        216,
+        222
+       ]
+      },
+      {
+       "id": "E83",
+       "name": "genblk1.pte_addr_q",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 48.0,
+       "struct_score": 24.6,
+       "trace": "data_backward",
+       "why": "PTE fetch address for current walk level",
+       "lines": [
+        218,
+        236,
+        508
+       ]
+      },
+      {
+       "id": "E84",
+       "name": "genblk1.pte_entry_q",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 49.9,
+       "struct_score": 32.1,
+       "trace": "data_backward",
+       "why": "Resolved translation entry written into ITLB or DTLB",
+       "lines": [
+        242,
+        252,
+        294
+       ]
+      },
+      {
+       "id": "E85",
+       "name": "genblk1.virt_addr_q",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 20.7,
+       "struct_score": 27.3,
+       "trace": "data_backward",
+       "why": "Virtual address being walked; becomes TLB tag",
+       "lines": [
+        219,
+        293,
+        365
+       ]
+      },
+      {
+       "id": "E71",
+       "name": "genblk1.dtlb_req_q",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.9,
+       "struct_score": 20.0,
+       "trace": "control_backward",
+       "why": "Walk is for data side; selects which TLB is updated",
+       "lines": [
+        220,
+        280,
+        354
+       ]
+      },
+      {
+       "id": "E80",
+       "name": "genblk1.itlb_miss_w",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.5,
+       "struct_score": 10.2,
+       "trace": "control_backward",
+       "why": "Instruction TLB miss starts page table walk",
+       "lines": [
+        189,
+        216
+       ]
+      },
+      {
+       "id": "E81",
+       "name": "genblk1.dtlb_miss_w",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.1,
+       "struct_score": 12.4,
+       "trace": "control_backward",
+       "why": "Data TLB miss starts walk, prioritized over instruction miss",
+       "lines": [
+        190,
+        194,
+        216
+       ]
+      },
+      {
+       "id": "E59",
+       "name": "genblk1.resp_valid_w",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 18.5,
+       "struct_score": 18.2,
+       "trace": "control_backward",
+       "why": "MMU-tagged PTE response valid advancing walk",
+       "lines": [
+        130,
+        225,
+        247
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "satp_i",
+       "role": "CONFIG_REG",
+       "importance": "major",
+       "score": 52.5,
+       "struct_score": 42.3,
+       "trace": "interface",
+       "why": "satp CSR: translation mode and page table base",
+       "lines": [
+        46,
+        176,
+        177
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E57",
+       "name": "genblk1.idle_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E58",
+       "name": "genblk1.resp_mmu_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E60",
+       "name": "genblk1.resp_error_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E61",
+       "name": "genblk1.resp_data_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E72",
+       "name": "genblk1.vm_enable_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E73",
+       "name": "genblk1.ptbr_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E82",
+       "name": "genblk1.request_addr_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E86",
+       "name": "genblk1.pte_ppn_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E87",
+       "name": "genblk1.pte_flags_w",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Instruction TLB",
+     "kind": "MEMORY",
+     "description": "Single-entry ITLB translating fetch PC with execute permission checks",
+     "anchors": [
+      {
+       "id": "E90",
+       "name": "genblk1.itlb_entry_q",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 81.9,
+       "struct_score": 47.3,
+       "trace": "data_backward",
+       "why": "Instruction TLB entry: physical page and permission flags",
+       "lines": [
+        273,
+        294,
+        332
+       ]
+      },
+      {
+       "id": "E89",
+       "name": "genblk1.itlb_va_addr_q",
+       "role": "STORAGE",
+       "importance": "minor",
+       "score": 26.1,
+       "struct_score": 48.2,
+       "trace": "data_backward",
+       "why": "Instruction TLB virtual page tag",
+       "lines": [
+        272,
+        293,
+        298
+       ]
+      },
+      {
+       "id": "E88",
+       "name": "genblk1.itlb_valid_q",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.3,
+       "struct_score": 9.2,
+       "trace": "control_backward",
+       "why": "Instruction TLB valid bit, cleared on flush",
+       "lines": [
+        271,
+        281,
+        298
+       ]
+      },
+      {
+       "id": "E69",
+       "name": "genblk1.itlb_hit_w",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 44.6,
+       "struct_score": 10.5,
+       "trace": "control_backward",
+       "why": "ITLB hit gates translated fetch request and accept",
+       "lines": [
+        298,
+        331,
+        336
+       ]
+      },
+      {
+       "id": "E91",
+       "name": "genblk1.pc_fault_r",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.6,
+       "struct_score": 10.7,
+       "trace": "control_backward",
+       "why": "Instruction fetch permission fault from ITLB flags",
+       "lines": [
+        312,
+        331,
+        336
+       ]
+      },
+      {
+       "id": "E78",
+       "name": "genblk1.vm_i_enable_w",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.4,
+       "struct_score": 9.7,
+       "trace": "control_backward",
+       "why": "Instruction translation enabled for non-machine privilege",
+       "lines": [
+        185,
+        331,
+        332
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "fetch_in_pc_i",
+       "role": "INTERFACE_ADDR",
+       "importance": "critical",
+       "score": 86.7,
+       "struct_score": 65.0,
+       "trace": "interface",
+       "why": "Virtual fetch PC to translate",
+       "lines": [
+        50,
+        298,
+        332
+       ]
+      },
+      {
+       "id": "E38",
+       "name": "fetch_out_pc_o",
+       "role": "INTERFACE_ADDR",
+       "importance": "critical",
+       "score": 83.6,
+       "struct_score": 53.6,
+       "trace": "data_backward",
+       "why": "Translated physical fetch address to icache",
+       "lines": [
+        79,
+        332
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "fetch_in_rd_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 29.9,
+       "struct_score": 61.8,
+       "trace": "interface",
+       "why": "Fetch request from frontend",
+       "lines": [
+        47,
+        189,
+        331
+       ]
+      },
+      {
+       "id": "E31",
+       "name": "fetch_in_accept_o",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 23.4,
+       "struct_score": 38.4,
+       "trace": "control_backward",
+       "why": "Fetch accept on hit plus downstream accept or fault",
+       "lines": [
+        72,
+        336
+       ]
+      },
+      {
+       "id": "E35",
+       "name": "fetch_out_rd_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 28.6,
+       "struct_score": 57.3,
+       "trace": "control_backward",
+       "why": "Fetch request forwarded on ITLB hit without fault",
+       "lines": [
+        76,
+        331
+       ]
+      },
+      {
+       "id": "E39",
+       "name": "fetch_in_fault_o",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 16.2,
+       "struct_score": 9.1,
+       "trace": "data_backward",
+       "why": "Instruction page fault indication",
+       "lines": [
+        80,
+        339
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E74",
+       "name": "genblk1.ifetch_vm_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E76",
+       "name": "genblk1.supervisor_i_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E92",
+       "name": "genblk1.pc_fault_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E32",
+       "name": "fetch_in_valid_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E33",
+       "name": "fetch_in_error_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E34",
+       "name": "fetch_in_inst_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E36",
+       "name": "fetch_out_flush_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E37",
+       "name": "fetch_out_invalidate_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "Data TLB",
+     "kind": "MEMORY",
+     "description": "Single-entry DTLB translating LSU addresses with load/store permission checks",
+     "anchors": [
+      {
+       "id": "E95",
+       "name": "genblk1.dtlb_entry_q",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 83.6,
+       "struct_score": 53.7,
+       "trace": "data_backward",
+       "why": "Data TLB entry: physical page and permission flags",
+       "lines": [
+        347,
+        366,
+        435
+       ]
+      },
+      {
+       "id": "E94",
+       "name": "genblk1.dtlb_va_addr_q",
+       "role": "STORAGE",
+       "importance": "minor",
+       "score": 24.2,
+       "struct_score": 41.5,
+       "trace": "data_backward",
+       "why": "Data TLB virtual page tag",
+       "lines": [
+        346,
+        365,
+        370
+       ]
+      },
+      {
+       "id": "E93",
+       "name": "genblk1.dtlb_valid_q",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 16.2,
+       "struct_score": 8.9,
+       "trace": "control_backward",
+       "why": "Data TLB valid bit, cleared on flush",
+       "lines": [
+        345,
+        355,
+        370
+       ]
+      },
+      {
+       "id": "E70",
+       "name": "genblk1.dtlb_hit_w",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 45.6,
+       "struct_score": 14.7,
+       "trace": "control_backward",
+       "why": "DTLB hit gates translated LSU read/write and accept",
+       "lines": [
+        370,
+        433,
+        464
+       ]
+      },
+      {
+       "id": "E96",
+       "name": "genblk1.load_fault_r",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.3,
+       "struct_score": 13.5,
+       "trace": "control_backward",
+       "why": "Load permission fault from DTLB flags blocks memory read",
+       "lines": [
+        384,
+        433,
+        464
+       ]
+      },
+      {
+       "id": "E97",
+       "name": "genblk1.store_fault_r",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.2,
+       "struct_score": 13.1,
+       "trace": "control_backward",
+       "why": "Store permission fault from DTLB flags blocks memory write",
+       "lines": [
+        407,
+        434,
+        464
+       ]
+      },
+      {
+       "id": "E79",
+       "name": "genblk1.vm_d_enable_w",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.2,
+       "struct_score": 13.1,
+       "trace": "control_backward",
+       "why": "Data translation enabled by satp mode and privilege",
+       "lines": [
+        186,
+        433,
+        435
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "lsu_in_addr_i",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 56.4,
+       "struct_score": 56.6,
+       "trace": "interface",
+       "why": "Virtual LSU address to translate",
+       "lines": [
+        56,
+        163,
+        165
+       ]
+      },
+      {
+       "id": "E41",
+       "name": "lsu_in_accept_o",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 30.4,
+       "struct_score": 63.7,
+       "trace": "control_backward",
+       "why": "LSU accept on DTLB hit and memory accept or fault",
+       "lines": [
+        82,
+        464
+       ]
+      },
+      {
+       "id": "E67",
+       "name": "genblk1.lsu_in_addr_q",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 18.6,
+       "struct_score": 18.5,
+       "trace": "data_backward",
+       "why": "Holds LSU address while request stalls for walk",
+       "lines": [
+        157,
+        163,
+        165
+       ]
+      },
+      {
+       "id": "E63",
+       "name": "genblk1.load_q",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 15.9,
+       "struct_score": 7.7,
+       "trace": "control_backward",
+       "why": "Pending unaccepted load request",
+       "lines": [
+        139,
+        146,
+        154
+       ]
+      },
+      {
+       "id": "E54",
+       "name": "lsu_in_load_fault_o",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 16.2,
+       "struct_score": 9.1,
+       "trace": "data_backward",
+       "why": "Load page fault indication",
+       "lines": [
+        95,
+        462
+       ]
+      },
+      {
+       "id": "E55",
+       "name": "lsu_in_store_fault_o",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 16.2,
+       "struct_score": 9.1,
+       "trace": "data_backward",
+       "why": "Store page fault indication",
+       "lines": [
+        96,
+        461
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E64",
+       "name": "genblk1.store_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E65",
+       "name": "genblk1.load_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E66",
+       "name": "genblk1.store_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E68",
+       "name": "genblk1.lsu_addr_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E75",
+       "name": "genblk1.dfetch_vm_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E77",
+       "name": "genblk1.supervisor_d_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E98",
+       "name": "genblk1.store_fault_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E99",
+       "name": "genblk1.load_fault_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E100",
+       "name": "genblk1.lsu_out_rd_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E101",
+       "name": "genblk1.lsu_out_wr_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E102",
+       "name": "genblk1.lsu_out_addr_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E103",
+       "name": "genblk1.lsu_out_data_wr_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E104",
+       "name": "genblk1.lsu_out_invalidate_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E105",
+       "name": "genblk1.lsu_out_writeback_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E106",
+       "name": "genblk1.lsu_out_cacheable_r",
+       "kind": "comb"
+      },
+      {
+       "id": "E107",
+       "name": "genblk1.lsu_out_req_tag_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E108",
+       "name": "genblk1.lsu_out_flush_w",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Memory port mux",
+     "kind": "ARBITER",
+     "description": "Muxes PTE fetches and CPU LSU requests onto shared memory port",
+     "anchors": [
+      {
+       "id": "E113",
+       "name": "genblk1.src_mmu_w",
+       "role": "MUX_SELECT",
+       "importance": "major",
+       "score": 48.8,
+       "struct_score": 27.5,
+       "trace": "control_backward",
+       "why": "Selects MMU PTE request or CPU LSU request onto memory port",
+       "lines": [
+        487,
+        506,
+        508
+       ]
+      },
+      {
+       "id": "E111",
+       "name": "genblk1.read_hold_q",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.6,
+       "struct_score": 14.6,
+       "trace": "control_backward",
+       "why": "Holds request source while memory port not accepting",
+       "lines": [
+        487,
+        497
+       ]
+      },
+      {
+       "id": "E109",
+       "name": "genblk1.mem_req_q",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 24.6,
+       "struct_score": 42.9,
+       "trace": "control_backward",
+       "why": "PTE read request pending on memory port",
+       "lines": [
+        476,
+        487,
+        506
+       ]
+      },
+      {
+       "id": "E45",
+       "name": "lsu_out_addr_o",
+       "role": "INTERFACE_ADDR",
+       "importance": "critical",
+       "score": 85.1,
+       "struct_score": 59.0,
+       "trace": "data_backward",
+       "why": "Memory port address: translated LSU address or PTE address",
+       "lines": [
+        86,
+        508
+       ]
+      },
+      {
+       "id": "E47",
+       "name": "lsu_out_rd_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "minor",
+       "score": 34.1,
+       "struct_score": 75.0,
+       "trace": "control_backward",
+       "why": "Memory read request from MMU walk or CPU load",
+       "lines": [
+        88,
+        506
+       ]
+      },
+      {
+       "id": "E27",
+       "name": "lsu_out_accept_i",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 23.2,
+       "struct_score": 37.2,
+       "trace": "interface",
+       "why": "Memory port accept steering MMU/CPU accept",
+       "lines": [
+        66,
+        503,
+        504
+       ]
+      },
+      {
+       "id": "E26",
+       "name": "lsu_out_data_rd_i",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 32.6,
+       "struct_score": 71.3,
+       "trace": "interface",
+       "why": "Memory read data; carries PTEs during walks",
+       "lines": [
+        65,
+        132
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E110",
+       "name": "genblk1.mmu_accept_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E112",
+       "name": "genblk1.src_mmu_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E62",
+       "name": "genblk1.cpu_accept_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E46",
+       "name": "lsu_out_data_wr_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E48",
+       "name": "lsu_out_wr_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E49",
+       "name": "lsu_out_cacheable_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E50",
+       "name": "lsu_out_req_tag_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E51",
+       "name": "lsu_out_invalidate_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E52",
+       "name": "lsu_out_writeback_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E53",
+       "name": "lsu_out_flush_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [
+    {
+     "id": "E6",
+     "name": "flush_i",
+     "role": "COMMAND",
+     "importance": "minor",
+     "score": 16.6,
+     "struct_score": 10.6,
+     "trace": "interface",
+     "why": "TLB flush command invalidating both TLBs",
+     "lines": [
+      45,
+      278,
+      352
+     ]
+    }
+   ],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "csr_control",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "priv_d_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "sum_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "mxr_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "flush_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "satp_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "fetch_in",
+     "protocol": "REQ_ACK",
+     "direction": "IN",
+     "member_ids": [
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12",
+      "E31",
+      "E32",
+      "E33",
+      "E34",
+      "E39"
+     ],
+     "members": [
+      {
+       "id": "E8",
+       "name": "fetch_in_rd_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "fetch_in_flush_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "fetch_in_invalidate_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "fetch_in_pc_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E12",
+       "name": "fetch_in_priv_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E31",
+       "name": "fetch_in_accept_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E32",
+       "name": "fetch_in_valid_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E33",
+       "name": "fetch_in_error_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E34",
+       "name": "fetch_in_inst_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E39",
+       "name": "fetch_in_fault_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "fetch_out",
+     "protocol": "REQ_ACK",
+     "direction": "OUT",
+     "member_ids": [
+      "E35",
+      "E36",
+      "E37",
+      "E38",
+      "E13",
+      "E14",
+      "E15",
+      "E16"
+     ],
+     "members": [
+      {
+       "id": "E35",
+       "name": "fetch_out_rd_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E36",
+       "name": "fetch_out_flush_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E37",
+       "name": "fetch_out_invalidate_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E38",
+       "name": "fetch_out_pc_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "fetch_out_accept_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E14",
+       "name": "fetch_out_valid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E15",
+       "name": "fetch_out_error_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E16",
+       "name": "fetch_out_inst_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "lsu_in",
+     "protocol": "MEMORY_BUS",
+     "direction": "IN",
+     "member_ids": [
+      "E17",
+      "E18",
+      "E19",
+      "E20",
+      "E21",
+      "E22",
+      "E23",
+      "E24",
+      "E25",
+      "E40",
+      "E41",
+      "E42",
+      "E43",
+      "E44",
+      "E54",
+      "E55"
+     ],
+     "members": [
+      {
+       "id": "E17",
+       "name": "lsu_in_addr_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "lsu_in_data_wr_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E19",
+       "name": "lsu_in_rd_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E20",
+       "name": "lsu_in_wr_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E21",
+       "name": "lsu_in_cacheable_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E22",
+       "name": "lsu_in_req_tag_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E23",
+       "name": "lsu_in_invalidate_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E24",
+       "name": "lsu_in_writeback_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E25",
+       "name": "lsu_in_flush_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E40",
+       "name": "lsu_in_data_rd_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E41",
+       "name": "lsu_in_accept_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E42",
+       "name": "lsu_in_ack_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E43",
+       "name": "lsu_in_error_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E44",
+       "name": "lsu_in_resp_tag_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E54",
+       "name": "lsu_in_load_fault_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E55",
+       "name": "lsu_in_store_fault_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "lsu_out",
+     "protocol": "MEMORY_BUS",
+     "direction": "OUT",
+     "member_ids": [
+      "E45",
+      "E46",
+      "E47",
+      "E48",
+      "E49",
+      "E50",
+      "E51",
+      "E52",
+      "E53",
+      "E26",
+      "E27",
+      "E28",
+      "E29",
+      "E30"
+     ],
+     "members": [
+      {
+       "id": "E45",
+       "name": "lsu_out_addr_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E46",
+       "name": "lsu_out_data_wr_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E47",
+       "name": "lsu_out_rd_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E48",
+       "name": "lsu_out_wr_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E49",
+       "name": "lsu_out_cacheable_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E50",
+       "name": "lsu_out_req_tag_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E51",
+       "name": "lsu_out_invalidate_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E52",
+       "name": "lsu_out_writeback_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E53",
+       "name": "lsu_out_flush_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E26",
+       "name": "lsu_out_data_rd_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E27",
+       "name": "lsu_out_accept_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E28",
+       "name": "lsu_out_ack_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E29",
+       "name": "lsu_out_error_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E30",
+       "name": "lsu_out_resp_tag_i",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

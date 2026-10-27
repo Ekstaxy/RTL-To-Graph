@@ -1,0 +1,27 @@
+{
+  "module_summary": "10GBASE-R PHY transmit interface: scrambles 64b/66b encoded data with a 58-bit LFSR or substitutes PRBS31 test pattern, registering output to SERDES with optional bit-reverse and pipeline.",
+  "anchors": [
+    {"id": "E3", "name": "encoded_tx_data", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "64-bit encoded payload input fed to the scrambler LFSR", "lines": [50, 145, 176]},
+    {"id": "E4", "name": "encoded_tx_hdr", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "2-bit sync header input passed unscrambled to output register", "lines": [51, 177]},
+    {"id": "E5", "name": "serdes_tx_data", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "64-bit data output to SERDES after scrambling and optional pipeline", "lines": [56, 126, 129]},
+    {"id": "E6", "name": "serdes_tx_hdr", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "2-bit header output to SERDES", "lines": [57, 127, 130]},
+    {"id": "E7", "name": "cfg_tx_prbs31_enable", "role": "MUX_SELECT", "importance": "major", "trace": "forward", "why": "Selects PRBS31 test pattern instead of scrambled data for output registers", "lines": [62, 170]},
+    {"id": "E8", "name": "scrambler_state_reg", "role": "STORAGE", "importance": "major", "trace": "data_backward", "why": "58-bit scrambler LFSR state register updated every cycle", "lines": [78, 146, 168]},
+    {"id": "E10", "name": "scrambled_data", "role": "DATAPATH_MAJOR", "importance": "major", "trace": "data_backward", "why": "Scrambler output data loaded into serdes data register", "lines": [80, 147, 176]},
+    {"id": "E11", "name": "prbs31_state_reg", "role": "STORAGE", "importance": "minor", "trace": "data_backward", "why": "31-bit PRBS31 generator LFSR state, only active when PRBS31_ENABLE", "lines": [82, 162, 171]},
+    {"id": "E13", "name": "prbs31_data", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "66-bit PRBS31 pattern, inverted into data and header registers", "lines": [84, 173, 174]},
+    {"id": "E14", "name": "serdes_tx_data_reg", "role": "PIPELINE_REG", "importance": "major", "trace": "data_backward", "why": "Output data register choosing scrambled, raw, or PRBS data each cycle", "lines": [86, 173, 176]},
+    {"id": "E15", "name": "serdes_tx_hdr_reg", "role": "PIPELINE_REG", "importance": "minor", "trace": "data_backward", "why": "Output header register from encoded header or PRBS bits", "lines": [87, 174, 177]}
+  ],
+  "groups": [
+    {"name": "Scrambler", "kind": "DATAPATH", "anchor_ids": ["E8", "E10"], "member_ids": ["I1", "E9"], "description": "58-bit self-synchronous LFSR scrambler over encoded data"},
+    {"name": "PRBS31 generator", "kind": "DATAPATH", "anchor_ids": ["E11", "E13"], "member_ids": ["I2", "E12"], "description": "PRBS31 test pattern LFSR generator"},
+    {"name": "Output register and select", "kind": "PIPELINE_STAGE", "anchor_ids": ["E7", "E14", "E15"], "member_ids": ["E16", "E17"], "description": "Selects PRBS or scrambled data, registers, optional bit-reverse and pipeline"}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "encoded_tx", "protocol": "STREAM", "direction": "IN", "member_ids": ["E3", "E4"]},
+    {"name": "serdes_tx", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E5", "E6"]},
+    {"name": "config", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E7"]}
+  ]
+}

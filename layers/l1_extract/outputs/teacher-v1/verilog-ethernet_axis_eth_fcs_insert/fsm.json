@@ -1,0 +1,110 @@
+[
+ {
+  "module": "axis_eth_fcs_insert",
+  "instance": "axis_eth_fcs_insert",
+  "state": "state_reg",
+  "next": "state_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "STATE_IDLE",
+    "value": "2'b0"
+   },
+   {
+    "name": "STATE_FCS",
+    "value": "2'b11"
+   },
+   {
+    "name": "STATE_PAYLOAD",
+    "value": "2'b1"
+   },
+   {
+    "name": "STATE_PAD",
+    "value": "2'b10"
+   }
+  ],
+  "reset_state": "STATE_IDLE",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_IDLE",
+    "cond": "s_axis_tready && s_axis_tvalid && s_axis_tlast && s_axis_tuser"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_FCS",
+    "cond": "s_axis_tready && s_axis_tvalid && s_axis_tlast && !s_axis_tuser"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_PAYLOAD",
+    "cond": "s_axis_tready && s_axis_tvalid && !s_axis_tlast"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_IDLE",
+    "cond": "!(s_axis_tready && s_axis_tvalid)"
+   },
+   {
+    "src": "STATE_PAYLOAD",
+    "dst": "STATE_IDLE",
+    "cond": "s_axis_tready && s_axis_tvalid && s_axis_tlast && s_axis_tuser"
+   },
+   {
+    "src": "STATE_PAYLOAD",
+    "dst": "STATE_FCS",
+    "cond": "s_axis_tready && s_axis_tvalid && s_axis_tlast && !s_axis_tuser"
+   },
+   {
+    "src": "STATE_PAYLOAD",
+    "dst": "STATE_PAYLOAD",
+    "cond": "s_axis_tready && s_axis_tvalid && !s_axis_tlast"
+   },
+   {
+    "src": "STATE_PAYLOAD",
+    "dst": "STATE_PAYLOAD",
+    "cond": "!(s_axis_tready && s_axis_tvalid)"
+   },
+   {
+    "src": "STATE_PAD",
+    "dst": "STATE_PAD",
+    "cond": "m_axis_tready_int_reg && frame_ptr_reg < MIN_FRAME_LENGTH-5"
+   },
+   {
+    "src": "STATE_PAD",
+    "dst": "STATE_FCS",
+    "cond": "m_axis_tready_int_reg && !(frame_ptr_reg < MIN_FRAME_LENGTH-5)"
+   },
+   {
+    "src": "STATE_PAD",
+    "dst": "STATE_PAD",
+    "cond": "!m_axis_tready_int_reg"
+   },
+   {
+    "src": "STATE_FCS",
+    "dst": "STATE_FCS",
+    "cond": "m_axis_tready_int_reg && frame_ptr_reg < 16'd3"
+   },
+   {
+    "src": "STATE_FCS",
+    "dst": "STATE_IDLE",
+    "cond": "m_axis_tready_int_reg && !(frame_ptr_reg < 16'd3)"
+   },
+   {
+    "src": "STATE_FCS",
+    "dst": "STATE_FCS",
+    "cond": "!m_axis_tready_int_reg"
+   }
+  ],
+  "outputs": [],
+  "warnings": [
+   "semantic_check: unsupported (unsupported: packed select of array)"
+  ],
+  "semantic_check": "unsupported"
+ }
+]

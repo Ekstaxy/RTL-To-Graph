@@ -1,0 +1,350 @@
+[
+ {
+  "module": "udp_ip_rx_64",
+  "instance": "udp_64.udp_ip_rx_64_inst",
+  "state": "state_reg",
+  "next": "state_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "STATE_IDLE",
+    "value": "3'b0"
+   },
+   {
+    "name": "STATE_READ_HEADER",
+    "value": "3'b1"
+   },
+   {
+    "name": "STATE_READ_PAYLOAD",
+    "value": "3'b10"
+   },
+   {
+    "name": "STATE_READ_PAYLOAD_LAST",
+    "value": "3'b11"
+   },
+   {
+    "name": "STATE_WAIT_LAST",
+    "value": "3'b100"
+   }
+  ],
+  "reset_state": "STATE_IDLE",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_READ_HEADER",
+    "cond": "s_ip_hdr_ready && s_ip_hdr_valid"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_IDLE",
+    "cond": "!(s_ip_hdr_ready && s_ip_hdr_valid)"
+   },
+   {
+    "src": "STATE_READ_HEADER",
+    "dst": "STATE_READ_HEADER",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid"
+   },
+   {
+    "src": "STATE_READ_HEADER",
+    "dst": "STATE_READ_PAYLOAD",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid"
+   },
+   {
+    "src": "STATE_READ_HEADER",
+    "dst": "STATE_IDLE",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && s_ip_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_READ_HEADER",
+    "dst": "STATE_READ_HEADER",
+    "cond": "!(s_ip_payload_axis_tready && s_ip_payload_axis_tvalid)"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD",
+    "dst": "STATE_IDLE",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && word_count_reg <= 8 && s_ip_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD",
+    "dst": "STATE_READ_PAYLOAD_LAST",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && word_count_reg <= 8 && !s_ip_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD",
+    "dst": "STATE_IDLE",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && !(word_count_reg <= 8) && s_ip_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD",
+    "dst": "STATE_READ_PAYLOAD",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && !(word_count_reg <= 8) && !s_ip_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD",
+    "dst": "STATE_READ_PAYLOAD",
+    "cond": "!(s_ip_payload_axis_tready && s_ip_payload_axis_tvalid)"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD_LAST",
+    "dst": "STATE_IDLE",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && s_ip_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD_LAST",
+    "dst": "STATE_READ_PAYLOAD_LAST",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && !s_ip_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_READ_PAYLOAD_LAST",
+    "dst": "STATE_READ_PAYLOAD_LAST",
+    "cond": "!(s_ip_payload_axis_tready && s_ip_payload_axis_tvalid)"
+   },
+   {
+    "src": "STATE_WAIT_LAST",
+    "dst": "STATE_IDLE",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && s_ip_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_WAIT_LAST",
+    "dst": "STATE_WAIT_LAST",
+    "cond": "s_ip_payload_axis_tready && s_ip_payload_axis_tvalid && !s_ip_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_WAIT_LAST",
+    "dst": "STATE_WAIT_LAST",
+    "cond": "!(s_ip_payload_axis_tready && s_ip_payload_axis_tvalid)"
+   }
+  ],
+  "outputs": [
+   {
+    "signal": "store_last_word",
+    "kind": "moore",
+    "port": false
+   }
+  ],
+  "warnings": [],
+  "semantic_check": "consistent-subset"
+ },
+ {
+  "module": "udp_checksum_gen_64",
+  "instance": "udp_64.genblk1.udp_checksum_gen_64_inst",
+  "state": "state_reg",
+  "next": "state_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "STATE_IDLE",
+    "value": "3'b0"
+   },
+   {
+    "name": "STATE_SUM_HEADER",
+    "value": "3'b1"
+   },
+   {
+    "name": "STATE_SUM_PAYLOAD",
+    "value": "3'b10"
+   },
+   {
+    "name": "STATE_FINISH_SUM_1",
+    "value": "3'b11"
+   },
+   {
+    "name": "STATE_FINISH_SUM_2",
+    "value": "3'b100"
+   }
+  ],
+  "reset_state": "STATE_IDLE",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_SUM_HEADER",
+    "cond": "s_udp_hdr_ready && s_udp_hdr_valid"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_IDLE",
+    "cond": "!(s_udp_hdr_ready && s_udp_hdr_valid)"
+   },
+   {
+    "src": "STATE_SUM_HEADER",
+    "dst": "STATE_SUM_PAYLOAD",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_SUM_PAYLOAD",
+    "dst": "STATE_FINISH_SUM_1",
+    "cond": "s_udp_payload_axis_tready && s_udp_payload_axis_tvalid && s_udp_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_SUM_PAYLOAD",
+    "dst": "STATE_SUM_PAYLOAD",
+    "cond": "s_udp_payload_axis_tready && s_udp_payload_axis_tvalid && !s_udp_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_SUM_PAYLOAD",
+    "dst": "STATE_SUM_PAYLOAD",
+    "cond": "!(s_udp_payload_axis_tready && s_udp_payload_axis_tvalid)"
+   },
+   {
+    "src": "STATE_FINISH_SUM_1",
+    "dst": "STATE_FINISH_SUM_2",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_FINISH_SUM_2",
+    "dst": "STATE_IDLE",
+    "cond": "1"
+   }
+  ],
+  "outputs": [
+   {
+    "signal": "hdr_valid_next",
+    "kind": "moore",
+    "port": false
+   },
+   {
+    "signal": "shift_payload_in",
+    "kind": "moore",
+    "port": false
+   }
+  ],
+  "warnings": [],
+  "semantic_check": "consistent-subset"
+ },
+ {
+  "module": "udp_ip_tx_64",
+  "instance": "udp_64.udp_ip_tx_64_inst",
+  "state": "state_reg",
+  "next": "state_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "STATE_IDLE",
+    "value": "3'b0"
+   },
+   {
+    "name": "STATE_WRITE_HEADER",
+    "value": "3'b1"
+   },
+   {
+    "name": "STATE_WRITE_PAYLOAD",
+    "value": "3'b10"
+   },
+   {
+    "name": "STATE_WRITE_PAYLOAD_LAST",
+    "value": "3'b11"
+   },
+   {
+    "name": "STATE_WAIT_LAST",
+    "value": "3'b100"
+   }
+  ],
+  "reset_state": "STATE_IDLE",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_WRITE_HEADER",
+    "cond": "s_udp_hdr_ready && s_udp_hdr_valid"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_WRITE_PAYLOAD",
+    "cond": "s_udp_hdr_ready && s_udp_hdr_valid && m_ip_payload_axis_tready_int_reg"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_IDLE",
+    "cond": "!(s_udp_hdr_ready && s_udp_hdr_valid)"
+   },
+   {
+    "src": "STATE_WRITE_HEADER",
+    "dst": "STATE_WRITE_PAYLOAD",
+    "cond": "m_ip_payload_axis_tready_int_reg"
+   },
+   {
+    "src": "STATE_WRITE_HEADER",
+    "dst": "STATE_WRITE_HEADER",
+    "cond": "!m_ip_payload_axis_tready_int_reg"
+   },
+   {
+    "src": "STATE_WRITE_PAYLOAD",
+    "dst": "STATE_IDLE",
+    "cond": "m_ip_payload_axis_tready_int_reg && s_udp_payload_axis_tvalid && word_count_reg <= 8 && s_udp_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_WRITE_PAYLOAD",
+    "dst": "STATE_WRITE_PAYLOAD_LAST",
+    "cond": "m_ip_payload_axis_tready_int_reg && s_udp_payload_axis_tvalid && word_count_reg <= 8 && !s_udp_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_WRITE_PAYLOAD",
+    "dst": "STATE_IDLE",
+    "cond": "m_ip_payload_axis_tready_int_reg && s_udp_payload_axis_tvalid && !(word_count_reg <= 8) && s_udp_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_WRITE_PAYLOAD",
+    "dst": "STATE_WRITE_PAYLOAD",
+    "cond": "m_ip_payload_axis_tready_int_reg && s_udp_payload_axis_tvalid && !(word_count_reg <= 8) && !s_udp_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_WRITE_PAYLOAD",
+    "dst": "STATE_WRITE_PAYLOAD",
+    "cond": "!(m_ip_payload_axis_tready_int_reg && s_udp_payload_axis_tvalid)"
+   },
+   {
+    "src": "STATE_WRITE_PAYLOAD_LAST",
+    "dst": "STATE_IDLE",
+    "cond": "s_udp_payload_axis_tready && s_udp_payload_axis_tvalid && s_udp_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_WRITE_PAYLOAD_LAST",
+    "dst": "STATE_WRITE_PAYLOAD_LAST",
+    "cond": "s_udp_payload_axis_tready && s_udp_payload_axis_tvalid && !s_udp_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_WRITE_PAYLOAD_LAST",
+    "dst": "STATE_WRITE_PAYLOAD_LAST",
+    "cond": "!(s_udp_payload_axis_tready && s_udp_payload_axis_tvalid)"
+   },
+   {
+    "src": "STATE_WAIT_LAST",
+    "dst": "STATE_IDLE",
+    "cond": "s_udp_payload_axis_tvalid && s_udp_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_WAIT_LAST",
+    "dst": "STATE_WAIT_LAST",
+    "cond": "s_udp_payload_axis_tvalid && !s_udp_payload_axis_tlast"
+   },
+   {
+    "src": "STATE_WAIT_LAST",
+    "dst": "STATE_WAIT_LAST",
+    "cond": "!s_udp_payload_axis_tvalid"
+   }
+  ],
+  "outputs": [
+   {
+    "signal": "store_last_word",
+    "kind": "moore",
+    "port": false
+   }
+  ],
+  "warnings": [],
+  "semantic_check": "consistent-subset"
+ }
+]

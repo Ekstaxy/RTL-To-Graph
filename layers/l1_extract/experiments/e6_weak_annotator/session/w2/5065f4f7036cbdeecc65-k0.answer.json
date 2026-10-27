@@ -1,0 +1,195 @@
+{
+  "module_summary": "Synchronous FIFO with dual-port handshake: tracks fill level from head/tail pointers via controller, stores data in register bank, gates write/read via control flags.",
+  "anchors": [
+    {
+      "id": "E4",
+      "name": "in_valid",
+      "role": "HANDSHAKE_VALID",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Input valid signal indicating data available to write.",
+      "lines": [69, 88]
+    },
+    {
+      "id": "E5",
+      "name": "in_ready",
+      "role": "HANDSHAKE_READY",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Output ready signal indicating FIFO not full.",
+      "lines": [70, 86]
+    },
+    {
+      "id": "E6",
+      "name": "in_data",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "32-bit input data payload written to FIFO.",
+      "lines": [71, 107]
+    },
+    {
+      "id": "E7",
+      "name": "out_valid",
+      "role": "HANDSHAKE_VALID",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Output valid signal indicating data available to read.",
+      "lines": [72, 87]
+    },
+    {
+      "id": "E8",
+      "name": "out_ready",
+      "role": "HANDSHAKE_READY",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "Input ready signal indicating receiver ready to accept.",
+      "lines": [73, 89]
+    },
+    {
+      "id": "E9",
+      "name": "out_data",
+      "role": "INTERFACE_DATA",
+      "importance": "critical",
+      "trace": "interface",
+      "why": "32-bit output data payload read from FIFO.",
+      "lines": [74, 109]
+    },
+    {
+      "id": "E11",
+      "name": "lvl",
+      "role": "FIFO_PTR",
+      "importance": "critical",
+      "trace": "data_backward",
+      "why": "Current fill level computed from head/tail pointers.",
+      "lines": [79, 84, 100]
+    },
+    {
+      "id": "E10",
+      "name": "count_o",
+      "role": "STATUS",
+      "importance": "major",
+      "trace": "interface",
+      "why": "Occupancy count output to external observers.",
+      "lines": [75, 90]
+    },
+    {
+      "id": "E15",
+      "name": "give",
+      "role": "ENABLE",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Write enable signal gating data into storage.",
+      "lines": [81, 88, 105]
+    },
+    {
+      "id": "E14",
+      "name": "take",
+      "role": "ENABLE",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Read enable signal gating data out of storage.",
+      "lines": [81, 89, 97]
+    },
+    {
+      "id": "E16",
+      "name": "brim",
+      "role": "CONTROL_FLAG",
+      "importance": "major",
+      "trace": "forward",
+      "why": "Full flag indicating FIFO at capacity.",
+      "lines": [82, 84, 88]
+    },
+    {
+      "id": "E17",
+      "name": "dry",
+      "role": "CONTROL_FLAG",
+      "importance": "major",
+      "trace": "forward",
+      "why": "Empty flag indicating FIFO has no data.",
+      "lines": [82, 85, 87]
+    },
+    {
+      "id": "E12",
+      "name": "rd_at",
+      "role": "INDEX",
+      "importance": "minor",
+      "trace": "control_backward",
+      "why": "Read address pointer to next data element.",
+      "lines": [80, 98, 108]
+    },
+    {
+      "id": "E13",
+      "name": "wr_at",
+      "role": "INDEX",
+      "importance": "minor",
+      "trace": "control_backward",
+      "why": "Write address pointer to next storage location.",
+      "lines": [80, 99, 106]
+    }
+  ],
+  "groups": [
+    {
+      "name": "Input Handshake",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E4", "E5", "E6"],
+      "member_ids": [],
+      "description": "Valid, ready, and data signals for FIFO write port."
+    },
+    {
+      "name": "Output Handshake",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E7", "E8", "E9"],
+      "member_ids": [],
+      "description": "Valid, ready, and data signals for FIFO read port."
+    },
+    {
+      "name": "Fill Level Tracking",
+      "kind": "COUNTER_TIMER",
+      "anchor_ids": ["E11", "E10"],
+      "member_ids": ["I1"],
+      "description": "Occupancy level updated by head/tail pointer controller."
+    },
+    {
+      "name": "Control Flags",
+      "kind": "CONTROLLER",
+      "anchor_ids": ["E15", "E14", "E16", "E17"],
+      "member_ids": [],
+      "description": "Enable and status flags gating storage operations."
+    },
+    {
+      "name": "Address Pointers",
+      "kind": "OTHER",
+      "anchor_ids": ["E12", "E13"],
+      "member_ids": ["I1"],
+      "description": "Read and write address indices into storage bank."
+    },
+    {
+      "name": "Storage",
+      "kind": "MEMORY",
+      "anchor_ids": [],
+      "member_ids": ["I2"],
+      "description": "Register file bank holding FIFO data."
+    }
+  ],
+  "interfaces": [
+    {
+      "name": "Write Port",
+      "protocol": "VALID_READY",
+      "direction": "IN",
+      "member_ids": ["E4", "E5", "E6"]
+    },
+    {
+      "name": "Read Port",
+      "protocol": "VALID_READY",
+      "direction": "OUT",
+      "member_ids": ["E7", "E8", "E9"]
+    },
+    {
+      "name": "Status",
+      "protocol": "SIMPLE",
+      "direction": "OUT",
+      "member_ids": ["E10"]
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+ "module_summary": "Source half of a clearable two-phase CDC: accepted data is latched and a request toggle flips, with ready derived from a synchronized acknowledge toggle.",
+ "anchors": [
+  {"id": "E5", "name": "valid_i", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Source valid; with ready_o accepts data and toggles request.", "lines": [366, 396]},
+  {"id": "E6", "name": "ready_o", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Ready when request toggle equals synchronized ack toggle.", "lines": [367, 407]},
+  {"id": "E4", "name": "data_i", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Source payload latched into data_src_q on handshake.", "lines": [365, 398]},
+  {"id": "E7", "name": "async_req_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "data_backward", "why": "Two-phase request toggle to destination, copy of req_src_q.", "lines": [368, 408]},
+  {"id": "E8", "name": "async_ack_i", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "interface", "why": "Asynchronous ack toggle from destination, synchronized into ack_synced.", "lines": [369, 384]},
+  {"id": "E9", "name": "async_data_o", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Held payload crossing to destination domain from data_src_q.", "lines": [370, 409]},
+  {"id": "E14", "name": "data_src_q", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Holds accepted data stable during the asynchronous transfer.", "lines": [376, 391, 409]},
+  {"id": "E11", "name": "req_src_q", "role": "CONTROL_FLAG", "importance": "major", "trace": "control_backward", "why": "Request phase toggle register; flipped on accept, cleared by clear_i, compared with ack.", "lines": [397, 404, 407]}
+ ],
+ "groups": [
+  {"name": "src_handshake", "kind": "CONTROLLER", "anchor_ids": ["E5", "E6", "E11", "E7", "E8"], "member_ids": ["E10", "E12", "E3"], "description": "Two-phase request toggle and synchronized ack compare producing ready."},
+  {"name": "data_hold", "kind": "DATAPATH", "anchor_ids": ["E4", "E14", "E9"], "member_ids": ["E13"], "description": "Latches source data and drives it across the clock domain."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2", "E3"]},
+  {"name": "src_stream", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E4", "E5", "E6"]},
+  {"name": "async_link", "protocol": "REQ_ACK", "direction": "OUT", "member_ids": ["E7", "E8", "E9"]}
+ ]
+}

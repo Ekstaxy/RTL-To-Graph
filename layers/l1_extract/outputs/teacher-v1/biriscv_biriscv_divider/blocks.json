@@ -1,0 +1,539 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "biriscv_biriscv_divider",
+ "tops": [
+  "biriscv_divider"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "biriscv_divider": {
+   "source": "teacher",
+   "canonical_instance": "biriscv_divider",
+   "file": "data/rtl/biriscv/src/core/biriscv_divider.v",
+   "lines": [
+    26,
+    195
+   ],
+   "summary": "RISC-V DIV/DIVU/REM/REMU unit: decodes opcode, runs a 32-cycle restoring shift-subtract division with sign fixup, and caches last operands to skip repeated operations.",
+   "blocks": [
+    {
+     "name": "Opcode decode",
+     "kind": "DECODER",
+     "description": "Decodes divide/remainder variants and signedness from opcode.",
+     "anchors": [
+      {
+       "id": "E4",
+       "name": "opcode_opcode_i",
+       "role": "COMMAND",
+       "importance": "critical",
+       "score": 91.4,
+       "struct_score": 78.2,
+       "trace": "interface",
+       "why": "Instruction word decoded into div/divu/rem/remu flags.",
+       "lines": [
+        32,
+        62,
+        67
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "inst_div_w",
+       "role": "DECODE",
+       "importance": "major",
+       "score": 52.1,
+       "struct_score": 41.1,
+       "trace": "control_backward",
+       "why": "Decoded DIV instruction; divu/rem/remu flags are siblings.",
+       "lines": [
+        62,
+        115,
+        126
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "div_rem_inst_w",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 17.6,
+       "struct_score": 14.5,
+       "trace": "control_backward",
+       "why": "Any divide/remainder opcode, qualifies div_start_w.",
+       "lines": [
+        67,
+        90
+       ]
+      },
+      {
+       "id": "E21",
+       "name": "signed_operation_w",
+       "role": "DECODE",
+       "importance": "minor",
+       "score": 18.0,
+       "struct_score": 16.3,
+       "trace": "control_backward",
+       "why": "Signed op flag selecting operand negation on load.",
+       "lines": [
+        72,
+        134,
+        139
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E17",
+       "name": "inst_divu_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E18",
+       "name": "inst_rem_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E19",
+       "name": "inst_remu_w",
+       "kind": "wire"
+      },
+      {
+       "id": "E22",
+       "name": "div_operation_w",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Divider control",
+     "kind": "CONTROLLER",
+     "description": "Start, busy and mask-driven completion of iterative divide.",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "opcode_valid_i",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 88.8,
+       "struct_score": 71.8,
+       "trace": "interface",
+       "why": "Issue valid; with divide decode forms div_start_w.",
+       "lines": [
+        31,
+        90
+       ]
+      },
+      {
+       "id": "E36",
+       "name": "div_start_w",
+       "role": "ENABLE",
+       "importance": "major",
+       "score": 49.7,
+       "struct_score": 31.5,
+       "trace": "control_backward",
+       "why": "Start strobe loading operands, mask and busy flag.",
+       "lines": [
+        90,
+        110
+       ]
+      },
+      {
+       "id": "E37",
+       "name": "div_complete_w",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 48.6,
+       "struct_score": 26.7,
+       "trace": "control_backward",
+       "why": "Completion when q_mask exhausted; clears busy, loads result.",
+       "lines": [
+        91,
+        151,
+        187
+       ]
+      },
+      {
+       "id": "E28",
+       "name": "div_busy_q",
+       "role": "FSM_STATE",
+       "importance": "critical",
+       "score": 98.9,
+       "struct_score": 97.3,
+       "trace": "control_backward",
+       "why": "Busy state enabling iterative shift-subtract steps.",
+       "lines": [
+        80,
+        131,
+        155
+       ]
+      },
+      {
+       "id": "E26",
+       "name": "q_mask_q",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 64.1,
+       "struct_score": 80.1,
+       "trace": "control_backward",
+       "why": "One-hot bit position shifting right; empty mask ends division.",
+       "lines": [
+        78,
+        91,
+        164
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Shift-subtract datapath",
+     "kind": "DATAPATH",
+     "description": "Restoring division registers and sign-corrected result select.",
+     "anchors": [
+      {
+       "id": "E10",
+       "name": "opcode_ra_operand_i",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 98.0,
+       "struct_score": 95.0,
+       "trace": "interface",
+       "why": "Dividend operand, sign-corrected into dividend_q.",
+       "lines": [
+        38,
+        135,
+        137
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "opcode_rb_operand_i",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 98.0,
+       "struct_score": 95.0,
+       "trace": "interface",
+       "why": "Divisor operand, sign-corrected and shifted into divisor_q.",
+       "lines": [
+        39,
+        140,
+        142
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "dividend_q",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 57.6,
+       "struct_score": 61.0,
+       "trace": "data_backward",
+       "why": "Running remainder, reduced by divisor each successful step.",
+       "lines": [
+        75,
+        157,
+        159
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "divisor_q",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 58.4,
+       "struct_score": 63.9,
+       "trace": "data_backward",
+       "why": "Shifted divisor compared and subtracted each iteration.",
+       "lines": [
+        76,
+        157,
+        163
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "quotient_q",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 56.5,
+       "struct_score": 56.8,
+       "trace": "data_backward",
+       "why": "Accumulates quotient bits from q_mask_q.",
+       "lines": [
+        77,
+        160,
+        173
+       ]
+      },
+      {
+       "id": "E29",
+       "name": "invert_res_q",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 20.9,
+       "struct_score": 27.9,
+       "trace": "control_backward",
+       "why": "Sign fixup flag negating final quotient or remainder.",
+       "lines": [
+        81,
+        144,
+        173
+       ]
+      },
+      {
+       "id": "E27",
+       "name": "div_inst_q",
+       "role": "MUX_SELECT",
+       "importance": "minor",
+       "score": 24.7,
+       "struct_score": 43.1,
+       "trace": "control_backward",
+       "why": "Selects quotient versus remainder for result.",
+       "lines": [
+        79,
+        132,
+        172
+       ]
+      },
+      {
+       "id": "E38",
+       "name": "div_result_r",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 48.9,
+       "struct_score": 28.0,
+       "trace": "data_backward",
+       "why": "Sign-corrected quotient/remainder selected for writeback.",
+       "lines": [
+        167,
+        173,
+        188
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Result cache",
+     "kind": "REGISTER_BANK",
+     "description": "Last operands and op flags to reuse previous result.",
+     "anchors": [
+      {
+       "id": "E30",
+       "name": "last_a_q",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 35.3,
+       "struct_score": 78.1,
+       "trace": "data_backward",
+       "why": "Cached last operand A for repeat-operation detection.",
+       "lines": [
+        83,
+        113,
+        124
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E31",
+       "name": "last_b_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E32",
+       "name": "last_div_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E33",
+       "name": "last_divu_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E34",
+       "name": "last_rem_q",
+       "kind": "reg"
+      },
+      {
+       "id": "E35",
+       "name": "last_remu_q",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Writeback",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Registers result and valid pulse to writeback port.",
+     "anchors": [
+      {
+       "id": "E15",
+       "name": "wb_result_q",
+       "role": "HOLDING_REG",
+       "importance": "minor",
+       "score": 23.9,
+       "struct_score": 40.1,
+       "trace": "data_backward",
+       "why": "Registered result captured on completion, drives writeback value.",
+       "lines": [
+        57,
+        188,
+        191
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "writeback_valid_o",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 89.2,
+       "struct_score": 72.7,
+       "trace": "control_backward",
+       "why": "Result valid pulse driven by valid_q after completion.",
+       "lines": [
+        42,
+        190
+       ]
+      },
+      {
+       "id": "E13",
+       "name": "writeback_value_o",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 93.2,
+       "struct_score": 82.8,
+       "trace": "data_backward",
+       "why": "Quotient or remainder result from wb_result_q.",
+       "lines": [
+        43,
+        191
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E14",
+       "name": "valid_q",
+       "kind": "reg"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "opcode_issue",
+     "protocol": "OTHER",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "opcode_valid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "opcode_opcode_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "opcode_pc_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "opcode_invalid_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "opcode_rd_idx_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "opcode_ra_idx_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "opcode_rb_idx_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "opcode_ra_operand_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "opcode_rb_operand_i",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "writeback",
+     "protocol": "OTHER",
+     "direction": "OUT",
+     "member_ids": [
+      "E12",
+      "E13"
+     ],
+     "members": [
+      {
+       "id": "E12",
+       "name": "writeback_valid_o",
+       "kind": "port_out"
+      },
+      {
+       "id": "E13",
+       "name": "writeback_value_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

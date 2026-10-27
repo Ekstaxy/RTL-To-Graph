@@ -1,0 +1,35 @@
+{
+ "module_summary": "AXI4-Lite slave exposing four 32-bit registers: write channels accepted together (optionally via skid buffers) update a strobe-merged register, reads mux a register into a registered RDATA.",
+ "anchors": [
+  {"id": "E3", "name": "S_AXI_AWVALID", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Write address valid; with WVALID triggers write acceptance.", "lines": [162]},
+  {"id": "E4", "name": "S_AXI_AWREADY", "role": "HANDSHAKE_READY", "importance": "major", "trace": "control_backward", "why": "Write address/data ready driven by single-cycle awready pulse.", "lines": [165]},
+  {"id": "E7", "name": "S_AXI_WVALID", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Write data valid, required with AWVALID to accept a write.", "lines": [162]},
+  {"id": "E5", "name": "S_AXI_AWADDR", "role": "INTERFACE_ADDR", "importance": "major", "trace": "interface", "why": "Write address; word bits select which register is written.", "lines": [168]},
+  {"id": "E9", "name": "S_AXI_WDATA", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Write data merged by strobes into the selected register.", "lines": [169]},
+  {"id": "E11", "name": "S_AXI_BVALID", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Write response valid set on accepted write, cleared by BREADY.", "lines": [185, 163]},
+  {"id": "E14", "name": "S_AXI_ARVALID", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Read address valid; starts a read when ready.", "lines": [221]},
+  {"id": "E15", "name": "S_AXI_ARREADY", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "Read address ready whenever no read response is pending.", "lines": [220, 221]},
+  {"id": "E16", "name": "S_AXI_ARADDR", "role": "INTERFACE_ADDR", "importance": "major", "trace": "interface", "why": "Read address; word bits select the register returned.", "lines": [219]},
+  {"id": "E18", "name": "S_AXI_RVALID", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Read data valid from read-valid register; gates read data update.", "lines": [234, 279]},
+  {"id": "E20", "name": "S_AXI_RDATA", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Registered read data from the address-selected register.", "lines": [235]},
+  {"id": "E23", "name": "axil_write_ready", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Write-commit strobe: updates registers and raises BVALID.", "lines": [172, 180, 265]},
+  {"id": "E28", "name": "axil_read_ready", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Read-accept strobe that sets read-valid.", "lines": [221, 229]},
+  {"id": "E24", "name": "awskd_addr", "role": "INDEX", "importance": "minor", "trace": "data_backward", "why": "Word index selecting the register to write.", "lines": [168, 267]},
+  {"id": "E29", "name": "arskd_addr", "role": "INDEX", "importance": "minor", "trace": "data_backward", "why": "Word index selecting the register for read data.", "lines": [219, 281]},
+  {"id": "E32", "name": "r0", "role": "CONFIG_REG", "importance": "critical", "trace": "data_backward", "why": "Software-writable register (one of four r0-r3) read back over AXI.", "lines": [268, 282, 249]},
+  {"id": "E36", "name": "wskd_r0", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Byte-strobe merge of write data with old register value.", "lines": [249, 268]}
+ ],
+ "groups": [
+  {"name": "Write channel control", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E3", "E4", "E7", "E5", "E11", "E23", "E24"], "member_ids": ["E40", "E27", "E8", "E25", "E26"], "description": "Accepts AW/W together, issues write strobe and B response."},
+  {"name": "Register bank", "kind": "REGISTER_BANK", "anchor_ids": ["E32", "E36", "E9"], "member_ids": ["E33", "E34", "E35", "E37", "E38", "E39"], "description": "Four 32-bit registers updated with strobe-merged write data."},
+  {"name": "Read channel", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E14", "E15", "E16", "E18", "E20", "E28", "E29"], "member_ids": ["E41", "E30", "E31"], "description": "Accepts read address, muxes selected register into registered RDATA."}
+ ],
+ "interfaces": [
+  {"name": "clock/reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "AXI-Lite write address", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6"]},
+  {"name": "AXI-Lite write data", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E7", "E8", "E9", "E10"]},
+  {"name": "AXI-Lite write response", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E11", "E12", "E13"]},
+  {"name": "AXI-Lite read address", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E14", "E15", "E16", "E17"]},
+  {"name": "AXI-Lite read data", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E18", "E19", "E20", "E21"]}
+ ]
+}

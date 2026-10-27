@@ -1,0 +1,30 @@
+{
+ "module_summary": "Stream-to-memory adapter that forwards request streams to a memory port while an outstanding-request counter limits issue and a fall-through FIFO buffers memory responses into a valid/ready response stream.",
+ "anchors": [
+  {"id": "E4", "name": "req_i", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Request payload forwarded directly to mem_req_o.", "lines": [38, 120]},
+  {"id": "E5", "name": "req_valid_i", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Request valid gated into mem_req_valid_o and counter increment.", "lines": [40, 71, 85]},
+  {"id": "E6", "name": "req_ready_o", "role": "HANDSHAKE_READY", "importance": "critical", "trace": "control_backward", "why": "Request ready combining memory ready and outstanding-limit check.", "lines": [42, 84]},
+  {"id": "E10", "name": "mem_req_o", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Memory request payload copied from req_i.", "lines": [50, 120]},
+  {"id": "E11", "name": "mem_req_valid_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Memory request valid gated by outstanding-request limit.", "lines": [52, 85, 111]},
+  {"id": "E12", "name": "mem_req_ready_i", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Memory accepts request; drives req_ready_o.", "lines": [54, 84]},
+  {"id": "E13", "name": "mem_resp_i", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Memory response data pushed into response buffer.", "lines": [56, 97]},
+  {"id": "E14", "name": "mem_resp_valid_i", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Memory response valid pushing into the response FIFO.", "lines": [58, 98]},
+  {"id": "E7", "name": "resp_o", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Response payload output from response FIFO.", "lines": [44, 100, 116]},
+  {"id": "E8", "name": "resp_valid_o", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Response valid from FIFO; decrements outstanding counter on transfer.", "lines": [46, 74, 101]},
+  {"id": "E9", "name": "resp_ready_i", "role": "HANDSHAKE_READY", "importance": "major", "trace": "interface", "why": "Response consumer ready popping the FIFO.", "lines": [48, 74, 102]},
+  {"id": "E16", "name": "cnt_q", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "Outstanding request count limiting issue to BufDepth.", "lines": [63, 81, 107]},
+  {"id": "E18", "name": "req_ready", "role": "CONTROL_FLAG", "importance": "minor", "trace": "control_backward", "why": "Capacity-available flag gating request ready and memory valid.", "lines": [81, 84, 85]}
+ ],
+ "groups": [
+  {"name": "Outstanding request control", "kind": "COUNTER_TIMER", "anchor_ids": ["E16", "E18", "E6", "E11"], "member_ids": ["E15"], "description": "Counts outstanding requests and gates request handshakes."},
+  {"name": "Response buffer", "kind": "BUFFER", "anchor_ids": ["E13", "E14", "E7", "E8", "E9"], "member_ids": ["I1", "E17"], "description": "Fall-through FIFO buffering memory responses."},
+  {"name": "Request forwarding", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E4", "E5", "E10", "E12"], "member_ids": [], "description": "Passes request payload from stream to memory port."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2", "E3"]},
+  {"name": "req_stream", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E4", "E5", "E6"]},
+  {"name": "resp_stream", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E7", "E8", "E9"]},
+  {"name": "mem_req", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E10", "E11", "E12"]},
+  {"name": "mem_resp", "protocol": "STREAM", "direction": "IN", "member_ids": ["E13", "E14"]}
+ ]
+}

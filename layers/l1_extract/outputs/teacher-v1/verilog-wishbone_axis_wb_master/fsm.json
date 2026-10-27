@@ -1,0 +1,259 @@
+[
+ {
+  "module": "axis_wb_master",
+  "instance": "axis_wb_master",
+  "state": "state_reg",
+  "next": "state_next",
+  "style": "two-process",
+  "states": [
+   {
+    "name": "STATE_IDLE",
+    "value": "3'b0"
+   },
+   {
+    "name": "STATE_HEADER",
+    "value": "3'b1"
+   },
+   {
+    "name": "STATE_WAIT_LAST",
+    "value": "3'b110"
+   },
+   {
+    "name": "STATE_WRITE_1",
+    "value": "3'b100"
+   },
+   {
+    "name": "STATE_READ_1",
+    "value": "3'b10"
+   },
+   {
+    "name": "STATE_READ_2",
+    "value": "3'b11"
+   },
+   {
+    "name": "STATE_WRITE_2",
+    "value": "3'b101"
+   }
+  ],
+  "reset_state": "STATE_IDLE",
+  "transitions": [
+   {
+    "src": "*",
+    "dst": "STATE_IDLE",
+    "cond": "1"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_IDLE",
+    "cond": "input_axis_tready & input_axis_tvalid && !IMPLICIT_FRAMING & input_axis_tlast"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_HEADER",
+    "cond": "input_axis_tready & input_axis_tvalid && !(!IMPLICIT_FRAMING & input_axis_tlast) && input_axis_tdata == READ_REQ"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_HEADER",
+    "cond": "input_axis_tready & input_axis_tvalid && !(!IMPLICIT_FRAMING & input_axis_tlast) && !(input_axis_tdata == READ_REQ) && input_axis_tdata == WRITE_REQ"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_WAIT_LAST",
+    "cond": "input_axis_tready & input_axis_tvalid && !(!IMPLICIT_FRAMING & input_axis_tlast) && !(input_axis_tdata == READ_REQ) && !(input_axis_tdata == WRITE_REQ)"
+   },
+   {
+    "src": "STATE_IDLE",
+    "dst": "STATE_IDLE",
+    "cond": "!(input_axis_tready & input_axis_tvalid)"
+   },
+   {
+    "src": "STATE_HEADER",
+    "dst": "STATE_IDLE",
+    "cond": "input_axis_tready & input_axis_tvalid && count_reg == 0 && wb_we_o_reg && input_axis_tlast"
+   },
+   {
+    "src": "STATE_HEADER",
+    "dst": "STATE_WRITE_1",
+    "cond": "input_axis_tready & input_axis_tvalid && count_reg == 0 && wb_we_o_reg && !input_axis_tlast"
+   },
+   {
+    "src": "STATE_HEADER",
+    "dst": "STATE_READ_1",
+    "cond": "input_axis_tready & input_axis_tvalid && count_reg == 0 && !wb_we_o_reg"
+   },
+   {
+    "src": "STATE_HEADER",
+    "dst": "STATE_IDLE",
+    "cond": "input_axis_tready & input_axis_tvalid && !(count_reg == 0) && input_axis_tlast"
+   },
+   {
+    "src": "STATE_HEADER",
+    "dst": "STATE_HEADER",
+    "cond": "input_axis_tready & input_axis_tvalid && !(count_reg == 0) && !input_axis_tlast"
+   },
+   {
+    "src": "STATE_HEADER",
+    "dst": "STATE_HEADER",
+    "cond": "!(input_axis_tready & input_axis_tvalid)"
+   },
+   {
+    "src": "STATE_READ_1",
+    "dst": "STATE_READ_2",
+    "cond": "(wb_ack_i || wb_err_i)"
+   },
+   {
+    "src": "STATE_READ_1",
+    "dst": "STATE_READ_1",
+    "cond": "!(wb_ack_i || wb_err_i)"
+   },
+   {
+    "src": "STATE_READ_2",
+    "dst": "STATE_WAIT_LAST",
+    "cond": "output_axis_tready_int_reg && ptr_reg == 1 && !(last_cycle_reg || (input_axis_tvalid & input_axis_tlast))"
+   },
+   {
+    "src": "STATE_READ_2",
+    "dst": "STATE_IDLE",
+    "cond": "output_axis_tready_int_reg && ptr_reg == 1 && !(!(last_cycle_reg || (input_axis_tvalid & input_axis_tlast)))"
+   },
+   {
+    "src": "STATE_READ_2",
+    "dst": "STATE_READ_1",
+    "cond": "output_axis_tready_int_reg && !(ptr_reg == 1) && count_reg == (WB_SELECT_WIDTH*WB_WORD_SIZE/AXIS_DATA_WORD_SIZE)-1"
+   },
+   {
+    "src": "STATE_READ_2",
+    "dst": "STATE_READ_2",
+    "cond": "output_axis_tready_int_reg && !(ptr_reg == 1) && !(count_reg == (WB_SELECT_WIDTH*WB_WORD_SIZE/AXIS_DATA_WORD_SIZE)-1)"
+   },
+   {
+    "src": "STATE_READ_2",
+    "dst": "STATE_READ_2",
+    "cond": "!output_axis_tready_int_reg"
+   },
+   {
+    "src": "STATE_WRITE_1",
+    "dst": "STATE_WRITE_2",
+    "cond": "input_axis_tready & input_axis_tvalid && (count_reg == (WB_SELECT_WIDTH*WB_WORD_SIZE/AXIS_DATA_WORD_SIZE)-1 || ptr_reg == 1)"
+   },
+   {
+    "src": "STATE_WRITE_1",
+    "dst": "STATE_WRITE_1",
+    "cond": "input_axis_tready & input_axis_tvalid && !(count_reg == (WB_SELECT_WIDTH*WB_WORD_SIZE/AXIS_DATA_WORD_SIZE)-1 || ptr_reg == 1)"
+   },
+   {
+    "src": "STATE_WRITE_1",
+    "dst": "STATE_WRITE_1",
+    "cond": "!(input_axis_tready & input_axis_tvalid)"
+   },
+   {
+    "src": "STATE_WRITE_2",
+    "dst": "STATE_WAIT_LAST",
+    "cond": "(wb_ack_i || wb_err_i) && ptr_reg == 0 && !last_cycle_reg"
+   },
+   {
+    "src": "STATE_WRITE_2",
+    "dst": "STATE_IDLE",
+    "cond": "(wb_ack_i || wb_err_i) && ptr_reg == 0 && last_cycle_reg"
+   },
+   {
+    "src": "STATE_WRITE_2",
+    "dst": "STATE_WRITE_1",
+    "cond": "(wb_ack_i || wb_err_i) && !(ptr_reg == 0)"
+   },
+   {
+    "src": "STATE_WRITE_2",
+    "dst": "STATE_WRITE_2",
+    "cond": "!(wb_ack_i || wb_err_i)"
+   },
+   {
+    "src": "STATE_WAIT_LAST",
+    "dst": "STATE_IDLE",
+    "cond": "input_axis_tready & input_axis_tvalid && input_axis_tlast"
+   },
+   {
+    "src": "STATE_WAIT_LAST",
+    "dst": "STATE_WAIT_LAST",
+    "cond": "input_axis_tready & input_axis_tvalid && !input_axis_tlast"
+   },
+   {
+    "src": "STATE_WAIT_LAST",
+    "dst": "STATE_WAIT_LAST",
+    "cond": "!(input_axis_tready & input_axis_tvalid)"
+   }
+  ],
+  "outputs": [],
+  "warnings": [],
+  "semantic_check": "consistent-subset"
+ },
+ {
+  "module": "axis_wb_master",
+  "instance": "axis_wb_master",
+  "state": "wb_sel_o_reg",
+  "next": null,
+  "style": "semantic",
+  "states": [
+   {
+    "name": "S_0",
+    "value": "0"
+   },
+   {
+    "name": "S_4",
+    "value": "4"
+   },
+   {
+    "name": "S_15",
+    "value": "15"
+   }
+  ],
+  "reset_state": "S_0",
+  "transitions": [
+   {
+    "src": "S_0",
+    "dst": "S_0",
+    "cond": "(!output_axis_tready_int_reg) || (!wb_we_o_reg) || (wb_err_i) || (!input_axis_tready_reg) || (!input_axis_tvalid && !wb_ack_i)"
+   },
+   {
+    "src": "S_0",
+    "dst": "S_15",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "S_0",
+    "dst": "S_8",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "S_4",
+    "dst": "S_4",
+    "cond": "(!wb_ack_i && !wb_err_i) || (!input_axis_tvalid && !wb_err_i && !output_axis_tready_int_reg && input_axis_tready_reg) || (input_axis_tvalid && !wb_we_o_reg && wb_err_i && output_axis_tready_int_reg && input_axis_tready_reg) || (input_axis_tvalid && !wb_we_o_reg && wb_ack_i && !output_axis_tready_int_reg && !input_axis_tready_reg)"
+   },
+   {
+    "src": "S_4",
+    "dst": "S_0",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "S_4",
+    "dst": "S_15",
+    "cond": "<datapath condition>"
+   },
+   {
+    "src": "S_15",
+    "dst": "S_15",
+    "cond": "(!input_axis_tvalid && !wb_ack_i && !wb_err_i) || (!wb_we_o_reg && !wb_ack_i && !wb_err_i) || (!wb_ack_i && !wb_err_i && output_axis_tready_int_reg) || (!input_axis_tvalid && wb_we_o_reg && !wb_ack_i && !input_axis_tready_reg) || (input_axis_tvalid && !wb_we_o_reg && wb_ack_i && wb_err_i && output_axis_tready_int_reg) || (!wb_ack_i && !wb_err_i && !input_axis_tready_reg) || (!input_axis_tvalid && !wb_ack_i && !output_axis_tready_int_reg && !input_axis_tready_reg) || (!input_axis_tvalid && !wb_we_o_reg && !wb_err_i && !output_axis_tready_int_reg && input_axis_tready_reg) || (input_axis_tvalid && !wb_we_o_reg && !wb_ack_i && !output_axis_tready_int_reg && input_axis_tready_reg) || (!input_axis_tvalid && wb_we_o_reg && wb_err_i && output_axis_tready_int_reg && !input_axis_tready_reg) || (input_axis_tvalid && wb_we_o_reg && !wb_err_i && output_axis_tready_int_reg && !input_axis_tready_reg)"
+   },
+   {
+    "src": "S_15",
+    "dst": "S_0",
+    "cond": "<datapath condition>"
+   }
+  ],
+  "outputs": [],
+  "warnings": [
+   "extracted by execution (coding style not recognized syntactically)"
+  ],
+  "semantic_check": "semantic-only"
+ }
+]

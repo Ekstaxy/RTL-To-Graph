@@ -1,0 +1,43 @@
+{
+  "module_summary": "DarkRISCV bus-mapped UART: independent TX and RX state machines with baud down-counters move bytes between single-byte buffers and serial lines, using toggle req/ack flags and a state-change IRQ.",
+  "anchors": [
+    {"id": "E19", "name": "UART_XSTATE", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "TX sequencer idle/start/data bits/stop/ack; low bits index transmitted bit.", "lines": [115, 248, 263]},
+    {"id": "E24", "name": "UART_RSTATE", "role": "FSM_STATE", "importance": "critical", "trace": "control_backward", "why": "RX sequencer with start detection; indexes received bit position.", "lines": [128, 275, 293]},
+    {"id": "E10", "name": "TXD", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Serial transmit line driven by TX state and buffered byte bit.", "lines": [90, 263]},
+    {"id": "E9", "name": "RXD", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Serial receive line shifted into the RXD synchronizer.", "lines": [89, 270]},
+    {"id": "E7", "name": "DATAO", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Bus read data: baud timer, received byte and UART status.", "lines": [86, 238]},
+    {"id": "E6", "name": "DATAI", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Bus write data; byte 1 loaded into TX buffer.", "lines": [85, 208]},
+    {"id": "E15", "name": "UART_XFIFO", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "TX byte buffer held while the TX FSM shifts its bits out.", "lines": [110, 208, 263]},
+    {"id": "E20", "name": "UART_RFIFO", "role": "STORAGE", "importance": "major", "trace": "data_backward", "why": "RX byte buffer assembled bit by bit, read through DATAO.", "lines": [123, 238, 293]},
+    {"id": "E18", "name": "UART_XBAUD", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "TX baud down-counter advancing UART_XSTATE at zero.", "lines": [114, 245, 250]},
+    {"id": "E23", "name": "UART_RBAUD", "role": "COUNTER", "importance": "major", "trace": "control_backward", "why": "RX baud down-counter, half-period preload for mid-bit sampling.", "lines": [127, 272, 277]},
+    {"id": "E16", "name": "UART_XREQ", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Toggle request from bus write; XREQ!=XACK starts transmission.", "lines": [111, 209, 249]},
+    {"id": "E21", "name": "UART_RREQ", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "control_backward", "why": "Toggle flag marking received byte available to the bus.", "lines": [124, 286, 144]},
+    {"id": "E17", "name": "UART_XACK", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "TX ack toggled at end of frame to complete transmit request.", "lines": [112, 254, 249]},
+    {"id": "E22", "name": "UART_RACK", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "control_backward", "why": "RX ack updated on bus read of byte 1, consuming received byte.", "lines": [125, 228, 219]},
+    {"id": "E26", "name": "UART_STATE", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "Status byte: RX data available and TX busy flags.", "lines": [144, 234, 238]},
+    {"id": "E27", "name": "UART_STATEFF", "role": "HOLDING_REG", "importance": "minor", "trace": "data_backward", "why": "Snapshot of status on read; differences raise IRQ.", "lines": [146, 230, 234]},
+    {"id": "E8", "name": "IRQ", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "Interrupt when status differs from last acknowledged snapshot.", "lines": [87, 234]},
+    {"id": "E25", "name": "UART_RXDFF", "role": "PIPELINE_REG", "importance": "minor", "trace": "data_backward", "why": "3-stage RXD synchronizer used for start-edge detect and sampling.", "lines": [130, 270, 276]},
+    {"id": "E12", "name": "UART_TIMER", "role": "CONFIG_REG", "importance": "minor", "trace": "none", "why": "Constant baud divisor reloading both baud counters.", "lines": [100, 245, 272]},
+    {"id": "E4", "name": "WR", "role": "COMMAND", "importance": "minor", "trace": "interface", "why": "Bus write loading TX buffer and LASTCHAR.", "lines": [83, 159]},
+    {"id": "E3", "name": "RD", "role": "COMMAND", "importance": "minor", "trace": "interface", "why": "Bus read acknowledging RX byte and status.", "lines": [82, 223]},
+    {"id": "E5", "name": "BE", "role": "ENABLE", "importance": "minor", "trace": "interface", "why": "Byte enables selecting TX data byte or status ack.", "lines": [84, 161, 230]},
+    {"id": "E31", "name": "LASTCHAR", "role": "HOLDING_REG", "importance": "minor", "trace": "none", "why": "Last written character, unused debug copy.", "lines": [155, 163]},
+    {"id": "E11", "name": "DEBUG", "role": "STATUS", "importance": "minor", "trace": "data_backward", "why": "Debug view of RXD, TXD and TX/RX busy.", "lines": [97, 333]}
+  ],
+  "groups": [
+    {"name": "Bus interface", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E7", "E6", "E4", "E3", "E5", "E26", "E27", "E8"], "member_ids": ["E31", "E28", "E29", "E30"], "description": "Register read/write decode, status snapshot and IRQ generation."},
+    {"name": "TX engine", "kind": "SERIALIZER", "anchor_ids": ["E19", "E10", "E15", "E16", "E17"], "member_ids": [], "description": "TX FSM serializes buffered byte with start and stop bits."},
+    {"name": "RX engine", "kind": "SERIALIZER", "anchor_ids": ["E24", "E9", "E20", "E21", "E22", "E25"], "member_ids": [], "description": "RX FSM detects start edge and deserializes bits into buffer."},
+    {"name": "Baud timers", "kind": "COUNTER_TIMER", "anchor_ids": ["E18", "E23", "E12"], "member_ids": [], "description": "TX/RX baud down-counters reloaded from constant timer."},
+    {"name": "Debug", "kind": "OTHER", "anchor_ids": ["E11"], "member_ids": [], "description": "Oscilloscope debug outputs."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "cpu_bus", "protocol": "MEMORY_BUS", "direction": "BIDIR", "member_ids": ["E3", "E4", "E5", "E6", "E7"]},
+    {"name": "irq", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E8"]},
+    {"name": "uart", "protocol": "SERIAL", "direction": "BIDIR", "member_ids": ["E9", "E10"]},
+    {"name": "debug", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E11"]}
+  ]
+}

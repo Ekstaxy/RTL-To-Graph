@@ -1,0 +1,1117 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "wb2axip_wbxclk",
+ "tops": [
+  "wbxclk"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "afifo": {
+   "source": "teacher",
+   "canonical_instance": "wbxclk.reqfifo",
+   "file": "data/rtl/wb2axip/rtl/afifo.v",
+   "lines": [
+    36,
+    804
+   ],
+   "summary": "Asynchronous dual-clock FIFO: binary write/read pointers address a memory, Gray-coded copies cross clock domains via NFF synchronizers to form full and empty flags, with optional registered read.",
+   "blocks": [
+    {
+     "name": "FIFO memory",
+     "kind": "MEMORY",
+     "description": "Dual-clock storage array with async read",
+     "anchors": [
+      {
+       "id": "E11",
+       "name": "mem",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 98.3,
+       "struct_score": 95.7,
+       "trace": "data_backward",
+       "why": "FIFO data array written in write domain, read in read domain",
+       "lines": [
+        98,
+        151,
+        172
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "lcl_rd_data",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 25.2,
+       "struct_score": 45.0,
+       "trace": "data_backward",
+       "why": "Asynchronous memory read word before output register",
+       "lines": [
+        106,
+        172,
+        232
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "Write domain pointer logic",
+     "kind": "BUFFER",
+     "description": "Write pointer, Gray encoding and full flag generation",
+     "anchors": [
+      {
+       "id": "E13",
+       "name": "wr_addr",
+       "role": "FIFO_PTR",
+       "importance": "critical",
+       "score": 86.6,
+       "struct_score": 64.4,
+       "trace": "control_backward",
+       "why": "Binary write pointer addressing mem, advanced on accepted write",
+       "lines": [
+        99,
+        142,
+        151
+       ]
+      },
+      {
+       "id": "E19",
+       "name": "wgray",
+       "role": "FIFO_PTR",
+       "importance": "minor",
+       "score": 31.0,
+       "struct_score": 65.9,
+       "trace": "data_backward",
+       "why": "Gray-coded write pointer sent across clock domain",
+       "lines": [
+        102,
+        143,
+        198
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "o_wr_full",
+       "role": "STATUS",
+       "importance": "critical",
+       "score": 83.3,
+       "struct_score": 52.7,
+       "trace": "control_backward",
+       "why": "Full flag comparing synced read Gray pointer; blocks writes",
+       "lines": [
+        80,
+        140,
+        211
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "i_wr",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 64.8,
+       "struct_score": 81.9,
+       "trace": "interface",
+       "why": "Write request advancing pointer and writing mem when not full",
+       "lines": [
+        78,
+        140,
+        150
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "i_wr_data",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 96.1,
+       "struct_score": 90.3,
+       "trace": "interface",
+       "why": "Write data stored into mem",
+       "lines": [
+        79,
+        151
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E17",
+       "name": "next_wr_addr",
+       "kind": "wire"
+      },
+      {
+       "id": "E22",
+       "name": "wclk",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Read domain pointer logic",
+     "kind": "BUFFER",
+     "description": "Read pointer, Gray encoding, empty flag and registered read output",
+     "anchors": [
+      {
+       "id": "E12",
+       "name": "rd_addr",
+       "role": "FIFO_PTR",
+       "importance": "critical",
+       "score": 87.6,
+       "struct_score": 68.2,
+       "trace": "control_backward",
+       "why": "Binary read pointer addressing mem, advanced on read",
+       "lines": [
+        99,
+        164,
+        172
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "rgray",
+       "role": "FIFO_PTR",
+       "importance": "minor",
+       "score": 31.7,
+       "struct_score": 68.5,
+       "trace": "data_backward",
+       "why": "Gray-coded read pointer sent across clock domain",
+       "lines": [
+        102,
+        165,
+        189
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "lcl_rd_empty",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 21.2,
+       "struct_score": 29.2,
+       "trace": "control_backward",
+       "why": "Unregistered empty compare gating read pointer advance",
+       "lines": [
+        107,
+        162,
+        214
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "lcl_read",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 21.1,
+       "struct_score": 28.8,
+       "trace": "control_backward",
+       "why": "Read enable loading o_rd_data/o_rd_empty and advancing rd_addr",
+       "lines": [
+        107,
+        222,
+        231
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "o_rd_empty",
+       "role": "STATUS",
+       "importance": "critical",
+       "score": 86.0,
+       "struct_score": 62.3,
+       "trace": "control_backward",
+       "why": "Empty flag registered from lcl_rd_empty for read side",
+       "lines": [
+        85,
+        228
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "o_rd_data",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 98.4,
+       "struct_score": 96.0,
+       "trace": "data_backward",
+       "why": "Read data output, registered from mem when lcl_read",
+       "lines": [
+        84,
+        232
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "i_rd",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 59.4,
+       "struct_score": 67.3,
+       "trace": "interface",
+       "why": "Read request consuming FIFO entry via lcl_read",
+       "lines": [
+        83,
+        222
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E16",
+       "name": "next_rd_addr",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Clock domain crossing",
+     "kind": "OTHER",
+     "description": "Multi-flop synchronizers carrying Gray pointers between clocks",
+     "anchors": [
+      {
+       "id": "E15",
+       "name": "wr_rgray",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 53.9,
+       "struct_score": 47.5,
+       "trace": "data_backward",
+       "why": "Read Gray pointer synchronized into write domain for full check",
+       "lines": [
+        100,
+        189,
+        211
+       ]
+      },
+      {
+       "id": "E14",
+       "name": "rd_wgray",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 53.6,
+       "struct_score": 46.4,
+       "trace": "data_backward",
+       "why": "Write Gray pointer synchronized into read domain for empty check",
+       "lines": [
+        100,
+        198,
+        214
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "rgray_cross",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 23.0,
+       "struct_score": 36.7,
+       "trace": "data_backward",
+       "why": "Synchronizer flops for read Gray pointer into write clock",
+       "lines": [
+        104,
+        189
+       ]
+      },
+      {
+       "id": "E21",
+       "name": "wgray_cross",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 23.0,
+       "struct_score": 36.7,
+       "trace": "data_backward",
+       "why": "Synchronizer flops for write Gray pointer into read clock",
+       "lines": [
+        104,
+        198
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "Write clock and reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "i_wclk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "i_wr_reset_n",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Write port",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "i_wr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "i_wr_data",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "o_wr_full",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "Read clock and reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E6",
+      "E7"
+     ],
+     "members": [
+      {
+       "id": "E6",
+       "name": "i_rclk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "i_rd_reset_n",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "Read port",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E8",
+      "E9",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E8",
+       "name": "i_rd",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "o_rd_data",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "o_rd_empty",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  },
+  "wbxclk": {
+   "source": "teacher",
+   "canonical_instance": "wbxclk",
+   "file": "data/rtl/wb2axip/rtl/wbxclk.v",
+   "lines": [
+    61,
+    853
+   ],
+   "summary": "Wishbone clock-domain crossing bridge: requests are pushed into an async request FIFO and replayed as a master on the second clock, with returns crossing back through an async ack FIFO and abort/reset synchronizers.",
+   "blocks": [
+    {
+     "name": "Upstream request intake",
+     "kind": "BUFFER",
+     "description": "Upstream Wishbone slave pushing requests into async request FIFO",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "i_wb_cyc",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 66.0,
+       "struct_score": 84.9,
+       "trace": "interface",
+       "why": "Upstream bus cycle; dropping it aborts and clears outstanding counters",
+       "lines": [
+        131,
+        140
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "i_wb_stb",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 91.7,
+       "struct_score": 79.1,
+       "trace": "interface",
+       "why": "Upstream request strobe writing a request into reqfifo",
+       "lines": [
+        133,
+        164
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "i_wb_we",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 19.1,
+       "struct_score": 20.6,
+       "trace": "interface",
+       "why": "Read/write command carried through request FIFO",
+       "lines": [
+        165
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "i_wb_addr",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 58.4,
+       "struct_score": 63.6,
+       "trace": "interface",
+       "why": "Upstream request address pushed into reqfifo",
+       "lines": [
+        165
+       ]
+      },
+      {
+       "id": "E7",
+       "name": "i_wb_data",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 63.4,
+       "struct_score": 78.4,
+       "trace": "interface",
+       "why": "Upstream write data pushed into reqfifo",
+       "lines": [
+        165
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "o_wb_stall",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 64.9,
+       "struct_score": 82.1,
+       "trace": "control_backward",
+       "why": "Stall when ack count full, aborting, or request FIFO full",
+       "lines": [
+        133,
+        270
+       ]
+      },
+      {
+       "id": "E24",
+       "name": "wb_active",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.5,
+       "struct_score": 18.3,
+       "trace": "control_backward",
+       "why": "Marks active upstream cycle, pushes drop-cycle entry when cyc falls",
+       "lines": [
+        132,
+        134,
+        164
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I1",
+       "instance": "reqfifo",
+       "module": "afifo"
+      }
+     ],
+     "members": [
+      {
+       "id": "E8",
+       "name": "i_wb_sel",
+       "kind": "port_in"
+      },
+      {
+       "id": "E33",
+       "name": "req_fifo_stall",
+       "kind": "wire"
+      },
+      {
+       "id": "E35",
+       "name": "bus_abort",
+       "kind": "reg"
+      },
+      {
+       "id": "E25",
+       "name": "bus_abort_pipe",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Downstream master",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Replays FIFO requests as Wishbone master on the second clock",
+     "anchors": [
+      {
+       "id": "E14",
+       "name": "o_xclk_cyc",
+       "role": "HANDSHAKE_VALID",
+       "importance": "major",
+       "score": 68.6,
+       "struct_score": 91.3,
+       "trace": "control_backward",
+       "why": "Downstream cycle line from FIFO strobe/drop-cycle entries",
+       "lines": [
+        197,
+        207
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "o_xclk_stb",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 97.7,
+       "struct_score": 94.1,
+       "trace": "control_backward",
+       "why": "Downstream request strobe replaying FIFO requests",
+       "lines": [
+        213,
+        214
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "o_xclk_we",
+       "role": "COMMAND",
+       "importance": "minor",
+       "score": 23.7,
+       "struct_score": 39.3,
+       "trace": "data_backward",
+       "why": "Downstream write enable from FIFO",
+       "lines": [
+        218
+       ]
+      },
+      {
+       "id": "E17",
+       "name": "o_xclk_addr",
+       "role": "INTERFACE_ADDR",
+       "importance": "major",
+       "score": 62.3,
+       "struct_score": 75.6,
+       "trace": "data_backward",
+       "why": "Downstream address registered from request FIFO",
+       "lines": [
+        223
+       ]
+      },
+      {
+       "id": "E18",
+       "name": "o_xclk_data",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 67.0,
+       "struct_score": 87.4,
+       "trace": "data_backward",
+       "why": "Downstream write data registered from request FIFO",
+       "lines": [
+        224
+       ]
+      },
+      {
+       "id": "E19",
+       "name": "o_xclk_sel",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 34.3,
+       "struct_score": 75.4,
+       "trace": "data_backward",
+       "why": "Downstream byte selects from request FIFO",
+       "lines": [
+        225
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "i_xclk_stall",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 31.3,
+       "struct_score": 67.2,
+       "trace": "interface",
+       "why": "Downstream stall gating FIFO reads and strobe",
+       "lines": [
+        169,
+        213
+       ]
+      },
+      {
+       "id": "E36",
+       "name": "req_stb",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.6,
+       "struct_score": 18.5,
+       "trace": "data_backward",
+       "why": "FIFO entry type: strobe request vs drop-cycle marker",
+       "lines": [
+        207,
+        214
+       ]
+      },
+      {
+       "id": "E37",
+       "name": "req_fifo_empty",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.6,
+       "struct_score": 18.5,
+       "trace": "data_backward",
+       "why": "Request FIFO empty gating downstream issue",
+       "lines": [
+        204,
+        214
+       ]
+      },
+      {
+       "id": "E38",
+       "name": "xclk_err_state",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 47.4,
+       "struct_score": 22.0,
+       "trace": "control_backward",
+       "why": "Downstream error state suppressing cyc/stb until cycle restarts",
+       "lines": [
+        198,
+        206
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E40",
+       "name": "xck_reset",
+       "kind": "reg"
+      },
+      {
+       "id": "E41",
+       "name": "xck_reset_pipe",
+       "kind": "reg"
+      },
+      {
+       "id": "E42",
+       "name": "req_we",
+       "kind": "wire"
+      },
+      {
+       "id": "E43",
+       "name": "req_addr",
+       "kind": "wire"
+      },
+      {
+       "id": "E44",
+       "name": "req_data",
+       "kind": "wire"
+      },
+      {
+       "id": "E45",
+       "name": "req_sel",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Return path",
+     "kind": "BUFFER",
+     "description": "Async ack FIFO carrying acks, errors and data back upstream",
+     "anchors": [
+      {
+       "id": "E21",
+       "name": "i_xclk_ack",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 25.4,
+       "struct_score": 45.7,
+       "trace": "interface",
+       "why": "Downstream ack written into ack FIFO",
+       "lines": [
+        284,
+        285
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "i_xclk_data",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 35.4,
+       "struct_score": 78.4,
+       "trace": "interface",
+       "why": "Downstream read data written into ack FIFO",
+       "lines": [
+        285
+       ]
+      },
+      {
+       "id": "E23",
+       "name": "i_xclk_err",
+       "role": "HANDSHAKE_READY",
+       "importance": "minor",
+       "score": 29.2,
+       "struct_score": 59.5,
+       "trace": "interface",
+       "why": "Downstream error setting xclk_err_state and dropping cycle",
+       "lines": [
+        197,
+        284
+       ]
+      },
+      {
+       "id": "E34",
+       "name": "no_returns",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 17.8,
+       "struct_score": 15.4,
+       "trace": "data_backward",
+       "why": "Ack FIFO empty; gates reads and upstream ack",
+       "lines": [
+        289,
+        303
+       ]
+      },
+      {
+       "id": "E10",
+       "name": "o_wb_ack",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 94.2,
+       "struct_score": 85.4,
+       "trace": "data_backward",
+       "why": "Upstream ack from ack FIFO output, decrements outstanding count",
+       "lines": [
+        244,
+        306
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "o_wb_data",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 66.2,
+       "struct_score": 85.3,
+       "trace": "data_backward",
+       "why": "Returned read data from ack FIFO",
+       "lines": [
+        309
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "o_wb_err",
+       "role": "HANDSHAKE_READY",
+       "importance": "major",
+       "score": 68.0,
+       "struct_score": 89.8,
+       "trace": "data_backward",
+       "why": "Upstream bus error; triggers bus_abort and counter clear",
+       "lines": [
+        142,
+        306
+       ]
+      }
+     ],
+     "instances": [
+      {
+       "id": "I2",
+       "instance": "ackfifo",
+       "module": "afifo"
+      }
+     ],
+     "members": [
+      {
+       "id": "E30",
+       "name": "ack_stb",
+       "kind": "wire"
+      },
+      {
+       "id": "E31",
+       "name": "err_stb",
+       "kind": "wire"
+      },
+      {
+       "id": "E32",
+       "name": "ret_wb_data",
+       "kind": "wire"
+      },
+      {
+       "id": "E39",
+       "name": "ign_ackfifo_stall",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "Outstanding ack counter",
+     "kind": "COUNTER_TIMER",
+     "description": "Tracks outstanding requests for stall and abort control",
+     "anchors": [
+      {
+       "id": "E26",
+       "name": "acks_outstanding",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 57.1,
+       "struct_score": 59.2,
+       "trace": "control_backward",
+       "why": "Counts requests awaiting acks on upstream clock",
+       "lines": [
+        246,
+        252
+       ]
+      },
+      {
+       "id": "E28",
+       "name": "ackfifo_empty",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 21.1,
+       "struct_score": 28.7,
+       "trace": "control_backward",
+       "why": "No outstanding acks; releases bus_abort pipeline",
+       "lines": [
+        140,
+        247
+       ]
+      },
+      {
+       "id": "E29",
+       "name": "ackfifo_full",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 20.1,
+       "struct_score": 24.8,
+       "trace": "control_backward",
+       "why": "Outstanding count full, stalls upstream",
+       "lines": [
+        249,
+        270
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E27",
+       "name": "ackfifo_single",
+       "kind": "reg"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2",
+      "E13"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "i_wb_clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "i_reset",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "i_xclk_clk",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "wb_slave",
+     "protocol": "MEMORY_BUS",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6",
+      "E7",
+      "E8",
+      "E9",
+      "E10",
+      "E11",
+      "E12"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "i_wb_cyc",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "i_wb_stb",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "i_wb_we",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "i_wb_addr",
+       "kind": "port_in"
+      },
+      {
+       "id": "E7",
+       "name": "i_wb_data",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "i_wb_sel",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "o_wb_stall",
+       "kind": "port_out"
+      },
+      {
+       "id": "E10",
+       "name": "o_wb_ack",
+       "kind": "port_out"
+      },
+      {
+       "id": "E11",
+       "name": "o_wb_data",
+       "kind": "port_out"
+      },
+      {
+       "id": "E12",
+       "name": "o_wb_err",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "xclk_master",
+     "protocol": "MEMORY_BUS",
+     "direction": "OUT",
+     "member_ids": [
+      "E14",
+      "E15",
+      "E16",
+      "E17",
+      "E18",
+      "E19",
+      "E20",
+      "E21",
+      "E22",
+      "E23"
+     ],
+     "members": [
+      {
+       "id": "E14",
+       "name": "o_xclk_cyc",
+       "kind": "port_out"
+      },
+      {
+       "id": "E15",
+       "name": "o_xclk_stb",
+       "kind": "port_out"
+      },
+      {
+       "id": "E16",
+       "name": "o_xclk_we",
+       "kind": "port_out"
+      },
+      {
+       "id": "E17",
+       "name": "o_xclk_addr",
+       "kind": "port_out"
+      },
+      {
+       "id": "E18",
+       "name": "o_xclk_data",
+       "kind": "port_out"
+      },
+      {
+       "id": "E19",
+       "name": "o_xclk_sel",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "i_xclk_stall",
+       "kind": "port_in"
+      },
+      {
+       "id": "E21",
+       "name": "i_xclk_ack",
+       "kind": "port_in"
+      },
+      {
+       "id": "E22",
+       "name": "i_xclk_data",
+       "kind": "port_in"
+      },
+      {
+       "id": "E23",
+       "name": "i_xclk_err",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

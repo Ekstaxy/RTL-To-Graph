@@ -1,0 +1,379 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "S1_sync_fifo",
+ "tops": [
+  "sync_fifo"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "sync_fifo": {
+   "source": "teacher",
+   "canonical_instance": "sync_fifo",
+   "file": "experiments/e3_perturb_benchmark/data/sync_fifo/S1/sync_fifo.sv",
+   "lines": [
+    1,
+    60
+   ],
+   "summary": "Synchronous valid/ready FIFO: flat register array indexed by head/tail pointers with an occupancy counter producing full/empty, plus synchronous flush.",
+   "blocks": [
+    {
+     "name": "fifo_storage",
+     "kind": "MEMORY",
+     "description": "Flattened register array holding DEPTH entries.",
+     "anchors": [
+      {
+       "id": "E14",
+       "name": "bank",
+       "role": "STORAGE",
+       "importance": "critical",
+       "score": 97.1,
+       "struct_score": 92.7,
+       "trace": "data_backward",
+       "why": "DEPTH x WIDTH flattened entry array written at tail, read at head.",
+       "lines": [
+        21,
+        32,
+        56
+       ]
+      }
+     ],
+     "instances": [],
+     "members": []
+    },
+    {
+     "name": "pointer_control",
+     "kind": "CONTROLLER",
+     "description": "Head/tail pointers, occupancy counter, full/empty flags and flush.",
+     "anchors": [
+      {
+       "id": "E13",
+       "name": "tl",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 56.7,
+       "struct_score": 57.7,
+       "trace": "control_backward",
+       "why": "Write pointer selecting slot for in_data; increments on push, cleared by flush.",
+       "lines": [
+        32,
+        36,
+        37
+       ]
+      },
+      {
+       "id": "E12",
+       "name": "hd",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 57.0,
+       "struct_score": 58.7,
+       "trace": "control_backward",
+       "why": "Read pointer selecting out_data slot; increments on pop, cleared by flush.",
+       "lines": [
+        41,
+        42,
+        56
+       ]
+      },
+      {
+       "id": "E11",
+       "name": "lvl",
+       "role": "FIFO_PTR",
+       "importance": "major",
+       "score": 61.7,
+       "struct_score": 73.9,
+       "trace": "control_backward",
+       "why": "Occupancy count; drives full/empty flags and count output.",
+       "lines": [
+        25,
+        50,
+        52
+       ]
+      },
+      {
+       "id": "E15",
+       "name": "ins",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 20.4,
+       "struct_score": 26.2,
+       "trace": "control_backward",
+       "why": "Push enable: writes bank, advances tail, increments level.",
+       "lines": [
+        27,
+        32,
+        37
+       ]
+      },
+      {
+       "id": "E16",
+       "name": "rem",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 19.3,
+       "struct_score": 21.5,
+       "trace": "control_backward",
+       "why": "Pop enable: advances head and decrements level.",
+       "lines": [
+        28,
+        42
+       ]
+      },
+      {
+       "id": "E3",
+       "name": "flush_i",
+       "role": "COMMAND",
+       "importance": "major",
+       "score": 53.8,
+       "struct_score": 47.1,
+       "trace": "forward",
+       "why": "Flush request clearing head, tail and occupancy count.",
+       "lines": [
+        36,
+        41,
+        47
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E17",
+       "name": "nfull",
+       "kind": "wire"
+      },
+      {
+       "id": "E18",
+       "name": "nempty",
+       "kind": "wire"
+      },
+      {
+       "id": "E19",
+       "name": "act",
+       "kind": "wire"
+      },
+      {
+       "id": "E10",
+       "name": "count_o",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "write_port",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Valid/ready push interface gated by not-full.",
+     "anchors": [
+      {
+       "id": "E4",
+       "name": "in_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 92.5,
+       "struct_score": 81.0,
+       "trace": "interface",
+       "why": "Push request; with not-full enables write.",
+       "lines": [
+        8,
+        27
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "in_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 89.1,
+       "struct_score": 72.6,
+       "trace": "interface",
+       "why": "Asserted while FIFO is not full.",
+       "lines": [
+        9,
+        58
+       ]
+      },
+      {
+       "id": "E6",
+       "name": "in_data",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 95.4,
+       "struct_score": 88.3,
+       "trace": "interface",
+       "why": "Write payload stored into bank at tail.",
+       "lines": [
+        10,
+        32
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E17",
+       "name": "nfull",
+       "kind": "wire"
+      }
+     ]
+    },
+    {
+     "name": "read_port",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Valid/ready pop interface gated by not-empty.",
+     "anchors": [
+      {
+       "id": "E7",
+       "name": "out_valid",
+       "role": "HANDSHAKE_VALID",
+       "importance": "critical",
+       "score": 93.6,
+       "struct_score": 83.9,
+       "trace": "interface",
+       "why": "Asserted while FIFO is not empty.",
+       "lines": [
+        11,
+        59
+       ]
+      },
+      {
+       "id": "E8",
+       "name": "out_ready",
+       "role": "HANDSHAKE_READY",
+       "importance": "critical",
+       "score": 87.2,
+       "struct_score": 66.8,
+       "trace": "interface",
+       "why": "Consumer ready; with non-empty pops the head entry.",
+       "lines": [
+        12,
+        28
+       ]
+      },
+      {
+       "id": "E9",
+       "name": "out_data",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 96.7,
+       "struct_score": 91.6,
+       "trace": "interface",
+       "why": "Read payload: bank entry at head pointer.",
+       "lines": [
+        13,
+        56
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E18",
+       "name": "nempty",
+       "kind": "wire"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst_n",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "push",
+     "protocol": "VALID_READY",
+     "direction": "IN",
+     "member_ids": [
+      "E4",
+      "E5",
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E4",
+       "name": "in_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "in_ready",
+       "kind": "port_out"
+      },
+      {
+       "id": "E6",
+       "name": "in_data",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "pop",
+     "protocol": "VALID_READY",
+     "direction": "OUT",
+     "member_ids": [
+      "E7",
+      "E8",
+      "E9"
+     ],
+     "members": [
+      {
+       "id": "E7",
+       "name": "out_valid",
+       "kind": "port_out"
+      },
+      {
+       "id": "E8",
+       "name": "out_ready",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "out_data",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "control_status",
+     "protocol": "SIMPLE",
+     "direction": "BIDIR",
+     "member_ids": [
+      "E3",
+      "E10"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "flush_i",
+       "kind": "port_in"
+      },
+      {
+       "id": "E10",
+       "name": "count_o",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

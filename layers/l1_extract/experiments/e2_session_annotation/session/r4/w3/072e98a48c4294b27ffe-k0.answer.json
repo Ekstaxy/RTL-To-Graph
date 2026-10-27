@@ -1,0 +1,48 @@
+{
+  "module_summary": "AXI-lite GPIO peripheral: skid-buffered AW/W/AR channels feed an address-decoded output register (load/set/clear/toggle) and a synchronized input block with sticky change flags, mask and interrupt.",
+  "anchors": [
+    {"id": "E26", "name": "axil_write_ready", "role": "ENABLE", "importance": "critical", "trace": "control_backward", "why": "Write strobe when AW and W both valid and B free; enables r_gpio, mask, toggled and bvalid updates.", "lines": [228, 259, 334]},
+    {"id": "E31", "name": "axil_read_ready", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Read accept strobe from AR skid buffer; sets read valid and gates read data.", "lines": [288, 308]},
+    {"id": "E35", "name": "r_gpio", "role": "CONFIG_REG", "importance": "critical", "trace": "data_backward", "why": "Software-written GPIO output register updated by load/set/clear/toggle with byte strobes.", "lines": [337, 341, 379]},
+    {"id": "E22", "name": "o_gpio", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "GPIO output pins driven from r_gpio.", "lines": [384]},
+    {"id": "E23", "name": "i_gpio", "role": "INTERFACE_DATA", "importance": "major", "trace": "interface", "why": "External GPIO inputs entering the two-flop synchronizer chain.", "lines": [418]},
+    {"id": "E27", "name": "awskd_addr", "role": "INDEX", "importance": "major", "trace": "data_backward", "why": "Skid-buffered write word address; decodes which register/operation the write targets.", "lines": [336, 430, 447]},
+    {"id": "E32", "name": "arskd_addr", "role": "MUX_SELECT", "importance": "minor", "trace": "data_backward", "why": "Skid-buffered read word address selecting which register goes to read data.", "lines": [494]},
+    {"id": "E28", "name": "wskd_data", "role": "INTERFACE_DATA", "importance": "minor", "trace": "data_backward", "why": "Skid-buffered write data applied to r_gpio, mask and toggle-clear.", "lines": [224, 341, 431]},
+    {"id": "E29", "name": "wskd_strb", "role": "ENABLE", "importance": "minor", "trace": "control_backward", "why": "Byte write strobes enabling per-byte updates of r_gpio.", "lines": [340, 342]},
+    {"id": "E40", "name": "wskd_gpio", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Strobe-merged new GPIO value used for load writes.", "lines": [327, 337]},
+    {"id": "E20", "name": "S_AXI_RDATA", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Read data from the address-muxed axil_read_data register.", "lines": [314]},
+    {"id": "E11", "name": "S_AXI_BVALID", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Write response valid, set by write strobe, cleared by BREADY.", "lines": [264, 229]},
+    {"id": "E18", "name": "S_AXI_RVALID", "role": "HANDSHAKE_VALID", "importance": "major", "trace": "interface", "why": "Read data valid from axil_read_valid; gates read data reload.", "lines": [313, 490]},
+    {"id": "E3", "name": "S_AXI_AWVALID", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Write address valid into AW skid buffer.", "lines": [205]},
+    {"id": "E7", "name": "S_AXI_WVALID", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Write data valid into W skid buffer.", "lines": [221]},
+    {"id": "E14", "name": "S_AXI_ARVALID", "role": "HANDSHAKE_VALID", "importance": "minor", "trace": "interface", "why": "Read address valid into AR skid buffer.", "lines": [283]},
+    {"id": "E4", "name": "S_AXI_AWREADY", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Write address ready from AW skid buffer.", "lines": [205]},
+    {"id": "E8", "name": "S_AXI_WREADY", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Write data ready from W skid buffer.", "lines": [221]},
+    {"id": "E15", "name": "S_AXI_ARREADY", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Read address ready from AR skid buffer.", "lines": [283]},
+    {"id": "E12", "name": "S_AXI_BREADY", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Write response ready; clears bvalid and frees write path.", "lines": [229, 261]},
+    {"id": "E19", "name": "S_AXI_RREADY", "role": "HANDSHAKE_READY", "importance": "minor", "trace": "interface", "why": "Read data ready; clears read valid and allows next read.", "lines": [289, 310]},
+    {"id": "E45", "name": "INPUT_HANDLING.qq_gpio", "role": "STORAGE", "importance": "minor", "trace": "data_backward", "why": "Synchronized input stage of the q/qq/last shift chain; readable input data.", "lines": [418, 451]},
+    {"id": "E47", "name": "INPUT_HANDLING.toggled", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Sticky per-bit input change flags, set on edge, cleared by write-one.", "lines": [432, 434, 452]},
+    {"id": "E48", "name": "INPUT_HANDLING.r_mask", "role": "CONFIG_REG", "importance": "major", "trace": "data_backward", "why": "Software interrupt mask register selecting which toggled bits raise interrupt.", "lines": [447, 448, 407]},
+    {"id": "E49", "name": "INPUT_HANDLING.wstrb_mask", "role": "DATAPATH_MAJOR", "importance": "minor", "trace": "data_backward", "why": "Strobe-merged new mask value written into r_mask.", "lines": [441, 448]},
+    {"id": "E24", "name": "o_int", "role": "STATUS", "importance": "major", "trace": "control_backward", "why": "Interrupt output: registered OR of masked toggled bits.", "lines": [455]}
+  ],
+  "groups": [
+    {"name": "AXI-lite write path", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E26", "E27", "E28", "E29", "E11", "E3", "E7", "E4", "E8", "E12"], "member_ids": ["I1", "I2", "E30", "E41", "E42", "E5", "E9", "E10", "E13"], "description": "AW and W skid buffers joined into one write strobe with registered B response."},
+    {"name": "AXI-lite read path", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E31", "E32", "E20", "E18", "E14", "E15", "E19"], "member_ids": ["I3", "E33", "E34", "E43", "E16", "E21"], "description": "AR skid buffer and address-muxed read data register with RVALID handshake."},
+    {"name": "GPIO output register", "kind": "REGISTER_BANK", "anchor_ids": ["E35", "E22", "E40"], "member_ids": [], "description": "Output register with load/set/clear/toggle byte-strobed writes driving o_gpio."},
+    {"name": "Input sync and interrupt", "kind": "DATAPATH", "anchor_ids": ["E23", "E45", "E47", "E48", "E49", "E24"], "member_ids": ["E44", "E46", "E50", "E36", "E37", "E38", "E39"], "description": "Two-flop input synchronizer, change detection, mask register and interrupt generation."}
+  ],
+  "interfaces": [
+    {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+    {"name": "axil_write_address", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E3", "E4", "E5", "E6"]},
+    {"name": "axil_write_data", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E7", "E8", "E9", "E10"]},
+    {"name": "axil_write_response", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E11", "E12", "E13"]},
+    {"name": "axil_read_address", "protocol": "VALID_READY", "direction": "IN", "member_ids": ["E14", "E15", "E16", "E17"]},
+    {"name": "axil_read_data", "protocol": "VALID_READY", "direction": "OUT", "member_ids": ["E18", "E19", "E20", "E21"]},
+    {"name": "gpio_out", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E22"]},
+    {"name": "gpio_in", "protocol": "SIMPLE", "direction": "IN", "member_ids": ["E23"]},
+    {"name": "interrupt", "protocol": "SIMPLE", "direction": "OUT", "member_ids": ["E24"]}
+  ]
+}

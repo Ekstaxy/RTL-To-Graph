@@ -1,0 +1,534 @@
+{
+ "module_summary": "SERV bit-serial core state controller: a 5-bit cycle counter (3-bit binary o_cnt plus 4-bit one-hot cnt_lsb ring) and an init/run phase flag sequence instruction fetch, register-file requests, bus cycles, branches and traps.",
+ "anchors": [
+  {
+   "id": "E47",
+   "name": "init_done",
+   "role": "FSM_STATE",
+   "importance": "critical",
+   "trace": "control_backward",
+   "why": "Two-phase state: first (init) stage done; selects init vs second stage for o_init, bus, rf writes.",
+   "lines": [
+    68,
+    161,
+    143
+   ]
+  },
+  {
+   "id": "E49",
+   "name": "o_cnt",
+   "role": "COUNTER",
+   "importance": "critical",
+   "trace": "control_backward",
+   "why": "Upper 3 bits of the 0-31 bit-serial cycle counter; decoded into cnt outputs and done.",
+   "lines": [
+    71,
+    199,
+    145
+   ]
+  },
+  {
+   "id": "E55",
+   "name": "gen_cnt_w_eq_1.cnt_lsb",
+   "role": "COUNTER",
+   "importance": "minor",
+   "trace": "control_backward",
+   "why": "4-bit one-hot ring forming counter LSBs, started by i_rf_ready; nonzero gives o_cnt_en.",
+   "lines": [
+    197,
+    200,
+    207
+   ]
+  },
+  {
+   "id": "E6",
+   "name": "o_cnt_en",
+   "role": "ENABLE",
+   "importance": "major",
+   "trace": "control_backward",
+   "why": "Counter-running enable; gates PC update, bufreg and bus cycle starts.",
+   "lines": [
+    21,
+    207,
+    76
+   ]
+  },
+  {
+   "id": "E16",
+   "name": "o_cnt_done",
+   "role": "STATUS",
+   "importance": "major",
+   "trace": "control_backward",
+   "why": "End-of-32-cycle indication; updates init_done, ibus_cyc and jump register.",
+   "lines": [
+    31,
+    145,
+    160
+   ]
+  },
+  {
+   "id": "E5",
+   "name": "o_init",
+   "role": "STATUS",
+   "importance": "major",
+   "trace": "control_backward",
+   "why": "Init-stage indication decoded from init_done and two-stage op.",
+   "lines": [
+    20,
+    143
+   ]
+  },
+  {
+   "id": "E41",
+   "name": "o_ibus_cyc",
+   "role": "HANDSHAKE_VALID",
+   "importance": "critical",
+   "trace": "interface",
+   "why": "Instruction fetch request driven from ibus_cyc register.",
+   "lines": [
+    60,
+    141
+   ]
+  },
+  {
+   "id": "E42",
+   "name": "i_ibus_ack",
+   "role": "HANDSHAKE_READY",
+   "importance": "critical",
+   "trace": "interface",
+   "why": "Instruction bus ack ending fetch and issuing rf read request.",
+   "lines": [
+    61,
+    123,
+    157
+   ]
+  },
+  {
+   "id": "E39",
+   "name": "o_dbus_cyc",
+   "role": "HANDSHAKE_VALID",
+   "importance": "major",
+   "trace": "interface",
+   "why": "Data bus cycle request after init for aligned memory ops.",
+   "lines": [
+    58,
+    119
+   ]
+  },
+  {
+   "id": "E40",
+   "name": "i_dbus_ack",
+   "role": "HANDSHAKE_READY",
+   "importance": "major",
+   "trace": "interface",
+   "why": "Data bus ack triggering register-file write request.",
+   "lines": [
+    59,
+    115
+   ]
+  },
+  {
+   "id": "E43",
+   "name": "o_rf_rreq",
+   "role": "HANDSHAKE_VALID",
+   "importance": "major",
+   "trace": "interface",
+   "why": "Register-file read request on fetch ack or trap.",
+   "lines": [
+    63,
+    123
+   ]
+  },
+  {
+   "id": "E44",
+   "name": "o_rf_wreq",
+   "role": "HANDSHAKE_VALID",
+   "importance": "major",
+   "trace": "interface",
+   "why": "Register-file write request when stage two can begin.",
+   "lines": [
+    64,
+    114
+   ]
+  },
+  {
+   "id": "E45",
+   "name": "i_rf_ready",
+   "role": "HANDSHAKE_READY",
+   "importance": "major",
+   "trace": "interface",
+   "why": "Register-file ready; shifted into cnt_lsb to start counting.",
+   "lines": [
+    65,
+    200
+   ]
+  },
+  {
+   "id": "E54",
+   "name": "trap_pending",
+   "role": "CONTROL_FLAG",
+   "importance": "minor",
+   "trace": "control_backward",
+   "why": "Misalignment trap pending; blocks branch rf write and forces rf read.",
+   "lines": [
+    105,
+    116,
+    123
+   ]
+  },
+  {
+   "id": "E52",
+   "name": "take_branch",
+   "role": "CONTROL_FLAG",
+   "importance": "minor",
+   "trace": "control_backward",
+   "why": "Branch-taken condition from ALU compare; latched into o_ctrl_jump.",
+   "lines": [
+    96,
+    162
+   ]
+  },
+  {
+   "id": "E53",
+   "name": "last_init",
+   "role": "CONTROL_FLAG",
+   "importance": "minor",
+   "trace": "control_backward",
+   "why": "Last cycle of init stage gating rf write and read requests.",
+   "lines": [
+    98,
+    114
+   ]
+  },
+  {
+   "id": "E56",
+   "name": "gen_csr.misalign_trap_sync_r",
+   "role": "CONTROL_FLAG",
+   "importance": "minor",
+   "trace": "control_backward",
+   "why": "Registered misalignment trap flag held until next fetch; drives o_ctrl_trap.",
+   "lines": [
+    228,
+    232,
+    234
+   ]
+  },
+  {
+   "id": "E19",
+   "name": "o_ctrl_jump",
+   "role": "HOLDING_REG",
+   "importance": "minor",
+   "trace": "control_backward",
+   "why": "Branch decision latched at end of init, held through PC update stage.",
+   "lines": [
+    34,
+    162
+   ]
+  },
+  {
+   "id": "E20",
+   "name": "o_ctrl_trap",
+   "role": "STATUS",
+   "importance": "minor",
+   "trace": "control_backward",
+   "why": "Trap mode indication to control unit from ecall, irq or misalignment.",
+   "lines": [
+    35,
+    224
+   ]
+  },
+  {
+   "id": "E17",
+   "name": "o_bufreg_en",
+   "role": "ENABLE",
+   "importance": "minor",
+   "trace": "control_backward",
+   "why": "Shift enable for buffer register during mem/branch/shift ops.",
+   "lines": [
+    32,
+    139
+   ]
+  },
+  {
+   "id": "E18",
+   "name": "o_ctrl_pc_en",
+   "role": "ENABLE",
+   "importance": "minor",
+   "trace": "control_backward",
+   "why": "PC update enable during counting outside init.",
+   "lines": [
+    33,
+    76
+   ]
+  },
+  {
+   "id": "E7",
+   "name": "o_cnt0to3",
+   "role": "STATUS",
+   "importance": "minor",
+   "trace": "control_backward",
+   "why": "Representative decoded counter-position output (cnt0..cnt12 family).",
+   "lines": [
+    22,
+    80
+   ]
+  },
+  {
+   "id": "E23",
+   "name": "o_mem_bytecnt",
+   "role": "STATUS",
+   "importance": "minor",
+   "trace": "control_backward",
+   "why": "Byte count output taken from o_cnt upper bits for memory lanes.",
+   "lines": [
+    38,
+    78
+   ]
+  },
+  {
+   "id": "E37",
+   "name": "o_mdu_valid",
+   "role": "HANDSHAKE_VALID",
+   "importance": "minor",
+   "trace": "interface",
+   "why": "MDU operation valid; disabled when MDU parameter is zero.",
+   "lines": [
+    54,
+    101
+   ]
+  },
+  {
+   "id": "E38",
+   "name": "i_mdu_ready",
+   "role": "HANDSHAKE_READY",
+   "importance": "minor",
+   "trace": "interface",
+   "why": "MDU result ready triggering rf write request (MDU builds).",
+   "lines": [
+    56,
+    115
+   ]
+  },
+  {
+   "id": "E28",
+   "name": "i_two_stage_op",
+   "role": "COMMAND",
+   "importance": "minor",
+   "trace": "interface",
+   "why": "Instruction class needing two stages; enables init stage.",
+   "lines": [
+    44,
+    143
+   ]
+  },
+  {
+   "id": "E29",
+   "name": "i_branch_op",
+   "role": "COMMAND",
+   "importance": "minor",
+   "trace": "interface",
+   "why": "Branch/jump instruction class steering take_branch and rf write.",
+   "lines": [
+    45,
+    96,
+    116
+   ]
+  }
+ ],
+ "groups": [
+  {
+   "name": "phase_controller",
+   "kind": "CONTROLLER",
+   "anchor_ids": [
+    "E47",
+    "E5",
+    "E54",
+    "E52",
+    "E53",
+    "E56",
+    "E19",
+    "E20",
+    "E28",
+    "E29"
+   ],
+   "member_ids": [
+    "E48",
+    "E3",
+    "E4",
+    "E21",
+    "E24",
+    "E25",
+    "E26",
+    "E27",
+    "E30",
+    "E31",
+    "E32",
+    "E33",
+    "E34",
+    "E35",
+    "E36",
+    "E22"
+   ],
+   "description": "Init/run phase flag, branch and trap decisions sequencing the two-stage instruction flow."
+  },
+  {
+   "name": "bit_counter",
+   "kind": "COUNTER_TIMER",
+   "anchor_ids": [
+    "E49",
+    "E55",
+    "E6",
+    "E16",
+    "E7",
+    "E23"
+   ],
+   "member_ids": [
+    "E50",
+    "E8",
+    "E9",
+    "E10",
+    "E11",
+    "E12",
+    "E13",
+    "E14",
+    "E15"
+   ],
+   "description": "0-31 bit-serial cycle counter with decoded position outputs."
+  },
+  {
+   "name": "bus_rf_requests",
+   "kind": "INTERFACE_ADAPTER",
+   "anchor_ids": [
+    "E41",
+    "E42",
+    "E39",
+    "E40",
+    "E43",
+    "E44",
+    "E45",
+    "E37",
+    "E38"
+   ],
+   "member_ids": [
+    "E51"
+   ],
+   "description": "Instruction/data bus cycles, register-file and MDU request handshakes."
+  },
+  {
+   "name": "unit_enables",
+   "kind": "CONTROLLER",
+   "anchor_ids": [
+    "E17",
+    "E18"
+   ],
+   "member_ids": [
+    "E46"
+   ],
+   "description": "Enables for bufreg, PC update and rf read derived from counter and phase."
+  }
+ ],
+ "interfaces": [
+  {
+   "name": "clk_rst",
+   "protocol": "CLOCK_RESET",
+   "direction": "IN",
+   "member_ids": [
+    "E1",
+    "E2"
+   ]
+  },
+  {
+   "name": "state_outputs",
+   "protocol": "SIMPLE",
+   "direction": "OUT",
+   "member_ids": [
+    "E5",
+    "E6",
+    "E7",
+    "E8",
+    "E9",
+    "E10",
+    "E11",
+    "E12",
+    "E13",
+    "E14",
+    "E15",
+    "E16",
+    "E17",
+    "E18",
+    "E19",
+    "E20",
+    "E23"
+   ]
+  },
+  {
+   "name": "state_inputs",
+   "protocol": "SIMPLE",
+   "direction": "IN",
+   "member_ids": [
+    "E3",
+    "E4",
+    "E21",
+    "E22",
+    "E24"
+   ]
+  },
+  {
+   "name": "decode_control",
+   "protocol": "SIMPLE",
+   "direction": "IN",
+   "member_ids": [
+    "E25",
+    "E26",
+    "E27",
+    "E28",
+    "E29",
+    "E30",
+    "E31",
+    "E32",
+    "E33",
+    "E34",
+    "E35"
+   ]
+  },
+  {
+   "name": "mdu",
+   "protocol": "VALID_READY",
+   "direction": "OUT",
+   "member_ids": [
+    "E36",
+    "E37",
+    "E38"
+   ]
+  },
+  {
+   "name": "dbus",
+   "protocol": "REQ_ACK",
+   "direction": "BIDIR",
+   "member_ids": [
+    "E39",
+    "E40"
+   ]
+  },
+  {
+   "name": "ibus",
+   "protocol": "REQ_ACK",
+   "direction": "IN",
+   "member_ids": [
+    "E41",
+    "E42"
+   ]
+  },
+  {
+   "name": "rf_requests",
+   "protocol": "REQ_ACK",
+   "direction": "OUT",
+   "member_ids": [
+    "E43",
+    "E44",
+    "E45",
+    "E46"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,669 @@
+{
+ "schema": "l1-blocks-v1",
+ "design": "verilog-ethernet_ptp_clock",
+ "tops": [
+  "ptp_clock"
+ ],
+ "taxonomy_version": "roles-v2",
+ "modules": {
+  "ptp_clock": {
+   "source": "teacher",
+   "canonical_instance": "ptp_clock",
+   "file": "data/rtl/verilog-ethernet/rtl/ptp_clock.v",
+   "lines": [
+    34,
+    319
+   ],
+   "summary": "PTP hardware clock: a per-cycle increment computed from period, offset-adjust and drift registers accumulates into 96-bit (s/ns/fns with 1e9 overflow lookahead) and 64-bit timestamp registers, loadable from inputs, also producing step and PPS pulses.",
+   "blocks": [
+    {
+     "name": "Increment computation",
+     "kind": "DATAPATH",
+     "description": "Sums period, offset and drift into per-cycle increment and lookahead constant",
+     "anchors": [
+      {
+       "id": "E32",
+       "name": "ts_inc_ns_reg",
+       "role": "DATAPATH_MAJOR",
+       "importance": "critical",
+       "score": 80.7,
+       "struct_score": 43.1,
+       "trace": "data_backward",
+       "why": "Per-cycle time increment: period plus active offset adjust plus drift",
+       "lines": [
+        236,
+        257,
+        285
+       ]
+      },
+      {
+       "id": "E34",
+       "name": "ts_inc_ns_delay_reg",
+       "role": "PIPELINE_REG",
+       "importance": "minor",
+       "score": 20.7,
+       "struct_score": 27.1,
+       "trace": "data_backward",
+       "why": "Delayed increment aligned with overflow lookahead pipeline",
+       "lines": [
+        257,
+        260
+       ]
+      },
+      {
+       "id": "E36",
+       "name": "ts_inc_ns_ovf_reg",
+       "role": "DATAPATH_MAJOR",
+       "importance": "minor",
+       "score": 22.3,
+       "struct_score": 33.6,
+       "trace": "data_backward",
+       "why": "1e9 minus increment, used for overflow lookahead subtraction",
+       "lines": [
+        258,
+        261
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E33",
+       "name": "ts_inc_fns_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E35",
+       "name": "ts_inc_fns_delay_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E37",
+       "name": "ts_inc_fns_ovf_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "96-bit time-of-day counter",
+     "kind": "COUNTER_TIMER",
+     "description": "Seconds/ns/fns accumulator with 1e9 overflow lookahead and PPS",
+     "anchors": [
+      {
+       "id": "E38",
+       "name": "ts_96_s_reg",
+       "role": "HOLDING_REG",
+       "importance": "critical",
+       "score": 78.4,
+       "struct_score": 34.0,
+       "trace": "data_backward",
+       "why": "Seconds field of 96-bit time-of-day, incremented on ns overflow or loaded",
+       "lines": [
+        200,
+        270,
+        275
+       ]
+      },
+      {
+       "id": "E39",
+       "name": "ts_96_ns_reg",
+       "role": "HOLDING_REG",
+       "importance": "major",
+       "score": 49.7,
+       "struct_score": 31.2,
+       "trace": "data_backward",
+       "why": "Nanoseconds field of 96-bit timestamp output",
+       "lines": [
+        202,
+        262,
+        276
+       ]
+      },
+      {
+       "id": "E41",
+       "name": "ts_96_ns_inc_reg",
+       "role": "DATAPATH_MAJOR",
+       "importance": "major",
+       "score": 56.1,
+       "struct_score": 55.4,
+       "trace": "data_backward",
+       "why": "Accumulator adding per-cycle increment to nanoseconds",
+       "lines": [
+        260,
+        267
+       ]
+      },
+      {
+       "id": "E43",
+       "name": "ts_96_ns_ovf_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "major",
+       "score": 55.5,
+       "struct_score": 53.3,
+       "trace": "control_backward",
+       "why": "Overflow lookahead; sign bit triggers seconds increment and PPS",
+       "lines": [
+        261,
+        264,
+        293
+       ]
+      },
+      {
+       "id": "E50",
+       "name": "pps_reg",
+       "role": "CLOCK_GEN",
+       "importance": "minor",
+       "score": 17.4,
+       "struct_score": 14.0,
+       "trace": "control_backward",
+       "why": "One-pulse-per-second tick from seconds overflow",
+       "lines": [
+        208,
+        293
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E40",
+       "name": "ts_96_fns_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E42",
+       "name": "ts_96_fns_inc_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E44",
+       "name": "ts_96_fns_ovf_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "64-bit timestamp counter",
+     "kind": "COUNTER_TIMER",
+     "description": "Free-running 64-bit ns accumulator",
+     "anchors": [
+      {
+       "id": "E45",
+       "name": "ts_64_ns_reg",
+       "role": "HOLDING_REG",
+       "importance": "critical",
+       "score": 81.0,
+       "struct_score": 44.3,
+       "trace": "data_backward",
+       "why": "64-bit relative nanosecond timestamp accumulator",
+       "lines": [
+        204,
+        285,
+        289
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E46",
+       "name": "ts_64_fns_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Adjustment registers",
+     "kind": "REGISTER_BANK",
+     "description": "Period, offset-adjust and drift configuration with counters",
+     "anchors": [
+      {
+       "id": "E23",
+       "name": "period_ns_reg",
+       "role": "CONFIG_REG",
+       "importance": "major",
+       "score": 45.9,
+       "struct_score": 15.8,
+       "trace": "data_backward",
+       "why": "Programmable nominal clock period, loaded on input_period_valid",
+       "lines": [
+        219,
+        236
+       ]
+      },
+      {
+       "id": "E25",
+       "name": "adj_ns_reg",
+       "role": "CONFIG_REG",
+       "importance": "minor",
+       "score": 17.9,
+       "struct_score": 15.8,
+       "trace": "data_backward",
+       "why": "Offset adjustment amount added while adjustment is active",
+       "lines": [
+        224,
+        237
+       ]
+      },
+      {
+       "id": "E27",
+       "name": "adj_count_reg",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 53.9,
+       "struct_score": 47.6,
+       "trace": "control_backward",
+       "why": "Counts remaining offset-adjust cycles, drives adj_active_reg",
+       "lines": [
+        241,
+        242
+       ]
+      },
+      {
+       "id": "E28",
+       "name": "adj_active_reg",
+       "role": "CONTROL_FLAG",
+       "importance": "minor",
+       "score": 18.9,
+       "struct_score": 20.0,
+       "trace": "control_backward",
+       "why": "Enables offset adjustment term in increment computation",
+       "lines": [
+        237,
+        243
+       ]
+      },
+      {
+       "id": "E29",
+       "name": "drift_ns_reg",
+       "role": "CONFIG_REG",
+       "importance": "minor",
+       "score": 17.9,
+       "struct_score": 15.8,
+       "trace": "data_backward",
+       "why": "Drift compensation amount added every drift_rate cycles",
+       "lines": [
+        230,
+        238
+       ]
+      },
+      {
+       "id": "E31",
+       "name": "drift_rate_reg",
+       "role": "CONFIG_REG",
+       "importance": "minor",
+       "score": 18.5,
+       "struct_score": 18.2,
+       "trace": "data_backward",
+       "why": "Drift application interval reloading drift_cnt",
+       "lines": [
+        232,
+        251
+       ]
+      },
+      {
+       "id": "E48",
+       "name": "drift_cnt",
+       "role": "COUNTER",
+       "importance": "major",
+       "score": 53.6,
+       "struct_score": 46.3,
+       "trace": "control_backward",
+       "why": "Down counter gating when drift term is applied",
+       "lines": [
+        238,
+        250,
+        253
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E24",
+       "name": "period_fns_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E26",
+       "name": "adj_fns_reg",
+       "kind": "reg"
+      },
+      {
+       "id": "E30",
+       "name": "drift_fns_reg",
+       "kind": "reg"
+      }
+     ]
+    },
+    {
+     "name": "Timestamp I/O",
+     "kind": "INTERFACE_ADAPTER",
+     "description": "Timestamp load inputs and timestamp/PPS outputs",
+     "anchors": [
+      {
+       "id": "E3",
+       "name": "input_ts_96",
+       "role": "INTERFACE_DATA",
+       "importance": "major",
+       "score": 69.4,
+       "struct_score": 93.5,
+       "trace": "interface",
+       "why": "96-bit timestamp to load into time-of-day registers",
+       "lines": [
+        55,
+        275
+       ]
+      },
+      {
+       "id": "E4",
+       "name": "input_ts_96_valid",
+       "role": "ENABLE",
+       "importance": "minor",
+       "score": 23.7,
+       "struct_score": 39.3,
+       "trace": "forward",
+       "why": "Load enable for 96-bit timestamp",
+       "lines": [
+        56,
+        273
+       ]
+      },
+      {
+       "id": "E5",
+       "name": "input_ts_64",
+       "role": "INTERFACE_DATA",
+       "importance": "minor",
+       "score": 38.5,
+       "struct_score": 86.2,
+       "trace": "interface",
+       "why": "64-bit timestamp to load",
+       "lines": [
+        57,
+        289
+       ]
+      },
+      {
+       "id": "E19",
+       "name": "output_ts_96",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 95.4,
+       "struct_score": 88.3,
+       "trace": "interface",
+       "why": "96-bit time-of-day timestamp output",
+       "lines": [
+        87,
+        200
+       ]
+      },
+      {
+       "id": "E20",
+       "name": "output_ts_64",
+       "role": "INTERFACE_DATA",
+       "importance": "critical",
+       "score": 94.1,
+       "struct_score": 85.2,
+       "trace": "interface",
+       "why": "64-bit relative timestamp output",
+       "lines": [
+        88,
+        204
+       ]
+      },
+      {
+       "id": "E22",
+       "name": "output_pps",
+       "role": "STATUS",
+       "importance": "major",
+       "score": 46.3,
+       "struct_score": 17.7,
+       "trace": "interface",
+       "why": "Pulse-per-second output",
+       "lines": [
+        94,
+        208
+       ]
+      },
+      {
+       "id": "E21",
+       "name": "output_ts_step",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 18.3,
+       "struct_score": 17.7,
+       "trace": "interface",
+       "why": "Indicates non-monotonic timestamp step",
+       "lines": [
+        89,
+        206
+       ]
+      },
+      {
+       "id": "E47",
+       "name": "ts_step_reg",
+       "role": "STATUS",
+       "importance": "minor",
+       "score": 15.5,
+       "struct_score": 6.1,
+       "trace": "control_backward",
+       "why": "Pulses when timestamp is loaded or offset adjusted",
+       "lines": [
+        244,
+        281,
+        290
+       ]
+      }
+     ],
+     "instances": [],
+     "members": [
+      {
+       "id": "E6",
+       "name": "input_ts_64_valid",
+       "kind": "port_in"
+      }
+     ]
+    }
+   ],
+   "ungrouped_anchors": [],
+   "instances_not_in_a_block": [],
+   "interfaces": [
+    {
+     "name": "clock_reset",
+     "protocol": "CLOCK_RESET",
+     "direction": "IN",
+     "member_ids": [
+      "E1",
+      "E2"
+     ],
+     "members": [
+      {
+       "id": "E1",
+       "name": "clk",
+       "kind": "port_in"
+      },
+      {
+       "id": "E2",
+       "name": "rst",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "timestamp_load",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E3",
+      "E4",
+      "E5",
+      "E6"
+     ],
+     "members": [
+      {
+       "id": "E3",
+       "name": "input_ts_96",
+       "kind": "port_in"
+      },
+      {
+       "id": "E4",
+       "name": "input_ts_96_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E5",
+       "name": "input_ts_64",
+       "kind": "port_in"
+      },
+      {
+       "id": "E6",
+       "name": "input_ts_64_valid",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "period_adjust",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E7",
+      "E8",
+      "E9"
+     ],
+     "members": [
+      {
+       "id": "E7",
+       "name": "input_period_ns",
+       "kind": "port_in"
+      },
+      {
+       "id": "E8",
+       "name": "input_period_fns",
+       "kind": "port_in"
+      },
+      {
+       "id": "E9",
+       "name": "input_period_valid",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "offset_adjust",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E10",
+      "E11",
+      "E12",
+      "E13",
+      "E14"
+     ],
+     "members": [
+      {
+       "id": "E10",
+       "name": "input_adj_ns",
+       "kind": "port_in"
+      },
+      {
+       "id": "E11",
+       "name": "input_adj_fns",
+       "kind": "port_in"
+      },
+      {
+       "id": "E12",
+       "name": "input_adj_count",
+       "kind": "port_in"
+      },
+      {
+       "id": "E13",
+       "name": "input_adj_valid",
+       "kind": "port_in"
+      },
+      {
+       "id": "E14",
+       "name": "input_adj_active",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "drift_adjust",
+     "protocol": "SIMPLE",
+     "direction": "IN",
+     "member_ids": [
+      "E15",
+      "E16",
+      "E17",
+      "E18"
+     ],
+     "members": [
+      {
+       "id": "E15",
+       "name": "input_drift_ns",
+       "kind": "port_in"
+      },
+      {
+       "id": "E16",
+       "name": "input_drift_fns",
+       "kind": "port_in"
+      },
+      {
+       "id": "E17",
+       "name": "input_drift_rate",
+       "kind": "port_in"
+      },
+      {
+       "id": "E18",
+       "name": "input_drift_valid",
+       "kind": "port_in"
+      }
+     ]
+    },
+    {
+     "name": "timestamp_out",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E19",
+      "E20",
+      "E21"
+     ],
+     "members": [
+      {
+       "id": "E19",
+       "name": "output_ts_96",
+       "kind": "port_out"
+      },
+      {
+       "id": "E20",
+       "name": "output_ts_64",
+       "kind": "port_out"
+      },
+      {
+       "id": "E21",
+       "name": "output_ts_step",
+       "kind": "port_out"
+      }
+     ]
+    },
+    {
+     "name": "pps",
+     "protocol": "SIMPLE",
+     "direction": "OUT",
+     "member_ids": [
+      "E22"
+     ],
+     "members": [
+      {
+       "id": "E22",
+       "name": "output_pps",
+       "kind": "port_out"
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

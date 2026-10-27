@@ -1,0 +1,22 @@
+{
+ "module_summary": "8-to-16 bit width converter: a child phase tracker toggles on each valid byte and holds the first byte; on the second byte the pair is registered as a 16-bit word with a valid pulse.",
+ "anchors": [
+  {"id": "E3", "name": "valid_in", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "interface", "why": "Input byte strobe; toggles phase tracker and qualifies word output.", "lines": [29, 40, 46]},
+  {"id": "E4", "name": "data_in", "role": "INTERFACE_DATA", "importance": "critical", "trace": "interface", "why": "Input byte: held as high byte or concatenated as low byte.", "lines": [30, 47, 58]},
+  {"id": "E5", "name": "valid_out", "role": "HANDSHAKE_VALID", "importance": "critical", "trace": "control_backward", "why": "Registered one-cycle valid accompanying each assembled 16-bit word.", "lines": [32, 57]},
+  {"id": "E6", "name": "data_out", "role": "INTERFACE_DATA", "importance": "critical", "trace": "data_backward", "why": "Assembled 16-bit word {held byte, current byte}, loaded on fire_k.", "lines": [33, 58]},
+  {"id": "E8", "name": "u_parity", "role": "FSM_STATE", "importance": "major", "trace": "control_backward", "why": "Byte phase toggle from child; marks second byte of a pair.", "lines": [36, 40, 49]},
+  {"id": "E7", "name": "u_pending", "role": "HOLDING_REG", "importance": "major", "trace": "data_backward", "why": "First byte of the pair held by the child, forms upper half of output.", "lines": [35, 48, 58]},
+  {"id": "E9", "name": "fire_k", "role": "ENABLE", "importance": "major", "trace": "control_backward", "why": "Second-byte strobe: loads data_out and raises valid_out.", "lines": [37, 40, 58]}
+ ],
+ "groups": [
+  {"name": "phase_tracker", "kind": "CONTROLLER", "anchor_ids": ["E8", "E9"], "member_ids": ["I1", "E10"], "description": "w8_phase_hold toggle decides when a byte pair is complete."},
+  {"name": "word_packer", "kind": "DATAPATH", "anchor_ids": ["E7", "E6", "E5"], "member_ids": ["I1"], "description": "Holds first byte and registers the 16-bit word with its valid."},
+  {"name": "byte_input", "kind": "INTERFACE_ADAPTER", "anchor_ids": ["E3", "E4"], "member_ids": [], "description": "Incoming byte stream with valid strobe."}
+ ],
+ "interfaces": [
+  {"name": "clock_reset", "protocol": "CLOCK_RESET", "direction": "IN", "member_ids": ["E1", "E2"]},
+  {"name": "byte_in", "protocol": "STREAM", "direction": "IN", "member_ids": ["E3", "E4"]},
+  {"name": "word_out", "protocol": "STREAM", "direction": "OUT", "member_ids": ["E5", "E6"]}
+ ]
+}

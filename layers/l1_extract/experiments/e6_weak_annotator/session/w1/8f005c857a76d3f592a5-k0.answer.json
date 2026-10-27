@@ -1,0 +1,207 @@
+{
+  "module_summary": "Synchronous FIFO with dual-pointer write/read handshake and occupancy tracking.",
+  "anchors": [
+    {
+      "id": "E11",
+      "name": "mem_q",
+      "role": "STORAGE",
+      "importance": "critical",
+      "trace": "data_backward",
+      "why": "Core FIFO buffer storing queued data elements",
+      "lines": [34, 30]
+    },
+    {
+      "id": "E12",
+      "name": "wptr_q",
+      "role": "FIFO_PTR",
+      "importance": "critical",
+      "trace": "control_backward",
+      "why": "Write pointer tracking next insertion position in FIFO",
+      "lines": [47, 34]
+    },
+    {
+      "id": "E13",
+      "name": "rptr_q",
+      "role": "FIFO_PTR",
+      "importance": "critical",
+      "trace": "control_backward",
+      "why": "Read pointer tracking next extraction position from FIFO",
+      "lines": [48, 30]
+    },
+    {
+      "id": "E15",
+      "name": "do_push",
+      "role": "CONTROL_FLAG",
+      "importance": "critical",
+      "trace": "forward",
+      "why": "Enables write to FIFO when valid input arrives",
+      "lines": [28, 34]
+    },
+    {
+      "id": "E16",
+      "name": "do_pop",
+      "role": "CONTROL_FLAG",
+      "importance": "critical",
+      "trace": "forward",
+      "why": "Enables read from FIFO when downstream ready",
+      "lines": [29, 48]
+    },
+    {
+      "id": "E14",
+      "name": "count_q",
+      "role": "FIFO_PTR",
+      "importance": "major",
+      "trace": "control_backward",
+      "why": "Occupancy counter determining full/empty status",
+      "lines": [26, 50]
+    },
+    {
+      "id": "E4",
+      "name": "in_valid",
+      "role": "HANDSHAKE_VALID",
+      "importance": "major",
+      "trace": "interface",
+      "why": "Write-side valid signal indicating data ready",
+      "lines": [28]
+    },
+    {
+      "id": "E5",
+      "name": "in_ready",
+      "role": "HANDSHAKE_READY",
+      "importance": "major",
+      "trace": "interface",
+      "why": "Write-side ready signal gated by occupancy",
+      "lines": [26]
+    },
+    {
+      "id": "E7",
+      "name": "out_valid",
+      "role": "HANDSHAKE_VALID",
+      "importance": "major",
+      "trace": "interface",
+      "why": "Read-side valid signal when FIFO non-empty",
+      "lines": [27]
+    },
+    {
+      "id": "E8",
+      "name": "out_ready",
+      "role": "HANDSHAKE_READY",
+      "importance": "major",
+      "trace": "interface",
+      "why": "Read-side ready signal from downstream consumer",
+      "lines": [29]
+    },
+    {
+      "id": "E6",
+      "name": "in_data",
+      "role": "INTERFACE_DATA",
+      "importance": "major",
+      "trace": "data_backward",
+      "why": "Input data payload written to FIFO buffer",
+      "lines": [34]
+    },
+    {
+      "id": "E9",
+      "name": "out_data",
+      "role": "INTERFACE_DATA",
+      "importance": "major",
+      "trace": "data_backward",
+      "why": "Output data payload read from FIFO buffer",
+      "lines": [30]
+    },
+    {
+      "id": "E3",
+      "name": "flush_i",
+      "role": "COMMAND",
+      "importance": "minor",
+      "trace": "forward",
+      "why": "Flush command resetting pointers and occupancy",
+      "lines": [42]
+    },
+    {
+      "id": "E10",
+      "name": "count_o",
+      "role": "STATUS",
+      "importance": "minor",
+      "trace": "none",
+      "why": "Occupancy status output for external monitoring",
+      "lines": [31]
+    }
+  ],
+  "groups": [
+    {
+      "name": "FIFO_Storage",
+      "kind": "BUFFER",
+      "anchor_ids": ["E11"],
+      "member_ids": [],
+      "description": "FIFO buffer memory storing queued data"
+    },
+    {
+      "name": "Pointer_Control",
+      "kind": "CONTROLLER",
+      "anchor_ids": ["E12", "E13", "E14", "E15", "E16"],
+      "member_ids": [],
+      "description": "Write/read pointers with push/pop control and occupancy tracking"
+    },
+    {
+      "name": "Write_Interface",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E4", "E5", "E6"],
+      "member_ids": [],
+      "description": "Write-side handshake with data input"
+    },
+    {
+      "name": "Read_Interface",
+      "kind": "INTERFACE_ADAPTER",
+      "anchor_ids": ["E7", "E8", "E9"],
+      "member_ids": [],
+      "description": "Read-side handshake with data output"
+    },
+    {
+      "name": "Control_Signals",
+      "kind": "OTHER",
+      "anchor_ids": ["E3"],
+      "member_ids": [],
+      "description": "Flush control and reset management"
+    },
+    {
+      "name": "Status_Output",
+      "kind": "OTHER",
+      "anchor_ids": ["E10"],
+      "member_ids": [],
+      "description": "Occupancy counter output"
+    }
+  ],
+  "interfaces": [
+    {
+      "name": "clk_reset",
+      "protocol": "CLOCK_RESET",
+      "direction": "IN",
+      "member_ids": ["E1", "E2"]
+    },
+    {
+      "name": "write_handshake",
+      "protocol": "VALID_READY",
+      "direction": "IN",
+      "member_ids": ["E4", "E5", "E6"]
+    },
+    {
+      "name": "read_handshake",
+      "protocol": "VALID_READY",
+      "direction": "OUT",
+      "member_ids": ["E7", "E8", "E9"]
+    },
+    {
+      "name": "flush_control",
+      "protocol": "SIMPLE",
+      "direction": "IN",
+      "member_ids": ["E3"]
+    },
+    {
+      "name": "occupancy_status",
+      "protocol": "SIMPLE",
+      "direction": "OUT",
+      "member_ids": ["E10"]
+    }
+  ]
+}
