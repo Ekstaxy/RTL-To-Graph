@@ -96,6 +96,24 @@ EXPECT: dict[str, dict[str, tuple[str, bool, tuple[str, ...]]]] = {
 }
 
 
+# The clock reaches a child register through an instance connection. The line of that
+# connection is in the parent's file: mf_child.v is shorter than that line number (looking it up
+# there raised IndexError), and the `~` on it turns the child's posedge into a negedge of clk.
+MULTIFILE: dict[str, str] = {
+    "mf_top.v": "".join(f"// padding {i}: keeps the instance past the end of mf_child.v\n"
+                        for i in range(8)) + """
+module mf_top (input wire clk, input wire d, output wire q);
+  mf_child u_inv (.clk(~clk), .d(d), .q(q));
+endmodule
+""",
+    "mf_child.v": """
+module mf_child (input wire clk, input wire d, output reg q);
+  always @(posedge clk) q <= d;
+endmodule
+""",
+}
+
+
 def _extra(case: str, sig: dict) -> list[str]:
     errs = []
     if case == "loopidx" and any(x["signal"] == "i" for x in sig["internal"]):
@@ -128,6 +146,22 @@ def check(case: str, out: Path, e9) -> list[str]:
     return errs + _extra(case, sig)
 
 
+def check_multifile(out: Path, e9) -> list[str]:
+    from rtl2d_l1.pipeline import RunConfig, annotate_design
+
+    files = []
+    for name, text in MULTIFILE.items():
+        f = out / "rtl" / name
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text(text.lstrip("\n") if name != "mf_top.v" else text, encoding="utf-8")
+        files.append(str(f))
+    cfg = RunConfig(mode="heuristic", targets=frozenset({"block", "fsm", "timing"}))
+    run = annotate_design(files, top="mf_top", cfg=cfg, name="mf_top")
+    sig = e9.select(run, design="mf_top")
+    got = [(c["port"], c["edge"]) for c in sig["clocks"]]
+    return [] if got == [("clk", "negedge")] else [f"clocks {got} != [('clk', 'negedge')]"]
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--out", default=str(ROOT / "runs" / "e9_protocol_templates" / "_regress"))
@@ -138,7 +172,10 @@ def main(argv: list[str] | None = None) -> int:
         errs = check(case, Path(a.out), e9)
         bad += bool(errs)
         print(f"{'PASS' if not errs else 'FAIL'} {case}" + "".join(f"\n    {e}" for e in errs))
-    print(f"{len(CASES) - bad}/{len(CASES)} passed")
+    errs = check_multifile(Path(a.out), e9)
+    bad += bool(errs)
+    print(f"{'PASS' if not errs else 'FAIL'} multifile" + "".join(f"\n    {e}" for e in errs))
+    print(f"{len(CASES) + 1 - bad}/{len(CASES) + 1} passed")
     return 1 if bad else 0
 
 

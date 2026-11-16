@@ -134,11 +134,20 @@ def _mid(s: str) -> str:
     return re.sub(r"\W", "_", s)
 
 
+_COMMENT = re.compile(r'"(?:\\.|[^"\\])*"|//[^\n]*|/\*.*?\*/', re.S)
+
+
+def _no_comments(s: str) -> str:
+    """Source text without `//` and `/* */` comments; string literals are left as they are."""
+    return _COMMENT.sub(lambda m: m.group(0) if m.group(0).startswith('"') else " ", s)
+
+
 def _text(e) -> str:
     try:
         while e is not None and e.syntax is None and isinstance(e, ast.ConversionExpression):
             e = e.operand  # implicit conversions have no syntax of their own
-        return re.sub(r"\s+", " ", str(e.syntax)).strip()
+        # the syntax node carries the comments in front of its first token
+        return re.sub(r"\s+", " ", _no_comments(str(e.syntax))).strip()
     except Exception:
         return "?"
 

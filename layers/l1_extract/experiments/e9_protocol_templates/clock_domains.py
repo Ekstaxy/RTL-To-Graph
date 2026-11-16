@@ -63,6 +63,22 @@ def trace_root(G: DesignGraph, k: str) -> tuple[str, list[str]]:
     return k, chain
 
 
+def _via_file(G: DesignGraph, a: str, b: str, via: str) -> str:
+    """File that the `@L<line>` of the edge b -> a refers to.
+
+    A procedure or assign line lies in the module of the driven node. An instance connection
+    (`inst:<name>@L<line>`) is written where the instance is declared: for an input port that is
+    the parent module, not the child module the port node belongs to."""
+    na = G.nodes[a]
+    if (via or "").startswith("inst:"):
+        ia = G.instances.get(na.inst)
+        ib = G.instances.get(G.nodes[b].inst)
+        child_output = ib is not None and ib.parent == na.inst  # b is a port of a's child
+        if ia is not None and ia.parent is not None and not child_output:
+            return G.instances[ia.parent].file
+    return na.file
+
+
 def _inverted(G: DesignGraph, chain: list[str]) -> bool:
     """Odd number of `~`/`!` inversions along an assign chain (read from the source lines)."""
     gm = _graph_mod()
@@ -72,7 +88,8 @@ def _inverted(G: DesignGraph, chain: list[str]) -> bool:
             if _s != b or d["type"] not in (EdgeType.DATA, EdgeType.PORT):
                 continue
             ln = gm.via_line(d["via"])
-            text = gm.source_lines(G.nodes[a].file)[ln - 1] if ln else ""
+            src = gm.source_lines(_via_file(G, a, b, d["via"])) if ln else ()
+            text = src[ln - 1] if ln and ln <= len(src) else ""
             name_b = re.escape(G.nodes[b].name)
             if re.search(rf"[~!]\s*\(?\s*{name_b}\b", text):
                 inv += 1

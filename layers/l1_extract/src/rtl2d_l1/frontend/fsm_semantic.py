@@ -32,13 +32,17 @@ class Unsupported(Exception):
     pass
 
 
-_LIT = re.compile(r"^(?:(\d+)\s*)?'(s?)([bodhBODH])([0-9a-fA-FxXzZ?_]+)$")
+_LIT = re.compile(r"^(?:(\d+)\s*)?'(s?)([bodhBODH])\s*([0-9a-fA-FxXzZ?_]+)$")
+_COMMENT = re.compile(r"//[^\n]*|/\*.*?\*/", re.S)
 
 
 def _parse_const(text: str) -> tuple[int, int | None, int]:
     """Verilog constant text -> (value, width or None, care_mask). x/z/? bits are don't-care
-    (value 0)."""
-    t = text.strip().replace("_", "")
+    (value 0).
+
+    The text may come from `str(expr.syntax)`, which carries the comments and newlines in front
+    of the token, and Verilog allows white space between the base and the digits (`1'b 0`)."""
+    t = _COMMENT.sub(" ", text).strip().replace("_", "")
     m = _LIT.match(t)
     if m:
         width = int(m.group(1)) if m.group(1) else None

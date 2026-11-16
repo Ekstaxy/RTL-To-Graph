@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased (2026-11-16)
+Bug fixes only; SPEC and `SPEC_VERSION` unchanged.
+- `fsm_semantic._parse_const`: constant text read from the syntax tree carries the comments in
+  front of the token, and Verilog allows white space between the base and the digits (`1'b 0`,
+  `3'b 01?`). Both ended in `semantic_check: unsupported`, which made x4 reject correct FSMs
+  (wb2axip `axisgfsm.sgstate` now passes as consistent-subset). Two regression tests.
+- `fsm._text`: expression text no longer contains comments. A comment in front of a state constant
+  (`n = // go\n 2'd 1;`) became part of the state name and created a bogus extra state, so the
+  syntactic graph disagreed with the executed one.
+- e9 `clock_domains._inverted`: the line of an instance connection is now looked up in the file
+  of the module that declares the instance. It was looked up in the child's file, which raised
+  `IndexError` on multi-file designs (12 of 29 designs in a run over the third-party corpus) or
+  silently read an unrelated line. `e9_regress.py` gained a two-file case.
+
 ## stage1-spec-v1.7 (2026-10-03)
 - Frontend (found by round-4 annotators, each with a regression test):
   - slang silently turns a whole always block into an InvalidStatement when a branch that is dead

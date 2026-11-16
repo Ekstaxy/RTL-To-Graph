@@ -4,7 +4,7 @@ import networkx as nx
 
 from rtl2d_l1.frontend import build_entity_tables, build_graph, elaborate
 from rtl2d_l1.frontend.fsm_hybrid import extract_fsms_hybrid
-from rtl2d_l1.frontend.fsm_semantic import detect, state_graph
+from rtl2d_l1.frontend.fsm_semantic import _parse_const, detect, state_graph
 
 BINARY = """
 module det(input clk, input rst_n, input x, output y);
@@ -38,6 +38,27 @@ module det(input clk, input rst_n, input x, output y);
   nxt u(.q(h), .x(x), .d(d));
   always @(posedge clk) h <= (!rst_n) ? 3'b001 : d;
   assign y = h[2];
+endmodule
+"""
+
+
+# same machine as BINARY: literals with white space after the base, and comments in front of
+# them (both legal Verilog; seen in wb2axip axisgfsm and picosoc spimemio)
+SPACED = """
+module det(input clk, input rst_n, input x, output y);
+  reg [1:0] s, n;
+  always @(*) begin
+    n = s;
+    case (s)
+      2'd 0: if (x) n = // leave A
+                        2'd 1;
+      2'd 1: n = x ? /* stay on the path */ 2'd 2 : 2'b 00;
+      2'd 2: if (!x) n = 2'b 0_0;
+      default: n = 2'd 0;
+    endcase
+  end
+  always @(posedge clk or negedge rst_n) if (!rst_n) s <= 2'd 0; else s <= n;
+  assign y = (s == 2'd 2);
 endmodule
 """
 
@@ -77,3 +98,29 @@ def test_hybrid_marks_syntactic_consistent_and_adds_semantic_only(tmp_path):
         "S_2",
         "x",
     ) in edges  # A -> B on x (state names from values: 001 -> S_1, 010 -> S_2)
+
+
+def _candidates(tables):
+    return {
+        f"{t.canonical_instance}.{r.name}" for t in tables for r in t.rows if r.fsm_candidate
+    }
+
+
+def test_parse_const_accepts_comments_and_space_after_base():
+    # text as `str(expr.syntax)` returns it: the comments and newlines in front come with it
+    assert _parse_const(" // Clear any errors\n\t\t1'b1") == (1, 1, 1)
+    assert _parse_const("/* note */ 2'b1_0") == (2, 2, 3)
+    # white space between the base and the digits is legal; `?` bits are don't-care
+    assert _parse_const(" 1'b 0") == (0, 1, 1)
+    assert _parse_const("\n\t3'b 01?") == (2, 3, 0b110)
+    assert _parse_const("4 'd 9") == (9, 4, 15)
+
+
+def test_spaced_and_commented_literals_do_not_make_the_check_unsupported(tmp_path):
+    d1, G1, T1 = _graph(tmp_path, "bin", BINARY)
+    d2, G2, T2 = _graph(tmp_path, "sp", SPACED)
+    f2 = extract_fsms_hybrid(d2, G2, T2)
+    assert [getattr(f, "semantic_check", None) for f in f2] == ["consistent"]
+    g1 = state_graph([r for r in detect(d1, G1, _candidates(T1)) if not r.error][0])
+    g2 = state_graph([r for r in detect(d2, G2, _candidates(T2)) if not r.error][0])
+    assert nx.is_isomorphic(g1, g2, node_match=lambda a, b: a["reset"] == b["reset"])
