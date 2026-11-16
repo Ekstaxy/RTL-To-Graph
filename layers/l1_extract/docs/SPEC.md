@@ -2,7 +2,7 @@
 
 | 項目 | 值 |
 |---|---|
-| Spec 版本 | `stage1-spec-v1.7`（v1.7 = 前端修正（無效 always 區塊的 syntax fallback、reset 誤判）+ 重要度 v2；v1.6 = 量化重要度分數 0–100 + `--importance`；v1.5 = 語意 FSM 抽取 + 證據行號 + 多輪選項；v1.4 = `--target` + FSM）；前版 `stage1-spec-v1.3`（2026-10-01；v1.3 = roles-v2 + 前端 reset/FSM 修正；v1.2 = teacher 固定 LOW + Controls；v1.1 = scored slicing） |
+| Spec 版本 | `stage1-spec-v1.8`（v1.8 = FSM 修正（常數前的註解與空白、與 reset 並列的 soft reset、instance 連線行號所屬的檔案）+ 語意探索的 seed 與 hunt；v1.7 = 前端修正（無效 always 區塊的 syntax fallback、reset 誤判）+ 重要度 v2；v1.6 = 量化重要度分數 0–100 + `--importance`；v1.5 = 語意 FSM 抽取 + 證據行號 + 多輪選項；v1.4 = `--target` + FSM）；前版 `stage1-spec-v1.3`（2026-10-01；v1.3 = roles-v2 + 前端 reset/FSM 修正；v1.2 = teacher 固定 LOW + Controls；v1.1 = scored slicing） |
 | Taxonomy 版本 | `roles-v2` |
 | Entity table 版本 | `entities-v1` |
 | Prompt 版本 | 見 `src/rtl2d_l1/llm/prompt.py::PROMPT_VERSION` |
@@ -270,7 +270,7 @@ Target 只決定**要準備哪種圖的資料**；teacher 標註與 work-unit ha
 - states：enum literal、parameter/localparam 名稱，或常數（數值正規化，所以 `2'b0` 和 `2'b00` 是同一個 state）；`'x` 會被濾掉。
 - transitions：`case (state)` 的 item 和 `if (state == X)` 決定來源 state；指派常數給 state 或 next 時記錄目的 state 與路徑上的條件；`c ? A : B` 會展開成兩條。`default:` 只套用到沒列出的 state。
 - 條件化簡：被 parameter 關掉的分支會剪除，`&&`/`||` 裡的常數項會被化簡（slang constant evaluation）。
-- reset state：reset 條件下（第一層、結構判定或名稱判定、結尾 override）賦的值。
+- reset state：reset 條件下（第一層、結構判定或名稱判定、結尾 override）賦的值。條件是「reset 或其他訊號」時（例如 `if (!resetn || softreset)`），該分支賦的值仍是 reset state，其他項另外成為一條從任何 state 出發的轉移（v1.8）。
 - outputs：由 state 驅動的 output port，以及純 state 解碼的內部訊號。從輸入 port 有組合路徑的歸為 Mealy，其餘為 Moore。
 - 不支援（會寫進 warnings）：one-hot 的 `case (1'b1) state[X]` 寫法、算術型的 next state、跨模組的 FSM。
 
@@ -281,11 +281,13 @@ Target 只決定**要準備哪種圖的資料**；teacher 標註與 work-unit ha
 `frontend/fsm_semantic.py` 在 slang AST 上執行 RTL：包括 continuous assign、組合／時序 procedural block、function、for 迴圈、case/casez 和 part-select，並且跨 instance port 求值。
 
 - **reset**：以結構偵測到的 reset 為優先。再加上任何 1-bit 頂層輸入：只要它在某個電位時，不管其他輸入是什麼都會把 state 強制成同一個常數，就視為 reset（例如 `rst ? IDLE : nxt` 這種寫法）。
-- **狀態探索**：從 reset 值開始做 BFS；每個 state 取樣 300 組（隨機值、設計中的所有常數 ±1、全 1）。
+- **狀態探索**：從 reset 值開始做 BFS；每個 state 取樣 300 組（隨機值、設計中的所有常數 ±1、全 1）。v1.8 起另外做兩件事，兩者都只決定取樣什麼，轉移仍然全部來自實際執行：
+  - **seed**：某個 1-bit 訊號被求值 50 次之後才第一次出現某個值時，記下算出它的那些訊號的值，之後在每個 state 重播（其餘訊號重新取樣）。state 暫存器直接讀取的訊號每個 state 重播 16 次，其餘 3 次，最多保留 48 組。
+  - **hunt**：state 暫存器直接讀取的 1-bit 訊號如果始終只出現一種值，單獨對它求值最多 6000 次（比執行一個 cycle 便宜得多），其中一半從既有的 seed 出發。每次分析最多 hunt 8 個訊號。
 - **偵測規則**：語法候選；或者可到達的 state 數 ≥ 3 且是稀疏編碼（少於 2^width）；或者在任一 port 別名上被整值解碼。
 - **hybrid 輸出**：語法 FSM 一律附上 `semantic_check`（consistent / mismatch / unsupported）；語意引擎額外找到的標記為 `semantic-only`，其轉移條件由 ≤ 8 個控制 bit 窮舉後，以 Quine-McCluskey 化簡。
 - **保證**：取樣是 sound 的（列出的每條轉移都確實由 RTL 產生），但不是 complete 的（極罕見的條件可能漏掉）。
-- **驗證**：亂改等價 benchmark 18/18 同構（語法抽取 0/18）；一般 RTL 37/37 consistent。
+- **驗證**：亂改等價 benchmark 18/18 同構（語法抽取 0/18）；一般 RTL 37/37 consistent。v1.8 的 seed 與 hunt：picosoc `spimemio.state` 的 13 個 state 全部到達（先前只到 3 個，因為每個 state 都要等子模組的 `din_ready`，隨機取樣出現的機率約 0.1%）；亂改 benchmark 仍是 18/18；5 個資料集的交叉驗證結果不變。
 
 ### 6d. 證據行號（v1.5，`anchor-v2.1`）
 

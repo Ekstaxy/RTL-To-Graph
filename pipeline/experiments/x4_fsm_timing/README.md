@@ -119,6 +119,13 @@ before they are trusted (open item).
 Done check (2026-10-24): `uv run ruff check .` reports only the 5 pre-existing E501 in the
 untracked `docs/report/gen_flow.py`. `uv run pytest` gives 46 passed, 2 skipped.
 
+### 2026-11-17: file order no longer matters to iverilog
+`sim.py` now runs iverilog with `-u` (one compilation unit per file). slang, which L1 uses, reads
+every file as its own unit, so macros do not leak from one file to the next; iverilog kept them in
+command-line order, and `picosoc.v` stops with `` `error `` when `picorv32.v` was read first. A
+design L1 elaborates therefore failed to compile, and without Verilator installed the run ended
+in `sim: verilator not found`. With `-u` picosoc simulates under iverilog.
+
 ## Conclusion
 Keep. All three proposal stages run end to end without a generative model. Every FSM drawn
 is proven complete by SymbiYosys. Every timing diagram replays from simulation, and every

@@ -9,7 +9,10 @@ a submodule...). This module instead *evaluates* the design:
     signals across instance ports, so hierarchy does not matter;
   * the reset value of a state register is found by asserting each candidate reset level;
   * from the reset value, a BFS over states: for every reached state value, many input/free-register
-    samples (random + every literal constant of the design +/-1) give the next-state values.
+    samples (random + every literal constant of the design +/-1) give the next-state values;
+  * guards that uniform sampling rarely satisfies are found by keeping the signal values behind
+    every one-bit value that shows up late (seeds, replayed in each state) and by evaluating a
+    stuck guard of the state register on its own (hunts). See analyze().
 
 Two equivalent designs therefore produce isomorphic state graphs regardless of how they are written.
 Sampling is sound (every reported transition is produced by the RTL for some value assignment of the
@@ -30,6 +33,38 @@ from .graph import DesignGraph, EdgeType
 
 class Unsupported(Exception):
     pass
+
+
+# analyze(): a one-bit value first seen after _WARMUP evaluations of its signal is rare; up to
+# _MAX_SEEDS of them are kept and replayed in every state (_GUARD_REPLAYS times when the signal
+# is read by the state register itself, else _REPLAYS); a guard stuck at one value gets _HUNT
+# evaluations on its own, for at most _MAX_HUNTS guards
+_WARMUP = 50
+_MAX_SEEDS = 48
+_REPLAYS = 3
+_GUARD_REPLAYS = 16
+_HUNT = 6000
+_MAX_HUNTS = 8
+
+
+class _Reads(dict):
+    """A dict that records the keys looked up in it."""
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.read: set = set()
+
+    def __contains__(self, k):
+        self.read.add(k)
+        return super().__contains__(k)
+
+    def __getitem__(self, k):
+        self.read.add(k)
+        return super().__getitem__(k)
+
+    def get(self, k, default=None):
+        self.read.add(k)
+        return super().get(k, default)
 
 
 _LIT = re.compile(r"^(?:(\d+)\s*)?'(s?)([bodhBODH])\s*([0-9a-fA-FxXzZ?_]+)$")
@@ -817,21 +852,100 @@ def analyze(
             else {}
         )
         seen, frontier = {rv}, [rv]
-        while frontier:
+        pinned = {key, *inactive}
+        # Uniform sampling rarely hits a guard that needs several signals at once (a handshake
+        # with a submodule: `valid && resetn && count == 0`). Two additions, both of which only
+        # choose what to sample; every edge still comes from an executed cycle:
+        #  - seeds: when a one-bit signal shows a value for the first time after it was evaluated
+        #    _WARMUP times, the values of the signals it was computed from are kept and replayed
+        #    in every state, with everything else resampled;
+        #  - hunts: a one-bit signal read by the state register that never showed one of its
+        #    values gets _HUNT evaluations of that signal alone (much cheaper than a cycle), half
+        #    of them starting from a seed, so a guard built on a rare signal is found as well.
+        evals: dict = {}
+        first: set = set()
+        seeds: list[tuple[dict, int]] = []  # (values to pin, replays per state)
+        replayed: dict[int, int] = {}  # explored state -> number of seeds already replayed in it
+        guards = sorted(
+            p
+            for p, et in G.preds(key)
+            if et != EdgeType.CLOCK and p not in pinned and (G.nodes[p].width or 1) == 1
+        )
+        hunted: set = set()
+
+        def learn(env) -> None:
+            new = []
+            for k, v in M.cache.items():
+                if isinstance(v, int) and 0 <= v <= 1:
+                    evals[k] = evals.get(k, 0) + 1
+                    if (k, v) not in first:
+                        first.add((k, v))
+                        if evals[k] > _WARMUP:
+                            new.append((k, v))
+            for k, v in new:
+                if len(seeds) >= _MAX_SEEDS:
+                    return
+                reads = _Reads(env)
+                M.new_cycle(reads)
+                try:
+                    if M.value(k) != v:
+                        continue
+                except Unsupported:
+                    continue
+                seed = {x: env[x] for x in sorted(reads.read) if x in env and x not in pinned}
+                # a guard of the state register decides transitions directly: try it harder
+                reps = _GUARD_REPLAYS if k in guards else _REPLAYS
+                if seed and all(seed != x or reps > r for x, r in seeds):
+                    seeds.append((seed, reps))
+
+        def hunt(g, s) -> None:
+            for i in range(_HUNT):
+                if (g, 0) in first and (g, 1) in first:
+                    return
+                env = dict(seeds[M.rng.randrange(len(seeds))][0]) if seeds and i % 2 else {}
+                env.update({key: s, **inactive})
+                M.new_cycle(env)
+                try:
+                    M.value(g)
+                except Unsupported:
+                    return
+                learn(env)
+
+        def sample(s, env) -> None:
+            n = step(env)
+            res.samples += 1
+            res.edges.add((s, n))
+            if n not in seen:
+                seen.add(n)
+                frontier.append(n)
+            learn(env)
+
+        while frontier and len(seen) <= max_states:
             s = frontier.pop(0)
             for _ in range(samples_per_state):
-                env = {key: s, **inactive}
-                n = step(env)
-                res.samples += 1
-                res.edges.add((s, n))
-                if n not in seen:
-                    seen.add(n)
-                    frontier.append(n)
-                    if len(seen) > max_states:
-                        res.complete = False
-                        res.error = f"more than {max_states} reachable values (not an FSM)"
-                        res.states = sorted(seen)
-                        return res
+                sample(s, {key: s, **inactive})
+            for g in guards:
+                stuck = (g, 0) not in first or (g, 1) not in first
+                tried = g in hunted or len(hunted) >= _MAX_HUNTS
+                if stuck and not tried and evals.get(g, 0) > _WARMUP:
+                    hunted.add(g)
+                    hunt(g, s)
+            replayed[s] = 0
+            todo = True
+            while todo:  # a replay may add a seed, which the earlier states have not tried yet
+                todo = False
+                for t in list(replayed):
+                    while replayed[t] < len(seeds):
+                        seed, reps = seeds[replayed[t]]
+                        replayed[t] += 1
+                        todo = True
+                        for _ in range(reps):
+                            sample(t, {**seed, key: t, **inactive})
+        if len(seen) > max_states:
+            res.complete = False
+            res.error = f"more than {max_states} reachable values (not an FSM)"
+            res.states = sorted(seen)
+            return res
         res.states = sorted(seen)
     except Unsupported as ex:
         res.error = f"unsupported: {ex}"

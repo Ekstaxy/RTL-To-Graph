@@ -1,7 +1,17 @@
 # Changelog
 
-## Unreleased (2026-11-16)
-Bug fixes only; SPEC and `SPEC_VERSION` unchanged.
+## stage1-spec-v1.8 (2026-11-17)
+FSM fixes and a more thorough state exploration. Output schemas are unchanged.
+- `fsm.py` reset state: `if (!resetn || softreset) state <= A;` now gives reset state A. The branch
+  was not seen as a reset because its condition also reads a non-reset signal, so the FSM had no
+  reset state and the hybrid check called it a mismatch. The other terms of the condition become
+  a transition `* -> A`, and only they guard the else branch.
+- `fsm_semantic.analyze` finds guards that uniform sampling rarely satisfies (SPEC 6c: seeds and
+  hunts). picosoc `spimemio.state` waits for `din_ready` from a submodule in ten of its states, a
+  value about 0.1% of random samples produce: 13 of 13 states are reached now (3 before) and the
+  check says consistent. e3 rewrite benchmark still 18/18; the cross-check over examples, RTLLM,
+  VerilogEval, picorv32 and opensource is unchanged (46 consistent, 4 consistent-subset, 2 mismatch
+  (both picorv32_wb, as before), 1 semantic-only) and takes 21% longer.
 - `fsm_semantic._parse_const`: constant text read from the syntax tree carries the comments in
   front of the token, and Verilog allows white space between the base and the digits (`1'b 0`,
   `3'b 01?`). Both ended in `semantic_check: unsupported`, which made x4 reject correct FSMs

@@ -124,3 +124,74 @@ def test_spaced_and_commented_literals_do_not_make_the_check_unsupported(tmp_pat
     g1 = state_graph([r for r in detect(d1, G1, _candidates(T1)) if not r.error][0])
     g2 = state_graph([r for r in detect(d2, G2, _candidates(T2)) if not r.error][0])
     assert nx.is_isomorphic(g1, g2, node_match=lambda a, b: a["reset"] == b["reset"])
+
+
+# BINARY with a soft reset next to the hard one, as in picosoc spimemio: `if (!resetn || softreset)`
+SOFT_RESET = """
+module det(input clk, input rst_n, input go, input x, output y);
+  localparam A = 2'd0, B = 2'd1, C = 2'd2;
+  reg [1:0] s;
+  reg sr;
+  always @(posedge clk) if (!rst_n) sr <= 1'b1; else sr <= go;
+  always @(posedge clk) begin
+    if (!rst_n || sr) s <= A;
+    else case (s)
+      A: if (x) s <= B;
+      B: s <= x ? C : A;
+      C: if (!x) s <= A;
+      default: s <= A;
+    endcase
+  end
+  assign y = (s == C);
+endmodule
+"""
+
+
+def test_soft_reset_next_to_the_reset_still_gives_the_reset_state(tmp_path):
+    d, G, T = _graph(tmp_path, "soft", SOFT_RESET)
+    f = extract_fsms_hybrid(d, G, T)
+    assert len(f) == 1
+    # asserting rst_n alone takes the branch, so A is the reset state...
+    assert f[0].reset_state == "A"
+    # ...and `sr` makes the same assignment an ordinary transition from every state
+    assert ("*", "A", "sr") in {(t.src, t.dst, t.cond) for t in f[0].transitions}
+    assert f[0].semantic_check == "consistent"
+
+
+# Six states that each wait for a handshake from a submodule. `rdy` needs fourteen independent
+# registers at once (well under 0.1% of uniform samples), so plain sampling stays in S0.
+_Q = [f"q{i}" for i in range(14)]
+HANDSHAKE = f"""
+module hs(input clk, input [13:0] a, output rdy);
+  reg {", ".join(_Q)};
+  always @(posedge clk) {{{", ".join(_Q)}}} <= a;
+  assign rdy = {" & ".join(_Q)};
+endmodule
+module det(input clk, input rst_n, input [13:0] a, output y);
+  localparam S0 = 3'd0, S1 = 3'd1, S2 = 3'd2, S3 = 3'd3, S4 = 3'd4, S5 = 3'd5;
+  reg [2:0] s;
+  wire rdy;
+  hs u(.clk(clk), .a(a), .rdy(rdy));
+  always @(posedge clk or negedge rst_n)
+    if (!rst_n) s <= S0;
+    else case (s)
+      S0: if (rdy) s <= S1;
+      S1: if (rdy) s <= S2;
+      S2: if (rdy) s <= S3;
+      S3: if (rdy) s <= S4;
+      S4: if (rdy) s <= S5;
+      S5: if (rdy) s <= S0;
+      default: s <= S0;
+    endcase
+  assign y = (s == S5);
+endmodule
+"""
+
+
+def test_rare_guard_from_a_submodule_is_found_and_reused_in_every_state(tmp_path):
+    d, G, T = _graph(tmp_path, "hs", HANDSHAKE)
+    r = [x for x in detect(d, G, _candidates(T)) if not x.error]
+    assert len(r) == 1
+    assert r[0].states == [0, 1, 2, 3, 4, 5]
+    f = extract_fsms_hybrid(d, G, T)
+    assert [getattr(x, "semantic_check", None) for x in f] == ["consistent"]

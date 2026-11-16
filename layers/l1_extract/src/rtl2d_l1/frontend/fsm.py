@@ -361,6 +361,22 @@ class _Extractor:
                 )
         return None, _text(e)
 
+    def _soft_reset_terms(self, e) -> str | None:
+        """For `r || a || b` where `r` reads only reset signals and the other terms do not: the
+        text of `a || b`. None for any other condition."""
+        terms, todo = [], [e]
+        while todo:
+            x = _strip(todo.pop())
+            if isinstance(x, ast.BinaryExpression) and str(x.op).split(".")[-1] == "LogicalOr":
+                todo += [x.right, x.left]
+            else:
+                terms.append(x)
+        rest = [t for t in terms if not ((rd := self.reads(t)) and rd <= self.resets)]
+        if not rest or len(rest) == len(terms):
+            return None
+        texts = [_text(t) for t in rest]
+        return texts[0] if len(texts) == 1 else "(" + " || ".join(texts) + ")"
+
     # ------------------------------------------------------------------ walk
     def stmt(self, st, src: frozenset | None, conds: tuple, in_reset: bool):
         if st is None:
@@ -382,9 +398,17 @@ class _Extractor:
                 return self.stmt(st.ifFalse, src, conds, in_reset)
             rd = self.reads(c)
             st_val = self._state_test(c)
+            soft = self._soft_reset_terms(c) if st_val is None else None
             if rd and rd <= self.resets:
                 self.stmt(st.ifTrue, src, conds, True)
                 self.stmt(st.ifFalse, src, conds, in_reset)
+            elif soft:
+                # `if (!rst || soft)`: the reset alone takes this branch, so what it assigns is the
+                # reset state; the other terms make the same assignment an ordinary transition,
+                # and only they guard the else branch
+                self.stmt(st.ifTrue, src, conds, True)
+                self.stmt(st.ifTrue, src, conds + (soft,), in_reset)
+                self.stmt(st.ifFalse, src, conds + (_neg(soft),), in_reset)
             elif st_val is not None:
                 self.stmt(st.ifTrue, frozenset({st_val}), conds, in_reset)
                 self.stmt(st.ifFalse, src, conds + (_neg(_text(c)),), in_reset)

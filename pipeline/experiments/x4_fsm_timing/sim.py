@@ -233,7 +233,10 @@ def run_iverilog(entry: dict, srcs: list[Path], top: str, out_dir: Path, log: li
     if not exe or not vvp:
         return {"ok": False, "error": "iverilog/vvp not found", "cmd": [], "warnings": []}
     files = [str(_resolve(f)) for f in entry["files"]]
-    c1 = [exe, "-g2012", "-o", "a.out", "-s", top, *_flags(entry, "-I", "-D"),
+    # -u: one compilation unit per file, as slang (the L1 front end) reads the same list. Without
+    # it macros leak from file to file in command-line order (picosoc.v `error`s when picorv32.v
+    # was read first), so a design L1 elaborates would not compile here.
+    c1 = [exe, "-g2012", "-u", "-o", "a.out", "-s", top, *_flags(entry, "-I", "-D"),
           *[str(s) for s in srcs], *files]
     r1 = t.run_capped(c1, cwd=out_dir, timeout=180, mem="25%")
     o1 = _step(log, c1, r1)
