@@ -105,4 +105,4 @@ class H(BaseHTTPRequestHandler):
 if __name__ == "__main__":
     port = int(A.CFG.get("port", 8765))
     print(f"RTL-To-Graph agent demo: http://localhost:{port}   (API key {'found' if A.load_key() else 'NOT SET: fill agent_demo/.env'})", flush=True)
-    ThreadingHTTPServer(("0.0.0.0", port), H).serve_forever()
+    ThreadingHTTPServer((A.CFG.get("host", "0.0.0.0"), port), H).serve_forever()

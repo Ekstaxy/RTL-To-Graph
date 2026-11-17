@@ -21,7 +21,10 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 CFG = json.loads((HERE / "config.json").read_text(encoding="utf-8"))
-X = lambda p: Path(os.path.expanduser(p))  # noqa: E731
+def X(p):
+    """A configured path: ~ expanded, relative paths taken from this folder."""
+    q = Path(os.path.expanduser(p))
+    return q if q.is_absolute() else (HERE / q).resolve()
 X4_ROOT, BLOCK_ROOT = X(CFG["x4_root"]), X(CFG["block_root"])
 X5_DIR = (HERE / CFG["x5_dir"]).resolve()
 X5_PY, PATH_EXTRA = X(CFG["x5_python"]), X(CFG["path_extra"])
@@ -127,8 +130,11 @@ def analyze(design):
     fsms = []
     for f in res.get("fsm") or []:
         g = {}
-        if f.get("json") and (X4_ROOT / f["json"]).exists():
-            g = json.loads((X4_ROOT / f["json"]).read_text())
+        gp = X4_ROOT / f["json"] if f.get("json") else None
+        if gp is not None and not gp.exists():  # a bundled copy keeps only the design's own folder
+            gp = p / "fsm" / Path(f["json"]).name
+        if gp is not None and gp.exists():
+            g = json.loads(gp.read_text())
         fsms.append({"id": f.get("id"), "state_signal": g.get("state_reg"), "instance": g.get("instance"), "states": len(g.get("states", [])),
                      "x4_status": f.get("status"), "state_names": [s.get("name") for s in g.get("states", [])][:24]})
     return {"design": d["name"], "top": d["top"], "files": files, "clocks": sig.get("clocks", []), "resets": sig.get("resets", []),
@@ -228,7 +234,7 @@ def _x5_summary(cdir):
     audit = None
     aud = cdir.parent.parent / "audit.json"
     if aud.exists():
-        row = next((r for r in json.loads(aud.read_text())["rows"] if Path(r["dir"]).resolve() == cdir.resolve()), None)
+        row = next((r for r in json.loads(aud.read_text())["rows"] if r.get("id") == cert.get("id") and r.get("design") == cert.get("design")), None)
         if row:
             audit = {k: v["status"] for k, v in row["items"].items()}
     nm = {}
@@ -320,6 +326,8 @@ def timing(design, interface=None, max_diagrams=4, session="s"):
         # what the drawing really contains, so the agent describes the data and not what it imagines
         content = {}
         tj = X4_ROOT / t["json"] if t.get("json") and not Path(t["json"]).is_absolute() else Path(t.get("json") or "")
+        if t.get("json") and not tj.is_file():
+            tj = p / "timing" / Path(t["json"]).name
         if tj.is_file():
             w = json.loads(tj.read_text())
             lanes = []

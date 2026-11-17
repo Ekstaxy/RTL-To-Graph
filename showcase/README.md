@@ -20,4 +20,4 @@ zip 裡也附了 x5 的程式和交接文件 `x5_proven_graph/HANDOFF.md`；同�
 同一個資料夾還有：
 
 - `RTL-To-Graph_Agent_成果簡報.pptx`：階段成果簡報，用 AI agent 一句話產生三種圖的完整操作歷程、和開源工具的比較、目前限制。
-- agent demo 的程式在 `pipeline/experiments/x6_agent_demo/`，需要 WSL、專案的管線環境與 Anthropic API key，見該資料夾 README。
+- agent demo：雙擊 `pipeline/experiments/x6_agent_demo/start_agent.bat`（macOS 或 Linux 用 `start_agent.sh`），第一次會打開 `.env` 讓你貼上 Anthropic API key，之後就會打開 http://localhost:8765 。只需要 Python 3.10 以上，語料庫 30 個設計的結果已經打包在裡面。
