@@ -1,0 +1,18 @@
+# RTL-To-Graph 成果頁
+
+打開方式：Windows 雙擊 `start.bat`；macOS / Linux / WSL 執行 `sh start.sh`。
+
+腳本會把 `RTL-To-Graph-showcase.zip` 解壓到旁邊的 `RTL-To-Graph-showcase/`，然後用預設瀏覽器打開
+`proof.html`。之後 `git pull` 拿到新版 zip 時，再執行一次就會重新解壓。整個頁面都是本機靜態檔，
+不需要網路，也不需要架伺服器。
+
+三個頁面互相有連結：
+
+| 頁面 | 內容 |
+|---|---|
+| `proof.html` | x5 可證明狀態圖：23 張圖、10 項驗證全部通過的稽核結果 |
+| `all.html` | 30 個設計的方塊圖、狀態圖、時序圖，逐張評分 |
+| `index.html` | 與五個開源專案官方圖的並排比較，28 張卡片 |
+
+zip 裡也附了 x5 的程式和交接文件 `x5_proven_graph/HANDOFF.md`；同一份程式也放在
+`pipeline/experiments/x5_proven_graph/`，可以直接在 git 裡看。
