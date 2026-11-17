@@ -76,6 +76,44 @@ module t6(input clk, input rst, input go, output [1:0] s);
 endmodule
 """
 
+T8 = """
+module t8(input clk, input rst, input go, output reg [1:0] st);
+  // u keeps its power-up value forever. u ^ u is 0 in every circuit, but a simulator that computes
+  // with x sees x ^ x = x, takes the else branch, and shows 0 -> 1, which no hardware can do.
+  reg u;
+  always @(posedge clk) u <= u;
+  always @(posedge clk)
+    if (rst) st <= 0;
+    else if (st == 0 && go) begin if ((u ^ u) == 1'b0) st <= 2; else st <= 1; end
+    else st <= 0;
+endmodule
+"""
+T9 = """
+module t9(input clk, input rst, input go, output reg [1:0] st);
+  // d is a don't-care every cycle. The model lets it be anything, so 0 -> 1 and 0 -> 2 are both
+  // possible; the simulator takes it as 0 and can only show 0 -> 2.
+  reg d;
+  always @(posedge clk) d <= 1'bx;
+  always @(posedge clk)
+    if (rst) st <= 0;
+    else if (st == 0 && go) st <= d ? 2'd1 : 2'd2;
+    else st <= 0;
+endmodule
+"""
+T10 = """
+module t10_sub(input clk, output reg q, output reg r);
+  always @(posedge clk) begin q <= q; r <= r; end  // keep their power-up values; the parent sees them only as wires
+endmodule
+module t10(input clk, input rst, input go, output reg [1:0] st);
+  wire u;
+  wire w;  // r drives nothing the observation needs: the model drops it, the simulator still has it
+  t10_sub s(.clk(clk), .q(u), .r(w));
+  always @(posedge clk)
+    if (rst) st <= 0;
+    else if (st == 0 && go) begin if ((u ^ u) == 1'b0) st <= 2; else st <= 1; end
+    else st <= 0;
+endmodule
+"""
 T7 = """
 module t7(input clk, input rst, input soft_rst, input go, output reg s);
   // two inputs look like a reset; only rst is the reset, soft_rst is a functional input
@@ -114,14 +152,34 @@ def main(work):
 
     # 1. A counter observed alone leaves edges open; observed with its state machine it is exact.
     s1 = build(work, "t1", T1)
-    a = P.prove(s1, ["cnt"], work / "t1" / "alone", **kw)
+    a = P.prove(s1, ["cnt"], work / "t1" / "alone", pdr=False, **kw)
+    a2 = P.prove(s1, ["cnt"], work / "t1" / "alone_pdr", **kw)
     b = P.prove(s1, ["cnt"], work / "t1" / "aux", aux=["st"], **kw)
     pairs = lambda c: sorted((e["src"], e["dst"]) for e in c["edges"])  # noqa: E731
     real = [(0, 0), (0, 6), (1, 0), (2, 1), (3, 2), (4, 3), (5, 4), (6, 5)]
     und = sorted((e["src"], e["dst"]) for e in a["edges"] if e["status"] == "undetermined")
-    expect("t1 alone: complete, the eight real transitions witnessed, the wrap 0->7 left undetermined",
+    expect("t1 alone, without PDR: complete, the eight real transitions witnessed, the wrap 0->7 left undetermined",
            a["completeness"]["status"] == "proven" and (0, 7) in und and set(und) <= {(0, 7), (7, 6), (7, 7)} and tally(a).get("witnessed") == 8,
            (pairs(a), tally(a)))
+    inv = a2["completeness"].get("invariant") or {}
+    expect("t1 alone, with PDR: exactly the eight real transitions, the rest proven impossible, invariant carried",
+           pairs(a2) == real and tally(a2) == {"witnessed": 8} and len(inv.get("blocked", [])) > 0 and (0, 7) in {tuple(x) for x in inv.get("removed_edges", [])},
+           (pairs(a2), tally(a2), a2["completeness"].get("pdr")))
+    c2 = C.check(s1, a2, work / "t1" / "chk_pdr")
+    expect("t1 alone, with PDR: independent checker accepts, induction with the invariant", c2["ok"] and "invariant" in c2["completeness"].get("engine", ""), c2)
+    if inv.get("blocked"):
+        m = copy.deepcopy(a2)
+        m["completeness"]["invariant"]["blocked"] = []
+        # with the invariant one induction step is enough; without it, two are not
+        expect("t1 alone, with PDR: at induction length 2 the invariant is what makes the proof go through",
+               C.check(s1, a2, work / "t1" / "chk_pdr_a1", maxsteps=2)["ok"] and not C.check(s1, m, work / "t1" / "chk_pdr_a", maxsteps=2)["ok"])
+        m = copy.deepcopy(a2)
+        m["edges"] = [e for e in m["edges"] if (e["src"], e["dst"]) != (3, 2)]
+        expect("t1 alone, with PDR: a real edge removed, invariant kept: rejected", not C.check(s1, m, work / "t1" / "chk_pdr_b")["ok"])
+        m = copy.deepcopy(a2)
+        m["completeness"]["invariant"]["blocked"].append([])  # the empty cube matches every state: a false invariant
+        r = C.check(s1, m, work / "t1" / "chk_pdr_c")
+        expect("t1 alone, with PDR: a false invariant makes the proof fail, it never passes", not r["ok"] and r["completeness"]["result"] == "failed", r["completeness"])
     expect("t1 with st: exactly the eight real transitions, all witnessed", pairs(b) == real and tally(b) == {"witnessed": 8}, (pairs(b), tally(b)))
     expect("t1 with st: no trace needs a power-up state", not any(e.get("needs_power_up") for e in b["edges"]))
     cb = C.check(s1, b, work / "t1" / "chk")
@@ -149,6 +207,9 @@ def main(work):
     r = C.check(s1, m, work / "t1" / "chk_g")
     expect("t1: edge removed with every trace through it: witnesses pass, the induction rejects",
            not r["ok"] and r["witnesses"]["result"] == "ok" and r["completeness"]["result"] == "failed", (r["witnesses"]["result"], r["completeness"]))
+    expect("t1: that lie is refuted by a concrete counterexample the simulator replays, taking 2->1",
+           (r["completeness"].get("refutation") or {}).get("result") == "refuted" and r["completeness"]["refutation"].get("pair") == [2, 1],
+           r["completeness"].get("refutation"))
     ca = C.check(s1, a, work / "t1" / "chk_alone")
     expect("t1 alone: independent checker accepts the looser certificate too", ca["ok"], ca)
     m = copy.deepcopy(b)
@@ -212,7 +273,46 @@ def main(work):
     expect("t7: with no reset given, every reset-like input is held as a reset and none is left free",
            c["assumptions"].get("reset_like_inputs_left_free") == [] and len(c["assumptions"]["reset"]) == 2, c["assumptions"]["reset"])
 
-    # 8. The attack program end to end on a small certificate: it must finish, and every false
+    # 8. Unknown values: the simulator must not show a transition only its x rules produce.
+    s8 = build(work, "t8", T8)
+    c = P.prove(s8, ["st"], work / "t8" / "p", **kw)
+    expect("t8: complete and not refuted: two-valued simulation agrees with the model", c["completeness"]["status"] == "proven"
+           and not c["completeness"].get("conflicts"), c["completeness"])
+    expect("t8: 0->2 witnessed, 0->1 absent", tally(c).get("witnessed", 0) >= 2 and (0, 1) not in pairs(c) and (0, 2) in pairs(c), pairs(c))
+    r = C.check(s8, c, work / "t8" / "chk")
+    expect("t8: independent checker accepts, replay is two-valued", r["ok"] and str(r["witnesses"].get("mode", "")).startswith("two-valued"), r["witnesses"])
+    m = copy.deepcopy(c)
+    e02 = next(e for e in m["edges"] if (e["src"], e["dst"]) == (0, 2))
+    m["edges"].append(dict(e02, dst=1))
+    m["states"] = m["states"] + [{"value": 1, "status": "witnessed", "entry": False}] if all(x["value"] != 1 for x in m["states"]) else m["states"]
+    r = C.check(s8, m, work / "t8" / "chk_x", skip_proof_when_witnesses_fail=True)
+    expect("t8: forged 0->1, which only x rules would show, is rejected", not r["ok"] and [0, 1] in r["witnesses"]["unconfirmed"], r["witnesses"])
+    m = copy.deepcopy(c)
+    m["widths"]["regs"] = {}
+    r = C.check(s8, m, work / "t8" / "chk_w")
+    expect("t8: a certificate that lists no registers still gets every register defined by the checker", r["ok"] and r["witnesses"]["state"]["registers"] >= 2, r["witnesses"])
+
+    s9 = build(work, "t9", T9)
+    c = P.prove(s9, ["st"], work / "t9" / "p", **kw)
+    st9 = {(e["src"], e["dst"]): e["status"] for e in c["edges"]}
+    expect("t9: an x written by the RTL: 0->2 witnessed, 0->1 only in the model, not proven absent, not drawn as fact",
+           st9.get((0, 2)) == "witnessed" and st9.get((0, 1)) in ("undetermined", "model-witness") and c["completeness"]["status"] == "proven", st9)
+    expect("t9: independent checker accepts", C.check(s9, c, work / "t9" / "chk")["ok"])
+
+    # 10. The same through a submodule: the register is s.q, the parent only has the wire u. Filling
+    # u is impossible (a wire); the register itself must be found and made defined.
+    s10 = build(work, "t10", T10)
+    c = P.prove(s10, ["st"], work / "t10" / "p", **kw)
+    expect("t10: register behind a submodule port: complete, not refuted, 0->2 witnessed, 0->1 absent",
+           c["completeness"]["status"] == "proven" and (0, 2) in pairs(c) and (0, 1) not in pairs(c) and tally(c).get("witnessed", 0) == len(c["edges"]),
+           (c["completeness"].get("status"), pairs(c), tally(c)))
+    r = C.check(s10, c, work / "t10" / "chk")
+    expect("t10: independent checker accepts", r["ok"], r["witnesses"])
+    m10 = P.Model(s10, work / "t10" / "model")
+    expect("t10: the simulator's fill list has every register by its own hierarchical name, also one the model drops",
+           {"s.q", "s.r", "st"} <= set(m10.fill_regs or {}) and "s.r" not in m10.regs, (sorted(m10.regs), sorted(m10.fill_regs or {})))
+
+    # 9. The attack program end to end on a small certificate: it must finish, and every false
     # certificate must be turned down with a verdict.
     import attack as A
     d8 = work / "t1" / "cert_aux"

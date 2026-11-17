@@ -97,6 +97,12 @@ def tampered(cert, rng, n):
         if free:
             del ins[rng.choice(free)]  # an input left floating: the simulator would run on unknown values
             out.append((f"input dropped from the trace of {e['src']}->{e['dst']}", m))
+    inv = cert["completeness"].get("invariant")
+    if inv and inv.get("blocked"):
+        # an invariant is a hint for the induction; a false one must make the proof fail, never pass
+        m = copy.deepcopy(cert)
+        m["completeness"]["invariant"]["blocked"].append([])
+        out.append(("invariant made false: a cube every state matches", m))
     return out
 
 

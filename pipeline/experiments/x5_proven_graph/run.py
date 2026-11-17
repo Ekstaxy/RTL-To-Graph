@@ -59,7 +59,7 @@ def one(a):
         cert = P.prove(spec, c["observe"], work, budget=budget, **c.get("options", {}))
         cert["id"], cert["source"], cert["note"] = c["id"], c["source"], c.get("note")
         here = Path(__file__).parent  # which prover made this certificate: the audit compares it with the code on disk
-        cert["engine"]["code"] = {f: hashlib.sha256((here / f).read_bytes()).hexdigest()[:16] for f in ("prove.py", "run.py")}
+        cert["engine"]["code"] = {f: hashlib.sha256((here / f).read_bytes()).hexdigest()[:16] for f in ("prove.py", "pdr.py", "run.py")}
         e = cert["edges"]
         row.update(status=cert["completeness"]["status"], k=cert["completeness"]["k"], depth=cert["completeness"]["depth"],
                    stopped=cert["completeness"]["stopped"], states=len(cert["states"]), edges=len(e),

@@ -102,7 +102,7 @@ def code_version():
     of the certificate it is about, so a result can never be counted for another certificate or
     another version of the code."""
     here = Path(__file__).parent
-    return {f: sha(here / f) for f in ("prove.py", "check.py", "guards.py", "attack.py", "post.py", "run.py")}
+    return {f: sha(here / f) for f in ("prove.py", "pdr.py", "check.py", "guards.py", "attack.py", "post.py", "run.py")}
 
 
 def one(a):

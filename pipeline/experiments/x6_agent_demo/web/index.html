@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RTL-To-Graph Agent</title>
+<style>
+:root{--bg:#f4f5f7;--panel:#fff;--ink:#15181d;--mute:#5d6572;--line:#dfe3e8;--acc:#1d4ed8;--ok:#047857;--warn:#b45309;--bad:#b91c1c;--soft:#eef2ff}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 "Microsoft JhengHei","Noto Sans TC","PingFang TC",system-ui,sans-serif;display:flex;flex-direction:column}
+header{display:flex;align-items:center;gap:14px;padding:12px 22px;background:#0f1216;color:#fff}
+header h1{font-size:21px;margin:0;font-weight:700;letter-spacing:.2px}
+header .sub{color:#aab1bc;font-size:14px}
+.pill{margin-left:auto;border:1px solid #39404a;border-radius:999px;padding:3px 12px;font-size:13px;color:#d7dbe0}
+.pill b{color:#fff}
+.pill.bad{border-color:#7f1d1d;background:#450a0a;color:#fecaca}
+main{flex:1;display:grid;grid-template-columns:minmax(380px,42%) 1fr;min-height:0}
+#left{display:flex;flex-direction:column;border-right:1px solid var(--line);background:var(--panel);min-height:0}
+#log{flex:1;overflow:auto;padding:18px 20px 8px}
+.msg{margin:0 0 14px}
+.user{background:var(--acc);color:#fff;border-radius:14px 14px 4px 14px;padding:10px 14px;margin-left:12%;font-size:16.5px}
+.think{color:var(--mute);font-size:14px;border-left:3px solid var(--line);padding:2px 0 2px 10px;white-space:pre-wrap}
+.think summary{cursor:pointer;color:var(--mute)}
+.step{border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:14.5px;background:#fafbfc}
+.step .n{display:inline-block;min-width:22px;height:22px;border-radius:50%;background:var(--ink);color:#fff;text-align:center;font-size:12.5px;line-height:22px;margin-right:6px}
+.step .tool{font-weight:700}
+.step code{font-size:13px;background:#eef0f3;border-radius:4px;padding:0 5px}
+.step .res{color:var(--mute);margin-top:3px}
+.step.ok .res::before{content:"✓ ";color:var(--ok);font-weight:700}
+.step.no .res{color:var(--bad)}
+.step.run .res::before{content:"⋯ 執行中";color:var(--warn)}
+.answer{font-size:16.5px}
+.answer table{border-collapse:collapse;margin:.5em 0;font-size:15px}.answer th,.answer td{border:1px solid var(--line);padding:4px 8px;text-align:left;vertical-align:top}.answer th{background:#f3f4f6}
+.answer p{margin:.45em 0}.answer ul{margin:.3em 0;padding-left:1.3em}.answer code{font-size:14px;background:#eef0f3;border-radius:4px;padding:0 5px}
+.err{color:var(--bad);font-weight:700}
+.meta{color:var(--mute);font-size:12.5px;margin:-8px 0 12px}
+#ex{display:flex;flex-wrap:wrap;gap:8px;padding:8px 20px 0}
+#ex button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 12px;font:inherit;font-size:14px;cursor:pointer;color:var(--ink);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#ex.off{display:none}
+#ex button:hover{border-color:var(--acc);color:var(--acc)}
+form{display:flex;gap:10px;padding:12px 20px 16px}
+textarea{flex:1;resize:none;height:62px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;font-size:16px}
+textarea:focus{outline:2px solid #bfdbfe;border-color:var(--acc)}
+form button{border:0;background:var(--acc);color:#fff;border-radius:10px;padding:0 20px;font:inherit;font-weight:700;font-size:16px;cursor:pointer}
+form button:disabled{background:#9ca3af;cursor:wait}
+#right{overflow:auto;padding:18px 22px}
+#right h2{font-size:15px;color:var(--mute);font-weight:400;margin:0 0 12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;margin:0 0 18px;overflow:hidden}
+.card header{background:#fafbfc;color:var(--ink);padding:10px 16px;border-bottom:1px solid var(--line);gap:10px}
+.card h3{margin:0;font-size:17.5px}
+.kind{font-size:12.5px;border-radius:999px;padding:1px 10px;color:#fff;white-space:nowrap}
+.k-block{background:#1d4ed8}.k-fsm{background:#047857}.k-timing{background:#7c3aed}
+.card figure{margin:0;padding:12px;background:#fff;text-align:center}
+.card img{max-width:100%;max-height:520px;cursor:zoom-in}
+.card .cap{padding:0 16px 14px;color:var(--mute);font-size:14.5px}
+.empty{color:var(--mute);border:2px dashed var(--line);border-radius:14px;padding:60px 20px;text-align:center;font-size:16px}
+#lb{position:fixed;inset:0;background:rgba(12,14,18,.9);display:none;align-items:center;justify-content:center;z-index:9;cursor:zoom-out;padding:24px}
+#lb.on{display:flex}#lb img{max-width:100%;max-height:100%;background:#fff;border-radius:8px}
+#banner{display:none;background:#fef3c7;color:#78350f;padding:10px 22px;font-size:15px}
+#banner.on{display:block}
+@media (max-width:900px){main{grid-template-columns:1fr}#left{max-height:60vh}}
+</style>
+</head>
+<body>
+<header><h1>RTL-To-Graph Agent</h1><span class="sub">用一句話要圖：架構圖、狀態機、時序圖，每張都由專案的管線畫出並檢查</span><span id="st" class="pill">連線中…</span></header>
+<div id="banner">尚未設定 API key：打開 <code>agent_demo/.env</code>，把 <code>ANTHROPIC_API_KEY=</code> 後面填上你的 key，存檔後重新執行啟動腳本。</div>
+<main>
+<section id="left">
+  <div id="log"><div class="meta">輸入想看的設計與圖，例如下面幾個範例。agent 會先讀懂設計，再決定要畫什麼、看哪些訊號。</div></div>
+  <div id="ex"></div>
+  <form id="f"><textarea id="q" placeholder="例如：幫我畫 picosoc 的架構圖，要放論文用的"></textarea><button id="go">送出</button></form>
+</section>
+<section id="right"><h2>產出的圖</h2><div id="arts"><div class="empty">圖會出現在這裡</div></div></section>
+</main>
+<div id="lb"><img alt=""></div>
+<script>
+const EX = [
+  "幫我畫 picosoc 的架構圖，要放論文用的版本，並說明各模組的角色",
+  "spimemio 這個 SPI flash 控制器的狀態機怎麼運作？畫出來並解釋每個狀態",
+  "UART 接收器 uart_rx：我想看資料一個位元一個位元進來的時序圖",
+  "picorv32 CPU 的主狀態機，順便告訴我哪些轉移是不可能發生的",
+];
+const TOOLWORD = {list_designs:"列出設計", analyze_design:"分析設計語意", read_source:"讀原始碼", draw_block:"畫架構圖", draw_fsm:"畫狀態機（證明）", draw_timing:"畫時序圖"};
+const KIND = {block:["架構圖","k-block"], fsm:["狀態機","k-fsm"], timing:["時序圖","k-timing"]};
+const QS = new URLSearchParams(location.search);
+let sid = QS.get("session") || sessionStorage.getItem("sid") || Math.random().toString(36).slice(2, 12);
+try { sessionStorage.setItem("sid", sid); } catch (e) {}
+let since = 0, steps = 0, busy = false, firstArt = true;
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function md(t) {
+  const lines = esc(t).split(/\n/); let out = "", inList = false, inTab = false;
+  for (let l of lines) {
+    l = l.replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/`([^`]+)`/g, "<code>$1</code>");
+    if (/^\s*\|.*\|\s*$/.test(l)) {
+      if (/^\s*\|[\s:|-]+\|\s*$/.test(l)) continue;
+      const cells = l.trim().slice(1, -1).split("|").map(c => c.trim());
+      if (!inTab) { out += "<table><tr>" + cells.map(c => "<th>" + c + "</th>").join("") + "</tr>"; inTab = true; }
+      else out += "<tr>" + cells.map(c => "<td>" + c + "</td>").join("") + "</tr>";
+      continue;
+    }
+    if (inTab) { out += "</table>"; inTab = false; }
+    if (/^\s*[-*・]\s+/.test(l)) { if (!inList) { out += "<ul>"; inList = true; } out += "<li>" + l.replace(/^\s*[-*・]\s+/, "") + "</li>"; continue; }
+    if (inList) { out += "</ul>"; inList = false; }
+    if (/^#{1,4}\s/.test(l)) out += "<p><b>" + l.replace(/^#{1,4}\s/, "") + "</b></p>"; else if (l.trim()) out += "<p>" + l + "</p>";
+  }
+  return out + (inList ? "</ul>" : "") + (inTab ? "</table>" : "");
+}
+function add(html, cls) { const d = document.createElement("div"); d.className = "msg " + (cls || ""); d.innerHTML = html; $("#log").appendChild(d); if (QS.get("scroll") !== "top") $("#log").scrollTop = 1e9; return d; }
+function args(a) { return Object.entries(a || {}).map(([k, v]) => `${esc(k)}=<code>${esc(typeof v === "string" ? v : JSON.stringify(v))}</code>`).join(" "); }
+const pending = {};
+function show(e) {
+  if (e.type === "user") { add(esc(e.text), "user"); $("#ex").classList.add("off"); }
+  else if (e.type === "thinking") add(`<details class="think"><summary>agent 的思路</summary>${esc(e.text)}</details>`);
+  else if (e.type === "text") add(md(e.text), "answer");
+  else if (e.type === "tool") { steps++; pending[e.id] = add(`<div class="step run"><span class="n">${steps}</span><span class="tool">${esc(TOOLWORD[e.name] || e.name)}</span> ${args(e.input)}<div class="res"></div></div>`); }
+  else if (e.type === "tool_done") { const d = pending[e.id]; if (d) { const s = d.querySelector(".step"); s.classList.remove("run"); s.classList.add(e.ok ? "ok" : "no"); s.querySelector(".res").textContent = (e.brief || "") + `（${e.seconds} 秒）`; } }
+  else if (e.type === "artifact") art(e);
+  else if (e.type === "usage") add(`第 ${e.round} 輪：${esc(e.model)}，${e.seconds} 秒，輸入 ${e.input_tokens} / 輸出 ${e.output_tokens} tokens`, "meta");
+  else if (e.type === "error") add(esc(e.text), "err");
+}
+function art(a) {
+  if (firstArt) { $("#arts").innerHTML = ""; firstArt = false; }
+  const [w, c] = KIND[a.kind] || [a.kind, ""];
+  const d = document.createElement("article"); d.className = "card";
+  d.innerHTML = `<header><span class="kind ${c}">${w}</span><h3>${esc(a.title)}</h3></header><figure><img src="${esc(a.file)}" alt="${esc(a.title)}"></figure><div class="cap">${esc(a.caption)}</div>`;
+  d.querySelector("img").onclick = ev => { $("#lb img").src = ev.target.src; $("#lb").classList.add("on"); };
+  $("#arts").prepend(d);
+}
+$("#lb").onclick = () => $("#lb").classList.remove("on");
+async function poll() {
+  try {
+    const r = await (await fetch(`/api/events?session=${sid}&since=${since}`)).json();
+    r.events.forEach(show); since = r.next; busy = r.busy;
+    $("#go").disabled = busy; $("#go").textContent = busy ? "處理中" : "送出";
+  } catch (e) {}
+  setTimeout(poll, busy ? 600 : 1500);
+}
+async function send(text) {
+  if (!text.trim() || busy) return;
+  const r = await fetch("/api/chat", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({session: sid, prompt: text})});
+  const j = await r.json(); if (!r.ok) { add(esc(j.error || "送出失敗"), "err"); return; }
+  busy = true; $("#q").value = ""; $("#ex").classList.add("off");
+}
+$("#f").onsubmit = ev => { ev.preventDefault(); send($("#q").value); };
+$("#q").addEventListener("keydown", ev => { if (ev.key === "Enter" && !ev.shiftKey) { ev.preventDefault(); send($("#q").value); } });
+EX.forEach(t => { const b = document.createElement("button"); b.type = "button"; b.textContent = t; b.onclick = () => { $("#q").value = t; $("#q").focus(); }; $("#ex").appendChild(b); });
+fetch("/api/status").then(r => r.json()).then(s => {
+  $("#st").innerHTML = s.key ? `模型 <b>${esc(s.model)}</b>・effort ${esc(s.effort)}` : "API key 未設定";
+  if (!s.key) { $("#st").classList.add("bad"); $("#banner").classList.add("on"); }
+});
+poll();
+</script>
+</body>
+</html>

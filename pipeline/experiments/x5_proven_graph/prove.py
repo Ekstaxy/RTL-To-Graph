@@ -202,6 +202,10 @@ class Model:
         # files read after it. The simulator must read them in the order the model was built from.
         self.source_order = "as listed" if order == self.files else "top module's file first"
         self.files = list(order)
+        # what the simulator must make defined at power-up and watch: every register and memory under
+        # its own hierarchical name (see hier_state); without the list, the model's names are used
+        self.fill_regs, self.fill_mems = hier_state(f"read_verilog -sv {' '.join(_defs(self.spec))} {' '.join(order)}\n" + cut, self.top,
+                                                    self.work / "hier", timeout=timeout)
         cnt = lambda n: int(re.findall(r"(\d+) objects", (self.work / n).read_text())[-1])  # noqa: E731
         if cnt("latch.txt"):
             raise Refuse("latches in the design")
@@ -228,18 +232,22 @@ class Model:
             raise Refuse(f"clock {self.clock} is not a top-level input")
         self.regs = {k: v for k, v in self.regs.items() if not k.startswith("$") and k in self.wires}
         # Small memories without initial contents: their power-up contents are part of a trace.
-        self.mems = {}
+        self.mems, smt_mems = {}, {}
         for nm, ab, w, js in re.findall(r"^; yosys-smt2-memory (\S+) (\d+) (\d+) \d+ \d+ \w+\n; yosys-smt2-witness (\{.*\})$", self.text, re.M):
             try:
                 info = json.loads(js)
             except ValueError:
                 continue
             size = int(info.get("size", 0))
+            if not nm.startswith("$") and 0 < size:
+                smt_mems[nm] = {"width": int(w), "size": size}
             if (not nm.startswith("$") and 0 < size <= 256 and size <= 2 ** int(ab)
                     and info.get("uninitialized") == [{"offset": 0, "width": size * int(w)}]):
                 self.mems[nm] = {"abits": int(ab), "width": int(w), "size": size}
         if sum(v["size"] for v in self.mems.values()) > 1024:
             self.mems = {}
+        if self.fill_mems is None:
+            self.fill_mems = smt_mems
         # Other names of a register's net. After flatten the model may know a register by the name of
         # a wire it drives; the simulator can only be told a value under the register's own name.
         body = dict(re.findall(r"^\(define-fun \|" + re.escape(self.name) + r"_n ([^|]+)\| \(\(state \|[^|]+\|\)\) (?:Bool|\(_ BitVec \d+\)) (.+)\)$", self.text, re.M))
@@ -603,6 +611,71 @@ def _ident(n):
 IVERILOG = ["iverilog", "-g2012", "-s", "x5_tb"]
 
 
+FF_CELLS = {"$dff", "$adff", "$dffe", "$adffe", "$sdff", "$sdffe", "$sdffce", "$dffsr", "$dffsre", "$aldff", "$aldffe", "$ff"}
+
+
+def hier_state(prefix, top, work, timeout=600):
+    """Every register and memory under the hierarchical name the simulator knows it by.
+    The flattened model names a register after a net it drives, which in the simulator may be a
+    wire of the parent (an output port of a submodule); a value cannot be put on a wire, and the
+    register inside stays unknown. Here the design is elaborated without flattening and each module's
+    own registers are listed under their instance path. prefix: the Yosys lines that read the files
+    and cut the top. -> (registers {path: width}, memories {path: {size, width}}), or (None, None)."""
+    work = Path(work)
+    work.mkdir(parents=True, exist_ok=True)
+    (work / "hier.ys").write_text(prefix + f"prep -top {top}\nwrite_json hier.json\n")
+    rc, _ = sh([YOSYS, "-q", "-s", "hier.ys"], cwd=work, timeout=timeout)
+    if rc != 0 or not (work / "hier.json").exists():
+        return None, None
+    mods = json.loads((work / "hier.json").read_text())["modules"]
+    num = lambda v: int(v, 2) if isinstance(v, str) else int(v)  # noqa: E731
+    regs, mems = {}, {}
+
+    def walk(name, path, depth):
+        mod = mods.get(name)
+        if mod is None or depth > 24:
+            return
+        q = {b for c in mod["cells"].values() if c["type"] in FF_CELLS for b in c["connections"].get("Q", []) if isinstance(b, int)}
+        for n, d in mod["netnames"].items():
+            if not d.get("hide_name") and not n.startswith("$") and d["bits"] and all(isinstance(b, int) and b in q for b in d["bits"]):
+                regs[path + n] = len(d["bits"])
+        for c in mod["cells"].values():
+            if c["type"] in ("$mem", "$mem_v2"):
+                mid = str(c["parameters"]["MEMID"]).lstrip("\\")
+                if not mid.startswith("$") and num(c["parameters"].get("OFFSET", 0)) == 0:
+                    mems[path + mid] = {"size": num(c["parameters"]["SIZE"]), "width": num(c["parameters"]["WIDTH"])}
+        for cn, c in mod["cells"].items():
+            if c["type"] in mods and not cn.startswith("$"):
+                walk(c["type"], path + cn.lstrip("\\") + ".", depth + 1)
+
+    walk(top, "", 0)
+    return {n: w for n, w in regs.items() if not n.startswith("x5_mon.")}, {n: d for n, d in mems.items() if not n.startswith("x5_mon.")}
+
+
+_XLIT = re.compile(r"(\d+\s*)?'(\s*[sS]?[bBoOhH]\s*)([0-9a-fA-FxXzZ_?]+)")
+
+
+def _x_as_zero(text):
+    """An x the RTL writes (`'bx`, `{W{1'bx}}`) is a don't-care: Yosys lets it be any value, and so do
+    the assumptions. The simulator would carry it as x and decide branches on it by its own rules.
+    For the simulator it becomes 0, one of the values allowed, so the run stays two-valued. Comments
+    are kept as they are, and a file with `casex` is left alone, where x in a case item means 'any'."""
+    if re.search(r"\bcasex\b", text):
+        return text
+
+    def code(t):
+        t = _XLIT.sub(lambda x: (x.group(1) or "") + "'" + x.group(2) + re.sub("[xX]", "0", x.group(3)), t)
+        return re.sub(r"(?<![\w'])'[xX]\b", "'0", t)  # SystemVerilog's unsized '{x}
+
+    out, pos = [], 0
+    for m in re.finditer(r"//[^\n]*|/\*.*?\*/|\"(?:\\.|[^\"\\])*\"", text, re.S):  # comments and strings stay
+        out.append(code(text[pos:m.start()]))
+        out.append(m.group(0))
+        pos = m.end()
+    out.append(code(text[pos:]))
+    return "".join(out)
+
+
 def sim_files(m, work):
     """Sources for the simulator, in the configuration Yosys synthesizes: the same file order
     (m.files), SYNTHESIS and YOSYS defined as Yosys defines them, and the simulator's own predefined
@@ -612,10 +685,11 @@ def sim_files(m, work):
     d = Path(work) / "simsrc"
     for i, f in enumerate(m.files):
         text = Path(f).read_text(errors="replace")
-        if "__ICARUS__" in text:
+        new = _x_as_zero(text.replace("__ICARUS__", "x5_not_icarus"))
+        if new != text:
             d.mkdir(parents=True, exist_ok=True)
             p = d / f"{i}_{Path(f).name}"
-            p.write_text(text.replace("__ICARUS__", "x5_not_icarus"))
+            p.write_text(new)
             out.append(str(p))
             changed = True
         else:
@@ -654,6 +728,38 @@ def _tb_head(kern):
     return L, "{" + ", ".join("dut." + n for n in obs) + "}", win, idle, act
 
 
+def _fill(m):
+    """Two-valued simulation. Icarus computes with unknown values by rules no hardware follows (an `if`
+    on x takes the else branch), so a pair it shows while state is unknown is not an execution of any
+    circuit. These testbench lines, run once at power-up after the RTL's own initial values and a
+    trace's own power-up state, set every bit still unknown in a named register or small memory to 0.
+    A real chip powers up in some state, and the assumptions allow any, so the run that follows is
+    an execution of the hardware. -> (declarations, lines); each line names one register or word and
+    may be dropped by the compiler (`_compile`) if the simulator does not know the name."""
+    regs = [(n, w) for n, w in (getattr(m, "fill_regs", None) or m.regs).items() if _ident(n)]
+    mems = [(n, d) for n, d in (getattr(m, "fill_mems", None) or getattr(m, "mems", {})).items() if _ident(n)]
+    mw = max([w for _, w in regs] + [d["width"] for _, d in mems] + [1])
+    dec = [f"  reg [{mw - 1}:0] x5_v;", "  integer x5_b, x5_xs, x5_xm;"]
+    one = lambda lhs, w: (f"    x5_v = {lhs}; for (x5_b = 0; x5_b < {w}; x5_b = x5_b + 1) x5_v[x5_b] = (x5_v[x5_b] === 1'b1); "  # noqa: E731
+                          f"{lhs} = x5_v[{w - 1}:0];")
+    out = [one("dut." + n, w) for n, w in regs]
+    out += [one(f"dut.{n}[{a}]", d["width"]) for n, d in mems for a in range(d["size"])]
+    return dec, out
+
+
+def _xcheck(m, every_word=True):
+    """Lines that set x5_xs when a named register holds an unknown bit (x5_xm for a memory word).
+    With every register and small memory defined at power-up and every input driven, an unknown bit
+    can only come from an x written in the RTL, or from state the model does not name."""
+    out = [f"      if ((^dut.{n}) === 1'bx) x5_xs = 1;" for n in (getattr(m, "fill_regs", None) or m.regs) if _ident(n)]
+    if every_word:
+        # words of memories up to 256 words, every cycle; a larger memory is defined at power-up and
+        # can only become unknown through an x the RTL writes, which reaches a register to be seen
+        out += [f"      if ((^dut.{n}[{a}]) === 1'bx) x5_xm = 1;" for n, d in (getattr(m, "fill_mems", None) or getattr(m, "mems", {})).items()
+                if _ident(n) and d["size"] <= 256 for a in range(d["size"])]
+    return out
+
+
 def _pack(kern, tr, t):
     v = 0
     for n in kern.ins:
@@ -661,8 +767,9 @@ def _pack(kern, tr, t):
     return v
 
 
-def replay(kern, traces, work, deposit=True, timeout=900):
-    """-> per trace: number of leading frames (from the first frame after reset) the simulator agrees on."""
+def replay(kern, traces, work, deposit=True, timeout=900, two_valued=True):
+    """-> per trace: number of leading frames (from the first frame after reset) the simulator agrees
+    on with every named register and small memory holding defined bits (see _fill)."""
     m, work = kern.m, Path(work).resolve()
     work.mkdir(parents=True, exist_ok=True)
     head = _tb_head(kern)
@@ -673,9 +780,10 @@ def replay(kern, traces, work, deposit=True, timeout=900):
     for tid, tr in enumerate(traces):
         (work / f"tr{tid}.hex").write_text("".join(f"{_pack(kern, tr, t):0{digits}x}\n" for t in range(len(tr["obs"]))))
     nmax = max(len(tr["obs"]) for tr in traces)
-    L += [f"  reg [{max(win, 1) - 1}:0] vec [0:{nmax - 1}];", "  integer x5_t, x5_n, x5_i;", "  reg x5_bad = 0;", "  initial begin",
-          '    if (!$value$plusargs("t=%d", x5_t)) x5_t = 0;', "    x5_n = 0;", "    #1;  // the RTL's own initial values are in place",
-          "    case (x5_t)"]
+    dec, fill = _fill(m)
+    L += dec + [f"  reg [{max(win, 1) - 1}:0] vec [0:{nmax - 1}];", "  integer x5_t, x5_n, x5_i;", "  reg x5_bad = 0;", "  initial begin",
+                '    if (!$value$plusargs("t=%d", x5_t)) x5_t = 0;', "    x5_n = 0; x5_xs = 0; x5_xm = 0;",
+                "    #1;  // the RTL's own initial values are in place", "    case (x5_t)"]
     soft = []
     for tid, tr in enumerate(traces):
         L.append(f'    {tid}: begin x5_n = {len(tr["obs"])}; $readmemh("tr{tid}.hex", vec);')
@@ -683,8 +791,17 @@ def replay(kern, traces, work, deposit=True, timeout=900):
             soft.append(len(L))
             L.append(ln)
         L.append("    end")
-    L += ["    endcase", '    if (x5_bad) $display("X5BAD;");', "    for (x5_i = 0; x5_i < x5_n; x5_i = x5_i + 1) begin", "      cur = vec[x5_i];",
-          f'      #4 $display("X5O%0d:%b;", x5_i, {cat}); #1 x5_clk = {act}; #5 x5_clk = {idle};', "    end", "    $finish;", "  end", "endmodule"]
+    L.append("    endcase")
+    if two_valued:
+        for ln in fill:  # after the trace's own power-up values: only bits still unknown become 0
+            soft.append(len(L))
+            L.append(ln)
+    L += ['    if (x5_bad) $display("X5BAD;");', "    for (x5_i = 0; x5_i < x5_n; x5_i = x5_i + 1) begin", "      cur = vec[x5_i];", "      #4;"]
+    if two_valued:
+        for ln in _xcheck(m):
+            soft.append(len(L))
+            L.append(ln)
+    L += [f'      $display("X5O%0d:%b:%0d;", x5_i, {cat}, x5_xs + x5_xm); #1 x5_clk = {act}; #5 x5_clk = {idle};', "    end", "    $finish;", "  end", "endmodule"]
     ok, dropped, log = _compile(m, work, work / "x5_tb.sv", L, soft, "tb.vvp", timeout)
     (work / "iverilog.log").write_text(log)
     if not ok:
@@ -692,14 +809,15 @@ def replay(kern, traces, work, deposit=True, timeout=900):
     out = []
     for tid, tr in enumerate(traces):
         rc, log = sh(["vvp", "-n", "tb.vvp", f"+t={tid}"], cwd=work, timeout=timeout)
-        got = dict(re.findall(r"X5O(\d+):([01xzXZ]+);", log))
+        got = {t: (o, int(x)) for t, o, x in re.findall(r"X5O(\d+):([01xzXZ]+):(\d+);", log)}
         n = 0
         for t in range(kern.R, len(tr["obs"]) if "X5BAD;" not in log else 0):
-            if tr["obs"][t] is None or got.get(str(t)) != format(tr["obs"][t], f"0{kern.W}b"):
+            # a frame counts only while no register or memory word holds an unknown bit
+            if tr["obs"][t] is None or got.get(str(t)) != (format(tr["obs"][t], f"0{kern.W}b"), 0):
                 break
             n += 1
         out.append(n)
-    how = "deposit" if soft else "no-deposit"
+    how = ("two-valued, " if two_valued else "") + ("deposit" if soft else "no-deposit")
     if dropped:
         how += f", {len(dropped)} of {len(soft)} values not accepted by the simulator"
     return out, how
@@ -758,11 +876,20 @@ class Driver:
         self.digits = (max(win, 1) + 3) // 4
         self.regs = [n for n in m.regs if _ident(n)]
         self.mems = [n for n in m.mems if _ident(n)]
-        L += [f"  reg [{max(win, 1) - 1}:0] vec [0:{cap - 1}];", "  reg [31:0] x5_sn [0:255];", "  integer x5_n, x5_i, x5_p, x5_j;", "  initial begin",
-              '    if (!$value$plusargs("n=%d", x5_n)) x5_n = 0;', '    $readmemh("in.hex", vec); $readmemh("sn.hex", x5_sn);', "    x5_p = 0;", "    #1;",
-              "    for (x5_i = 0; x5_i < x5_n; x5_i = x5_i + 1) begin", "      cur = vec[x5_i];", f'      #4 $display("X5O%0d:%b;", x5_i, {cat});',
-              "      if (x5_i == x5_sn[x5_p]) begin", "        x5_p = x5_p + 1;", '        $write("X5R%0d:", x5_i);']
+        dec, fill = _fill(m)
+        L += dec + [f"  reg [{max(win, 1) - 1}:0] vec [0:{cap - 1}];", "  reg [31:0] x5_sn [0:255];", "  integer x5_n, x5_i, x5_p, x5_j;", "  initial begin",
+                    '    if (!$value$plusargs("n=%d", x5_n)) x5_n = 0;', '    $readmemh("in.hex", vec); $readmemh("sn.hex", x5_sn);',
+                    "    x5_p = 0; x5_xs = 0; x5_xm = 0;", "    #1;"]
         soft = []
+        for ln in fill:
+            soft.append(len(L))
+            L.append(ln)
+        L += ["    for (x5_i = 0; x5_i < x5_n; x5_i = x5_i + 1) begin", "      cur = vec[x5_i];", "      #4;"]
+        for ln in _xcheck(m):
+            soft.append(len(L))
+            L.append(ln)
+        L += [f'      $display("X5O%0d:%b:%0d;", x5_i, {cat}, x5_xs + x5_xm);',
+              "      if (x5_i == x5_sn[x5_p]) begin", "        x5_p = x5_p + 1;", '        $write("X5R%0d:", x5_i);']
         for j, n in enumerate(self.regs):
             soft.append(len(L))
             L.append(f'        $write("%0d=%h,", {j}, dut.{n});')
@@ -782,7 +909,8 @@ class Driver:
         (self.work / "in.hex").write_text("".join(f"{_pack(k, tr, t):0{self.digits}x}\n" for t in range(n)))
         (self.work / "sn.hex").write_text("".join(f"{c:x}\n" for c in sorted(snaps)[:255]) + "ffffffff\n")
         rc, log = sh(["vvp", "-n", "drv.vvp", f"+n={n}"], cwd=self.work, timeout=self.timeout)
-        obs = dict(re.findall(r"X5O(\d+):([01xzXZ]+);", log))
+        # an observation after the first unknown bit in any register is not an execution: left out
+        obs = {t: o for t, o, x in re.findall(r"X5O(\d+):([01xzXZ]+):(\d+);", log) if x == "0"}
         known = lambda h: not set(h.lower()) & {"x", "z"}  # noqa: E731
         dumps = {}
         for c, body in re.findall(r"X5R(\d+):([^;]*);", log):
@@ -903,9 +1031,15 @@ def simulate(kern, work, runs=12, cycles=3000, seed=1, timeout=900, stim=None):
     L, cat, win, idle, act = head
     ni = len(kern.ins)
     rports = {r["port"]: r for r in kern.rst}
-    L += ["  integer x5_n, x5_i, x5_s;", f"  reg [{max(3 * ni, 1) - 1}:0] x5_m;", "  reg [31:0] x5_a, x5_b;", "  initial begin",
-          '    if (!$value$plusargs("s=%d", x5_s)) x5_s = 1;', '    if (!$value$plusargs("n=%d", x5_n)) x5_n = 100;',
-          '    if (!$value$plusargs("m=%h", x5_m)) x5_m = 0;', "    cur = 0;", "    for (x5_i = 0; x5_i < x5_n; x5_i = x5_i + 1) begin"]
+    dec, fill = _fill(m)
+    L += dec + ["  integer x5_n, x5_i, x5_s;", f"  reg [{max(3 * ni, 1) - 1}:0] x5_m;", "  reg [31:0] x5_a;", "  initial begin",
+                '    if (!$value$plusargs("s=%d", x5_s)) x5_s = 1;', '    if (!$value$plusargs("n=%d", x5_n)) x5_n = 100;',
+                '    if (!$value$plusargs("m=%h", x5_m)) x5_m = 0;', "    cur = 0; x5_xs = 0; x5_xm = 0;", "    #1;"]
+    soft = []
+    for ln in fill:
+        soft.append(len(L))
+        L.append(ln)
+    L.append("    for (x5_i = 0; x5_i < x5_n; x5_i = x5_i + 1) begin")
     lo = win
     for jn, n in enumerate(kern.ins):
         w = m.inputs[n]
@@ -930,13 +1064,18 @@ def simulate(kern, work, runs=12, cycles=3000, seed=1, timeout=900, stim=None):
         L.append(f"        6: begin x5_a = $random(x5_s); if (x5_a[5:0] == 0) {sl} = {rnd()}; end")
         L.append(f"        7: begin x5_a = $random(x5_s); if (x5_a[8:0] == 0 || x5_i <= {kern.R}) {sl} = {rnd()}; end")
         L.append("      endcase")
-    L += [f'      #4 $display("X5S%b:%h;", {cat}, cur); #1 x5_clk = {act}; #5 x5_clk = {idle};', "    end", "    $finish;", "  end", "endmodule"]
-    tb = work / "x5_sim.sv"
-    tb.write_text(chr(10).join(L))
-    files, extra, _ = sim_files(m, work)
-    rc, log = sh(IVERILOG + ["-o", "sim.vvp"] + extra + _defs(m.spec) + [str(tb)] + files, cwd=work, timeout=timeout)
+    L.append("      #4;")
+    for ln in _xcheck(m, every_word=False):  # memory words are looked at once, after the run
+        soft.append(len(L))
+        L.append(ln)
+    L += [f'      $display("X5S%b:%h:%0d;", {cat}, cur, x5_xs); #1 x5_clk = {act}; #5 x5_clk = {idle};', "    end"]
+    for ln in [x.replace("      ", "    ", 1) for x in _xcheck(m) if "x5_xm" in x]:
+        soft.append(len(L))
+        L.append(ln)
+    L += ['    $display("X5M%0d;", x5_xm);', "    $finish;", "  end", "endmodule"]
+    ok, _, log = _compile(m, work, work / "x5_sim.sv", L, soft, "sim.vvp", timeout)
     (work / "iverilog.log").write_text(log)
-    if rc != 0:
+    if not ok:
         return []
     rng, out = random.Random(seed), []
     for r in range(runs):
@@ -946,8 +1085,11 @@ def simulate(kern, work, runs=12, cycles=3000, seed=1, timeout=900, stim=None):
                 mv = (mv & ~(7 << (3 * jn))) | (int(stim[n]) << (3 * jn))
         rc, log = sh(["vvp", "-n", "sim.vvp", f"+s={seed * 1000 + r}", f"+n={cycles}", f"+m={mv:x}"], cwd=work, timeout=timeout)
         obs, ins = [], {n: [] for n in kern.ins}
-        for o, c in re.findall(r"X5S([01xzXZ]+):([0-9a-fA-FxzXZ]+);", log):
-            obs.append(int(o, 2) if set(o) <= {"0", "1"} else None)
+        # after the first unknown bit in a register the run says nothing; a memory word left unknown
+        # at the end (written from an x in the RTL) discards the whole run
+        mem_x = "X5M0;" not in log
+        for o, c, x in re.findall(r"X5S([01xzXZ]+):([0-9a-fA-FxzXZ]+):(\d+);", log):
+            obs.append(int(o, 2) if set(o) <= {"0", "1"} and x == "0" and not mem_x else None)
             cv = int(c, 16) if not set(c.lower()) & {"x", "z"} else 0
             sh_ = win
             for n in kern.ins:
@@ -1046,13 +1188,24 @@ def project(cert, n_keep):
 
 def prove(spec, obs, work, depth=40, shallow=12, max_states=64, budget=300, ks=(1, 2, 4), grow=24, reset_cycles=8,
           check_ms=60000, windows=(16, 48, 128), max_len=700, inject=None, do_replay=True, sim_runs=32, sim_cycles=4000, stim=None,
-          relay=True, relay_share=0.6, aux=()):
+          relay=True, relay_share=0.6, aux=(), pdr=True, pdr_seconds=300):
     """aux: more signals of the same module, observed together with `obs` while proving and dropped
     from the result (see project()). Observing a counter together with the state machine that
-    drives it is what lets the closure show which counter values and steps can never occur."""
+    drives it is what lets the closure show which counter values and steps can never occur.
+    pdr: edges still without a witness are handed to PDR (pdr.py); those it proves impossible leave
+    the certificate, which then carries the invariant for the checker to verify."""
     cert = _prove(spec, list(obs) + list(aux), work, depth, shallow, max_states, budget, ks, grow, reset_cycles, check_ms, windows, max_len,
                   inject, do_replay, sim_runs, sim_cycles, stim, relay, relay_share)
-    return project(cert, len(obs)) if aux else cert
+    cert = project(cert, len(obs)) if aux else cert
+    if pdr and cert["completeness"]["status"] == "proven" and any(e["status"] == "undetermined" for e in cert["edges"]):
+        import pdr as PD  # noqa: PLC0415  (imports check.py, which imports this module)
+        t0 = time.time()
+        cert, rep = PD.close(spec, cert, Path(work).resolve() / "pdr", seconds=pdr_seconds)
+        cert["completeness"]["pdr"] = {"undetermined_before": rep["undetermined"], "proven_impossible": len(rep["removed"]),
+                                       "runs": rep["runs"], "self_check": rep.get("self_check"), "dropped": rep.get("dropped"),
+                                       "seconds": round(time.time() - t0, 1)}
+        cert["engine"]["seconds"] = round(cert["engine"]["seconds"] + time.time() - t0, 1)
+    return cert
 
 
 def _prove(spec, obs, work, depth, shallow, max_states, budget, ks, grow, reset_cycles, check_ms, windows, max_len, inject, do_replay,
@@ -1215,7 +1368,8 @@ def _prove(spec, obs, work, depth, shallow, max_states, budget, ks, grow, reset_
                         # the design is assumed to be reset at random and started another way than intended
                         "reset_like_inputs_left_free": sorted(n for n in k.ins if model.inputs[n] == 1 and RESET_RE.search(n)
                                                               and n not in {r["port"] for r in k.rst}),
-                        "inputs": "unconstrained", "unknown_values": "any value", "power_up": "RTL initial values, otherwise any value",
+                        "inputs": "unconstrained", "unknown_values": "any value; in simulation an x the RTL writes is 0, and every power-up value the RTL leaves open is 0 unless the trace gives one",
+                        "power_up": "RTL initial values, otherwise any value",
                         "configuration": "as synthesized: SYNTHESIS and YOSYS defined, simulator-only macros not taken",
                         "source_order": model.source_order, "macros": "carried from file to file, as in Yosys"},
         "states": states, "edges": edges, "completeness": comp,

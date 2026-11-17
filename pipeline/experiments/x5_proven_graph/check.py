@@ -40,12 +40,33 @@ def support(cert):
     return ob, W, [tuple(p) for p in s["pairs"]]
 
 
-def monitor(cert, W, pairs):
+MON_REGS = ("c", "prev", "pv", "viol")  # the monitor's own registers an invariant may name
+
+
+def lemma_signals(inv):
+    """The design signals an invariant names, in the order they are wired to the monitor's `lem`
+    input (the first is the most significant part), with their widths as the certificate states them.
+    A wrong width makes Yosys refuse the wiring, which is no verdict; it can never pass a proof."""
+    used = sorted({n for cube in inv["blocked"] for where, n, _, _ in cube if where == "design"})
+    return [(n, int(inv["signals"][n])) for n in used]
+
+
+def monitor(cert, W, pairs, inv=None, bad=False):
+    """inv: an inductive invariant offered by the certificate, as cubes no reachable state matches
+    after the first cycle. It is a hint, not a claim: `ok` then also requires the invariant, and the
+    induction must prove both. A wrong or useless invariant can only make the proof fail."""
     R = cert["assumptions"]["reset_cycles"]
     by = {}
     for a, b in pairs:
         by.setdefault(a, []).append(b)
-    L = [f"module x5_mon(input x5_clk, (* keep *) input [{W - 1}:0] obs, input rst_act, (* keep *) output ok);",
+    sigs = lemma_signals(inv) if inv else []
+    nlem = sum(w for _, w in sigs)
+    ports = f"input x5_clk, (* keep *) input [{W - 1}:0] obs, input rst_act, (* keep *) output ok"
+    if sigs:
+        ports += f", (* keep *) input [{nlem - 1}:0] lem"
+    if bad:
+        ports += ", (* keep *) output bad"
+    L = [f"module x5_mon({ports});",
          f"  reg [15:0] c = 0; reg viol = 0; reg pv = 0; reg [{W - 1}:0] prev = 0; reg pair;",
          f"  wire inr = c < {R};",
          "  wire v = viol | (inr ? !rst_act : rst_act);" if cert["assumptions"]["reset"] else "  wire v = 1'b0;",
@@ -54,18 +75,39 @@ def monitor(cert, W, pairs):
          "  always @* begin", "    pair = 1'b0;", "    case (prev)"]
     for a, bs in sorted(by.items()):
         L.append(f"      {W}'d{a}: pair = " + " | ".join(f"(obs == {W}'d{b})" for b in sorted(set(bs))) + ";")
-    L += ["      default: pair = 1'b0;", "    endcase", "  end", "  assign ok = v | !pv | inr | pair;", "endmodule"]
+    L += ["      default: pair = 1'b0;", "    endcase", "  end"]
+    if inv:
+        off, low = {}, nlem
+        for n, w in sigs:
+            low -= w
+            off[n] = (low, w)
+        def lit(where, n, b, v):
+            if where == "design" and not 0 <= b < off[n][1]:
+                raise ValueError(f"bit {b} of {n} is outside its stated width")
+            return f"(lem[{off[n][0] + b}] == 1'b{v})" if where == "design" else f"({n}[{b}] == 1'b{v})"
+        cubes = [" & ".join(lit(*x) for x in cube) or "1'b1" for cube in inv["blocked"]]
+        L += ["  reg x5_first = 1;",
+              f"  always @({'negedge' if cert['assumptions']['clock']['edge'] == 'negedge' else 'posedge'} x5_clk) x5_first <= 0;",
+              # in the first cycle only the monitor's own initial values are known; afterwards no blocked cube holds
+              f"  wire inv_ok = x5_first ? (c == 0 && !viol && !pv && prev == 0) : !({' | '.join(f'({x})' for x in cubes) or '1' + chr(39) + 'b0'});",
+              "  assign ok = (v | !pv | inr | pair) & inv_ok;"]
+    else:
+        L += ["  assign ok = v | !pv | inr | pair;"]
+    if bad:
+        L += ["  assign bad = !ok;"]
+    L += ["endmodule"]
     return "\n".join(L)
 
 
-def completeness(spec, cert, work, timeout=900, maxsteps=10):
-    work = Path(work).resolve()
-    work.mkdir(parents=True, exist_ok=True)
+def _sig(n, b=None):
+    return chr(92) + n + ("" if b is None else f" [{b}]")
+
+
+def design(spec, cert, work, sob, sW, pairs, inv=None, bad=False):
+    """The design with the monitor wired in, as Yosys reads it for a proof: one script prefix per source
+    order to try, each ending with the flattened, synchronous, memory-free netlist of module `top`.
+    -> (prefixes, top). The prover's PDR builds its AIGER from exactly this netlist."""
     top, A = spec["top"], cert["assumptions"]
-    sup = support(cert)
-    if sup is None:
-        return {"result": "failed", "engine": "projection", "why": "the supporting edge set does not project into the certificate's edges"}
-    sob, sW, pairs = sup
     files = [str(f) for f in spec["files"]]
     incs = list(spec.get("include_dirs") or []) + sorted({str(Path(f).parent) for f in files})
     spec = dict(spec, include_dirs=incs)
@@ -74,26 +116,49 @@ def completeness(spec, cert, work, timeout=900, maxsteps=10):
     files = P.usable_files(spec, files, work / "files")[0]
     srcs = P.inject_sources(files, work, {cert["scope"]["module"]: inst})
     scoped = bool(cert["scope"]["instance"])
-    (work / "x5_mon.v").write_text(monitor(cert, sW, pairs))  # the injected instance needs its module to elaborate
+    (work / "x5_mon.v").write_text(monitor(cert, sW, pairs, inv=inv, bad=bad))  # the injected instance needs its module to elaborate
     derived = P.resolve_scope(dict(spec, scope=cert["scope"]["instance"]), srcs + [str(work / "x5_mon.v")], work / "scope")[0]
     cut = f"hierarchy -check -top {top}\n" + (f"hierarchy -top {derived}\nrename -top x5_scope\n" if scoped else "")
     design_top, top = top, ("x5_scope" if scoped else top)
-    obs = ",".join(chr(92) + o["signal"] for o in sob)  # first token is the MSB
+    wire = f"connect -set {chr(92)}x5_mon.obs " + ",".join(_sig(o["signal"]) for o in sob) + "\n"  # first token is the MSB
+    if inv and lemma_signals(inv):
+        wire += f"connect -set {chr(92)}x5_mon.lem " + ",".join(_sig(n) for n, _ in lemma_signals(inv)) + "\n"
+    # only the order the certificate states; certificates older than that field get the two orders tried in turn
+    orders = [ordered(cert, srcs, design_top)] if cert["assumptions"].get("source_order") else [srcs, P.top_first(srcs, design_top)]
+    return [(f"read_verilog -sv {' '.join(P._defs(spec))} {' '.join(order)} x5_mon.v\n" + cut +
+             f"prep -flatten -top {top}\ncd {top}\n{wire}cd ..\n"
+             "async2sync\ndffunmap\nmemory_map\nsetundef -undriven -anyseq\nsetundef -anyseq\nopt_clean\n") for order in orders], top
+
+
+def completeness(spec, cert, work, timeout=900, maxsteps=16):
+    work = Path(work).resolve()
+    work.mkdir(parents=True, exist_ok=True)
+    A = cert["assumptions"]
+    inv = cert["completeness"].get("invariant")
+    if inv:
+        # An invariant is stated over the certificate's own observation: the edges are proved directly.
+        if not isinstance(inv.get("blocked"), list) or not isinstance(inv.get("signals"), dict) or any(
+                not (isinstance(x, list) and len(x) == 4 and x[0] in ("design", "monitor") and isinstance(x[2], int) and x[3] in (0, 1)
+                     and (x[1] in inv["signals"] if x[0] == "design" else x[1] in MON_REGS) and re.fullmatch(r"[A-Za-z_][\w$.\[\]]*", str(x[1])))
+                for cube in inv["blocked"] for x in cube):
+            return {"result": "failed", "engine": "invariant", "why": "malformed invariant"}
+        sob, sW, pairs = cert["observation"], cert["width"], [(e["src"], e["dst"]) for e in cert["edges"]]
+    else:
+        sup = support(cert)
+        if sup is None:
+            return {"result": "failed", "engine": "projection", "why": "the supporting edge set does not project into the certificate's edges"}
+        sob, sW, pairs = sup
+    prefixes, top = design(spec, cert, work, sob, sW, pairs, inv=inv)
     proven = cert["completeness"]["status"] == "proven"
     depth = A["reset_cycles"] + cert["completeness"]["depth"] + 1
     goal = (f"sat -tempinduct -prove x5_mon.ok 1 -maxsteps {maxsteps} -timeout {timeout}" if proven
             else f"sat -seq {depth} -prove x5_mon.ok 1 -timeout {timeout}")
     log = ""
-    # only the order the certificate states; certificates older than that field get the two orders tried in turn
-    orders = [ordered(cert, srcs, design_top)] if cert["assumptions"].get("source_order") else [srcs, P.top_first(srcs, design_top)]
-    for order in orders:
+    for pre in prefixes:
         # Cone of influence: the design's outputs stop being ports, so `opt_clean` removes every cell
         # that feeds neither the monitor (kept) nor anything it depends on, a FIFO's data words say.
         # Logic outside the fan-in of `ok` cannot change `ok`, so the proof is about the same thing.
-        ys = (f"read_verilog -sv {' '.join(P._defs(spec))} {' '.join(order)} x5_mon.v\n" + cut +
-              f"prep -flatten -top {top}\ncd {top}\nconnect -set {chr(92)}x5_mon.obs {obs}\ncd ..\n"
-              "async2sync\ndffunmap\nmemory_map\nsetundef -undriven -anyseq\nsetundef -anyseq\nopt_clean\n"
-              f"cd {top}\ntee -q -o cone_before.txt select -count t:*\ndelete -port o:*\nopt_clean\n"
+        ys = (pre + f"cd {top}\ntee -q -o cone_before.txt select -count t:*\ndelete -port o:*\nopt_clean\n"
               f"tee -q -o cone_after.txt select -count t:*\n{goal}\n")
         (work / "check.ys").write_text(ys)
         rc, log = P.sh([P.YOSYS, "-s", "check.ys"], cwd=work, timeout=timeout + 120)
@@ -114,7 +179,10 @@ def completeness(spec, cert, work, timeout=900, maxsteps=10):
     if proven:
         if "Induction step proven: SUCCESS!" in log:
             k = re.findall(r"Trying induction with length (\d+)", log)
-            return {"result": "proven", "engine": "yosys sat tempinduct", "step": int(k[-1]) if k else None}
+            out = {"result": "proven", "engine": "yosys sat tempinduct", "step": int(k[-1]) if k else None}
+            if inv:
+                out.update(engine="yosys sat tempinduct, with the certificate's invariant", invariant_cubes=len(inv["blocked"]))
+            return out
         why = ("base case fails" if "model found for base case" in log else
                "not inductive within maxsteps" if "maximum number of time steps" in log else (log.strip().splitlines() or ["?"])[-1][:160])
         return {"result": "failed", "engine": "yosys sat tempinduct", "why": why}
@@ -164,10 +232,29 @@ def allowed(cert, tr):
     return True
 
 
+def own_state(spec, cert, work):
+    """Every register and memory of the design under the hierarchical name the simulator knows it
+    by, from the checker's own Yosys run (prove.hier_state: elaborated without flattening, each
+    module's registers under its instance path). The replay makes all of them defined at power-up
+    and watches them for unknown bits; taking the list from the certificate would let a certificate
+    leave a register unknown and the simulator's x rules decide.
+    -> (registers {name: width}, memories {name: {"size", "width"}})"""
+    work = Path(work).resolve()
+    work.mkdir(parents=True, exist_ok=True)
+    prefixes, top = design(spec, cert, work, cert["observation"], cert["width"], [])
+    for pre in prefixes:
+        regs, mems = P.hier_state(pre.split("prep -flatten")[0], top, work, timeout=900)  # where design() wrote x5_mon.v
+        if regs is not None:
+            return regs, mems
+    raise RuntimeError("yosys could not list the design's registers")
+
+
 def witnesses(spec, cert, work):
     """Every `witnessed` edge must show up at its step when its trace is simulated again, and the
     trace must be one the assumptions allow."""
     k = _K(spec, cert)
+    own_regs, own_mems = own_state(spec, cert, Path(work) / "state")
+    k.m.fill_regs, k.m.fill_mems = own_regs, own_mems  # the certificate's names stay in k.m.regs, for its power-up values
     legal = [allowed(cert, tr) for tr in cert["traces"]]
     idx = [i for i, ok in enumerate(legal) if ok]  # a trace outside the assumptions is not simulated at all
     part, how = P.replay(k, [cert["traces"][i] for i in idx], Path(work) / "replay") if idx else ([], "none")
@@ -193,12 +280,116 @@ def witnesses(spec, cert, work):
             p = (tr["obs"][t], tr["obs"][t + 1])
             if p not in listed and [i, t, p[0], p[1]] not in outside:
                 outside.append([i, t, p[0], p[1]])
-    return {"result": "ok" if not bad and not outside else "failed", "mode": how, "unconfirmed": bad,
+    two = str(how).startswith("two-valued") or not any(e["status"] == "witnessed" for e in cert["edges"])
+    return {"result": "ok" if not bad and not outside and two else "failed", "mode": how, "unconfirmed": bad,
+            "state": {"registers": len(own_regs), "memories": len(own_mems)},
             "traces_outside_assumptions": [i for i, x in enumerate(legal) if not x],
             "replayed_pairs_not_listed": outside[:20]}
 
 
-def check(spec, cert, work, timeout=900, skip_proof_when_witnesses_fail=False, maxsteps=10):
+def observe(k, tr, work, timeout=900):
+    """Simulate one input sequence from power-up, two-valued (see prove._fill), with the trace's own
+    power-up values. -> list of observations as bit strings, None from the first unknown bit on."""
+    work = Path(work).resolve()
+    work.mkdir(parents=True, exist_ok=True)
+    head = P._tb_head(k)
+    if head is None:
+        return None
+    L, cat, win, idle, act = head
+    n = len(next(iter(tr["inputs"].values()))) if tr["inputs"] else 0
+    digits = (max(win, 1) + 3) // 4
+    (work / "ref.hex").write_text("".join(f"{P._pack(k, tr, t):0{digits}x}\n" for t in range(n)))
+    dec, fill = P._fill(k.m)
+    L += dec + [f"  reg [{max(win, 1) - 1}:0] vec [0:{max(n, 1) - 1}];", "  integer x5_i;", "  reg x5_bad = 0;", "  initial begin",
+                '    $readmemh("ref.hex", vec); x5_xs = 0; x5_xm = 0;', "    #1;"]
+    soft = []
+    for ln in P._deposits(k.m, tr) + fill:
+        soft.append(len(L))
+        L.append(ln)
+    L += ['    if (x5_bad) $display("X5BAD;");', f"    for (x5_i = 0; x5_i < {n}; x5_i = x5_i + 1) begin", "      cur = vec[x5_i];", "      #4;"]
+    for ln in P._xcheck(k.m):
+        soft.append(len(L))
+        L.append(ln)
+    L += [f'      $display("X5O%0d:%b:%0d;", x5_i, {cat}, x5_xs + x5_xm); #1 x5_clk = {act}; #5 x5_clk = {idle};', "    end", "    $finish;", "  end", "endmodule"]
+    ok, _, log = P._compile(k.m, work, work / "x5_ref.sv", L, soft, "ref.vvp", timeout)
+    if not ok:
+        return None
+    rc, log = P.sh(["vvp", "-n", "ref.vvp"], cwd=work, timeout=timeout)
+    if "X5BAD;" in log:
+        return None
+    got = {int(t): (o, x) for t, o, x in re.findall(r"X5O(\d+):([01xzXZ]+):(\d+);", log)}
+    out, dead = [], False
+    for t in range(n):
+        o, x = got.get(t, (None, "1"))
+        dead = dead or x != "0" or o is None or not set(o) <= {"0", "1"}
+        out.append(None if dead else o)
+    return out
+
+
+def refute(spec, cert, work, seconds=120):
+    """After the induction failed: look for a concrete execution that takes an edge the certificate
+    does not list. ABC searches the checker's own netlist (PDR, which also finds deep
+    counterexamples), and the input sequence and power-up values it returns are simulated in Icarus
+    Verilog, two-valued. Only the simulator's run counts: a pair it shows that is not listed refutes
+    the certificate. Finding nothing proves nothing either way; the certificate stays rejected."""
+    work = Path(work).resolve()
+    if work.exists():
+        shutil.rmtree(work)
+    work.mkdir(parents=True)
+    listed = {(e["src"], e["dst"]) for e in cert["edges"]}
+    prefixes, top = design(spec, cert, work, cert["observation"], cert["width"], sorted(listed), bad=True)
+    ys = (prefixes[0] + f"cd {top}\ndelete -port o:*\nexpose x5_mon.bad\nopt_clean\ncd ..\n"
+          "techmap\nopt_clean\naigmap\nopt_clean\nwrite_aiger -zinit -map aig.map x.aig\n")
+    (work / "ref.ys").write_text(ys)
+    rc, log = P.sh([P.YOSYS, "-q", "-s", "ref.ys"], cwd=work, timeout=900)
+    if rc != 0:
+        return {"result": "none", "why": "no AIGER: " + (log.strip().splitlines() or ["?"])[-1][:120]}
+    rc, log = P.sh(["yosys-abc", "-c", f"read_aiger x.aig; pdr -T {int(seconds)}; write_cex -n cex.txt"], cwd=work, timeout=seconds + 120)
+    m = re.search(r"was asserted in frame (\d+)", log)
+    if not m or not (work / "cex.txt").exists():
+        return {"result": "none", "why": "no counterexample within " + str(seconds) + " s"}
+    pin, ini = {}, {}
+    for ln in (work / "aig.map").read_text().splitlines():
+        f = ln.split()
+        if f[0] == "input":
+            pin[int(f[1])] = (int(f[2]), f[3])
+        elif f[0] == "init":
+            ini.setdefault(int(f[1]), []).append((int(f[2]), f[3]))
+    val = {}
+    for i, fr, v in re.findall(r"^pi(\d+)@(\d+)=([01])$", (work / "cex.txt").read_text(), re.M):
+        val[(int(i), int(fr))] = int(v)
+    n = int(m.group(1)) + 1
+    W = cert["widths"]["inputs"]
+    ins = {p: [0] * n for p in W}
+    for (i, fr), v in val.items():
+        if i in pin and pin[i][1] in ins and fr < n and v:
+            ins[pin[i][1]][fr] |= 1 << pin[i][0]
+    k = _K(spec, cert)
+    own_regs, own_mems = own_state(spec, cert, work / "state")
+    k.m.fill_regs, k.m.fill_mems = own_regs, own_mems
+    init = {}
+    for i, names in ini.items():
+        for b, nm in names:
+            if nm in k.m.regs and val.get((i, 0)):
+                init[nm] = init.get(nm, 0) | (1 << b)
+            elif nm in k.m.regs:
+                init.setdefault(nm, 0)
+    tr = {"inputs": ins, "init_regs": init, "init_mems": {}}
+    seen = observe(k, tr, work / "sim")
+    if seen is None:
+        return {"result": "none", "why": f"the counterexample of {n} cycles did not simulate"}
+    R = cert["assumptions"]["reset_cycles"]
+    for t in range(R, n - 1):
+        if seen[t] is None or seen[t + 1] is None:
+            break
+        p = (int(seen[t], 2), int(seen[t + 1], 2))
+        if p not in listed:
+            return {"result": "refuted", "pair": list(p), "step": t, "cycles": n,
+                    "why": f"counterexample replayed: {p[0]}->{p[1]} at cycle {t}, not listed"}
+    return {"result": "none", "why": f"the simulator did not reproduce the counterexample of {n} cycles"}
+
+
+def check(spec, cert, work, timeout=900, skip_proof_when_witnesses_fail=False, maxsteps=16, refute_seconds=60):
     """maxsteps bounds the induction of the second engine. A smaller bound can only turn an
     acceptance into a rejection, never the other way, so a caller may pass one to limit cost."""
     work = Path(work).resolve()
@@ -225,6 +416,15 @@ def check(spec, cert, work, timeout=900, skip_proof_when_witnesses_fail=False, m
             c = completeness(spec, cert, work / "ind", timeout=timeout, maxsteps=maxsteps)
         except Exception as ex:  # noqa: BLE001
             c = {"result": "failed", "why": "malformed: " + repr(ex)[:200]}
+        if c["result"] == "failed" and str(c.get("engine", "")).startswith("yosys sat") and refute_seconds:
+            # the rejection stands either way; a replayed counterexample says why
+            try:
+                ref = refute(spec, cert, work / "refute", seconds=refute_seconds)
+            except Exception as ex:  # noqa: BLE001
+                ref = {"result": "none", "why": "error: " + repr(ex)[:160]}
+            c = dict(c, refutation=ref, induction=c.get("why"))
+            if ref["result"] == "refuted":
+                c["why"] = "counterexample replayed in the simulator"
     return {"ok": form and w["result"] == "ok" and c["result"] in ("proven", "bounded-ok"), "wellformed": form, "witnesses": w, "completeness": c}
 
 

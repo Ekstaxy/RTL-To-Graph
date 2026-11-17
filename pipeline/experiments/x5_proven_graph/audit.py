@@ -19,7 +19,7 @@ from pathlib import Path
 
 HERE = Path(__file__).parent
 sha = lambda p: hashlib.sha256(Path(p).read_bytes()).hexdigest()[:16]  # noqa: E731
-CODE = {f: sha(HERE / f) for f in ("prove.py", "check.py", "guards.py", "attack.py", "post.py", "run.py")}
+CODE = {f: sha(HERE / f) for f in ("prove.py", "pdr.py", "check.py", "guards.py", "attack.py", "post.py", "run.py")}
 PASS, FAIL, NOT = "pass", "FAIL", "NOT RUN"
 
 
@@ -73,6 +73,14 @@ def consistency(cert):
             bad.append(f"{len(proj - have)} supporting pairs project outside the edges")
         if have - proj:
             bad.append(f"{len(have - proj)} edges have no supporting pair")
+    inv = comp.get("invariant")
+    if inv:
+        if sup:
+            bad.append("an invariant and a supporting edge set at once")
+        if set(map(tuple, inv.get("removed_edges", []))) & set(pairs):
+            bad.append("an edge said to be proven impossible is still listed")
+        if not isinstance(inv.get("blocked"), list) or not isinstance(inv.get("signals"), dict):
+            bad.append("invariant is malformed")
     return bad
 
 
@@ -86,10 +94,12 @@ def audit_one(d, row):
             "witnessed": n("witnessed"), "undetermined": n("undetermined"), "model_witness": n("model-witness"),
             "needs_power_up": sum(1 for x in e if x.get("needs_power_up")), "completeness": cert["completeness"]["status"],
             "method": cert["completeness"].get("method"), "aux": bool(cert["completeness"].get("support")),
-            "source_order": cert["assumptions"].get("source_order"), "seconds": cert["engine"].get("seconds")}
+            "source_order": cert["assumptions"].get("source_order"), "seconds": cert["engine"].get("seconds"),
+            "proven_impossible_by_pdr": len((cert["completeness"].get("invariant") or {}).get("removed_edges", [])),
+            "invariant_cubes": len((cert["completeness"].get("invariant") or {}).get("blocked", []))}
     # 0. produced by this prover
     pc = cert["engine"].get("code")
-    it["prover version"] = ({"status": PASS} if pc == {k: CODE[k] for k in ("prove.py", "run.py")} else
+    it["prover version"] = ({"status": PASS} if pc == {k: CODE[k] for k in ("prove.py", "pdr.py", "run.py")} else
                             {"status": NOT, "detail": "certificate carries no prover stamp" if not pc else "certificate was made by another version of the prover"})
     # 0b. the simulator elaborated the same design as the model
     sd = cert.get("replay", {}).get("same_design")
@@ -121,7 +131,10 @@ def audit_one(d, row):
         it["witnesses replayed"] = it["completeness, second engine"] = {"status": NOT, "detail": why}
     else:
         w, c = chk["witnesses"], chk["completeness"]
-        it["witnesses replayed"] = {"status": PASS if w["result"] == "ok" else FAIL, "detail": f"{info['witnessed']} edges, {len(cert['traces'])} traces, {w.get('mode')}"
+        two = str(w.get("mode", "")).startswith("two-valued")
+        it["witnesses replayed"] = {"status": PASS if w["result"] == "ok" and two else FAIL,
+                                    "detail": f"{info['witnessed']} edges, {len(cert['traces'])} traces, {w.get('mode')}"
+                                    + (f", every one of {w['state']['registers']} registers and {w['state']['memories']} memories defined from power-up" if w.get("state") else "")
                                     + ("" if w["result"] == "ok" else f"; unconfirmed {w.get('unconfirmed')}; {w.get('why', '')}")}
         want = "proven" if cert["completeness"]["status"] == "proven" else "bounded-ok"
         if c["result"] == want:
